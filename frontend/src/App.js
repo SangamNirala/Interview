@@ -7441,6 +7441,193 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
     );
   }
 
+  // Test Completion & Submission Screen (Task 2.3.5 - NEW IMPLEMENTATION)
+  if (showTestCompletion) {
+    const answeredCount = Object.keys(selectedAnswers).length;
+    const unansweredCount = testQuestions.length - answeredCount;
+    const unansweredQuestions = [];
+    const markedQuestions = [];
+
+    // Collect unanswered questions
+    for (let i = 0; i < testQuestions.length; i++) {
+      if (!selectedAnswers.hasOwnProperty(i)) {
+        unansweredQuestions.push(i + 1);
+      }
+    }
+
+    // Collect marked for review questions
+    markedForReview.forEach(index => {
+      markedQuestions.push(index + 1);
+    });
+
+    const formatTime = (seconds) => {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 flex items-center justify-center px-4">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 w-full max-w-4xl">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="text-4xl">✅</div>
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-4">Test Completion Review</h1>
+            <p className="text-lg text-white/80">
+              Please review your answers before final submission
+            </p>
+          </div>
+
+          {/* Test Summary Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            
+            {/* Total Answered */}
+            <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-6 text-center">
+              <div className="text-3xl font-bold text-green-300 mb-2">
+                {answeredCount} of {testQuestions.length}
+              </div>
+              <div className="text-green-200 text-sm font-medium">Questions Answered</div>
+              <div className="text-green-300 text-xs mt-1">
+                {Math.round((answeredCount / testQuestions.length) * 100)}% Complete
+              </div>
+            </div>
+
+            {/* Unanswered Questions */}
+            <div className={`${unansweredCount > 0 ? 'bg-red-500/20 border-red-500/30' : 'bg-gray-500/20 border-gray-500/30'} border rounded-lg p-6 text-center`}>
+              <div className={`text-3xl font-bold mb-2 ${unansweredCount > 0 ? 'text-red-300' : 'text-gray-300'}`}>
+                {unansweredCount}
+              </div>
+              <div className={`text-sm font-medium ${unansweredCount > 0 ? 'text-red-200' : 'text-gray-200'}`}>
+                Unanswered Questions
+              </div>
+              {unansweredCount > 0 && (
+                <div className="text-red-300 text-xs mt-1">
+                  Questions: {unansweredQuestions.slice(0, 5).join(', ')}
+                  {unansweredQuestions.length > 5 && `, +${unansweredQuestions.length - 5} more`}
+                </div>
+              )}
+            </div>
+
+            {/* Marked for Review */}
+            <div className={`${markedQuestions.length > 0 ? 'bg-yellow-500/20 border-yellow-500/30' : 'bg-gray-500/20 border-gray-500/30'} border rounded-lg p-6 text-center`}>
+              <div className={`text-3xl font-bold mb-2 ${markedQuestions.length > 0 ? 'text-yellow-300' : 'text-gray-300'}`}>
+                {markedQuestions.length}
+              </div>
+              <div className={`text-sm font-medium ${markedQuestions.length > 0 ? 'text-yellow-200' : 'text-gray-200'}`}>
+                Marked for Review
+              </div>
+              {markedQuestions.length > 0 && (
+                <div className="text-yellow-300 text-xs mt-1">
+                  Questions: {markedQuestions.slice(0, 5).join(', ')}
+                  {markedQuestions.length > 5 && `, +${markedQuestions.length - 5} more`}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Warning for Incomplete Answers */}
+          {unansweredCount > 0 && (
+            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-6 mb-8">
+              <div className="flex items-start space-x-3">
+                <div className="text-red-400 text-2xl">⚠️</div>
+                <div>
+                  <h3 className="text-red-300 font-semibold text-lg mb-2">Incomplete Submission Warning</h3>
+                  <p className="text-red-200 mb-3">
+                    You have <strong>{unansweredCount} unanswered questions</strong>. 
+                    Submitting now will count these as incorrect answers.
+                  </p>
+                  <div className="text-red-200 text-sm">
+                    <strong>Unanswered Questions:</strong> {unansweredQuestions.join(', ')}
+                  </div>
+                  {markedQuestions.length > 0 && (
+                    <div className="text-yellow-200 text-sm mt-2">
+                      <strong>Marked for Review:</strong> {markedQuestions.join(', ')}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Time Status */}
+          <div className="bg-white/5 rounded-lg p-4 mb-8 text-center">
+            <div className={`text-2xl font-bold mb-2 ${timeRemaining < 600 ? 'text-red-400' : 'text-white'}`}>
+              {timeRemaining > 0 ? `Time Remaining: ${formatTime(timeRemaining)}` : 'Time Expired - Auto-submitting'}
+            </div>
+            <div className="text-white/70 text-sm">
+              {timeRemaining <= 0 ? 'Your test will be automatically submitted.' : 'You can still make changes before submitting.'}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            {timeRemaining > 0 && (
+              <button
+                onClick={() => {
+                  setShowTestCompletion(false);
+                  setShowTestExecution(true);
+                  // Restart timer
+                  timerRef.current = setInterval(() => {
+                    setTimeRemaining(prev => {
+                      if (prev <= 1) {
+                        handleTestAutoSubmit();
+                        return 0;
+                      }
+                      return prev - 1;
+                    });
+                  }, 1000);
+                }}
+                className="flex-1 text-white border border-white/30 hover:border-white/50 py-4 px-6 rounded-lg transition-all duration-300 font-medium"
+              >
+                ← Back to Test
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                const confirmed = window.confirm(
+                  unansweredCount > 0 
+                    ? `You have ${unansweredCount} unanswered questions. These will be marked as incorrect. Are you sure you want to submit your test?`
+                    : 'Are you sure you want to submit your test? This action cannot be undone.'
+                );
+                
+                if (confirmed) {
+                  handleFinalTestSubmission();
+                }
+              }}
+              className={`${timeRemaining > 0 ? 'flex-1' : 'w-full'} font-bold py-4 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
+                unansweredCount > 0 
+                  ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white'
+                  : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+              }`}
+            >
+              {timeRemaining <= 0 ? (
+                <div className="flex items-center justify-center">
+                  <span className="mr-2">⏰</span>
+                  Auto-Submit Test
+                </div>
+              ) : (
+                <div className="flex items-center justify-center">
+                  <span className="mr-2">✅</span>
+                  Submit Test Final
+                </div>
+              )}
+            </button>
+          </div>
+
+          {/* Footer Instructions */}
+          <div className="mt-6 text-center text-sm text-white/60">
+            <p>💡 Once submitted, you cannot make any changes to your answers</p>
+            <p>🔒 Your responses will be securely processed and results generated</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center px-4">
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 w-full max-w-md">
