@@ -10747,13 +10747,7 @@ async def calculate_ats_score(
         
         # Use Gemini API for enhanced ATS scoring analysis
         try:
-            import os
-            import google.generativeai as genai
-            genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-            
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(enhanced_prompt)
-            
+            response = generate_content_with_fallback(enhanced_prompt)
             ats_analysis_text = response.text
             
             # Extract ATS score from the response using multiple patterns
