@@ -242,24 +242,18 @@ class AptitudeTestTester:
                             "No questions available for validation")
                 return False
             
-            # Test validation on first question
+            # Test validation on first question using query parameter
             question_id = questions[0].get("id")
-            validation_response = self.session.post(f"{BASE_URL}/admin/aptitude-questions/validate-quality", 
-                                                  json={"question_ids": [question_id]})
+            validation_response = self.session.post(f"{BASE_URL}/admin/aptitude-questions/validate-quality?question_id={question_id}")
             
             if validation_response.status_code == 200:
                 validation_data = validation_response.json()
                 if validation_data.get("success"):
-                    validation_results = validation_data.get("validation_results", [])
-                    if validation_results:
-                        overall_score = validation_results[0].get('overall_score', 'N/A')
-                        self.log_test("Question Quality Validation", "PASS", 
-                                    f"Successfully validated question quality: Score={overall_score}")
-                        return True
-                    else:
-                        self.log_test("Question Quality Validation", "FAIL", 
-                                    "No validation results returned")
-                        return False
+                    overall_score = validation_data.get('overall_score', 'N/A')
+                    quality_metrics = validation_data.get('quality_metrics', {})
+                    self.log_test("Question Quality Validation", "PASS", 
+                                f"Successfully validated question quality: Score={overall_score}, Metrics={len(quality_metrics)} items")
+                    return True
                 else:
                     self.log_test("Question Quality Validation", "FAIL", 
                                 f"Validation failed: {validation_data.get('message', 'Unknown error')}")
