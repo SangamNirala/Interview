@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://admin-password-reset.preview.emergentagent.com
+URL: https://test-module.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

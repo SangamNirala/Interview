@@ -18,7 +18,7 @@ import io
 from typing import Dict, Any, Optional, List
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://admin-password-reset.preview.emergentagent.com/api"
+BASE_URL = "https://test-module.preview.emergentagent.com/api"
 
 class AIJustificationTester:
     def __init__(self):

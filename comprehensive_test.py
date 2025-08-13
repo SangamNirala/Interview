@@ -7,7 +7,7 @@ import requests
 import json
 import time
 
-BASE_URL = 'https://admin-password-reset.preview.emergentagent.com/api'
+BASE_URL = 'https://test-module.preview.emergentagent.com/api'
 
 def test_comprehensive_enhanced_features():
     session = requests.Session()
