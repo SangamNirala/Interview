@@ -5081,6 +5081,74 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
   );
 };
 
+// Aptitude Test Portal Component (Placeholder for Phase 2.3+)
+const AptitudeTestPortal = ({ setCurrentPage }) => {
+  const { t } = useI18n();
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-white">🧠 {t('landing.aptitudeTest.title')}</h1>
+          <button
+            onClick={() => setCurrentPage('landing')}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-300"
+          >
+            Back to Home
+          </button>
+        </div>
+        
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 text-center">
+          <div className="text-6xl mb-6">🧠</div>
+          <h2 className="text-3xl font-bold text-white mb-4">Aptitude Test Portal</h2>
+          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
+            The comprehensive aptitude testing system is coming soon! This will include:
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white/5 rounded-lg p-6">
+              <div className="text-3xl mb-4">📊</div>
+              <h3 className="text-xl font-bold text-white mb-2">Token Entry & Validation</h3>
+              <p className="text-gray-300">Secure token-based test access following the same workflow as Candidate Experience</p>
+            </div>
+            
+            <div className="bg-white/5 rounded-lg p-6">
+              <div className="text-3xl mb-4">📸</div>
+              <h3 className="text-xl font-bold text-white mb-2">Photo Capture</h3>
+              <p className="text-gray-300">Identity verification with camera-based photo capture for test security</p>
+            </div>
+            
+            <div className="bg-white/5 rounded-lg p-6">
+              <div className="text-3xl mb-4">⏱️</div>
+              <h3 className="text-xl font-bold text-white mb-2">Timer-Based Assessment</h3>
+              <p className="text-gray-300">Multiple-choice questions with countdown timers and progress tracking</p>
+            </div>
+            
+            <div className="bg-white/5 rounded-lg p-6">
+              <div className="text-3xl mb-4">📈</div>
+              <h3 className="text-xl font-bold text-white mb-2">Detailed Results</h3>
+              <p className="text-gray-300">Comprehensive scoring with topic-wise analysis and improvement recommendations</p>
+            </div>
+          </div>
+          
+          <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
+            <p className="text-yellow-200">
+              <strong>Coming in Phase 2.3+:</strong> Complete aptitude testing workflow with Numerical, Logical, Verbal, and Spatial Reasoning questions
+            </p>
+          </div>
+          
+          <button
+            onClick={() => setCurrentPage('landing')}
+            className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold py-3 px-8 rounded-lg hover:from-teal-700 hover:to-cyan-700 transition-all duration-300"
+          >
+            Return to Main Menu
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Candidate Login Component
 const CandidateLogin = ({ setCurrentPage, setToken, setValidatedJob }) => {
   const [inputToken, setInputToken] = useState('');
