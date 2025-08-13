@@ -6992,8 +6992,7 @@ REQUIREMENTS:
 Return JSON with: question_text, question_type, options, correct_answer, explanation, job_relevance_score, improvement_notes
 """
         
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        resp = model.generate_content(prompt)
+        resp = generate_content_with_fallback(prompt)
         refined = _extract_json(resp.text)
         
         # Update question with refined data
