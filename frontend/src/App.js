@@ -6882,6 +6882,242 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
     );
   }
 
+  // Pre-Test Instructions Phase (Task 2.3.3 - Similar to Pre-Interview)
+  if (showPreTestInstructions) {
+    const browserRequirements = [
+      { name: 'Stable Internet Connection', status: 'Required', icon: '🌐' },
+      { name: 'Modern Browser (Chrome, Firefox, Safari)', status: 'Required', icon: '🌟' },
+      { name: 'JavaScript Enabled', status: 'Required', icon: '⚡' },
+      { name: 'Camera & Microphone Access', status: 'Completed', icon: '✅' },
+      { name: 'Full Screen Mode', status: 'Recommended', icon: '📱' },
+    ];
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 w-full max-w-5xl">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="text-4xl">🧠</div>
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-4">Aptitude Assessment Instructions</h1>
+            <p className="text-lg text-white/80">
+              Please read the following instructions carefully before beginning your assessment
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8 mb-8">
+            
+            {/* A. Test Overview (Adapted from Interview Overview) */}
+            <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+                <span className="mr-3">📊</span> Test Configuration
+              </h2>
+              
+              {/* Test configuration display */}
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg p-4 border border-blue-500/30">
+                  <h3 className="text-lg font-semibold text-white mb-3">Assessment Details</h3>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center">
+                      <span className="text-teal-400 mr-2">📚</span>
+                      <div>
+                        <div className="text-white font-medium">Topics Included</div>
+                        <div className="text-gray-300">Numerical, Logical, Verbal, Spatial</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-teal-400 mr-2">❓</span>
+                      <div>
+                        <div className="text-white font-medium">Total Questions</div>
+                        <div className="text-gray-300">45 questions</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-teal-400 mr-2">⏱️</span>
+                      <div>
+                        <div className="text-white font-medium">Time Allocation</div>
+                        <div className="text-gray-300">90 minutes total</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-teal-400 mr-2">🎯</span>
+                      <div>
+                        <div className="text-white font-medium">Question Format</div>
+                        <div className="text-gray-300">Multiple choice</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Test rules and guidelines */}
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3 flex items-center">
+                    <span className="mr-2">📋</span> Test Rules & Guidelines
+                  </h4>
+                  <ul className="text-yellow-200 text-sm space-y-2">
+                    <li className="flex items-start">
+                      <span className="mr-2 mt-0.5">•</span>
+                      Complete all questions within the allocated 90-minute time frame
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2 mt-0.5">•</span>
+                      Each question has only one correct answer - select the best option
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2 mt-0.5">•</span>
+                      You can navigate between questions and review your answers
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2 mt-0.5">•</span>
+                      Questions marked for review can be revisited before submission
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2 mt-0.5">•</span>
+                      The test will auto-submit when time expires
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2 mt-0.5">•</span>
+                      No external resources, calculators, or assistance allowed
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Browser requirements check */}
+            <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+                <span className="mr-3">🔧</span> System Requirements
+              </h2>
+              
+              <div className="space-y-3 mb-6">
+                {browserRequirements.map((req, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                    <div className="flex items-center">
+                      <span className="text-2xl mr-3">{req.icon}</span>
+                      <span className="text-white text-sm font-medium">{req.name}</span>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      req.status === 'Completed' 
+                        ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                        : req.status === 'Required'
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                    }`}>
+                      {req.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Additional Technical Information */}
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                <h4 className="text-white font-semibold mb-3 flex items-center">
+                  <span className="mr-2">✅</span> Environment Check
+                </h4>
+                <ul className="text-green-200 text-sm space-y-1">
+                  <li>• Camera access verified and photo captured</li>
+                  <li>• Candidate information collected successfully</li>
+                  <li>• Token validated and test session initialized</li>
+                  <li>• All system requirements met</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Important Reminders */}
+          <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/30 rounded-lg p-6 mb-8">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+              <span className="mr-3">⚠️</span> Important Reminders
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4 text-red-200 text-sm">
+              <ul className="space-y-2">
+                <li className="flex items-start">
+                  <span className="mr-2 mt-0.5">🚫</span>
+                  Do not refresh the page or navigate away during the test
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 mt-0.5">🔇</span>
+                  Ensure you're in a quiet environment free from distractions
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 mt-0.5">🔋</span>
+                  Keep your device charged or plugged in throughout the assessment
+                </li>
+              </ul>
+              <ul className="space-y-2">
+                <li className="flex items-start">
+                  <span className="mr-2 mt-0.5">📱</span>
+                  Disable notifications and put your phone in silent mode
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 mt-0.5">💾</span>
+                  Your progress is automatically saved as you answer questions
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2 mt-0.5">🎯</span>
+                  Focus on accuracy - there's no penalty for wrong answers
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-center gap-6">
+            <button
+              onClick={() => {
+                setShowPreTestInstructions(false);
+                setShowPhotoCapture(true);
+              }}
+              className="px-8 py-3 rounded-lg font-medium text-gray-300 hover:text-white border border-gray-500 hover:border-white transition-all duration-300"
+            >
+              Back to Photo Capture
+            </button>
+
+            {/* "Start Aptitude Test" button (instead of "Start Interview") */}
+            <button
+              onClick={handleStartAptitudeTest}
+              disabled={loading}
+              className={`px-12 py-4 rounded-lg font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
+                !loading
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
+                  : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+              }`}
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Starting Assessment...
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <span className="mr-2">🚀</span>
+                  Start Aptitude Test
+                </div>
+              )}
+            </button>
+          </div>
+
+          {/* Footer Information */}
+          <div className="mt-8 text-center text-sm text-white/60">
+            <p>💡 Take your time to read each question carefully before selecting your answer</p>
+            <p>🎯 Trust your first instinct - overthinking often leads to second-guessing</p>
+            <p>⏰ Keep an eye on the timer, but don't let it pressure you unnecessarily</p>
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="mt-4 bg-red-500/20 border border-red-500/30 rounded-lg p-3">
+              <p className="text-red-200 text-sm text-center">{error}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center px-4">
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 w-full max-w-md">
