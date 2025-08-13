@@ -102,7 +102,67 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: In the Placement Preparation tab, under the Resume Analysis section, when the user clicks the "Calculate ATS Score" button, a PDF is generated showing the ATS score and the reasons for that score. I want you to review and enhance the ATS score calculation logic in this project. The improved system should: Thoroughly analyze the resume content, job description, and job title before calculating the ATS score. Ensure that the scoring algorithm is accurate, fair, and aligns with real ATS evaluation practices. Provide clear, specific, and actionable reasons for the score in the generated PDF. Consider keyword relevance, skill match, experience alignment, formatting, and compliance with ATS parsing rules. Your task is to upgrade the ATS calculation system to deliver precise, job-specific evaluations that help candidates understand exactly what they need to improve.
+user_problem_statement: ## 🎯 UPDATED COMPREHENSIVE PHASE 2 IMPLEMENTATION PLAN: Aptitude Test Frontend
+
+### **OVERVIEW**
+Implementing complete frontend for the aptitude test system following the **same workflow as Candidate Experience tab** with backend already operational (88.9% success rate). The key difference: instead of AI interviewer questions with voice/text responses, candidates will see aptitude questions with multiple-choice answers and timer-based scoring.
+
+---
+
+## **PHASE 2.1: MAIN LANDING PAGE ENHANCEMENT**
+
+### **Task 2.1.1: Add 4th Main Card - "Aptitude Test"**
+- **Location**: `/app/frontend/src/App.js` - Main landing page
+- **Implementation**:
+  - Add new card alongside existing 3 cards (Admin Dashboard, Candidate Experience, Placement Preparation)
+  - **Design**: Consistent styling with gradient background and icon
+  - **Icon**: 🧠 or 📝 for aptitude testing
+  - **Description**: "Take comprehensive aptitude assessments with AI-powered questions"
+  - **Navigation**: Route to new aptitude test interface **following Candidate Experience workflow**
+
+**Expected Outcome**: 4 main cards on landing page with new aptitude test entry point
+
+CURRENT TASK: ✅ COMPLETED - Phase 2.1.1: Add 4th Main Card - "Aptitude Test"
+
+LATEST IMPLEMENTATION (Phase 2.1.1 - Landing Page Enhancement):
+✅ Updated Grid Layout - Changed from `md:grid-cols-3` to `md:grid-cols-2 lg:grid-cols-4` for responsive 4-card layout
+✅ Added Translation Support - Extended translations.js with aptitudeTest section including title, description, features, and button text
+✅ New Aptitude Test Card Implementation - Added 4th card with consistent styling:
+  - 🧠 Brain icon in teal-to-cyan gradient background circle
+  - Title: "Aptitude Test" 
+  - Description: "Take comprehensive aptitude assessments with AI-powered questions designed to evaluate your cognitive abilities and problem-solving skills"
+  - Features: Multiple Reasoning Topics, Timer-Based Assessment, Detailed Performance Analysis
+  - Teal-to-cyan gradient button: "Take Aptitude Test"
+✅ Routing Logic Added - Added 'aptitude-test' route in main App component renderPage() function
+✅ AptitudeTestPortal Component Created - Professional placeholder component with:
+  - Consistent design matching existing page layouts
+  - Overview of upcoming features (Token Entry, Photo Capture, Timer-Based Assessment, Detailed Results)
+  - "Coming in Phase 2.3+" notification with feature preview
+  - Working navigation buttons (Back to Home, Return to Main Menu)
+✅ Professional UI Design - All components follow existing design patterns:
+  - Gradient backgrounds (indigo-900 via purple-900 to pink-800)
+  - Backdrop blur effects and white/10 transparency
+  - Consistent button styling and hover effects
+  - Responsive layout with proper spacing and typography
+✅ Complete Navigation Testing - Verified both directions:
+  - Landing page → Aptitude Test portal (working)
+  - Aptitude Test portal → Landing page (working)
+  - All 4 cards visible and properly arranged on desktop and mobile
+
+TECHNICAL DETAILS:
+- Grid Layout: `md:grid-cols-2 lg:grid-cols-4` for optimal responsive display
+- Card Styling: Consistent with existing cards using backdrop-blur-lg, rounded-2xl, hover effects
+- Icon Implementation: Used 🧠 emoji in 4xl size within teal-500 to cyan-600 gradient circle
+- Translation Structure: Added aptitudeTest object with title, description, features (multipleTopics, timerBased, detailedAnalysis), and button text
+- Component Architecture: AptitudeTestPortal component placed before CandidateLogin component in App.js
+- Route Management: Added 'aptitude-test' case in renderPage() switch statement
+
+VISUAL VERIFICATION:
+✅ Landing Page: 4 cards displayed in perfect responsive grid layout
+✅ Aptitude Test Card: Professional appearance with brain icon and teal gradient
+✅ Navigation: Smooth transitions between landing page and aptitude test portal
+✅ Design Consistency: Matches existing card styling and application theme
+✅ Mobile Responsiveness: Cards arrange properly on different screen sizes
 
 CURRENT TASK: ✅ COMPLETED - Enhanced ATS Score Calculation System with Multi-Phase Analysis Engine
 
