@@ -6251,6 +6251,19 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
   const [showCandidateForm, setShowCandidateForm] = useState(false);
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const [showPreTestInstructions, setShowPreTestInstructions] = useState(false);
+  const [showTestExecution, setShowTestExecution] = useState(false);
+  
+  // Test execution state (NEW - Task 2.3.4)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(5400); // 90 minutes in seconds
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [markedForReview, setMarkedForReview] = useState(new Set());
+  const [testQuestions, setTestQuestions] = useState([]);
+  const [testStartTime, setTestStartTime] = useState(null);
+  const [testPaused, setTestPaused] = useState(false);
+  
+  // Timer ref for test execution
+  const timerRef = useRef(null);
   
   // Candidate information form state
   const [fullName, setFullName] = useState('');
