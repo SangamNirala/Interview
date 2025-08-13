@@ -3219,6 +3219,21 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
   const [testJobRoleContext, setTestJobRoleContext] = useState('');
   const [timePerQuestion, setTimePerQuestion] = useState(2); // minutes (1-3 range)
   
+  // Difficulty Distribution Controls state (Part C)
+  const [difficultyDistribution, setDifficultyDistribution] = useState({
+    easy: 40,
+    medium: 40,
+    hard: 20
+  });
+  
+  // Advanced Settings state (Part D)
+  const [advancedSettings, setAdvancedSettings] = useState({
+    randomizeQuestions: true,
+    randomizeOptions: true,
+    allowPreviousNavigation: false,
+    showProgress: true
+  });
+  
   // Enhanced features state
   const [includeCodingChallenge, setIncludeCodingChallenge] = useState(false);
   const [roleArchetype, setRoleArchetype] = useState('General');
