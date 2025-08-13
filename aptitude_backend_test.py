@@ -235,7 +235,7 @@ class AptitudeTestTester:
                 return False
             
             questions_data = response.json()
-            questions = questions_data.get("questions", [])
+            questions = questions_data.get("items", [])  # Changed from "questions" to "items"
             
             if not questions:
                 self.log_test("Question Quality Validation", "FAIL", 
@@ -252,8 +252,9 @@ class AptitudeTestTester:
                 if validation_data.get("success"):
                     validation_results = validation_data.get("validation_results", [])
                     if validation_results:
+                        overall_score = validation_results[0].get('overall_score', 'N/A')
                         self.log_test("Question Quality Validation", "PASS", 
-                                    f"Successfully validated question quality: {validation_results[0].get('overall_score', 'N/A')}")
+                                    f"Successfully validated question quality: Score={overall_score}")
                         return True
                     else:
                         self.log_test("Question Quality Validation", "FAIL", 
