@@ -5091,11 +5091,336 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                 </div>
               </div>
 
-              {/* Coming Soon: Other Sections */}
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                <p className="text-yellow-200 text-sm text-center">
-                  <strong>Coming Next:</strong> Test Configuration Panel, Difficulty Distribution Controls, and Token Generation (Phase 2.2.2 Parts B, C, D)
-                </p>
+              {/* Difficulty Distribution Controls - Part C */}
+              <div className="bg-white/5 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                  📊 Difficulty Distribution Controls
+                </h3>
+                
+                <div className="space-y-6">
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <p className="text-gray-300 text-sm mb-4">
+                      Configure the percentage distribution of questions by difficulty level. Total must equal 100%.
+                    </p>
+                    
+                    <div className="space-y-4">
+                      {/* Easy Questions */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-green-300 font-medium flex items-center">
+                            🟢 Easy Questions
+                          </label>
+                          <span className="text-white font-semibold bg-green-600 px-3 py-1 rounded text-sm">
+                            {difficultyDistribution.easy}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="80"
+                          value={difficultyDistribution.easy}
+                          onChange={(e) => {
+                            const newEasy = parseInt(e.target.value);
+                            const remaining = 100 - newEasy;
+                            const mediumRatio = difficultyDistribution.medium / (difficultyDistribution.medium + difficultyDistribution.hard);
+                            const newMedium = Math.round(remaining * mediumRatio);
+                            const newHard = remaining - newMedium;
+                            
+                            setDifficultyDistribution({
+                              easy: newEasy,
+                              medium: newMedium,
+                              hard: newHard
+                            });
+                          }}
+                          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-easy"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0%</span>
+                          <span>40%</span>
+                          <span>80%</span>
+                        </div>
+                      </div>
+
+                      {/* Medium Questions */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-yellow-300 font-medium flex items-center">
+                            🟡 Medium Questions
+                          </label>
+                          <span className="text-white font-semibold bg-yellow-600 px-3 py-1 rounded text-sm">
+                            {difficultyDistribution.medium}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="80"
+                          value={difficultyDistribution.medium}
+                          onChange={(e) => {
+                            const newMedium = parseInt(e.target.value);
+                            const remaining = 100 - newMedium;
+                            const easyRatio = difficultyDistribution.easy / (difficultyDistribution.easy + difficultyDistribution.hard);
+                            const newEasy = Math.round(remaining * easyRatio);
+                            const newHard = remaining - newEasy;
+                            
+                            setDifficultyDistribution({
+                              easy: newEasy,
+                              medium: newMedium,
+                              hard: newHard
+                            });
+                          }}
+                          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-medium"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0%</span>
+                          <span>40%</span>
+                          <span>80%</span>
+                        </div>
+                      </div>
+
+                      {/* Hard Questions */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-red-300 font-medium flex items-center">
+                            🔴 Hard Questions
+                          </label>
+                          <span className="text-white font-semibold bg-red-600 px-3 py-1 rounded text-sm">
+                            {difficultyDistribution.hard}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="80"
+                          value={difficultyDistribution.hard}
+                          onChange={(e) => {
+                            const newHard = parseInt(e.target.value);
+                            const remaining = 100 - newHard;
+                            const easyRatio = difficultyDistribution.easy / (difficultyDistribution.easy + difficultyDistribution.medium);
+                            const newEasy = Math.round(remaining * easyRatio);
+                            const newMedium = remaining - newEasy;
+                            
+                            setDifficultyDistribution({
+                              easy: newEasy,
+                              medium: newMedium,
+                              hard: newHard
+                            });
+                          }}
+                          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-hard"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>0%</span>
+                          <span>40%</span>
+                          <span>80%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Real-time Validation */}
+                  <div className={`rounded-lg p-4 border ${
+                    (difficultyDistribution.easy + difficultyDistribution.medium + difficultyDistribution.hard) === 100
+                      ? 'bg-green-900/20 border-green-400/30'
+                      : 'bg-red-900/20 border-red-400/30'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-medium flex items-center">
+                        {(difficultyDistribution.easy + difficultyDistribution.medium + difficultyDistribution.hard) === 100
+                          ? '✅ Distribution Valid'
+                          : '⚠️ Distribution Invalid'
+                        }
+                      </span>
+                      <div className="text-right">
+                        <span className={`font-bold text-lg ${
+                          (difficultyDistribution.easy + difficultyDistribution.medium + difficultyDistribution.hard) === 100
+                            ? 'text-green-400'
+                            : 'text-red-400'
+                        }`}>
+                          {difficultyDistribution.easy + difficultyDistribution.medium + difficultyDistribution.hard}%
+                        </span>
+                        <div className="text-xs text-gray-400">
+                          Must equal 100%
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="text-green-300">Easy: {difficultyDistribution.easy}%</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-yellow-300">Medium: {difficultyDistribution.medium}%</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-red-300">Hard: {difficultyDistribution.hard}%</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Advanced Settings - Part D */}
+              <div className="bg-white/5 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                  ⚙️ Advanced Settings
+                </h3>
+                
+                <div className="space-y-6">
+                  <p className="text-gray-300 text-sm">
+                    Configure advanced test behavior and candidate experience options.
+                  </p>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Randomize Questions */}
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="text-white font-medium flex items-center">
+                            🔀 Randomize Questions
+                          </h4>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Shuffle question order for each candidate
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={advancedSettings.randomizeQuestions}
+                            onChange={(e) => setAdvancedSettings({
+                              ...advancedSettings,
+                              randomizeQuestions: e.target.checked
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                      <div className={`text-xs ${advancedSettings.randomizeQuestions ? 'text-green-400' : 'text-gray-400'}`}>
+                        {advancedSettings.randomizeQuestions ? '✅ Questions will be randomized' : '❌ Questions in fixed order'}
+                      </div>
+                    </div>
+
+                    {/* Randomize Options */}
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="text-white font-medium flex items-center">
+                            🎯 Randomize Options
+                          </h4>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Shuffle answer choices within each question
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={advancedSettings.randomizeOptions}
+                            onChange={(e) => setAdvancedSettings({
+                              ...advancedSettings,
+                              randomizeOptions: e.target.checked
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                      <div className={`text-xs ${advancedSettings.randomizeOptions ? 'text-green-400' : 'text-gray-400'}`}>
+                        {advancedSettings.randomizeOptions ? '✅ Answer options will be shuffled' : '❌ Answer options in fixed order'}
+                      </div>
+                    </div>
+
+                    {/* Allow Previous Navigation */}
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="text-white font-medium flex items-center">
+                            ⬅️ Allow Previous Navigation
+                          </h4>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Let candidates go back to previous questions
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={advancedSettings.allowPreviousNavigation}
+                            onChange={(e) => setAdvancedSettings({
+                              ...advancedSettings,
+                              allowPreviousNavigation: e.target.checked
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                      <div className={`text-xs ${advancedSettings.allowPreviousNavigation ? 'text-yellow-400' : 'text-gray-400'}`}>
+                        {advancedSettings.allowPreviousNavigation ? '⚠️ Previous navigation enabled (may affect timing)' : '✅ Forward-only navigation (recommended)'}
+                      </div>
+                    </div>
+
+                    {/* Show Progress */}
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="text-white font-medium flex items-center">
+                            📊 Show Progress
+                          </h4>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Display progress bar and question counter
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={advancedSettings.showProgress}
+                            onChange={(e) => setAdvancedSettings({
+                              ...advancedSettings,
+                              showProgress: e.target.checked
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                      <div className={`text-xs ${advancedSettings.showProgress ? 'text-green-400' : 'text-gray-400'}`}>
+                        {advancedSettings.showProgress ? '✅ Progress indicators will be shown' : '❌ No progress indicators (distraction-free)'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Advanced Settings Summary */}
+                  <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 rounded-lg p-4 border border-purple-400/20">
+                    <h4 className="text-white font-semibold mb-3 flex items-center">
+                      🎛️ Settings Summary
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-300">Question Order: </span>
+                        <span className="text-white font-medium">
+                          {advancedSettings.randomizeQuestions ? 'Randomized' : 'Fixed'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-300">Answer Order: </span>
+                        <span className="text-white font-medium">
+                          {advancedSettings.randomizeOptions ? 'Shuffled' : 'Fixed'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-300">Navigation: </span>
+                        <span className="text-white font-medium">
+                          {advancedSettings.allowPreviousNavigation ? 'Forward & Backward' : 'Forward Only'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-300">Progress Display: </span>
+                        <span className="text-white font-medium">
+                          {advancedSettings.showProgress ? 'Enabled' : 'Hidden'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Action Buttons */}
