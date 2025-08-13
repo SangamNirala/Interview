@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://assessment-platform.preview.emergentagent.com
+URL: https://question-validation.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
