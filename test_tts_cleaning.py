@@ -2,7 +2,7 @@
 import requests
 import json
 
-BASE_URL = 'https://aptitude-review.preview.emergentagent.com/api'
+BASE_URL = 'https://exam-submit-flow.preview.emergentagent.com/api'
 
 def test_tts_text_cleaning():
     session = requests.Session()

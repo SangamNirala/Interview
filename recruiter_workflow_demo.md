@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://aptitude-review.preview.emergentagent.com
+URL: https://exam-submit-flow.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
