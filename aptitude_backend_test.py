@@ -169,7 +169,10 @@ class AptitudeTestTester:
                 "job_title": "Senior Data Analyst",
                 "job_description": "Analyzing complex datasets and creating insights for business decisions",
                 "topics": ["numerical_reasoning", "logical_reasoning"],
-                "questions_per_topic": 2,
+                "questions_per_topic": {
+                    "numerical_reasoning": 2,
+                    "logical_reasoning": 2
+                },
                 "difficulty_distribution": {"easy": 0.3, "medium": 0.5, "hard": 0.2}
             }
             
