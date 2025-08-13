@@ -90,6 +90,16 @@ export const translations = {
           skillAssessment: 'Skill Assessment Tools'
         },
         button: 'Start Preparation'
+      },
+      aptitudeTest: {
+        title: 'Aptitude Test',
+        description: 'Take comprehensive aptitude assessments with AI-powered questions designed to evaluate your cognitive abilities and problem-solving skills.',
+        features: {
+          multipleTopics: 'Multiple Reasoning Topics',
+          timerBased: 'Timer-Based Assessment', 
+          detailedAnalysis: 'Detailed Performance Analysis'
+        },
+        button: 'Take Aptitude Test'
       }
     },
     
