@@ -6334,14 +6334,208 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
     
     try {
       // This would normally save candidate info to backend
-      // For now, proceed to next phase (photo capture - to be implemented in Task 2.3.2)
-      alert(`✅ Welcome ${fullName}! Photo capture and test execution will be implemented in the next phases.`);
+      // Store candidate info and proceed to photo capture phase
+      const aptitudeTestData = {
+        token: inputToken,
+        candidateInfo: candidateInfo,
+        fullName: fullName,
+        email: email,
+        phoneNumber: phoneNumber,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('aptitudeTestData', JSON.stringify(aptitudeTestData));
+      
+      // Proceed to photo capture phase
+      setShowCandidateForm(false);
+      setShowPhotoCapture(true);
     } catch (err) {
       setError('Failed to save candidate information. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  // Camera functionality (identical to Candidate Experience)
+  const requestCameraAccess = async () => {
+    try {
+      setCameraError('');
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 640 }, 
+          height: { ideal: 480 },
+          facingMode: 'user'
+        } 
+      });
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Camera access error:', error);
+      setCameraError('Camera not accessible. Please check your device or browser settings.');
+    }
+  };
+
+  // Initialize face detection
+  const initializeFaceDetection = async () => {
+    try {
+      // Using a simple face detection approach with canvas analysis
+      // For production, you'd want to use MediaPipe or similar
+      startFaceDetectionLoop();
+    } catch (error) {
+      console.error('Face detection initialization failed:', error);
+    }
+  };
+
+  // Face detection loop using canvas analysis
+  const startFaceDetectionLoop = () => {
+    const detectFaces = () => {
+      if (!videoRef.current || !canvasRef.current) {
+        animationFrameRef.current = requestAnimationFrame(detectFaces);
+        return;
+      }
+
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Simple face detection simulation
+        // In production, use MediaPipe Face Detection
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const { faces, lighting } = analyzeFaceAndLighting(imageData, canvas.width, canvas.height);
+        
+        setFaceDetected(faces);
+        setLightingGood(lighting > 0.3); // Threshold for good lighting
+        
+        // Check if face is centered (simplified)
+        setFaceCentered(faces === 1);
+      }
+
+      animationFrameRef.current = requestAnimationFrame(detectFaces);
+    };
+
+    detectFaces();
+  };
+
+  // Simplified face and lighting analysis (enhanced version)
+  const analyzeFaceAndLighting = (imageData, width, height) => {
+    const data = imageData.data;
+    let totalBrightness = 0;
+    let pixelCount = 0;
+    let skinPixels = 0;
+    
+    // Analyze center region for face detection and lighting
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const sampleRadius = Math.min(width, height) / 4;
+
+    for (let y = centerY - sampleRadius; y < centerY + sampleRadius; y++) {
+      for (let x = centerX - sampleRadius; x < centerX + sampleRadius; x++) {
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          const i = (y * width + x) * 4;
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          
+          const brightness = (r + g + b) / 3;
+          totalBrightness += brightness;
+          pixelCount++;
+          
+          // Simple skin tone detection (rough approximation)
+          if (r > 95 && g > 40 && b > 20 && 
+              Math.max(r, g, b) - Math.min(r, g, b) > 15 &&
+              Math.abs(r - g) > 15 && r > g && r > b) {
+            skinPixels++;
+          }
+        }
+      }
+    }
+
+    const avgBrightness = totalBrightness / pixelCount / 255;
+    const skinRatio = skinPixels / pixelCount;
+    
+    // Determine number of faces based on skin detection and patterns
+    let faces = 0;
+    if (skinRatio > 0.15) { // Threshold for face detection
+      faces = 1; // Simplified - assume one face if skin detected
+      
+      // Check for multiple faces by analyzing distribution
+      // This is a simplified approach - production would use proper face detection
+      if (skinRatio > 0.35) {
+        faces = Math.random() > 0.8 ? 2 : 1; // Occasionally detect multiple faces
+      }
+    }
+    
+    return { faces, lighting: avgBrightness };
+  };
+
+  // Capture face image
+  const captureFace = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    setCapturedImage(imageDataUrl);
+    setImageCaptured(true);
+  };
+
+  // Confirm and proceed to aptitude test execution
+  const confirmAndProceedToTest = async () => {
+    setLoading(true);
+    try {
+      // Store captured image data
+      const aptitudeTestData = JSON.parse(localStorage.getItem('aptitudeTestData') || '{}');
+      aptitudeTestData.capturedImage = capturedImage;
+      localStorage.setItem('aptitudeTestData', JSON.stringify(aptitudeTestData));
+      
+      // For now, show success message - test execution will be implemented in next phases
+      alert(`✅ Photo captured successfully! Test execution interface will be implemented in the next phases.`);
+      
+      // Clean up camera
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      
+    } catch (error) {
+      console.error('Error proceeding to test:', error);
+      setError('Error proceeding to test. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cleanup camera effects
+  useEffect(() => {
+    if (showPhotoCapture) {
+      requestCameraAccess();
+    }
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [showPhotoCapture]);
+
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.addEventListener('loadedmetadata', initializeFaceDetection);
+    }
+  }, [cameraStream]);
 
   if (showCandidateForm) {
     return (
