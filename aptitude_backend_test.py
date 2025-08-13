@@ -70,7 +70,7 @@ class AptitudeTestTester:
     def test_aptitude_question_seeding(self):
         """Test the aptitude questions seeding system"""
         try:
-            response = self.session.post(f"{BASE_URL}/admin/aptitude-questions/seed")
+            response = self.session.post(f"{BASE_URL}/admin/aptitude-questions/seed", json={})
             
             if response.status_code == 200:
                 data = response.json()
