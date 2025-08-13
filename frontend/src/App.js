@@ -6535,13 +6535,19 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
   const handleStartAptitudeTest = async () => {
     setLoading(true);
     try {
-      // Here we would normally make API call to start test
-      // For now, show placeholder message for test execution (Task 2.3.4)
-      alert('✅ Starting Aptitude Test! Test execution interface will be implemented in Task 2.3.4.');
+      // Generate sample test questions for demonstration
+      const sampleQuestions = generateSampleQuestions();
+      setTestQuestions(sampleQuestions);
+      setTestStartTime(new Date());
+      setCurrentQuestionIndex(0);
+      setTimeRemaining(5400); // 90 minutes
       
-      // This will eventually navigate to the test execution interface
-      // setShowPreTestInstructions(false);
-      // setCurrentPage('aptitude-test-execution'); // Future implementation
+      // Start the timer
+      startTestTimer();
+      
+      // Navigate to test execution
+      setShowPreTestInstructions(false);
+      setShowTestExecution(true);
       
     } catch (error) {
       console.error('Error starting aptitude test:', error);
@@ -6550,6 +6556,220 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
       setLoading(false);
     }
   };
+
+  // Generate sample test questions for demonstration
+  const generateSampleQuestions = () => {
+    const topics = ['Numerical Reasoning', 'Logical Reasoning', 'Verbal Comprehension', 'Spatial Reasoning'];
+    const difficulties = ['Easy', 'Medium', 'Hard'];
+    const questions = [];
+    
+    for (let i = 0; i < 45; i++) {
+      const topic = topics[Math.floor(i / 11.25)]; // Distribute evenly across topics
+      const difficulty = difficulties[Math.floor(Math.random() * 3)];
+      
+      questions.push({
+        id: i + 1,
+        topic: topic,
+        difficulty: difficulty,
+        question: getQuestionByTopic(topic, i + 1),
+        options: getOptionsForQuestion(topic, i + 1),
+        correctAnswer: Math.floor(Math.random() * 4), // Random correct answer for demo
+        timeAllocated: 120, // 2 minutes per question
+        hasImage: Math.random() > 0.8 // 20% chance of having an image
+      });
+    }
+    
+    return questions;
+  };
+
+  // Get question text based on topic
+  const getQuestionByTopic = (topic, questionNum) => {
+    const questions = {
+      'Numerical Reasoning': [
+        'If a store offers a 25% discount on an item that costs $80, what is the final price after discount?',
+        'A train travels 180 km in 2.5 hours. What is its average speed in km/h?',
+        'What is 15% of 240?',
+        'If x + 12 = 20, what is the value of x?',
+        'A rectangle has a length of 12 cm and width of 8 cm. What is its area?'
+      ],
+      'Logical Reasoning': [
+        'All roses are flowers. Some flowers are red. Therefore, some roses are red. Is this conclusion valid?',
+        'If it rains, then the ground gets wet. The ground is wet. Can we conclude it rained?',
+        'Complete the pattern: 2, 4, 8, 16, ?',
+        'Which word does not belong: Apple, Orange, Carrot, Banana?',
+        'If A > B and B > C, then what can we conclude about A and C?'
+      ],
+      'Verbal Comprehension': [
+        'Choose the word that is most similar in meaning to "Eloquent": A) Silent B) Fluent C) Confused D) Angry',
+        'What is the main idea of this passage: "Reading regularly improves vocabulary, enhances critical thinking, and reduces stress levels."',
+        'Complete the sentence: "Despite the heavy rain, the outdoor concert _____ as planned."',
+        'Which sentence is grammatically correct?',
+        'Choose the antonym of "Abundant": A) Plentiful B) Scarce C) Multiple D) Various'
+      ],
+      'Spatial Reasoning': [
+        'How many faces does a cube have?',
+        'If you rotate a square 90 degrees clockwise, what shape do you get?',
+        'Which shape would you get if you fold this net? [Imagine a cross-shaped net]',
+        'How many cubes are hidden in this 3D structure? [Imagine a 3x3x3 cube structure]',
+        'What is the mirror image of the letter "b"?'
+      ]
+    };
+    
+    const topicQuestions = questions[topic] || ['Sample question for ' + topic];
+    return topicQuestions[questionNum % topicQuestions.length];
+  };
+
+  // Get options for question
+  const getOptionsForQuestion = (topic, questionNum) => {
+    const optionSets = {
+      'Numerical Reasoning': [
+        ['$60', '$65', '$70', '$75'],
+        ['60 km/h', '72 km/h', '80 km/h', '90 km/h'],
+        ['30', '36', '40', '45'],
+        ['6', '8', '10', '12'],
+        ['96 cm²', '100 cm²', '104 cm²', '108 cm²']
+      ],
+      'Logical Reasoning': [
+        ['Yes, it is valid', 'No, it is invalid', 'Cannot be determined', 'Partially valid'],
+        ['Yes, definitely', 'No, other causes possible', 'Cannot determine', 'Sometimes'],
+        ['24', '32', '36', '64'],
+        ['Apple', 'Orange', 'Carrot', 'Banana'],
+        ['A > C', 'A = C', 'A < C', 'Cannot determine']
+      ],
+      'Verbal Comprehension': [
+        ['Silent', 'Fluent', 'Confused', 'Angry'],
+        ['Reading is fun', 'Reading has multiple benefits', 'Reading is difficult', 'Reading is boring'],
+        ['was cancelled', 'proceeded', 'was postponed', 'was moved indoors'],
+        ['Option A', 'Option B', 'Option C', 'Option D'],
+        ['Plentiful', 'Scarce', 'Multiple', 'Various']
+      ],
+      'Spatial Reasoning': [
+        ['4', '6', '8', '12'],
+        ['Rectangle', 'Square', 'Triangle', 'Circle'],
+        ['Cube', 'Pyramid', 'Cylinder', 'Sphere'],
+        ['18', '21', '24', '27'],
+        ['d', 'p', 'q', 'b']
+      ]
+    };
+    
+    const topicOptions = optionSets[topic] || [['Option A', 'Option B', 'Option C', 'Option D']];
+    return topicOptions[questionNum % topicOptions.length];
+  };
+
+  // Start test timer
+  const startTestTimer = () => {
+    timerRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          // Auto-submit test when time expires
+          handleTestAutoSubmit();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Format time for display
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle answer selection
+  const handleAnswerSelect = (optionIndex) => {
+    setSelectedAnswers(prev => ({
+      ...prev,
+      [currentQuestionIndex]: optionIndex
+    }));
+  };
+
+  // Navigate to specific question
+  const navigateToQuestion = (questionIndex) => {
+    if (questionIndex >= 0 && questionIndex < testQuestions.length) {
+      setCurrentQuestionIndex(questionIndex);
+    }
+  };
+
+  // Mark question for review
+  const toggleReview = () => {
+    setMarkedForReview(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(currentQuestionIndex)) {
+        newSet.delete(currentQuestionIndex);
+      } else {
+        newSet.add(currentQuestionIndex);
+      }
+      return newSet;
+    });
+  };
+
+  // Navigate to next question
+  const nextQuestion = () => {
+    if (currentQuestionIndex < testQuestions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  // Navigate to previous question
+  const previousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+
+  // Handle test auto-submission
+  const handleTestAutoSubmit = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
+    // Calculate results and navigate to results screen
+    alert('⏰ Time\'s up! Test has been automatically submitted.');
+    
+    // This would normally submit to backend and show results
+    // For now, just navigate back or show completion message
+    setShowTestExecution(false);
+    setCurrentPage('landing');
+  };
+
+  // Handle manual test submission
+  const handleTestSubmit = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
+    const answeredCount = Object.keys(selectedAnswers).length;
+    const unansweredCount = testQuestions.length - answeredCount;
+    
+    if (unansweredCount > 0) {
+      const confirmed = window.confirm(
+        `You have ${unansweredCount} unanswered questions. Are you sure you want to submit?`
+      );
+      if (!confirmed) return;
+    }
+    
+    alert('✅ Test submitted successfully! Results will be processed.');
+    
+    // Navigate to results or back to landing
+    setShowTestExecution(false);
+    setCurrentPage('landing');
+  };
+
+  // Cleanup timer effect
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   // Cleanup camera effects
   useEffect(() => {
