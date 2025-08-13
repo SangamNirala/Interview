@@ -6852,6 +6852,17 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
     setShowTestCompletion(true);
   };
 
+  // Auto-submit when time expires in completion screen
+  useEffect(() => {
+    if (showTestCompletion && timeRemaining <= 0) {
+      const autoSubmitTimer = setTimeout(() => {
+        handleFinalTestSubmission();
+      }, 3000); // 3 second delay before auto-submit
+
+      return () => clearTimeout(autoSubmitTimer);
+    }
+  }, [showTestCompletion, timeRemaining]);
+
   // Cleanup timer effect
   useEffect(() => {
     return () => {
