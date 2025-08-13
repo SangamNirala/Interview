@@ -7661,6 +7661,260 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
     );
   }
 
+  // Test Results Display Screen (Task 2.3.5 - Results Display Phase)
+  if (showTestResults) {
+    if (!testResults) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 flex items-center justify-center px-4">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 w-full max-w-md">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+              <p className="text-white">Calculating your results...</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 flex items-center justify-center px-4">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 w-full max-w-6xl">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="text-4xl">🎉</div>
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-4">Aptitude Test Results</h1>
+            <p className="text-lg text-white/80">
+              Congratulations! You have successfully completed your aptitude assessment
+            </p>
+          </div>
+
+          {/* Overall Score Card */}
+          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-8 mb-8 text-center">
+            <h2 className="text-2xl font-bold text-white mb-4">Overall Performance</h2>
+            
+            <div className="grid md:grid-cols-4 gap-6 mb-6">
+              {/* Score Display */}
+              <div className="bg-white/10 rounded-lg p-6">
+                <div className="text-sm text-gray-300 mb-2">Your Score</div>
+                <div className="text-4xl font-bold text-green-400">
+                  {testResults.correctAnswers}/{testResults.totalQuestions}
+                </div>
+                <div className="text-lg text-white mt-2">
+                  {testResults.percentage}%
+                </div>
+              </div>
+
+              {/* Performance Level */}
+              <div className="bg-white/10 rounded-lg p-6">
+                <div className="text-sm text-gray-300 mb-2">Performance Level</div>
+                <div className={`text-2xl font-bold ${
+                  testResults.percentage >= 80 ? 'text-green-400' :
+                  testResults.percentage >= 60 ? 'text-yellow-400' :
+                  testResults.percentage >= 40 ? 'text-orange-400' : 'text-red-400'
+                }`}>
+                  {testResults.performanceLevel}
+                </div>
+                <div className="text-sm text-white/70 mt-2">
+                  {testResults.percentile}th percentile
+                </div>
+              </div>
+
+              {/* Time Taken */}
+              <div className="bg-white/10 rounded-lg p-6">
+                <div className="text-sm text-gray-300 mb-2">Time Taken</div>
+                <div className="text-2xl font-bold text-blue-400">
+                  {Math.floor(timeTaken / 60)}:{(timeTaken % 60).toString().padStart(2, '0')}
+                </div>
+                <div className="text-sm text-white/70 mt-2">
+                  out of 90 minutes
+                </div>
+              </div>
+
+              {/* Accuracy Rate */}
+              <div className="bg-white/10 rounded-lg p-6">
+                <div className="text-sm text-gray-300 mb-2">Accuracy Rate</div>
+                <div className="text-2xl font-bold text-purple-400">
+                  {testResults.accuracyRate}%
+                </div>
+                <div className="text-sm text-white/70 mt-2">
+                  {testResults.questionsAttempted} attempted
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Topic-wise Performance */}
+          <div className="bg-white/5 rounded-xl p-8 mb-8">
+            <h3 className="text-2xl font-bold text-white mb-6 text-center">Topic-wise Performance Breakdown</h3>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Object.entries(testResults.topicPerformance).map(([topic, performance]) => (
+                <div key={topic} className="bg-white/10 rounded-lg p-6">
+                  <div className="text-center mb-4">
+                    <div className="text-2xl mb-2">
+                      {topic === 'Numerical Reasoning' ? '🔢' :
+                       topic === 'Logical Reasoning' ? '🧩' :
+                       topic === 'Verbal Comprehension' ? '📖' : '🎯'}
+                    </div>
+                    <h4 className="text-lg font-semibold text-white">{topic}</h4>
+                  </div>
+                  
+                  <div className="text-center mb-4">
+                    <div className="text-2xl font-bold text-white">
+                      {performance.correct}/{performance.total}
+                    </div>
+                    <div className="text-sm text-gray-300">
+                      {Math.round((performance.correct / performance.total) * 100)}%
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full ${
+                        (performance.correct / performance.total) * 100 >= 80 ? 'bg-green-500' :
+                        (performance.correct / performance.total) * 100 >= 60 ? 'bg-yellow-500' :
+                        (performance.correct / performance.total) * 100 >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${(performance.correct / performance.total) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Performance Analysis */}
+          <div className="bg-white/5 rounded-xl p-8 mb-8">
+            <h3 className="text-2xl font-bold text-white mb-6 text-center">Performance Analysis</h3>
+            
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Strengths */}
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-6">
+                <h4 className="text-xl font-bold text-green-400 mb-4 flex items-center">
+                  <span className="mr-2">💪</span> Your Strengths
+                </h4>
+                <ul className="space-y-2 text-green-200 text-sm">
+                  {testResults.strengths.map((strength, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-green-500 mr-2">•</span>
+                      {strength}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Areas for Improvement */}
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-6">
+                <h4 className="text-xl font-bold text-orange-400 mb-4 flex items-center">
+                  <span className="mr-2">🎯</span> Areas for Improvement
+                </h4>
+                <ul className="space-y-2 text-orange-200 text-sm">
+                  {testResults.improvements.map((improvement, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-orange-500 mr-2">•</span>
+                      {improvement}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => setCurrentPage('landing')}
+              className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-4 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <div className="flex items-center justify-center">
+                <span className="mr-2">🏠</span>
+                Return to Home
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                // Reset all states for a new test
+                setShowTestResults(false);
+                setShowTestCompletion(false);
+                setShowTestExecution(false);
+                setShowPreTestInstructions(false);
+                setShowPhotoCapture(false);
+                setShowCandidateForm(false);
+                setCandidateInfo(null);
+                setInputToken('');
+                setError('');
+                setTestResults(null);
+                setTimeTaken(0);
+                setSelectedAnswers({});
+                setMarkedForReview(new Set());
+                setCurrentQuestionIndex(0);
+                setTimeRemaining(5400);
+                setTestQuestions([]);
+                setTestStartTime(null);
+                setFullName('');
+                setEmail('');
+                setPhoneNumber('');
+                setTermsAccepted(false);
+              }}
+              className="flex-1 sm:flex-none bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-4 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <div className="flex items-center justify-center">
+                <span className="mr-2">🔄</span>
+                Take Another Test
+              </div>
+            </button>
+          </div>
+
+          {/* Development Test Button for Results - Remove in production */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => {
+                // Simulate results data for development
+                const mockResults = {
+                  correctAnswers: 38,
+                  totalQuestions: 45,
+                  percentage: 84,
+                  performanceLevel: 'Excellent',
+                  percentile: 89,
+                  accuracyRate: 95,
+                  questionsAttempted: 40,
+                  topicPerformance: {
+                    'Numerical Reasoning': { correct: 10, total: 12 },
+                    'Logical Reasoning': { correct: 9, total: 11 },
+                    'Verbal Comprehension': { correct: 11, total: 12 },
+                    'Spatial Reasoning': { correct: 8, total: 10 }
+                  },
+                  strengths: [
+                    'Excellent performance in verbal comprehension',
+                    'Strong analytical and numerical reasoning skills',
+                    'Consistent accuracy across all topic areas',
+                    'Efficient time management throughout the test'
+                  ],
+                  improvements: [
+                    'Spatial reasoning can be enhanced with practice',
+                    'Consider reviewing complex logical patterns',
+                    'Focus on advanced mathematical concepts',
+                    'Practice under timed conditions for better speed'
+                  ]
+                };
+                setTestResults(mockResults);
+                setTimeTaken(4200); // 70 minutes
+              }}
+              className="px-4 py-2 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded text-sm hover:bg-purple-500/30"
+            >
+              [DEV] Load Results Data
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center px-4">
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 w-full max-w-md">
