@@ -5602,6 +5602,182 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                   ✅ Generate Test Token
                 </button>
               </div>
+
+              {/* Token Display Section */}
+              {showAptitudeTokenDisplay && (
+                <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-lg p-6 border border-green-400/30 mt-8">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                    🎉 Token Generated Successfully
+                  </h3>
+                  
+                  <div className="bg-white/10 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-gray-300 text-sm">Generated Token:</span>
+                      <button
+                        onClick={() => setShowAptitudeTokenDisplay(false)}
+                        className="text-gray-400 hover:text-white transition-colors text-xl"
+                        title="Close"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 bg-gray-900/50 rounded-lg p-3 font-mono text-lg text-green-400 border border-green-500/30">
+                        {aptitudeToken}
+                      </div>
+                      <button
+                        onClick={() => copyTokenToClipboard(aptitudeToken)}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center gap-2"
+                      >
+                        📋 Copy Token
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-semibold mb-2">✅ Next Steps:</h4>
+                    <ul className="text-gray-300 text-sm space-y-1">
+                      <li>• Share this token with candidates who need to take the aptitude test</li>
+                      <li>• Token is valid for 30 days from generation date</li>
+                      <li>• Candidates can access the test using the main "Aptitude Test" portal</li>
+                      <li>• Monitor token usage in the Token Management section below</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Token Management Table */}
+              <div className="bg-white/5 rounded-lg p-6 mt-8">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                  🎫 Token Management
+                </h3>
+                
+                {aptitudeTokens.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 mb-4">🎫 No tokens generated yet</div>
+                    <p className="text-gray-300">Generate your first aptitude test token using the configuration above</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-600">
+                          <th className="text-left text-gray-300 font-medium py-3 px-2">Token Code</th>
+                          <th className="text-left text-gray-300 font-medium py-3 px-2">Test Configuration</th>
+                          <th className="text-left text-gray-300 font-medium py-3 px-2">Created</th>
+                          <th className="text-left text-gray-300 font-medium py-3 px-2">Expires</th>
+                          <th className="text-left text-gray-300 font-medium py-3 px-2">Status</th>
+                          <th className="text-left text-gray-300 font-medium py-3 px-2">Details</th>
+                          <th className="text-left text-gray-300 font-medium py-3 px-2">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {aptitudeTokens.map((token) => (
+                          <tr key={token.id} className="border-b border-gray-700 hover:bg-white/5 transition-colors">
+                            {/* Token Code */}
+                            <td className="py-4 px-2">
+                              <div className="font-mono text-sm text-white bg-gray-800 rounded px-2 py-1 inline-block">
+                                {token.code}
+                              </div>
+                            </td>
+                            
+                            {/* Test Configuration */}
+                            <td className="py-4 px-2">
+                              <div>
+                                <div className="text-white font-medium">{token.testName}</div>
+                                <div className="text-gray-400 text-sm">{token.configName}</div>
+                              </div>
+                            </td>
+                            
+                            {/* Created Date */}
+                            <td className="py-4 px-2">
+                              <div className="text-gray-300 text-sm">
+                                {formatDate(token.createdDate)}
+                              </div>
+                            </td>
+                            
+                            {/* Expiry Date */}
+                            <td className="py-4 px-2">
+                              <div className="text-gray-300 text-sm">
+                                {formatDate(token.expiryDate)}
+                              </div>
+                            </td>
+                            
+                            {/* Status */}
+                            <td className="py-4 px-2">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(getTokenStatus(token))}`}>
+                                {getTokenStatus(token)}
+                              </span>
+                            </td>
+                            
+                            {/* Details */}
+                            <td className="py-4 px-2">
+                              <div className="text-xs text-gray-400">
+                                <div>{token.totalQuestions} questions</div>
+                                <div>{token.duration} minutes</div>
+                                <div>{token.topics.join(', ')}</div>
+                              </div>
+                            </td>
+                            
+                            {/* Actions */}
+                            <td className="py-4 px-2">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => copyTokenToClipboard(token.code)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors"
+                                  title="Copy Token"
+                                >
+                                  📋
+                                </button>
+                                <button
+                                  onClick={() => extendToken(token.id)}
+                                  className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 rounded transition-colors"
+                                  title="Extend Expiry"
+                                  disabled={getTokenStatus(token) === 'Expired'}
+                                >
+                                  ⏰
+                                </button>
+                                <button
+                                  onClick={() => deleteToken(token.id)}
+                                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition-colors"
+                                  title="Delete Token"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                
+                {/* Token Statistics */}
+                {aptitudeTokens.length > 0 && (
+                  <div className="mt-6 grid md:grid-cols-3 gap-4">
+                    <div className="bg-green-900/20 rounded-lg p-4 border border-green-400/30">
+                      <div className="text-green-400 text-2xl font-bold">
+                        {aptitudeTokens.filter(token => getTokenStatus(token) === 'Active').length}
+                      </div>
+                      <div className="text-green-300 text-sm">Active Tokens</div>
+                    </div>
+                    <div className="bg-red-900/20 rounded-lg p-4 border border-red-400/30">
+                      <div className="text-red-400 text-2xl font-bold">
+                        {aptitudeTokens.filter(token => getTokenStatus(token) === 'Expired').length}
+                      </div>
+                      <div className="text-red-300 text-sm">Expired Tokens</div>
+                    </div>
+                    <div className="bg-gray-900/20 rounded-lg p-4 border border-gray-400/30">
+                      <div className="text-gray-400 text-2xl font-bold">
+                        {aptitudeTokens.filter(token => getTokenStatus(token) === 'Used').length}
+                      </div>
+                      <div className="text-gray-300 text-sm">Used Tokens</div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
