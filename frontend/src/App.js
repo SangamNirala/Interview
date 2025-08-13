@@ -4632,6 +4632,78 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
           </div>
         )}
 
+        {/* Create Aptitude Test Tab */}
+        {activeTab === 'create-aptitude-test' && (
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+            <h2 className="text-2xl font-bold text-white mb-6">🧠 Create Aptitude Test</h2>
+            
+            <div className="space-y-8">
+              {/* Coming Soon Notice */}
+              <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-6 text-center">
+                <div className="text-4xl mb-4">🚧</div>
+                <h3 className="text-xl font-bold text-white mb-2">Feature Coming Soon</h3>
+                <p className="text-gray-300 mb-4">
+                  The comprehensive aptitude test configuration system is under development and will be available in Phase 2.2.2.
+                </p>
+                <p className="text-yellow-200 text-sm">
+                  <strong>Expected Features:</strong> Topic Selection, Test Configuration, Difficulty Distribution, Token Generation, and Advanced Settings
+                </p>
+              </div>
+
+              {/* Feature Preview */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white/5 rounded-lg p-6">
+                  <div className="text-3xl mb-4">📊</div>
+                  <h3 className="text-lg font-bold text-white mb-2">Topic Selection</h3>
+                  <p className="text-gray-300 text-sm">
+                    Configure Numerical, Logical, Verbal, and Spatial Reasoning questions with customizable question counts (10-50 per topic)
+                  </p>
+                </div>
+
+                <div className="bg-white/5 rounded-lg p-6">
+                  <div className="text-3xl mb-4">⚙️</div>
+                  <h3 className="text-lg font-bold text-white mb-2">Test Configuration</h3>
+                  <p className="text-gray-300 text-sm">
+                    Set test name, job title, role context, and time limits with per-question and total test time controls
+                  </p>
+                </div>
+
+                <div className="bg-white/5 rounded-lg p-6">
+                  <div className="text-3xl mb-4">📈</div>
+                  <h3 className="text-lg font-bold text-white mb-2">Difficulty Distribution</h3>
+                  <p className="text-gray-300 text-sm">
+                    Control difficulty levels with percentage sliders for Easy (40%), Medium (40%), and Hard (20%) questions
+                  </p>
+                </div>
+
+                <div className="bg-white/5 rounded-lg p-6">
+                  <div className="text-3xl mb-4">🎫</div>
+                  <h3 className="text-lg font-bold text-white mb-2">Token Generation</h3>
+                  <p className="text-gray-300 text-sm">
+                    Generate test tokens with copy-to-clipboard functionality and comprehensive token management
+                  </p>
+                </div>
+              </div>
+
+              {/* Navigation buttons */}
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => setActiveTab('create-interview')}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+                >
+                  🚀 Create Interview Instead
+                </button>
+                <button
+                  onClick={() => setActiveTab('resume-analysis')}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300"
+                >
+                  📝 Resume Analysis
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Analysis Result Tab */}
         {activeTab === 'analysis-result' && (
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
