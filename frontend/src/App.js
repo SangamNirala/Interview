@@ -6264,6 +6264,10 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
   const [testStartTime, setTestStartTime] = useState(null);
   const [testPaused, setTestPaused] = useState(false);
   
+  // Test results state (NEW - Task 2.3.5)
+  const [testResults, setTestResults] = useState(null);
+  const [timeTaken, setTimeTaken] = useState(0);
+  
   // Timer ref for test execution
   const timerRef = useRef(null);
   
