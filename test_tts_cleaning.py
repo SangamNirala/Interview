@@ -2,7 +2,7 @@
 import requests
 import json
 
-BASE_URL = 'https://aptiscore-engine.preview.emergentagent.com/api'
+BASE_URL = 'https://test-interface.preview.emergentagent.com/api'
 
 def test_tts_text_cleaning():
     session = requests.Session()
