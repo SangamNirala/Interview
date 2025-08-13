@@ -6492,7 +6492,7 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
     setImageCaptured(true);
   };
 
-  // Confirm and proceed to aptitude test execution
+  // Confirm and proceed to pre-test instructions 
   const confirmAndProceedToTest = async () => {
     setLoading(true);
     try {
@@ -6501,17 +6501,38 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
       aptitudeTestData.capturedImage = capturedImage;
       localStorage.setItem('aptitudeTestData', JSON.stringify(aptitudeTestData));
       
-      // For now, show success message - test execution will be implemented in next phases
-      alert(`✅ Photo captured successfully! Test execution interface will be implemented in the next phases.`);
-      
       // Clean up camera
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
       }
       
+      // Proceed to pre-test instructions phase
+      setShowPhotoCapture(false);
+      setShowPreTestInstructions(true);
+      
     } catch (error) {
       console.error('Error proceeding to test:', error);
       setError('Error proceeding to test. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Start aptitude test function
+  const handleStartAptitudeTest = async () => {
+    setLoading(true);
+    try {
+      // Here we would normally make API call to start test
+      // For now, show placeholder message for test execution (Task 2.3.4)
+      alert('✅ Starting Aptitude Test! Test execution interface will be implemented in Task 2.3.4.');
+      
+      // This will eventually navigate to the test execution interface
+      // setShowPreTestInstructions(false);
+      // setCurrentPage('aptitude-test-execution'); // Future implementation
+      
+    } catch (error) {
+      console.error('Error starting aptitude test:', error);
+      setError('Error starting test. Please try again.');
     } finally {
       setLoading(false);
     }
