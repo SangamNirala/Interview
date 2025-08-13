@@ -15480,8 +15480,6 @@ async def get_candidate_scoring_justification(candidate_id: str):
             job_requirements = await db.job_requirements.find_one({"id": analysis_result['job_requirements_id']})
         
         # Generate detailed justification using AI
-        client = genai.GenerativeModel("gemini-1.5-flash")
-        
         prompt = f"""
         Create a detailed, professional justification report for HR explaining why this candidate received their ATS score.
         
@@ -15515,7 +15513,7 @@ async def get_candidate_scoring_justification(candidate_id: str):
         Write in clear, concise language that non-technical HR staff can understand.
         """
         
-        response = client.generate_content(prompt)
+        response = generate_content_with_fallback(prompt)
         justification_text = response.text.strip()
         
         return {
