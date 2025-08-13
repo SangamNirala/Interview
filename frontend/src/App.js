@@ -4907,6 +4907,175 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                 </div>
               </div>
 
+              {/* Test Configuration Panel */}
+              <div className="bg-white/5 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                  ⚙️ Test Configuration
+                </h3>
+                
+                <div className="space-y-6">
+                  {/* Test Name and Job Title Row */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-300 text-sm font-medium mb-2">
+                        Test Name
+                      </label>
+                      <input
+                        type="text"
+                        value={testName}
+                        onChange={(e) => setTestName(e.target.value)}
+                        placeholder="e.g., Software Engineer Assessment"
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-gray-300 text-sm font-medium mb-2">
+                        Job Title
+                      </label>
+                      <input
+                        type="text"
+                        value={testJobTitle}
+                        onChange={(e) => setTestJobTitle(e.target.value)}
+                        placeholder="e.g., Senior Software Engineer"
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Job Role Context */}
+                  <div>
+                    <label className="block text-gray-300 text-sm font-medium mb-2">
+                      Job Role Context <span className="text-xs text-gray-400">(for AI question generation)</span>
+                    </label>
+                    <textarea
+                      value={testJobRoleContext}
+                      onChange={(e) => setTestJobRoleContext(e.target.value)}
+                      rows={4}
+                      placeholder="Describe the role requirements, key responsibilities, and context to help AI generate relevant questions. E.g., 'This role requires strong problem-solving skills, working with large datasets, developing algorithms, and collaborating with cross-functional teams...'"
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 resize-none"
+                    />
+                    <div className="flex justify-between mt-1">
+                      <span className="text-xs text-gray-400">
+                        Help AI generate job-specific questions
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {testJobRoleContext.length}/500 characters
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Time Configuration */}
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-semibold mb-4 flex items-center">
+                      ⏱️ Time Configuration
+                    </h4>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Time Per Question */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-gray-300 text-sm font-medium">
+                            Time Per Question
+                          </label>
+                          <span className="text-white font-semibold bg-orange-600 px-2 py-1 rounded text-sm">
+                            {timePerQuestion} minute{timePerQuestion !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="3"
+                          step="0.5"
+                          value={timePerQuestion}
+                          onChange={(e) => setTimePerQuestion(parseFloat(e.target.value))}
+                          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-time"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>1 min</span>
+                          <span>2 min</span>
+                          <span>3 min</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                          Recommended: 1-2 minutes for quick assessment, 2-3 minutes for detailed evaluation
+                        </p>
+                      </div>
+
+                      {/* Total Test Time */}
+                      <div>
+                        <label className="text-gray-300 text-sm font-medium mb-2 block">
+                          Total Test Time
+                        </label>
+                        <div className="bg-gradient-to-r from-teal-900/30 to-cyan-900/30 rounded-lg p-4 border border-teal-400/20">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-white mb-1">
+                              {Math.ceil(Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
+                                return total + (selected ? aptitudeQuestionCounts[topic] : 0);
+                              }, 0) * timePerQuestion)} minutes
+                            </div>
+                            <div className="text-sm text-gray-300">
+                              ({Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
+                                return total + (selected ? aptitudeQuestionCounts[topic] : 0);
+                              }, 0)} questions × {timePerQuestion} min each)
+                            </div>
+                            <div className="text-xs text-teal-200 mt-2">
+                              Auto-calculated based on selected topics and time per question
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configuration Summary */}
+                  <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-lg p-4 border border-blue-400/20">
+                    <h4 className="text-white font-semibold mb-3 flex items-center">
+                      📋 Configuration Summary
+                    </h4>
+                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-300">Test Name: </span>
+                        <span className="text-white font-medium">
+                          {testName || 'Not set'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-300">Job Title: </span>
+                        <span className="text-white font-medium">
+                          {testJobTitle || 'Not set'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-300">Context: </span>
+                        <span className="text-white font-medium">
+                          {testJobRoleContext ? `${testJobRoleContext.slice(0, 30)}${testJobRoleContext.length > 30 ? '...' : ''}` : 'Not set'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-300">Time/Question: </span>
+                        <span className="text-white font-medium">
+                          {timePerQuestion} minute{timePerQuestion !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-300">Total Duration: </span>
+                        <span className="text-white font-medium">
+                          {Math.ceil(Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
+                            return total + (selected ? aptitudeQuestionCounts[topic] : 0);
+                          }, 0) * timePerQuestion)} minutes
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-300">AI Context: </span>
+                        <span className="text-white font-medium">
+                          {testJobRoleContext ? 'Configured' : 'Basic'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Coming Soon: Other Sections */}
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                 <p className="text-yellow-200 text-sm text-center">
