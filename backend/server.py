@@ -15625,8 +15625,6 @@ async def perform_ats_analysis(resume: dict, job_requirements: dict) -> ATSAnaly
     """Perform ATS analysis of resume against job requirements"""
     try:
         # Use Gemini for comprehensive ATS analysis
-        client = genai.GenerativeModel("gemini-1.5-flash")
-        
         prompt = f"""
         Perform an ATS (Applicant Tracking System) analysis of this resume against the given job requirements.
         Provide detailed scoring and recommendations.
@@ -15663,7 +15661,7 @@ async def perform_ats_analysis(resume: dict, job_requirements: dict) -> ATSAnaly
         }}
         """
         
-        response = client.generate_content(prompt)
+        response = generate_content_with_fallback(prompt)
         
         # Parse AI response
         import json
