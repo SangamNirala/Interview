@@ -39,7 +39,7 @@ httpx
 aiohttp
 openai
 # Advanced AI Analysis Dependencies
-#librosa>=0.11.0
+librosa>=0.11.0
 #opencv-python>=4.12.0
 # mediapipe>=0.10.14
 #tensorflow>=2.19.0
