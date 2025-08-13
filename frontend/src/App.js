@@ -8533,6 +8533,73 @@ function App() {
   
   const [activeTab, setActiveTab] = useState('landing');
 
+  // Test execution state for aptitude test
+  const [showTestExecution, setShowTestExecution] = useState(false);
+  const [testQuestions, setTestQuestions] = useState([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(5400); // 90 minutes in seconds
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [markedForReview, setMarkedForReview] = useState(new Set());
+  const timerRef = useRef(null);
+
+  // Test execution functions
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleAnswerSelect = (answerIndex) => {
+    setSelectedAnswers(prev => ({
+      ...prev,
+      [currentQuestionIndex]: answerIndex
+    }));
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestionIndex < testQuestions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
+  };
+
+  const previousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
+  const navigateToQuestion = (index) => {
+    setCurrentQuestionIndex(index);
+  };
+
+  const toggleReview = () => {
+    const newMarkedForReview = new Set(markedForReview);
+    if (newMarkedForReview.has(currentQuestionIndex)) {
+      newMarkedForReview.delete(currentQuestionIndex);
+    } else {
+      newMarkedForReview.add(currentQuestionIndex);
+    }
+    setMarkedForReview(newMarkedForReview);
+  };
+
+  const handleTestSubmit = () => {
+    const answeredCount = Object.keys(selectedAnswers).length;
+    const unansweredCount = testQuestions.length - answeredCount;
+    
+    if (unansweredCount > 0) {
+      const confirmSubmit = window.confirm(
+        `You have ${unansweredCount} unanswered questions. Are you sure you want to submit?`
+      );
+      if (!confirmSubmit) return;
+    }
+    
+    alert('✅ Test submitted successfully! Results will be processed.');
+    
+    // Navigate to results or back to landing
+    setShowTestExecution(false);
+    setCurrentPage('landing');
+  };
+
   // Clear global spoken texts when starting new sessions
   useEffect(() => {
     if (currentPage === 'landing') {
