@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://test-portal.preview.emergentagent.com
+URL: https://identverify.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

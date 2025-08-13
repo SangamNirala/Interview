@@ -2,7 +2,7 @@
 import requests
 import json
 
-BASE_URL = 'https://test-portal.preview.emergentagent.com/api'
+BASE_URL = 'https://identverify.preview.emergentagent.com/api'
 
 def test_tts_text_cleaning():
     session = requests.Session()
