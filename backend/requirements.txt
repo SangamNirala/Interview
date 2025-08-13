@@ -69,7 +69,7 @@ distro
 propcache
 httpcore
 tiktoken
-#tokenizers
+tokenizers
 jinja2
 #ml_dtypes>=0.5.0
 
