@@ -3235,9 +3235,9 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
   });
   
   // Token Management state (Part 2.2.3)
-  const [generatedToken, setGeneratedToken] = useState('');
-  const [showTokenDisplay, setShowTokenDisplay] = useState(false);
-  const [tokens, setTokens] = useState([
+  const [aptitudeToken, setAptitudeToken] = useState('');
+  const [showAptitudeTokenDisplay, setShowAptitudeTokenDisplay] = useState(false);
+  const [aptitudeTokens, setAptitudeTokens] = useState([
     // Sample tokens for demonstration
     {
       id: '1',
