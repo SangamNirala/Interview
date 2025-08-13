@@ -3199,6 +3199,20 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
   const [allAnalyses, setAllAnalyses] = useState([]);
   const [analysesLoading, setAnalysesLoading] = useState(false);
   
+  // Aptitude Test Configuration state
+  const [aptitudeTopics, setAptitudeTopics] = useState({
+    numerical: false,
+    logical: false,
+    verbal: false,
+    spatial: false
+  });
+  const [aptitudeQuestionCounts, setAptitudeQuestionCounts] = useState({
+    numerical: 25,
+    logical: 25,
+    verbal: 25,
+    spatial: 25
+  });
+  
   // Enhanced features state
   const [includeCodingChallenge, setIncludeCodingChallenge] = useState(false);
   const [roleArchetype, setRoleArchetype] = useState('General');
