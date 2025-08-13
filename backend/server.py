@@ -6330,10 +6330,9 @@ async def detect_industry_context(job_title: str, job_description: str) -> str:
 async def extract_job_skills(job_description: str) -> List[str]:
     """Extract key skills and requirements from job description using AI"""
     try:
-        if not GEMINI_API_KEY:
+        if not gemini_api_manager.get_current_key():
             return []
         
-        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = f"""
 Extract the key skills, competencies, and requirements from this job description.
 Return a JSON array of strings with the most important skills mentioned.
@@ -6345,7 +6344,7 @@ Job Description: {job_description[:2000]}
 Return format: ["skill1", "skill2", "skill3", ...]
 """
         
-        response = model.generate_content(prompt)
+        response = generate_content_with_fallback(prompt)
         skills_data = _extract_json(response.text)
         
         if isinstance(skills_data, list):
