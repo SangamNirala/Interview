@@ -6736,13 +6736,15 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
       clearInterval(timerRef.current);
     }
     
-    // Calculate results and navigate to results screen
-    alert('⏰ Time\'s up! Test has been automatically submitted.');
+    // Calculate time taken
+    if (testStartTime) {
+      const timeElapsed = 5400 - timeRemaining; // Total time minus remaining time
+      setTimeTaken(timeElapsed);
+    }
     
-    // This would normally submit to backend and show results
-    // For now, just navigate back or show completion message
+    // Navigate to completion phase (auto-submit scenario)
     setShowTestExecution(false);
-    setCurrentPage('landing');
+    setShowTestCompletion(true);
   };
 
   // Handle manual test submission
