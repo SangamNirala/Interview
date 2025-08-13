@@ -6730,6 +6730,80 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
     }
   };
 
+  // Handle final test submission from completion screen
+  const handleFinalTestSubmission = async () => {
+    try {
+      // Calculate results
+      const results = calculateTestResults();
+      setTestResults(results);
+      
+      // Navigate to results display
+      setShowTestCompletion(false);
+      setShowTestResults(true);
+      
+    } catch (error) {
+      console.error('Error submitting test:', error);
+      alert('Error submitting test. Please try again.');
+    }
+  };
+
+  // Calculate test results
+  const calculateTestResults = () => {
+    const totalQuestions = testQuestions.length;
+    const answeredCount = Object.keys(selectedAnswers).length;
+    const unansweredCount = totalQuestions - answeredCount;
+    const reviewCount = markedForReview.size;
+    
+    // Calculate score (for demo - normally would be calculated by backend)
+    let correctAnswers = 0;
+    const topicPerformance = {
+      'Numerical Reasoning': { correct: 0, total: 0 },
+      'Logical Reasoning': { correct: 0, total: 0 },
+      'Verbal Comprehension': { correct: 0, total: 0 },
+      'Spatial Reasoning': { correct: 0, total: 0 }
+    };
+    
+    // Simulate scoring (normally done by backend)
+    testQuestions.forEach((question, index) => {
+      if (selectedAnswers[index] !== undefined) {
+        const isCorrect = Math.random() > 0.25; // Random for demo (75% accuracy)
+        if (isCorrect) correctAnswers++;
+        
+        // Update topic performance
+        if (topicPerformance[question.topic]) {
+          topicPerformance[question.topic].total++;
+          if (isCorrect) topicPerformance[question.topic].correct++;
+        }
+      }
+    });
+    
+    const scorePercentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+    
+    // Calculate percentile (demo calculation)
+    let percentile = 50;
+    if (scorePercentage >= 90) percentile = 95;
+    else if (scorePercentage >= 80) percentile = 85;
+    else if (scorePercentage >= 70) percentile = 75;
+    else if (scorePercentage >= 60) percentile = 65;
+    else if (scorePercentage >= 50) percentile = 55;
+    else if (scorePercentage >= 40) percentile = 45;
+    else percentile = 35;
+    
+    return {
+      totalQuestions,
+      answeredCount,
+      unansweredCount,
+      reviewCount,
+      correctAnswers,
+      incorrectAnswers: answeredCount - correctAnswers,
+      scorePercentage,
+      percentile,
+      timeTaken,
+      topicPerformance,
+      performanceLevel: scorePercentage >= 80 ? 'Excellent' : scorePercentage >= 70 ? 'Good' : scorePercentage >= 60 ? 'Average' : 'Below Average'
+    };
+  };
+
   // Handle test auto-submission
   const handleTestAutoSubmit = () => {
     if (timerRef.current) {
