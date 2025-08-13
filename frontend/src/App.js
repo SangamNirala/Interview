@@ -8563,6 +8563,286 @@ function App() {
     }
   };
 
+  // Test Execution Interface (Task 2.3.4 - REPLACES AI Interview)
+  if (showTestExecution && testQuestions.length > 0) {
+    const currentQuestion = testQuestions[currentQuestionIndex];
+    const progressPercentage = ((currentQuestionIndex + 1) / testQuestions.length) * 100;
+    const answeredCount = Object.keys(selectedAnswers).length;
+    const isTimeCritical = timeRemaining < 600; // Less than 10 minutes
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800">
+        
+        {/* A. Test Header with Timer (NEW - Key Difference) */}
+        <div className="bg-white/10 backdrop-blur-lg border-b border-white/20 sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              
+              {/* Left: Progress Info */}
+              <div className="flex items-center space-x-6">
+                {/* Progress indicator: "Question 15 of 45" */}
+                <div className="text-white">
+                  <span className="text-lg font-semibold">Question {currentQuestionIndex + 1} of {testQuestions.length}</span>
+                </div>
+                
+                {/* Current topic badge: "Numerical Reasoning" */}
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  currentQuestion.topic === 'Numerical Reasoning' 
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                    : currentQuestion.topic === 'Logical Reasoning'
+                      ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                      : currentQuestion.topic === 'Verbal Comprehension'
+                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                        : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
+                }`}>
+                  {currentQuestion.topic}
+                </div>
+                
+                {/* Difficulty indicator */}
+                <div className={`px-2 py-1 rounded text-xs font-medium ${
+                  currentQuestion.difficulty === 'Easy'
+                    ? 'bg-green-500/20 text-green-300'
+                    : currentQuestion.difficulty === 'Medium'
+                      ? 'bg-yellow-500/20 text-yellow-300'
+                      : 'bg-red-500/20 text-red-300'
+                }`}>
+                  {currentQuestion.difficulty}
+                </div>
+              </div>
+              
+              {/* Center: Progress bar */}
+              <div className="flex-1 mx-8">
+                <div className="bg-white/20 rounded-full h-2 max-w-md mx-auto">
+                  <div 
+                    className="bg-gradient-to-r from-teal-500 to-cyan-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+                <div className="text-center text-sm text-white/70 mt-1">
+                  {Math.round(progressPercentage)}% Complete
+                </div>
+              </div>
+              
+              {/* Right: Large countdown timer */}
+              <div className="text-right">
+                <div className={`text-2xl font-bold ${isTimeCritical ? 'text-red-400' : 'text-white'}`}>
+                  Time Remaining: {formatTime(timeRemaining)}
+                </div>
+                <div className="text-sm text-white/70">
+                  {answeredCount} of {testQuestions.length} answered
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="grid lg:grid-cols-4 gap-6">
+            
+            {/* Main Question Area (75% width) */}
+            <div className="lg:col-span-3">
+              
+              {/* B. Question Display Area (NEW - Core Difference) */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-6">
+                
+                {/* Question header */}
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Question {currentQuestion.id} - {currentQuestion.topic}
+                  </h2>
+                  <div className="flex items-center space-x-4 text-sm text-white/70">
+                    <span>Difficulty: <span className={`font-medium ${
+                      currentQuestion.difficulty === 'Easy' ? 'text-green-300' :
+                      currentQuestion.difficulty === 'Medium' ? 'text-yellow-300' : 'text-red-300'
+                    }`}>{currentQuestion.difficulty}</span></span>
+                    <span>Time Allocated: {Math.floor(currentQuestion.timeAllocated / 60)} minutes</span>
+                  </div>
+                </div>
+
+                {/* Question text */}
+                <div className="mb-8">
+                  <p className="text-lg text-white leading-relaxed">
+                    {currentQuestion.question}
+                  </p>
+                  
+                  {/* Question image placeholder (if applicable) */}
+                  {currentQuestion.hasImage && (
+                    <div className="mt-6 bg-white/5 rounded-lg p-4 border border-white/10 text-center">
+                      <div className="text-white/50 text-sm mb-2">📊 Question Diagram/Image</div>
+                      <div className="bg-white/10 rounded-lg h-32 flex items-center justify-center">
+                        <span className="text-white/50">Image would be displayed here</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Multiple choice options (A, B, C, D) with radio buttons */}
+                <div className="space-y-3">
+                  {currentQuestion.options.map((option, index) => {
+                    const isSelected = selectedAnswers[currentQuestionIndex] === index;
+                    const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
+                    
+                    return (
+                      <label
+                        key={index}
+                        className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-teal-500/20 border-teal-500/50 text-white'
+                            : 'bg-white/5 border-white/20 text-white/80 hover:bg-white/10 hover:border-white/30'
+                        }`}
+                        onClick={() => handleAnswerSelect(index)}
+                      >
+                        <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center ${
+                          isSelected
+                            ? 'border-teal-400 bg-teal-500'
+                            : 'border-white/40'
+                        }`}>
+                          {isSelected && (
+                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <div className="flex items-center">
+                          <span className="font-semibold mr-3 text-lg">{optionLabel})</span>
+                          <span className="text-base">{option}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {/* Answer Selection & Navigation Controls */}
+                <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/20">
+                  
+                  {/* Left: Review checkbox */}
+                  <div className="flex items-center">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={markedForReview.has(currentQuestionIndex)}
+                        onChange={toggleReview}
+                        className="w-4 h-4 text-yellow-600 bg-gray-700 border-gray-600 rounded focus:ring-yellow-500 focus:ring-2 mr-2"
+                      />
+                      <span className="text-white/80 text-sm">Mark for Review</span>
+                    </label>
+                  </div>
+
+                  {/* Right: Navigation buttons */}
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={previousQuestion}
+                      disabled={currentQuestionIndex === 0}
+                      className="px-6 py-2 rounded-lg font-medium text-white/80 border border-white/30 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    >
+                      ← Previous
+                    </button>
+                    
+                    {currentQuestionIndex === testQuestions.length - 1 ? (
+                      <button
+                        onClick={handleTestSubmit}
+                        className="px-8 py-2 rounded-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white transition-all duration-200 shadow-lg hover:shadow-xl"
+                      >
+                        Submit Test
+                      </button>
+                    ) : (
+                      <button
+                        onClick={nextQuestion}
+                        className="px-6 py-2 rounded-lg font-medium bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white transition-all duration-200"
+                      >
+                        Next →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Question Palette Sidebar (25% width) */}
+            <div className="lg:col-span-1">
+              
+              {/* D. Question Status Indicators (NEW) */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 sticky top-24">
+                <h3 className="text-lg font-bold text-white mb-4">Question Palette</h3>
+                
+                {/* Status Legend */}
+                <div className="mb-4 space-y-2 text-sm">
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded bg-green-500 mr-2"></div>
+                    <span className="text-white/70">Answered</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded border-2 border-white/40 mr-2"></div>
+                    <span className="text-white/70">Not Answered</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded bg-yellow-500 mr-2"></div>
+                    <span className="text-white/70">Marked for Review</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded bg-blue-500 mr-2"></div>
+                    <span className="text-white/70">Current Question</span>
+                  </div>
+                </div>
+
+                {/* Question Grid */}
+                <div className="grid grid-cols-5 gap-2">
+                  {testQuestions.map((_, index) => {
+                    const isAnswered = selectedAnswers.hasOwnProperty(index);
+                    const isMarkedForReview = markedForReview.has(index);
+                    const isCurrent = index === currentQuestionIndex;
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => navigateToQuestion(index)}
+                        className={`w-10 h-10 rounded text-sm font-medium transition-all duration-200 ${
+                          isCurrent
+                            ? 'bg-blue-500 text-white'
+                            : isMarkedForReview
+                              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                              : isAnswered
+                                ? 'bg-green-500 text-white hover:bg-green-600'
+                                : 'border-2 border-white/40 text-white/70 hover:bg-white/10'
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Summary Stats */}
+                <div className="mt-6 pt-4 border-t border-white/20">
+                  <div className="space-y-2 text-sm text-white/70">
+                    <div className="flex justify-between">
+                      <span>Answered:</span>
+                      <span className="text-green-300 font-medium">{answeredCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Not Answered:</span>
+                      <span className="text-red-300 font-medium">{testQuestions.length - answeredCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Marked for Review:</span>
+                      <span className="text-yellow-300 font-medium">{markedForReview.size}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Test Button */}
+                <button
+                  onClick={handleTestSubmit}
+                  className="w-full mt-6 px-4 py-3 rounded-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  Submit Test
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <PWAProvider>
       <I18nProvider>
