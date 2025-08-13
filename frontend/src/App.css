@@ -49,6 +49,79 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Custom Range Slider Styles for Aptitude Test Configuration */
+.slider-numerical::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.slider-numerical::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1f2937, #3b82f6);
+  border-radius: 4px;
+}
+
+.slider-logical::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #047857);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+.slider-logical::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1f2937, #10b981);
+  border-radius: 4px;
+}
+
+.slider-verbal::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #5b21b6);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+}
+
+.slider-verbal::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1f2937, #8b5cf6);
+  border-radius: 4px;
+}
+
+.slider-spatial::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f97316, #c2410c);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
+}
+
+.slider-spatial::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1f2937, #f97316);
+  border-radius: 4px;
+}
+
 .hover-scale {
   transition: transform 0.3s ease;
 }
