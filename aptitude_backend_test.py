@@ -114,17 +114,22 @@ class AptitudeTestTester:
             
             if response.status_code == 200:
                 data = response.json()
-                total_questions = data.get("total_questions", 0)
-                topics_breakdown = data.get("topics_breakdown", {})
-                difficulty_breakdown = data.get("difficulty_breakdown", {})
-                
-                if total_questions > 0:
-                    self.log_test("Aptitude Question Stats", "PASS", 
-                                f"Retrieved stats: {total_questions} total questions, Topics: {topics_breakdown}, Difficulty: {difficulty_breakdown}")
-                    return True
+                if data.get("success"):
+                    total_questions = data.get("total", 0)
+                    by_topic = data.get("by_topic", {})
+                    by_difficulty = data.get("by_difficulty", {})
+                    
+                    if total_questions > 0:
+                        self.log_test("Aptitude Question Stats", "PASS", 
+                                    f"Retrieved stats: {total_questions} total questions, Topics: {by_topic}, Difficulty: {by_difficulty}")
+                        return True
+                    else:
+                        self.log_test("Aptitude Question Stats", "FAIL", 
+                                    "No questions found in database")
+                        return False
                 else:
                     self.log_test("Aptitude Question Stats", "FAIL", 
-                                "No questions found in database")
+                                f"Stats request failed: {data.get('message', 'Unknown error')}")
                     return False
             else:
                 self.log_test("Aptitude Question Stats", "FAIL", 
