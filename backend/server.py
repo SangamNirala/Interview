@@ -6813,7 +6813,7 @@ async def admin_ai_generate_questions(request: AIQuestionGenerateRequest):
 async def admin_ai_generate_contextual_questions(request: JobContextualGenerationRequest):
     """Advanced job-contextual question generation across multiple topics"""
     try:
-        if not GEMINI_API_KEY:
+        if not gemini_api_manager.get_current_key():
             raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
         
         # Validate topics
