@@ -52,7 +52,7 @@ vaderSentiment>=3.3.2
 #scikit-learn>=1.7.0
 # Additional dependencies for voice recording functionality
 lazy_loader
-safetensors>=0.4.3
+#safetensors>=0.4.3
 absl-py>=1.0.0
 multidict
 regex
@@ -68,10 +68,10 @@ frozenlist
 distro
 propcache
 httpcore
-tiktoken
-tokenizers
+#tiktoken
+#tokenizers
 jinja2
-ml_dtypes>=0.5.0
+#ml_dtypes>=0.5.0
 
 # Phase 3: Open-Source AI Model Integration Dependencies
 # Step 7.1: Replace Proprietary AI Services
@@ -101,15 +101,15 @@ grpcio-status>=1.74.0
 cmudict>=1.1.0
 pyphen>=0.17.0
 thinc>=9.1.0
-spacy-legacy>=3.0.0
-spacy-loggers>=1.0.0
-catalogue>=2.0.0
-wasabi>=1.1.0
+#spacy-legacy>=3.0.0
+#spacy-loggers>=1.0.0
+#catalogue>=2.0.0
+#wasabi>=1.1.0
 srsly>=2.4.0
-murmurhash>=1.0.0
-cymem>=2.0.0
-preshed>=3.0.0
-blis>=0.7.0
+#murmurhash>=1.0.0
+#cymem>=2.0.0
+#preshed>=3.0.0
+#blis>=0.7.0
 PyYAML
 cachetools
 proto-plus
