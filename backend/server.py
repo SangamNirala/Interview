@@ -8031,12 +8031,7 @@ Provide a comprehensive analysis with ALL rejection reasons following the exact 
 
         # Use Gemini API for analysis
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-            
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(gap_analysis_prompt)
-            
+            response = generate_content_with_fallback(gap_analysis_prompt)
             analysis_text = response.text
         except Exception as e:
             logging.error(f"Gemini API error: {e}")
