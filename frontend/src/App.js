@@ -5585,45 +5585,8 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                       return;
                     }
                     
-                    const totalQuestions = Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
-                      return total + (selected ? aptitudeQuestionCounts[topic] : 0);
-                    }, 0);
-                    
-                    const totalTime = Math.ceil(totalQuestions * timePerQuestion);
-                    
-                    // Validation warnings (not blocking)
-                    const warnings = [];
-                    if (!testName.trim()) warnings.push('Test Name');
-                    if (!testJobTitle.trim()) warnings.push('Job Title');
-                    if (!testJobRoleContext.trim()) warnings.push('Job Role Context');
-                    
-                    let message = `✅ Complete Configuration Summary:\n\n`;
-                    message += `📊 Topics: ${selectedCount} selected (${Object.entries(aptitudeTopics).filter(([_, selected]) => selected).map(([topic, _]) => topic.charAt(0).toUpperCase() + topic.slice(1)).join(', ')})\n`;
-                    message += `❓ Questions: ${totalQuestions} total\n`;
-                    message += `⏱️ Duration: ${totalTime} minutes (${timePerQuestion} min per question)\n`;
-                    message += `📝 Test Name: ${testName || 'Not specified'}\n`;
-                    message += `👔 Job Title: ${testJobTitle || 'Not specified'}\n`;
-                    message += `🎯 AI Context: ${testJobRoleContext ? 'Configured' : 'Not provided'}\n\n`;
-                    
-                    message += `📊 Difficulty Distribution:\n`;
-                    message += `🟢 Easy: ${difficultyDistribution.easy}%\n`;
-                    message += `🟡 Medium: ${difficultyDistribution.medium}%\n`;
-                    message += `🔴 Hard: ${difficultyDistribution.hard}%\n\n`;
-                    
-                    message += `⚙️ Advanced Settings:\n`;
-                    message += `🔀 Randomize Questions: ${advancedSettings.randomizeQuestions ? 'Yes' : 'No'}\n`;
-                    message += `🎯 Randomize Options: ${advancedSettings.randomizeOptions ? 'Yes' : 'No'}\n`;
-                    message += `⬅️ Previous Navigation: ${advancedSettings.allowPreviousNavigation ? 'Allowed' : 'Disabled'}\n`;
-                    message += `📊 Show Progress: ${advancedSettings.showProgress ? 'Yes' : 'No'}\n\n`;
-                    
-                    if (warnings.length > 0) {
-                      message += `⚠️ Optional fields not filled: ${warnings.join(', ')}\n`;
-                      message += `(These help generate better questions but are not required)\n\n`;
-                    }
-                    
-                    message += `🎉 Configuration Complete! Ready for Token Generation (Phase 2.2.3)`;
-                    
-                    alert(message);
+                    // Generate the token
+                    generateAptitudeToken();
                   }}
                   disabled={
                     Object.values(aptitudeTopics).filter(Boolean).length === 0 ||
