@@ -20,7 +20,7 @@ import io
 from typing import Dict, Any, Optional, List
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://aptitude-config.preview.emergentagent.com/api"
+BASE_URL = "https://test-portal.preview.emergentagent.com/api"
 
 class InterviewProgressionTester:
     def __init__(self):
