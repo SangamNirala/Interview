@@ -678,25 +678,16 @@ class AptitudeTestTester:
             
             if response.status_code == 200:
                 data = response.json()
-                if isinstance(data, dict):
+                if data.get("success"):
+                    total_ai_questions = data.get("total_ai_questions", 0)
                     analytics = data.get("analytics", {})
                     
-                    if analytics:
-                        question_performance = analytics.get("question_performance", {})
-                        difficulty_trends = analytics.get("difficulty_trends", {})
-                        topic_insights = analytics.get("topic_insights", {})
-                        
-                        self.log_test("AI Analytics Insights", "PASS", 
-                                    f"AI analytics generated: Performance metrics={len(question_performance)}, "
-                                    f"Difficulty trends={len(difficulty_trends)}, Topic insights={len(topic_insights)}")
-                        return True
-                    else:
-                        self.log_test("AI Analytics Insights", "PASS", 
-                                    f"AI analytics endpoint accessible, returned: {str(data)[:100]}...")
-                        return True
+                    self.log_test("AI Analytics Insights", "PASS", 
+                                f"AI analytics endpoint working: {total_ai_questions} AI questions, Analytics: {str(analytics)[:100]}...")
+                    return True
                 else:
                     self.log_test("AI Analytics Insights", "FAIL", 
-                                f"Unexpected response format: {type(data)}")
+                                f"Analytics request failed: {data.get('message', 'Unknown error')}")
                     return False
             else:
                 self.log_test("AI Analytics Insights", "FAIL", 
