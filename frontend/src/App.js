@@ -3234,6 +3234,40 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
     showProgress: true
   });
   
+  // Token Management state (Part 2.2.3)
+  const [generatedToken, setGeneratedToken] = useState('');
+  const [showTokenDisplay, setShowTokenDisplay] = useState(false);
+  const [tokens, setTokens] = useState([
+    // Sample tokens for demonstration
+    {
+      id: '1',
+      code: 'APT-2024-XYZ789',
+      testName: 'Senior Developer Assessment',
+      configName: 'Full Stack Developer Test',
+      createdDate: '2024-01-15T10:30:00Z',
+      expiryDate: '2024-02-15T10:30:00Z',
+      status: 'Active',
+      totalQuestions: 45,
+      duration: 90,
+      topics: ['Numerical', 'Logical', 'Verbal'],
+      difficulty: { easy: 40, medium: 40, hard: 20 }
+    },
+    {
+      id: '2', 
+      code: 'APT-2024-ABC123',
+      testName: 'Junior Analyst Test',
+      configName: 'Basic Aptitude Assessment',
+      createdDate: '2024-01-10T14:20:00Z',
+      expiryDate: '2024-01-25T14:20:00Z',
+      status: 'Expired',
+      totalQuestions: 30,
+      duration: 60,
+      topics: ['Numerical', 'Logical'],
+      difficulty: { easy: 50, medium: 30, hard: 20 }
+    }
+  ]);
+  const [tokenActionLoading, setTokenActionLoading] = useState('');
+  
   // Enhanced features state
   const [includeCodingChallenge, setIncludeCodingChallenge] = useState(false);
   const [roleArchetype, setRoleArchetype] = useState('General');
