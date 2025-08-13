@@ -6507,7 +6507,7 @@ async def validate_ai_question_quality(question: AptitudeQuestion, target_releva
 async def ai_generate_contextual_question(req: AIQuestionGenerateRequest) -> Optional[AptitudeQuestion]:
     """Generate a single contextual aptitude question using enhanced AI"""
     try:
-        if not GEMINI_API_KEY:
+        if not gemini_api_manager.get_current_key():
             logging.error("GEMINI_API_KEY missing; cannot generate AI question")
             return None
         
@@ -6522,9 +6522,8 @@ async def ai_generate_contextual_question(req: AIQuestionGenerateRequest) -> Opt
             # Fallback to basic prompt for backward compatibility
             prompt = build_ai_question_prompt(req)
         
-        # Generate question using Gemini
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(prompt)
+        # Generate question using Gemini with failover
+        response = generate_content_with_fallback(prompt)
         data = _extract_json(response.text)
         
         # Extract enhanced data
