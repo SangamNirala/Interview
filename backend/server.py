@@ -9762,21 +9762,20 @@ MANDATORY HTML OUTPUT FORMAT:
 
         # Use Gemini API for generating behavioral interview questions
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
+            def api_call():
+                # Use more detailed model configuration for better results
+                model = genai.GenerativeModel(
+                    model_name='gemini-1.5-flash',
+                    generation_config={
+                        'temperature': 0.7,
+                        'top_p': 0.8,
+                        'top_k': 40,
+                        'max_output_tokens': 8192,  # Increased for complete responses
+                    }
+                )
+                return model.generate_content(behavioral_interview_prompt)
             
-            # Use more detailed model configuration for better results
-            model = genai.GenerativeModel(
-                model_name='gemini-1.5-flash',
-                generation_config={
-                    'temperature': 0.7,
-                    'top_p': 0.8,
-                    'top_k': 40,
-                    'max_output_tokens': 8192,  # Increased for complete responses
-                }
-            )
-            response = model.generate_content(behavioral_interview_prompt)
-            
+            response = gemini_api_manager.execute_with_fallback(api_call)
             interview_questions_text = response.text
             
             # Extract HTML content from the response
