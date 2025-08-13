@@ -6250,6 +6250,7 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
   const [candidateInfo, setCandidateInfo] = useState(null);
   const [showCandidateForm, setShowCandidateForm] = useState(false);
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
+  const [showPreTestInstructions, setShowPreTestInstructions] = useState(false);
   
   // Candidate information form state
   const [fullName, setFullName] = useState('');
