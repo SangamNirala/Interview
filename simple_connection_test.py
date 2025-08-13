@@ -7,7 +7,7 @@ import requests
 import json
 
 # Backend URL
-BASE_URL = "https://test-navigation.preview.emergentagent.com/api"
+BASE_URL = "https://test-completion-ui.preview.emergentagent.com/api"
 
 def test_simple_connection():
     """Test basic connection to backend"""

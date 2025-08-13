@@ -12,7 +12,7 @@ import io
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://test-navigation.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://test-completion-ui.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class ResumeUploadTester:

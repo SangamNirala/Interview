@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://test-navigation.preview.emergentagent.com
+URL: https://test-completion-ui.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
