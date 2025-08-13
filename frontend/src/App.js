@@ -6252,6 +6252,8 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const [showPreTestInstructions, setShowPreTestInstructions] = useState(false);
   const [showTestExecution, setShowTestExecution] = useState(false);
+  const [showTestCompletion, setShowTestCompletion] = useState(false);
+  const [showTestResults, setShowTestResults] = useState(false);
   
   // Test execution state (NEW - Task 2.3.4)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
