@@ -8391,12 +8391,7 @@ Before submitting, verify:
 
         # Use Gemini API for analysis
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
-            
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(rejection_reasons_prompt)
-            
+            response = generate_content_with_fallback(rejection_reasons_prompt)
             rejection_reasons_text = response.text
         except Exception as e:
             logging.error(f"Gemini API error: {e}")
