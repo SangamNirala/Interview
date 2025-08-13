@@ -734,6 +734,39 @@ const EnhancedLandingPage = ({ setCurrentPage }) => {
               </button>
             </div>
           </div>
+
+          {/* New Aptitude Test Card */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="text-4xl">🧠</div>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4">{t('landing.aptitudeTest.title')}</h2>
+              <p className="text-gray-300 mb-6">
+                {t('landing.aptitudeTest.description')}
+              </p>
+              <div className="mb-6 space-y-2">
+                <div className="flex items-center justify-center text-sm text-gray-300">
+                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  {t('landing.aptitudeTest.features.multipleTopics')}
+                </div>
+                <div className="flex items-center justify-center text-sm text-gray-300">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                  {t('landing.aptitudeTest.features.timerBased')}
+                </div>
+                <div className="flex items-center justify-center text-sm text-gray-300">
+                  <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                  {t('landing.aptitudeTest.features.detailedAnalysis')}
+                </div>
+              </div>
+              <button 
+                onClick={() => setCurrentPage('aptitude-test')}
+                className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-teal-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                {t('landing.aptitudeTest.button')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
