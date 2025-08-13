@@ -25,7 +25,20 @@ import google.generativeai as genai
 # Configure Gemini API with Failover System
 class GeminiAPIManager:
     def __init__(self):
-        self.api_keys = [
+        # Load environment dotenv first
+        load_dotenv()
+        
+        # Priority: Environment variable first, then fallback to hardcoded keys
+        env_key = os.environ.get('GEMINI_API_KEY')
+        self.api_keys = []
+        
+        # Add environment key as first priority if it exists
+        if env_key:
+            self.api_keys.append(env_key)
+            logging.info("Using GEMINI_API_KEY from environment as primary key")
+        
+        # Add fallback keys
+        fallback_keys = [
             "AIzaSyDhZLH27muUqB58dEisJS8ehudbDIpqZ6U",
             "AIzaSyDSGlUu78VL4npkt84U_Lhb3Q7bsrKnG9E", 
             "AIzaSyD7WEOE8qc4Y5ME13pXW6MSpk2pahW1U2o",
@@ -39,6 +52,8 @@ class GeminiAPIManager:
             "AIzaSyDMG67odfw3XOqXO2fUTQ2fjU444k9tYvg",
             "AIzaSyDPJ0oBXlwMb5TSRKoqSbuM8vTiI72UZZM"
         ]
+        self.api_keys.extend(fallback_keys)
+        
         self.current_key_index = 0
         self.configure_current_key()
     
