@@ -6666,6 +6666,200 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
     );
   }
 
+  // Photo Capture Phase (Task 2.3.2 - IDENTICAL to Candidate Experience)
+  if (showPhotoCapture) {
+    const canCapture = faceDetected === 1 && faceCentered && lightingGood && !cameraError;
+    const showLightingWarning = faceDetected > 0 && !lightingGood;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 w-full max-w-4xl">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="text-4xl">🧠</div>
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-4">Photo Capture</h1>
+            <p className="text-lg text-white/80">
+              Please position yourself in front of the camera for verification before beginning your aptitude assessment
+            </p>
+          </div>
+
+          {/* Camera Section */}
+          <div className="relative mb-8">
+            <div className="relative mx-auto w-full max-w-2xl">
+              {/* Video Stream */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-auto rounded-lg shadow-lg"
+                style={{ maxHeight: '400px', objectFit: 'cover' }}
+              />
+              
+              {/* Face Guide Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className={`border-4 rounded-full w-64 h-80 flex items-center justify-center transition-all duration-300 ${
+                  faceDetected === 1 && faceCentered && lightingGood 
+                    ? 'border-green-400 border-solid shadow-lg shadow-green-400/50' 
+                    : faceDetected === 1 
+                      ? 'border-yellow-400 border-dashed'
+                      : 'border-white/50 border-dashed'
+                }`}>
+                  <div className="text-center">
+                    <div className={`text-2xl mb-2 ${
+                      faceDetected === 1 && faceCentered && lightingGood 
+                        ? 'text-green-400' 
+                        : 'text-white/70'
+                    }`}>
+                      {faceDetected === 1 && faceCentered && lightingGood ? '✓' : '👤'}
+                    </div>
+                    <span className="text-white/70 text-sm">
+                      {faceDetected === 1 && faceCentered && lightingGood 
+                        ? 'Perfect!' 
+                        : 'Align your face here'
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hidden canvas for face detection */}
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+
+            {/* Camera Error */}
+            {cameraError && (
+              <div className="mt-4 text-center">
+                <p className="text-red-400 mb-4">{cameraError}</p>
+                <button
+                  onClick={requestCameraAccess}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  Retry Camera Access
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Status Messages */}
+          <div className="mb-6 space-y-2">
+            {/* Face Detection Status */}
+            {faceDetected === 0 && !cameraError && (
+              <p className="text-yellow-400 text-center">
+                ⚠️ No face detected. Please align your face within the frame.
+              </p>
+            )}
+            {faceDetected > 1 && (
+              <p className="text-red-400 text-center">
+                ❌ Multiple faces detected. Please ensure only you are visible.
+              </p>
+            )}
+            {faceDetected === 1 && (
+              <p className="text-green-400 text-center">
+                ✅ Face detected successfully
+              </p>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center items-center gap-6 mb-8">
+            {/* Lighting Warning */}
+            {showLightingWarning && (
+              <p className="text-red-400 text-sm">
+                💡 Improve the lighting
+              </p>
+            )}
+
+            {/* Capture Face Button */}
+            <button
+              onClick={captureFace}
+              disabled={!canCapture || imageCaptured}
+              className={`px-8 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                canCapture && !imageCaptured
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
+                  : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+              }`}
+            >
+              {imageCaptured ? '✓ Photo Captured' : 'Take Photo'}
+            </button>
+          </div>
+
+          {/* Captured Image Preview */}
+          {imageCaptured && capturedImage && (
+            <div className="mb-8 text-center">
+              <h3 className="text-lg font-semibold text-white mb-4">Captured Photo:</h3>
+              <img
+                src={capturedImage}
+                alt="Captured face"
+                className="mx-auto rounded-lg shadow-lg max-w-xs"
+              />
+              
+              {/* Retake Option */}
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setImageCaptured(false);
+                    setCapturedImage(null);
+                  }}
+                  className="text-teal-400 hover:text-teal-300 underline text-sm mr-4"
+                >
+                  Retake Photo
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => {
+                setShowPhotoCapture(false);
+                setShowCandidateForm(true);
+                // Clean up camera
+                if (cameraStream) {
+                  cameraStream.getTracks().forEach(track => track.stop());
+                }
+              }}
+              className="px-8 py-3 rounded-lg font-medium text-gray-300 hover:text-white border border-gray-500 hover:border-white transition-all duration-300"
+            >
+              Back to Info Form
+            </button>
+
+            {/* Confirm & Continue Button */}
+            <button
+              onClick={confirmAndProceedToTest}
+              disabled={!imageCaptured || loading}
+              className={`px-12 py-4 rounded-lg font-bold text-lg transition-all duration-300 ${
+                imageCaptured && !loading
+                  ? 'bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                  : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+              }`}
+            >
+              {loading ? 'Processing...' : 'Confirm & Continue to Assessment'}
+            </button>
+          </div>
+
+          {/* Instructions */}
+          <div className="mt-8 text-center text-sm text-white/60">
+            <p>📷 Ensure your face is clearly visible and well-lit</p>
+            <p>🎯 Position yourself within the guide frame</p>
+            <p>⚡ Good lighting helps with accurate detection</p>
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="mt-4 bg-red-500/20 border border-red-500/30 rounded-lg p-3">
+              <p className="text-red-200 text-sm text-center">{error}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center px-4">
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 w-full max-w-md">
