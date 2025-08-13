@@ -4652,54 +4652,263 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
             <h2 className="text-2xl font-bold text-white mb-6">🧠 Create Aptitude Test</h2>
             
             <div className="space-y-8">
-              {/* Coming Soon Notice */}
-              <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-6 text-center">
-                <div className="text-4xl mb-4">🚧</div>
-                <h3 className="text-xl font-bold text-white mb-2">Feature Coming Soon</h3>
-                <p className="text-gray-300 mb-4">
-                  The comprehensive aptitude test configuration system is under development and will be available in Phase 2.2.2.
-                </p>
-                <p className="text-yellow-200 text-sm">
-                  <strong>Expected Features:</strong> Topic Selection, Test Configuration, Difficulty Distribution, Token Generation, and Advanced Settings
+              {/* Topic Selection Section */}
+              <div className="bg-white/5 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+                  📊 Topic Selection
+                </h3>
+                
+                <div className="space-y-6">
+                  {/* Numerical Reasoning */}
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={aptitudeTopics.numerical}
+                          onChange={(e) => setAptitudeTopics({
+                            ...aptitudeTopics,
+                            numerical: e.target.checked
+                          })}
+                          className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mr-3"
+                        />
+                        <span className="text-white font-medium text-lg">
+                          🔢 Numerical Reasoning (10-50 questions)
+                        </span>
+                      </label>
+                      <span className="text-gray-300 text-sm">
+                        Mathematical and analytical problem solving
+                      </span>
+                    </div>
+                    
+                    {aptitudeTopics.numerical && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-gray-300 text-sm">Question Count:</label>
+                          <span className="text-white font-semibold">
+                            {aptitudeQuestionCounts.numerical} questions
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="10"
+                          max="50"
+                          value={aptitudeQuestionCounts.numerical}
+                          onChange={(e) => setAptitudeQuestionCounts({
+                            ...aptitudeQuestionCounts,
+                            numerical: parseInt(e.target.value)
+                          })}
+                          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-numerical"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>10</span>
+                          <span>30</span>
+                          <span>50</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Logical Reasoning */}
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={aptitudeTopics.logical}
+                          onChange={(e) => setAptitudeTopics({
+                            ...aptitudeTopics,
+                            logical: e.target.checked
+                          })}
+                          className="w-5 h-5 text-green-600 bg-gray-700 border-gray-600 rounded focus:ring-green-500 focus:ring-2 mr-3"
+                        />
+                        <span className="text-white font-medium text-lg">
+                          🧩 Logical Reasoning (10-50 questions)
+                        </span>
+                      </label>
+                      <span className="text-gray-300 text-sm">
+                        Pattern recognition and logical deduction
+                      </span>
+                    </div>
+                    
+                    {aptitudeTopics.logical && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-gray-300 text-sm">Question Count:</label>
+                          <span className="text-white font-semibold">
+                            {aptitudeQuestionCounts.logical} questions
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="10"
+                          max="50"
+                          value={aptitudeQuestionCounts.logical}
+                          onChange={(e) => setAptitudeQuestionCounts({
+                            ...aptitudeQuestionCounts,
+                            logical: parseInt(e.target.value)
+                          })}
+                          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-logical"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>10</span>
+                          <span>30</span>
+                          <span>50</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Verbal Comprehension */}
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={aptitudeTopics.verbal}
+                          onChange={(e) => setAptitudeTopics({
+                            ...aptitudeTopics,
+                            verbal: e.target.checked
+                          })}
+                          className="w-5 h-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2 mr-3"
+                        />
+                        <span className="text-white font-medium text-lg">
+                          📖 Verbal Comprehension (10-50 questions)
+                        </span>
+                      </label>
+                      <span className="text-gray-300 text-sm">
+                        Reading comprehension and language skills
+                      </span>
+                    </div>
+                    
+                    {aptitudeTopics.verbal && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-gray-300 text-sm">Question Count:</label>
+                          <span className="text-white font-semibold">
+                            {aptitudeQuestionCounts.verbal} questions
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="10"
+                          max="50"
+                          value={aptitudeQuestionCounts.verbal}
+                          onChange={(e) => setAptitudeQuestionCounts({
+                            ...aptitudeQuestionCounts,
+                            verbal: parseInt(e.target.value)
+                          })}
+                          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-verbal"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>10</span>
+                          <span>30</span>
+                          <span>50</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Spatial Reasoning */}
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={aptitudeTopics.spatial}
+                          onChange={(e) => setAptitudeTopics({
+                            ...aptitudeTopics,
+                            spatial: e.target.checked
+                          })}
+                          className="w-5 h-5 text-orange-600 bg-gray-700 border-gray-600 rounded focus:ring-orange-500 focus:ring-2 mr-3"
+                        />
+                        <span className="text-white font-medium text-lg">
+                          🎯 Spatial Reasoning (10-50 questions)
+                        </span>
+                      </label>
+                      <span className="text-gray-300 text-sm">
+                        3D visualization and spatial awareness
+                      </span>
+                    </div>
+                    
+                    {aptitudeTopics.spatial && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-gray-300 text-sm">Question Count:</label>
+                          <span className="text-white font-semibold">
+                            {aptitudeQuestionCounts.spatial} questions
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="10"
+                          max="50"
+                          value={aptitudeQuestionCounts.spatial}
+                          onChange={(e) => setAptitudeQuestionCounts({
+                            ...aptitudeQuestionCounts,
+                            spatial: parseInt(e.target.value)
+                          })}
+                          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-spatial"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>10</span>
+                          <span>30</span>
+                          <span>50</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Summary Section */}
+                <div className="mt-6 bg-gradient-to-r from-teal-900/30 to-cyan-900/30 rounded-lg p-4 border border-teal-400/20">
+                  <h4 className="text-white font-semibold mb-2 flex items-center">
+                    📊 Test Summary
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-300">Selected Topics: </span>
+                      <span className="text-white font-medium">
+                        {Object.values(aptitudeTopics).filter(Boolean).length} of 4
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-300">Total Questions: </span>
+                      <span className="text-white font-medium">
+                        {Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
+                          return total + (selected ? aptitudeQuestionCounts[topic] : 0);
+                        }, 0)} questions
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-300">Estimated Time: </span>
+                      <span className="text-white font-medium">
+                        {Math.ceil(Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
+                          return total + (selected ? aptitudeQuestionCounts[topic] : 0);
+                        }, 0) * 1.5)} minutes
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-300">Active Topics: </span>
+                      <span className="text-white font-medium">
+                        {Object.entries(aptitudeTopics)
+                          .filter(([_, selected]) => selected)
+                          .map(([topic, _]) => topic.charAt(0).toUpperCase() + topic.slice(1))
+                          .join(', ') || 'None selected'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coming Soon: Other Sections */}
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                <p className="text-yellow-200 text-sm text-center">
+                  <strong>Coming Next:</strong> Test Configuration Panel, Difficulty Distribution Controls, and Token Generation (Phase 2.2.2 Parts B, C, D)
                 </p>
               </div>
 
-              {/* Feature Preview */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white/5 rounded-lg p-6">
-                  <div className="text-3xl mb-4">📊</div>
-                  <h3 className="text-lg font-bold text-white mb-2">Topic Selection</h3>
-                  <p className="text-gray-300 text-sm">
-                    Configure Numerical, Logical, Verbal, and Spatial Reasoning questions with customizable question counts (10-50 per topic)
-                  </p>
-                </div>
-
-                <div className="bg-white/5 rounded-lg p-6">
-                  <div className="text-3xl mb-4">⚙️</div>
-                  <h3 className="text-lg font-bold text-white mb-2">Test Configuration</h3>
-                  <p className="text-gray-300 text-sm">
-                    Set test name, job title, role context, and time limits with per-question and total test time controls
-                  </p>
-                </div>
-
-                <div className="bg-white/5 rounded-lg p-6">
-                  <div className="text-3xl mb-4">📈</div>
-                  <h3 className="text-lg font-bold text-white mb-2">Difficulty Distribution</h3>
-                  <p className="text-gray-300 text-sm">
-                    Control difficulty levels with percentage sliders for Easy (40%), Medium (40%), and Hard (20%) questions
-                  </p>
-                </div>
-
-                <div className="bg-white/5 rounded-lg p-6">
-                  <div className="text-3xl mb-4">🎫</div>
-                  <h3 className="text-lg font-bold text-white mb-2">Token Generation</h3>
-                  <p className="text-gray-300 text-sm">
-                    Generate test tokens with copy-to-clipboard functionality and comprehensive token management
-                  </p>
-                </div>
-              </div>
-
-              {/* Navigation buttons */}
+              {/* Action Buttons */}
               <div className="flex gap-4 justify-center">
                 <button
                   onClick={() => setActiveTab('create-interview')}
@@ -4708,10 +4917,25 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                   🚀 Create Interview Instead
                 </button>
                 <button
-                  onClick={() => setActiveTab('resume-analysis')}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300"
+                  onClick={() => {
+                    const selectedCount = Object.values(aptitudeTopics).filter(Boolean).length;
+                    if (selectedCount === 0) {
+                      alert('Please select at least one topic to continue.');
+                      return;
+                    }
+                    // Placeholder for continue to next step
+                    alert(`Configuration saved! ${selectedCount} topics selected with ${Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
+                      return total + (selected ? aptitudeQuestionCounts[topic] : 0);
+                    }, 0)} total questions. \n\nNext: Test Configuration Panel (Coming in Part B)`);
+                  }}
+                  disabled={Object.values(aptitudeTopics).filter(Boolean).length === 0}
+                  className={`font-semibold py-3 px-6 rounded-lg transition-all duration-300 ${
+                    Object.values(aptitudeTopics).filter(Boolean).length === 0
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700'
+                  }`}
                 >
-                  📝 Resume Analysis
+                  ✅ Continue to Configuration
                 </button>
               </div>
             </div>
