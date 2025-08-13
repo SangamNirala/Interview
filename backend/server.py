@@ -15562,7 +15562,6 @@ async def extract_candidate_information(resume_text: str):
     """Extract candidate information from resume text using AI"""
     try:
         # Use Gemini to extract candidate information
-        client = genai.GenerativeModel("gemini-1.5-flash")
         
         prompt = f"""
         Analyze this resume text and extract the following information in JSON format:
@@ -15590,7 +15589,7 @@ async def extract_candidate_information(resume_text: str):
         }}
         """
         
-        response = client.generate_content(prompt)
+        response = generate_content_with_fallback(prompt)
         
         # Parse JSON response
         import json
