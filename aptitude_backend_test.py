@@ -256,6 +256,7 @@ class AptitudeTestTester:
         """Test creating an aptitude test configuration"""
         try:
             config_request = {
+                "created_by": "admin",
                 "test_name": "Software Engineer Aptitude Assessment",
                 "job_title": "Senior Software Engineer",
                 "job_description": "Full-stack development role requiring strong analytical and problem-solving skills",
