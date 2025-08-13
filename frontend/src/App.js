@@ -629,7 +629,7 @@ const EnhancedLandingPage = ({ setCurrentPage }) => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Enhanced Admin Portal Card */}
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105">
             <div className="text-center">
