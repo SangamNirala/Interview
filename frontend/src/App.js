@@ -6199,6 +6199,8 @@ function App() {
         return <AdminDashboard setCurrentPage={setCurrentPage} />;
       case 'placement-preparation':
         return <PlacementPreparationDashboard setCurrentPage={setCurrentPage} />;
+      case 'aptitude-test':
+        return <AptitudeTestPortal setCurrentPage={setCurrentPage} />;
       case 'candidate-login':
         return <CandidateLogin setCurrentPage={setCurrentPage} setToken={setToken} setValidatedJob={setValidatedJob} />;
       case 'interview-start':
