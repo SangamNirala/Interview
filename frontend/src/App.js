@@ -3213,6 +3213,12 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
     spatial: 25
   });
   
+  // Test Configuration Panel state
+  const [testName, setTestName] = useState('');
+  const [testJobTitle, setTestJobTitle] = useState('');
+  const [testJobRoleContext, setTestJobRoleContext] = useState('');
+  const [timePerQuestion, setTimePerQuestion] = useState(2); // minutes (1-3 range)
+  
   // Enhanced features state
   const [includeCodingChallenge, setIncludeCodingChallenge] = useState(false);
   const [roleArchetype, setRoleArchetype] = useState('General');
