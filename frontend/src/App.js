@@ -5098,10 +5098,35 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                       alert('Please select at least one topic to continue.');
                       return;
                     }
-                    // Placeholder for continue to next step
-                    alert(`Configuration saved! ${selectedCount} topics selected with ${Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
+                    
+                    const totalQuestions = Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
                       return total + (selected ? aptitudeQuestionCounts[topic] : 0);
-                    }, 0)} total questions. \n\nNext: Test Configuration Panel (Coming in Part B)`);
+                    }, 0);
+                    
+                    const totalTime = Math.ceil(totalQuestions * timePerQuestion);
+                    
+                    // Validation warnings (not blocking)
+                    const warnings = [];
+                    if (!testName.trim()) warnings.push('Test Name');
+                    if (!testJobTitle.trim()) warnings.push('Job Title');
+                    if (!testJobRoleContext.trim()) warnings.push('Job Role Context');
+                    
+                    let message = `✅ Configuration Summary:\n\n`;
+                    message += `📊 Topics: ${selectedCount} selected (${Object.entries(aptitudeTopics).filter(([_, selected]) => selected).map(([topic, _]) => topic.charAt(0).toUpperCase() + topic.slice(1)).join(', ')})\n`;
+                    message += `❓ Questions: ${totalQuestions} total\n`;
+                    message += `⏱️ Duration: ${totalTime} minutes (${timePerQuestion} min per question)\n`;
+                    message += `📝 Test Name: ${testName || 'Not specified'}\n`;
+                    message += `👔 Job Title: ${testJobTitle || 'Not specified'}\n`;
+                    message += `🎯 AI Context: ${testJobRoleContext ? 'Configured' : 'Not provided'}\n\n`;
+                    
+                    if (warnings.length > 0) {
+                      message += `⚠️ Optional fields not filled: ${warnings.join(', ')}\n`;
+                      message += `(These help generate better questions but are not required)\n\n`;
+                    }
+                    
+                    message += `Next: Difficulty Distribution Controls (Coming in Part C)`;
+                    
+                    alert(message);
                   }}
                   disabled={Object.values(aptitudeTopics).filter(Boolean).length === 0}
                   className={`font-semibold py-3 px-6 rounded-lg transition-all duration-300 ${
@@ -5110,7 +5135,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                       : 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700'
                   }`}
                 >
-                  ✅ Continue to Configuration
+                  ✅ Continue to Difficulty Settings
                 </button>
               </div>
             </div>
