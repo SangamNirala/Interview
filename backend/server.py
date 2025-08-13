@@ -22,10 +22,97 @@ import random
 # Google Generative AI import
 import google.generativeai as genai
 
-# Configure Gemini API
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+# Configure Gemini API with Failover System
+class GeminiAPIManager:
+    def __init__(self):
+        self.api_keys = [
+            "AIzaSyDhZLH27muUqB58dEisJS8ehudbDIpqZ6U",
+            "AIzaSyDSGlUu78VL4npkt84U_Lhb3Q7bsrKnG9E", 
+            "AIzaSyD7WEOE8qc4Y5ME13pXW6MSpk2pahW1U2o",
+            "AIzaSyDw_xGjEFIYkIZ7XR52XFTLk07M7O0Fh7I",
+            "AIzaSyALgNEG4i2FIOpVBpbxku55yYM3rh54mD8",
+            "AIzaSyBgLI-OoSyEX_wH3_qIO87mT_DXw8uT6kA",
+            "AIzaSyB5nFryg0jFOHdTClKKUKAk8s5FGchqwPA",
+            "AIzaSyBseKpa8UQzj7uBd_ILkr2p240mEMz8vl4",
+            "AIzaSyAAwzW_PVlmu1AZtBjg__EVWiTxNSe7ryg",
+            "AIzaSyDzX5bZbMxInQwU0g-5QFAoYNXQrnklJFk",
+            "AIzaSyDMG67odfw3XOqXO2fUTQ2fjU444k9tYvg",
+            "AIzaSyDPJ0oBXlwMb5TSRKoqSbuM8vTiI72UZZM"
+        ]
+        self.current_key_index = 0
+        self.configure_current_key()
+    
+    def configure_current_key(self):
+        """Configure genai with current API key"""
+        if self.current_key_index < len(self.api_keys):
+            current_key = self.api_keys[self.current_key_index]
+            genai.configure(api_key=current_key)
+            logging.info(f"Configured Gemini API with key index {self.current_key_index}")
+            return current_key
+        return None
+    
+    def get_current_key(self):
+        """Get the current API key"""
+        if self.current_key_index < len(self.api_keys):
+            return self.api_keys[self.current_key_index]
+        return None
+    
+    def try_next_key(self):
+        """Switch to next available API key"""
+        self.current_key_index += 1
+        if self.current_key_index < len(self.api_keys):
+            current_key = self.configure_current_key()
+            logging.warning(f"Switched to Gemini API key index {self.current_key_index} due to failure")
+            return current_key
+        else:
+            logging.error("All Gemini API keys exhausted!")
+            return None
+    
+    def reset_to_first_key(self):
+        """Reset to first key (for new requests)"""
+        self.current_key_index = 0
+        return self.configure_current_key()
+    
+    def execute_with_fallback(self, api_call_func, *args, **kwargs):
+        """Execute API call with automatic fallback to next key on failure"""
+        max_attempts = len(self.api_keys)
+        
+        for attempt in range(max_attempts):
+            try:
+                # Try the API call
+                result = api_call_func(*args, **kwargs)
+                
+                # If successful, reset to first key for next time
+                if attempt > 0:  # Only reset if we had failures
+                    self.reset_to_first_key()
+                
+                return result
+                
+            except Exception as e:
+                error_msg = str(e).lower()
+                
+                # Check if it's an API key related error
+                if any(keyword in error_msg for keyword in ['api_key_invalid', 'invalid api key', 'authentication', 'unauthorized', 'quota', 'timeout']):
+                    logging.warning(f"API call failed with key index {self.current_key_index}: {str(e)}")
+                    
+                    # Try next key
+                    next_key = self.try_next_key()
+                    if next_key is None:
+                        raise Exception("All Gemini API keys failed!")
+                    
+                    # Continue loop to try with next key
+                    continue
+                else:
+                    # Not an API key issue, re-raise the error
+                    raise e
+        
+        raise Exception("All Gemini API keys exhausted!")
+
+# Initialize global API manager
+gemini_api_manager = GeminiAPIManager()
+
+# For backward compatibility
+GEMINI_API_KEY = gemini_api_manager.get_current_key()
 
 # Document parsing imports
 import PyPDF2
