@@ -86,7 +86,7 @@ jinja2
 # Step 7.3: Computer Vision Emotion Detection (without dlib dependency)
 #fer>=22.4.0
 #imutils>=0.5.4
-Pillow>=10.0.0
+#Pillow>=10.0.0
 
 # Phase 2: AI-Powered Screening & Shortlisting Dependencies
 #spacy>=3.4.0
