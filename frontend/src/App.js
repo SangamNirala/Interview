@@ -3955,6 +3955,16 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
               📝 Resume Analysis
             </button>
             <button
+              onClick={() => setActiveTab('create-aptitude-test')}
+              className={`flex-1 py-3 px-4 text-sm font-medium rounded-md transition-all duration-300 ${
+                activeTab === 'create-aptitude-test'
+                  ? 'bg-orange-600 text-white shadow-lg'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              🧠 Create Aptitude Test
+            </button>
+            <button
               onClick={() => setActiveTab('analysis-result')}
               className={`flex-1 py-3 px-4 text-sm font-medium rounded-md transition-all duration-300 ${
                 activeTab === 'analysis-result'
