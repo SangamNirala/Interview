@@ -114,6 +114,18 @@ gemini_api_manager = GeminiAPIManager()
 # For backward compatibility
 GEMINI_API_KEY = gemini_api_manager.get_current_key()
 
+def create_gemini_model(model_name='gemini-1.5-flash'):
+    """Create Gemini model with current API key"""
+    return genai.GenerativeModel(model_name)
+
+def generate_content_with_fallback(prompt, model_name='gemini-1.5-flash'):
+    """Generate content with automatic API key fallback"""
+    def api_call():
+        model = create_gemini_model(model_name)
+        return model.generate_content(prompt)
+    
+    return gemini_api_manager.execute_with_fallback(api_call)
+
 # Document parsing imports
 import PyPDF2
 from docx import Document
