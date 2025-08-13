@@ -26,7 +26,7 @@ import tempfile
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://exam-submit-flow.preview.emergentagent.com/api"
+BASE_URL = "https://assessment-platform.preview.emergentagent.com/api"
 
 class VoiceRecordingTester:
     def __init__(self):

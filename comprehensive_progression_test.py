@@ -9,7 +9,7 @@ import json
 import io
 import time
 
-BASE_URL = "https://exam-submit-flow.preview.emergentagent.com/api"
+BASE_URL = "https://assessment-platform.preview.emergentagent.com/api"
 
 class ComprehensiveProgressionTest:
     def __init__(self):

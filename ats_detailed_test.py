@@ -10,7 +10,7 @@ import tempfile
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://exam-submit-flow.preview.emergentagent.com"
+BACKEND_URL = "https://assessment-platform.preview.emergentagent.com"
 ATS_ENDPOINT = f"{BACKEND_URL}/api/placement-preparation/ats-score-calculate"
 
 def create_comprehensive_resume():

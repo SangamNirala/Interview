@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://exam-submit-flow.preview.emergentagent.com
+URL: https://assessment-platform.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
