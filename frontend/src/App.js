@@ -7502,7 +7502,7 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
               </div>
               <div className="text-green-200 text-sm font-medium">Questions Answered</div>
               <div className="text-green-300 text-xs mt-1">
-                {Math.round((answeredCount / testQuestions.length) * 100)}% Complete
+                {testQuestions.length > 0 ? Math.round((answeredCount / testQuestions.length) * 100) : 0}% Complete
               </div>
             </div>
 
@@ -7633,6 +7633,28 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
           <div className="mt-6 text-center text-sm text-white/60">
             <p>💡 Once submitted, you cannot make any changes to your answers</p>
             <p>🔒 Your responses will be securely processed and results generated</p>
+          </div>
+
+          {/* Development Test Button - Remove in production */}
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => {
+                // Simulate test data for development
+                setTestQuestions([
+                  { topic: 'Numerical', difficulty: 'Easy' },
+                  { topic: 'Logical', difficulty: 'Medium' },
+                  { topic: 'Verbal', difficulty: 'Hard' },
+                  { topic: 'Spatial', difficulty: 'Easy' },
+                  { topic: 'Numerical', difficulty: 'Medium' }
+                ]);
+                setSelectedAnswers({ 0: 1, 2: 3, 4: 0 }); // Answer questions 1, 3, 5
+                setMarkedForReview(new Set([1, 3])); // Mark questions 2, 4 for review
+                setTimeRemaining(300); // 5 minutes remaining
+              }}
+              className="px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 rounded text-sm hover:bg-blue-500/30"
+            >
+              [DEV] Load Test Data
+            </button>
           </div>
         </div>
       </div>
