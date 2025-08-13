@@ -70,15 +70,29 @@ class AptitudeTestTester:
     def test_aptitude_question_seeding(self):
         """Test the aptitude questions seeding system"""
         try:
-            response = self.session.post(f"{BASE_URL}/admin/aptitude-questions/seed", json={})
+            # First check if questions already exist
+            stats_response = self.session.get(f"{BASE_URL}/admin/aptitude-questions/stats")
+            existing_questions = 0
+            if stats_response.status_code == 200:
+                stats_data = stats_response.json()
+                existing_questions = stats_data.get("total_questions", 0)
+            
+            # Force seeding with a smaller target for testing
+            seed_request = {
+                "force": True,
+                "target_total": 100  # Smaller number for testing
+            }
+            
+            response = self.session.post(f"{BASE_URL}/admin/aptitude-questions/seed", json=seed_request)
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get("success"):
-                    total_seeded = data.get("total_questions_seeded", 0)
-                    topics_seeded = data.get("topics_seeded", {})
+                    generated = data.get("generated", 0)
+                    inserted = data.get("inserted", 0)
+                    total_in_db = data.get("total_in_db", 0)
                     self.log_test("Aptitude Question Seeding", "PASS", 
-                                f"Successfully seeded {total_seeded} questions across topics: {topics_seeded}")
+                                f"Successfully seeded: Generated={generated}, Inserted={inserted}, Total in DB={total_in_db}")
                     return True
                 else:
                     self.log_test("Aptitude Question Seeding", "FAIL", 
