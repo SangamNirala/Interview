@@ -6727,7 +6727,7 @@ async def admin_ai_generate_questions(request: AIQuestionGenerateRequest):
             raise HTTPException(status_code=400, detail="Invalid question type")
         if request.count < 1 or request.count > 100:
             raise HTTPException(status_code=400, detail="Count must be between 1 and 100")
-        if not GEMINI_API_KEY:
+        if not gemini_api_manager.get_current_key():
             raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
 
         curated_n = int(request.count * max(0.0, min(1.0, request.curated_ratio)))
