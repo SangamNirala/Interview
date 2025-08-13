@@ -6249,12 +6249,27 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
   const [loading, setLoading] = useState(false);
   const [candidateInfo, setCandidateInfo] = useState(null);
   const [showCandidateForm, setShowCandidateForm] = useState(false);
+  const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   
   // Candidate information form state
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  
+  // Photo capture state (identical to Candidate Experience)
+  const [cameraStream, setCameraStream] = useState(null);
+  const [cameraError, setCameraError] = useState('');
+  const [faceDetected, setFaceDetected] = useState(0); // 0: none, 1: one face, 2+: multiple
+  const [faceCentered, setFaceCentered] = useState(false);
+  const [lightingGood, setLightingGood] = useState(false);
+  const [imageCaptured, setImageCaptured] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
+  
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const faceDetectionRef = useRef(null);
+  const animationFrameRef = useRef(null);
   
   const handleTokenValidation = async (e) => {
     e.preventDefault();
