@@ -141,6 +141,61 @@
   border-radius: 4px;
 }
 
+/* Difficulty Distribution Sliders */
+.slider-easy::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+.slider-easy::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1f2937, #10b981);
+  border-radius: 4px;
+}
+
+.slider-medium::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+.slider-medium::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1f2937, #f59e0b);
+  border-radius: 4px;
+}
+
+.slider-hard::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
+.slider-hard::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: linear-gradient(90deg, #1f2937, #ef4444);
+  border-radius: 4px;
+}
+
 .hover-scale {
   transition: transform 0.3s ease;
 }
