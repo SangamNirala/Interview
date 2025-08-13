@@ -6753,6 +6753,12 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
       clearInterval(timerRef.current);
     }
     
+    // Calculate time taken
+    if (testStartTime) {
+      const timeElapsed = 5400 - timeRemaining; // Total time minus remaining time
+      setTimeTaken(timeElapsed);
+    }
+    
     const answeredCount = Object.keys(selectedAnswers).length;
     const unansweredCount = testQuestions.length - answeredCount;
     
@@ -6760,14 +6766,16 @@ const AptitudeTestPortal = ({ setCurrentPage }) => {
       const confirmed = window.confirm(
         `You have ${unansweredCount} unanswered questions. Are you sure you want to submit?`
       );
-      if (!confirmed) return;
+      if (!confirmed) {
+        // Restart timer if user cancels
+        startTestTimer();
+        return;
+      }
     }
     
-    alert('✅ Test submitted successfully! Results will be processed.');
-    
-    // Navigate to results or back to landing
+    // Navigate to completion phase
     setShowTestExecution(false);
-    setCurrentPage('landing');
+    setShowTestCompletion(true);
   };
 
   // Cleanup timer effect
