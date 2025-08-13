@@ -3493,6 +3493,111 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
     }
   };
 
+  // Aptitude Test Token Management Functions
+  const generateAptitudeToken = () => {
+    // Generate a unique token
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substr(2, 6).toUpperCase();
+    const newToken = `APT-${new Date().getFullYear()}-${randomStr}${timestamp.toString().slice(-3)}`;
+    
+    // Calculate configuration details
+    const selectedCount = Object.values(aptitudeTopics).filter(Boolean).length;
+    const totalQuestions = Object.entries(aptitudeTopics).reduce((total, [topic, selected]) => {
+      return total + (selected ? aptitudeQuestionCounts[topic] : 0);
+    }, 0);
+    const totalTime = Math.ceil(totalQuestions * timePerQuestion);
+    const activeTopics = Object.entries(aptitudeTopics)
+      .filter(([_, selected]) => selected)
+      .map(([topic, _]) => topic.charAt(0).toUpperCase() + topic.slice(1));
+
+    // Create new token object
+    const newTokenObject = {
+      id: Date.now().toString(),
+      code: newToken,
+      testName: testName || 'Untitled Aptitude Test',
+      configName: testJobTitle || 'General Assessment', 
+      createdDate: new Date().toISOString(),
+      expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      status: 'Active',
+      totalQuestions: totalQuestions,
+      duration: totalTime,
+      topics: activeTopics,
+      difficulty: {...difficultyDistribution},
+      advancedSettings: {...advancedSettings}
+    };
+
+    // Add to tokens list and show token display
+    setAptitudeTokens(prev => [newTokenObject, ...prev]);
+    setAptitudeToken(newToken);
+    setShowAptitudeTokenDisplay(true);
+  };
+
+  const copyTokenToClipboard = async (tokenCode) => {
+    try {
+      await navigator.clipboard.writeText(tokenCode);
+      alert(`✅ Token copied to clipboard: ${tokenCode}`);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = tokenCode;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert(`✅ Token copied to clipboard: ${tokenCode}`);
+    }
+  };
+
+  const deleteToken = (tokenId) => {
+    if (window.confirm('Are you sure you want to delete this token? This action cannot be undone.')) {
+      setAptitudeTokens(prev => prev.filter(token => token.id !== tokenId));
+      alert('✅ Token deleted successfully');
+    }
+  };
+
+  const extendToken = (tokenId) => {
+    const extensionDays = prompt('Enter number of days to extend the token (1-365):', '30');
+    if (extensionDays && !isNaN(extensionDays) && extensionDays > 0 && extensionDays <= 365) {
+      setAptitudeTokens(prev => prev.map(token => {
+        if (token.id === tokenId) {
+          const currentExpiry = new Date(token.expiryDate);
+          const newExpiry = new Date(currentExpiry.getTime() + parseInt(extensionDays) * 24 * 60 * 60 * 1000);
+          return {
+            ...token,
+            expiryDate: newExpiry.toISOString(),
+            status: new Date() > newExpiry ? 'Expired' : 'Active'
+          };
+        }
+        return token;
+      }));
+      alert(`✅ Token extended by ${extensionDays} days`);
+    } else {
+      alert('❌ Please enter a valid number of days (1-365)');
+    }
+  };
+
+  const getTokenStatus = (token) => {
+    const now = new Date();
+    const expiry = new Date(token.expiryDate);
+    
+    if (now > expiry) return 'Expired';
+    return token.status;
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Active': return 'text-green-400 bg-green-900/30';
+      case 'Expired': return 'text-red-400 bg-red-900/30';
+      case 'Used': return 'text-gray-400 bg-gray-900/30';
+      default: return 'text-gray-400 bg-gray-900/30';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  };
+
   // Resume Analysis functions
   const handleAnalysisFileUpload = async (e) => {
     const file = e.target.files[0];
