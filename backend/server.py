@@ -6648,12 +6648,12 @@ async def ai_generate_single_question(req: AIQuestionGenerateRequest) -> Optiona
 async def ai_generate_legacy_question(req: AIQuestionGenerateRequest) -> Optional[AptitudeQuestion]:
     """Legacy question generation for backward compatibility"""
     try:
-        if not GEMINI_API_KEY:
+        if not gemini_api_manager.get_current_key():
             logging.error("GEMINI_API_KEY missing; cannot generate AI question")
             return None
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        
         prompt = build_ai_question_prompt(req)
-        resp = model.generate_content(prompt)
+        resp = generate_content_with_fallback(prompt)
         data = _extract_json(resp.text)
         # Normalize
         qtype = data.get("question_type", req.question_type)
