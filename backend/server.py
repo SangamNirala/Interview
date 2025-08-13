@@ -6956,7 +6956,7 @@ async def admin_ai_refine_question(req: AIQuestionRefineRequest):
         doc = await db.aptitude_questions.find_one({"id": req.question_id})
         if not doc:
             raise HTTPException(status_code=404, detail="Question not found")
-        if not GEMINI_API_KEY:
+        if not gemini_api_manager.get_current_key():
             raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
         
         # Build refinement prompt with job context if available
