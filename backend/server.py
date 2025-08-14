@@ -5245,19 +5245,25 @@ class SubmitAnswerRequest(BaseModel):
 
 @api_router.post("/aptitude-test/answer/{session_id}")
 async def submit_answer(session_id: str, req: SubmitAnswerRequest, request: Request):
+    """
+    Enhanced answer submission with fraud detection and multi-dimensional IRT updates
+    """
     try:
         ip = request.client.host if request.client else ""
         check_rate_limit("submit_answer", ip, limit=120, window_sec=60)
+        
         sess = await db.aptitude_sessions.find_one({"session_id": session_id})
         if not sess:
             raise HTTPException(status_code=404, detail="Session not found")
+            
         qdoc = await db.aptitude_questions.find_one({"id": req.question_id})
         if not qdoc:
             raise HTTPException(status_code=404, detail="Question not found")
+        
         # Evaluate correctness
         is_correct = False
-        # Sanitize answer to string for consistency (store raw too)
         raw_answer = req.answer
+        
         if qdoc.get("question_type") in ["multiple_choice", "true_false"]:
             is_correct = str(raw_answer).strip() == str(qdoc.get("correct_answer")).strip()
         elif qdoc.get("question_type") == "numerical_input":
@@ -5265,50 +5271,187 @@ async def submit_answer(session_id: str, req: SubmitAnswerRequest, request: Requ
                 is_correct = float(raw_answer) == float(qdoc.get("correct_answer"))
             except Exception:
                 is_correct = False
-        # Anti-cheat: suspiciously fast answers (<1s) flagged
-        if float(req.time_taken or 0) < 1.0:
-            await mark_anti_cheat_flag(session_id, "too_fast", {"question_id": qdoc["id"], "time": req.time_taken})
-        # Update session answers and progress index
+        
+        # Enhanced fraud detection
+        response_time = float(req.time_taken or 0.0)
+        fraud_flags = []
+        
+        # Basic timing fraud checks
+        if response_time < 1.0:
+            fraud_flags.append("too_fast")
+        elif response_time > 600:  # 10 minutes
+            fraud_flags.append("too_slow")
+        elif response_time < 0.5:
+            fraud_flags.append("rapid_clicking")
+        
+        # Get current response patterns for analysis
         answers = sess.get("answers", {})
-        answers[qdoc["id"]] = {"answer": req.answer, "correct": is_correct}
         time_map = sess.get("time_per_question", {})
-        time_map[qdoc["id"]] = float(req.time_taken or 0.0)
-        # CAT update ability and reliability
+        
+        # Update session data
+        answers[qdoc["id"]] = {
+            "answer": req.answer, 
+            "correct": is_correct,
+            "time_taken": response_time,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        time_map[qdoc["id"]] = response_time
+        
+        # Enhanced CAT ability update
         theta = float(sess.get("adaptive_score", 0.0))
         se = float(sess.get("cat_se", 1.0))
-        b = _difficulty_to_value(qdoc.get("difficulty", "medium"))
-        theta_new, info = cat_update_ability(theta, b, is_correct)
-        # Update SE (approximate): SE ~ 1/sqrt(sum info)
-        info_sum = float(sess.get("cat_info_sum", 0.0)) + float(info)
-        se_new = 1.0 / max(1e-6, info_sum) ** 0.5
+        info_sum = float(sess.get("cat_info_sum", 0.0))
+        
+        # Prepare IRT parameters
+        item_params = {
+            'discrimination': qdoc.get('discrimination', 1.0),
+            'difficulty': qdoc.get('difficulty_value', _difficulty_to_value(qdoc.get('difficulty', 'medium'))),
+            'guessing': qdoc.get('guessing', 0.25 if qdoc.get('question_type') == 'multiple_choice' else 0.0)
+        }
+        
+        # Update ability estimate using enhanced IRT
+        theta_new, se_new, info_new = enhanced_cat_engine.update_ability_estimate(
+            current_theta=theta,
+            current_se=se,
+            item_params=item_params,
+            response=is_correct,
+            info_sum=info_sum
+        )
+        
+        # Calculate confidence intervals
+        ci_lower, ci_upper = enhanced_cat_engine.calculate_confidence_interval(theta_new, se_new)
+        
+        # Multi-dimensional ability tracking
+        topic = qdoc.get("topic", "")
+        theta_estimates = sess.get("theta_estimates", {})
+        se_estimates = sess.get("se_estimates", {})
+        confidence_intervals = sess.get("confidence_intervals", {})
+        
+        # Update topic-specific estimates
+        if topic:
+            topic_theta = theta_estimates.get(topic, 0.0)
+            topic_se = se_estimates.get(topic, 1.0)
+            
+            # Simple topic-specific update
+            topic_theta_new = topic_theta + 0.5 * (1.0 if is_correct else -1.0) * (1.0 / max(1, len([a for a in answers.values() if 'topic' in str(a)])))
+            topic_se_new = max(0.3, topic_se * 0.95)  # Gradually reduce SE
+            
+            theta_estimates[topic] = topic_theta_new
+            se_estimates[topic] = topic_se_new
+            confidence_intervals[topic] = {
+                "lower": topic_theta_new - 1.96 * topic_se_new,
+                "upper": topic_theta_new + 1.96 * topic_se_new
+            }
+        
+        # Comprehensive fraud detection analysis
+        if len(answers) >= 3:  # Need some history for pattern analysis
+            response_times = list(time_map.values())
+            responses = [a.get("correct", False) for a in answers.values()]
+            difficulties = []
+            
+            # Get difficulties for fraud analysis
+            for qid in answers.keys():
+                q = await db.aptitude_questions.find_one({"id": qid}, {"difficulty": 1})
+                if q:
+                    difficulties.append(q.get("difficulty", "medium"))
+            
+            fraud_analysis = enhanced_cat_engine.detect_fraud_patterns(
+                session_data=sess,
+                response_times=response_times,
+                responses=responses,
+                question_difficulties=difficulties
+            )
+            
+            fraud_flags.extend(fraud_analysis.get("flags", []))
+            fraud_score = fraud_analysis.get("fraud_score", 0.0)
+        else:
+            fraud_score = 0.0
+        
+        # Update ability history
+        ability_history = sess.get("ability_history", [])
+        ability_history.append({
+            "question_id": qdoc["id"],
+            "theta": theta_new,
+            "se": se_new,
+            "correct": is_correct,
+            "timestamp": datetime.utcnow().isoformat(),
+            "confidence_interval": {"lower": ci_lower, "upper": ci_upper}
+        })
+        
+        # Keep only last 50 history entries for performance
+        if len(ability_history) > 50:
+            ability_history = ability_history[-50:]
+        
+        # Check test completion
         new_idx = sess.get("current_question_index", 0) + 1
         status = sess.get("status", "in_progress")
-        # Early stopping if reliability achieved
+        
         cfg = await db.aptitude_configs.find_one({"id": sess["config_id"]})
-        if cat_should_end(cfg, {**sess, "questions_sequence": (sess.get("questions_sequence") or []), "cat_se": se_new, "start_time": sess.get("start_time") }):
-            status = "completed"
+        if cfg:
+            # Calculate current topic counts
+            current_topic_counts = {}
+            for qid in answers.keys():
+                q_doc = await db.aptitude_questions.find_one({"id": qid}, {"topic": 1})
+                if q_doc:
+                    topic = q_doc.get("topic", "")
+                    current_topic_counts[topic] = current_topic_counts.get(topic, 0) + 1
+            
+            should_end, reason = enhanced_cat_engine.should_terminate_test(
+                current_se=se_new,
+                questions_asked=len(answers),
+                time_elapsed=(datetime.utcnow() - sess.get("start_time", datetime.utcnow())).total_seconds() if sess.get("start_time") else 0,
+                topic_requirements=cfg.get("questions_per_topic", {}),
+                current_topic_counts=current_topic_counts
+            )
+            
+            if should_end:
+                status = "completed"
+        
+        # Update session with all enhanced data
+        update_data = {
+            "answers": answers,
+            "time_per_question": time_map,
+            "current_question_index": new_idx,
+            "status": status,
+            "adaptive_score": theta_new,
+            "cat_se": se_new,
+            "cat_info_sum": info_new,
+            "theta_estimates": theta_estimates,
+            "se_estimates": se_estimates,
+            "confidence_intervals": confidence_intervals,
+            "ability_history": ability_history,
+            "fraud_score": fraud_score,
+            "fraud_flags": list(set(sess.get("fraud_flags", []) + fraud_flags)),
+            "behavioral_flags": sess.get("behavioral_flags", [])
+        }
+        
         if status == "completed":
-            end_time = datetime.utcnow()
-        else:
-            end_time = sess.get("end_time")
+            update_data["end_time"] = datetime.utcnow()
+        
         await db.aptitude_sessions.update_one(
             {"session_id": session_id},
-            {"$set": {
-                "answers": answers,
-                "time_per_question": time_map,
-                "current_question_index": new_idx,
-                "status": status,
-                "end_time": end_time,
-                "adaptive_score": theta_new,
-                "cat_se": se_new,
-                "cat_info_sum": info_sum
-            }}
+            {"$set": update_data}
         )
-        return {"success": True, "correct": is_correct, "next_index": new_idx, "status": status, "cat_theta": theta_new, "cat_se": se_new}
+        
+        # Return enhanced response
+        return {
+            "success": True,
+            "correct": is_correct,
+            "next_index": new_idx,
+            "status": status,
+            "cat_theta": theta_new,
+            "cat_se": se_new,
+            "confidence_interval": {"lower": ci_lower, "upper": ci_upper},
+            "measurement_precision": 1.0 / se_new if se_new > 0 else 0.0,
+            "fraud_score": fraud_score,
+            "fraud_flags": fraud_flags,
+            "topic_performance": theta_estimates
+        }
+        
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Submit answer error: {e}")
+        logging.error(f"Enhanced submit answer error: {e}")
         raise HTTPException(status_code=500, detail="Failed to submit answer")
 
 # ===== ANALYTICS & SCORING ENGINE (PHASE 1 - PART 1) =====
