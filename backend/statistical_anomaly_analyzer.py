@@ -1085,9 +1085,72 @@ class StatisticalAnomalyAnalyzer:
         return {'trend': 'normal', 'anomaly_detected': False}
     
     # Additional placeholder methods for timing, collaboration analysis, etc.
-    def _extract_timing_data(self, session_data):
-        """Extract timing data from session"""
-        return {'timestamps': [], 'session_start': None, 'session_end': None, 'total_duration_minutes': 0}
+    def _extract_timing_data(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract comprehensive timing data from session"""
+        try:
+            responses = session_data.get('responses', [])
+            session_metadata = session_data.get('session_metadata', {})
+            
+            timestamps = []
+            response_times = []
+            activity_gaps = []
+            
+            # Extract timestamps and response times
+            for response in responses:
+                if 'timestamp' in response:
+                    try:
+                        timestamp = datetime.fromisoformat(response['timestamp'].replace('Z', '+00:00'))
+                        timestamps.append(timestamp)
+                    except:
+                        continue
+                
+                if 'response_time' in response:
+                    response_times.append(float(response['response_time']))
+            
+            # Calculate activity gaps between questions
+            if len(timestamps) > 1:
+                for i in range(1, len(timestamps)):
+                    gap = (timestamps[i] - timestamps[i-1]).total_seconds()
+                    activity_gaps.append(gap)
+            
+            # Extract session start/end times
+            session_start = None
+            session_end = None
+            
+            if session_metadata.get('start_time'):
+                try:
+                    session_start = datetime.fromisoformat(session_metadata['start_time'].replace('Z', '+00:00'))
+                except:
+                    pass
+                    
+            if session_metadata.get('end_time'):
+                try:
+                    session_end = datetime.fromisoformat(session_metadata['end_time'].replace('Z', '+00:00'))
+                except:
+                    pass
+            
+            # Calculate total duration
+            total_duration_minutes = 0
+            if session_start and session_end:
+                total_duration_minutes = (session_end - session_start).total_seconds() / 60
+            elif timestamps:
+                total_duration_minutes = (timestamps[-1] - timestamps[0]).total_seconds() / 60
+            
+            return {
+                'timestamps': timestamps,
+                'response_times': response_times,
+                'activity_gaps': activity_gaps,
+                'session_start': session_start.isoformat() if session_start else None,
+                'session_end': session_end.isoformat() if session_end else None,
+                'total_duration_minutes': float(total_duration_minutes),
+                'timezone_info': session_metadata.get('timezone'),
+                'location_info': session_metadata.get('location', {}),
+                'ip_address': session_metadata.get('ip_address')
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error extracting timing data: {str(e)}")
+            return {'timestamps': [], 'response_times': [], 'activity_gaps': []}
     
     def _analyze_timezone_consistency(self, timing_data, session_data):
         """Analyze timezone consistency"""
