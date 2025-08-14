@@ -248,86 +248,128 @@ class DeviceFingerprintingEngine:
     
     def detect_virtual_machines(self, device_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Comprehensive virtual machine detection through hardware indicators,
-        hypervisor presence analysis, and performance characteristics
+        ENHANCED: Comprehensive virtual machine detection through multiple analysis vectors:
+        - Hardware fingerprinting and anomaly detection
+        - Hypervisor presence analysis across all major platforms
+        - Performance characteristic profiling and anomaly detection
+        - OS-specific registry/system file analysis (Windows/Linux/Mac)
+        - VM software signature detection with comprehensive pattern matching
         
         Args:
-            device_data: Device characteristics data
+            device_data: Comprehensive device characteristics data including:
+                - hardware: CPU, GPU, memory, storage characteristics
+                - os: Operating system information, platform details
+                - browser: User agent, plugins, capabilities
+                - performance: Timing data, memory usage, hardware concurrency
+                - network: Connection characteristics (optional)
+                - screen: Display properties and capabilities
             
         Returns:
-            Dict containing VM detection analysis
+            Dict containing comprehensive VM detection analysis with probability scoring
         """
         try:
-            self.logger.info("Performing comprehensive VM detection analysis")
+            self.logger.info("🔍 Performing ENHANCED comprehensive VM detection analysis")
             
-            # Ensure device_data is a dictionary and extract components safely
-            if not isinstance(device_data, dict):
-                self.logger.warning(f"Device data is not a dictionary: {type(device_data)}")
-                device_data = {}
+            # Validate and normalize input data
+            device_data = self._validate_and_normalize_device_data(device_data)
             
+            # Extract data components with enhanced validation
             hardware_data = device_data.get('hardware', {})
             os_data = device_data.get('os', {})
             browser_data = device_data.get('browser', {})
             performance_data = device_data.get('performance', {})
-            
-            # Ensure all components are dictionaries
-            if not isinstance(hardware_data, dict):
-                self.logger.warning(f"Hardware data is not a dictionary: {type(hardware_data)}")
-                hardware_data = {}
-            if not isinstance(os_data, dict):
-                self.logger.warning(f"OS data is not a dictionary: {type(os_data)}")
-                os_data = {}
-            if not isinstance(browser_data, dict):
-                self.logger.warning(f"Browser data is not a dictionary: {type(browser_data)}")
-                browser_data = {}
-            if not isinstance(performance_data, dict):
-                self.logger.warning(f"Performance data is not a dictionary: {type(performance_data)}")
-                performance_data = {}
+            network_data = device_data.get('network', {})
+            screen_data = device_data.get('screen', {})
             
             vm_detection_results = {}
+            detection_metadata = {
+                'analysis_methods_used': [],
+                'detection_depth': 'comprehensive',
+                'platform_specific_checks': []
+            }
             
-            # 1. Hardware-based VM Detection
-            hardware_vm_indicators = self._detect_hardware_vm_indicators(hardware_data)
+            # 1. ENHANCED Hardware-based VM Detection
+            self.logger.info("🔧 Analyzing hardware-based VM indicators")
+            hardware_vm_indicators = self._detect_enhanced_hardware_vm_indicators(hardware_data, performance_data)
             vm_detection_results['hardware_indicators'] = hardware_vm_indicators
+            detection_metadata['analysis_methods_used'].append('hardware_fingerprinting')
             
-            # 2. Hypervisor Presence Analysis
-            hypervisor_analysis = self._analyze_hypervisor_presence(os_data, browser_data)
+            # 2. ENHANCED Hypervisor Presence Analysis
+            self.logger.info("🖥️ Performing hypervisor presence analysis")
+            hypervisor_analysis = self._analyze_enhanced_hypervisor_presence(os_data, browser_data, hardware_data)
             vm_detection_results['hypervisor_analysis'] = hypervisor_analysis
+            detection_metadata['analysis_methods_used'].append('hypervisor_detection')
             
-            # 3. Performance Characteristic Anomalies
-            performance_anomalies = self._analyze_vm_performance_anomalies(performance_data)
+            # 3. ENHANCED Performance Characteristic Anomalies
+            self.logger.info("⚡ Analyzing performance characteristic anomalies")
+            performance_anomalies = self._analyze_enhanced_vm_performance_anomalies(performance_data, hardware_data)
             vm_detection_results['performance_anomalies'] = performance_anomalies
+            detection_metadata['analysis_methods_used'].append('performance_profiling')
             
-            # 4. Registry/System File Analysis (via browser fingerprinting)
-            system_analysis = self._analyze_vm_system_indicators(browser_data, os_data)
+            # 4. ENHANCED OS-Specific Registry/System File Analysis
+            self.logger.info("📁 Performing OS-specific system analysis")
+            system_analysis = self._analyze_enhanced_vm_system_indicators(browser_data, os_data, hardware_data)
             vm_detection_results['system_analysis'] = system_analysis
+            detection_metadata['analysis_methods_used'].append('system_file_analysis')
             
-            # 5. VM Software Signature Detection
-            software_signatures = self._detect_vm_software_signatures(hardware_data, os_data)
+            # 5. ENHANCED VM Software Signature Detection
+            self.logger.info("🔍 Detecting VM software signatures")
+            software_signatures = self._detect_enhanced_vm_software_signatures(hardware_data, os_data, browser_data)
             vm_detection_results['software_signatures'] = software_signatures
+            detection_metadata['analysis_methods_used'].append('signature_detection')
             
-            # 6. Calculate Overall VM Probability
-            vm_probability = self._calculate_vm_probability(vm_detection_results)
+            # 6. Network-based VM Detection (New)
+            self.logger.info("🌐 Analyzing network-based VM indicators")
+            network_analysis = self._analyze_vm_network_indicators(network_data, browser_data)
+            vm_detection_results['network_analysis'] = network_analysis
+            detection_metadata['analysis_methods_used'].append('network_analysis')
             
-            # 7. VM Classification
-            vm_classification = self._classify_vm_type(vm_detection_results)
+            # 7. Screen/Display VM Detection (New)
+            self.logger.info("📺 Analyzing display characteristics for VM indicators")
+            display_analysis = self._analyze_vm_display_indicators(screen_data, hardware_data)
+            vm_detection_results['display_analysis'] = display_analysis
+            detection_metadata['analysis_methods_used'].append('display_analysis')
+            
+            # 8. Cross-Platform Consistency Analysis (New)
+            self.logger.info("🔗 Performing cross-platform consistency analysis")
+            consistency_analysis = self._analyze_vm_consistency_indicators(vm_detection_results)
+            vm_detection_results['consistency_analysis'] = consistency_analysis
+            detection_metadata['analysis_methods_used'].append('consistency_analysis')
+            
+            # 9. Calculate Enhanced VM Probability with Weighted Scoring
+            vm_probability = self._calculate_enhanced_vm_probability(vm_detection_results)
+            
+            # 10. Enhanced VM Classification with Platform-Specific Detection
+            vm_classification = self._classify_enhanced_vm_type(vm_detection_results, os_data)
+            
+            # 11. Risk Assessment and Confidence Scoring
+            confidence_metrics = self._calculate_enhanced_vm_detection_confidence(vm_detection_results)
+            risk_assessment = self._assess_vm_detection_risk(vm_detection_results, vm_probability)
             
             return {
                 'success': True,
                 'vm_detection_results': vm_detection_results,
                 'vm_probability': vm_probability,
                 'vm_classification': vm_classification,
-                'is_virtual_machine': vm_probability > 0.7,
-                'confidence_level': self._calculate_vm_detection_confidence(vm_detection_results),
-                'analysis_timestamp': datetime.utcnow().isoformat()
+                'is_virtual_machine': vm_probability > 0.65,  # Enhanced threshold
+                'confidence_metrics': confidence_metrics,
+                'risk_assessment': risk_assessment,
+                'detection_metadata': detection_metadata,
+                'platform_detection': self._detect_platform_specific_vm_indicators(os_data, vm_detection_results),
+                'recommendation': self._generate_vm_detection_recommendation(vm_probability, risk_assessment),
+                'analysis_timestamp': datetime.utcnow().isoformat(),
+                'analysis_version': '2.0_enhanced'
             }
             
         except Exception as e:
-            self.logger.error(f"Error in VM detection: {str(e)}")
+            self.logger.error(f"❌ Error in enhanced VM detection: {str(e)}")
             return {
                 'success': False,
                 'error': str(e),
-                'analysis_timestamp': datetime.utcnow().isoformat()
+                'error_type': 'vm_detection_failure',
+                'fallback_analysis': self._perform_basic_vm_detection_fallback(device_data),
+                'analysis_timestamp': datetime.utcnow().isoformat(),
+                'analysis_version': '2.0_enhanced'
             }
     
     def analyze_hardware_characteristics(self, hardware_data: Dict[str, Any]) -> Dict[str, Any]:
