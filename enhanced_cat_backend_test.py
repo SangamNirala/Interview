@@ -104,12 +104,17 @@ class EnhancedCATTester:
                     self.log_result("Question Seeding (Skip)", True, f"Already have {current_total} questions")
                     return True
             
-            # Seed questions
-            seed_response = self.session.post(f"{self.base_url}/admin/aptitude-questions/seed")
+            # Seed questions with proper request body
+            seed_request = {
+                "force": False,
+                "target_total": 200  # Smaller number for testing
+            }
+            seed_response = self.session.post(f"{self.base_url}/admin/aptitude-questions/seed", json=seed_request)
             
             if seed_response.status_code == 200:
                 seed_data = seed_response.json()
-                questions_created = seed_data.get("questions_created", 0)
+                generated = seed_data.get("generated", 0)
+                inserted = seed_data.get("inserted", 0)
                 
                 # Verify seeding worked
                 stats_response = self.session.get(f"{self.base_url}/admin/aptitude-questions/stats")
@@ -117,9 +122,9 @@ class EnhancedCATTester:
                     final_stats = stats_response.json()
                     total_questions = final_stats.get("total_questions", 0)
                     
-                    success = total_questions >= questions_created
+                    success = total_questions >= inserted
                     self.log_result("Question Seeding", success, 
-                                  f"Created: {questions_created}, Total: {total_questions}")
+                                  f"Generated: {generated}, Inserted: {inserted}, Total: {total_questions}")
                     return success
                 else:
                     self.log_result("Question Seeding", False, "Failed to verify seeding")
