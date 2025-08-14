@@ -17,6 +17,7 @@ import secrets
 import string
 import io
 import base64
+import hashlib
 
 import random
 # Google Generative AI import
