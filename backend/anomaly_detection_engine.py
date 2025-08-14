@@ -353,17 +353,11 @@ class AnomalyDetectionEngine:
             anomaly_results = self.detect_response_pattern_anomalies(session_data)
             inconsistency_results = self.analyze_performance_inconsistencies(session_data)
             
-            if not anomaly_results.get('success') or not inconsistency_results.get('success'):
-                return {
-                    'success': False,
-                    'error': 'Could not complete prerequisite analyses'
-                }
-            
-            # Extract probability components
+            # Extract probability components with fallbacks
             probability_components = {}
             
-            # 1. ML model probabilities
-            if 'individual_analyses' in anomaly_results:
+            # Use results if available, otherwise use fallback analysis
+            if anomaly_results.get('success') and 'individual_analyses' in anomaly_results:
                 ml_analyses = anomaly_results['individual_analyses']
                 
                 if 'isolation_forest' in ml_analyses:
@@ -378,11 +372,18 @@ class AnomalyDetectionEngine:
                 if 'pca_reconstruction' in ml_analyses:
                     pca_error = ml_analyses['pca_reconstruction'].get('reconstruction_error', 0)
                     probability_components['pca_prob'] = min(pca_error / 5.0, 1.0)  # Normalize to probability
+            else:
+                # Fallback analysis when baseline models aren't available
+                fallback_analysis = self._calculate_fallback_analysis(session_data)
+                probability_components.update(fallback_analysis)
             
-            # 2. Performance inconsistency probabilities
-            if 'composite_inconsistency_score' in inconsistency_results:
+            # Performance inconsistency probabilities
+            if inconsistency_results.get('success') and 'composite_inconsistency_score' in inconsistency_results:
                 inconsistency_score = inconsistency_results['composite_inconsistency_score']
                 probability_components['inconsistency_prob'] = inconsistency_score / 100.0  # Convert to probability
+            else:
+                # Fallback inconsistency analysis
+                probability_components['inconsistency_prob'] = self._calculate_fallback_inconsistency_probability(session_data)
             
             # 3. Behavioral pattern probabilities
             behavioral_prob = self._calculate_behavioral_anomaly_probability(session_data)
