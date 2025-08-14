@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://anomaly-detect-eval.preview.emergentagent.com/api"
+BACKEND_URL = "https://anomaly-test-verify.preview.emergentagent.com/api"
 
 def test_behavioral_interview_questions():
     """Test behavioral interview questions with enhanced PDF formatting"""

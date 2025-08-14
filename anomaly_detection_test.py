@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://anomaly-detect-eval.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://anomaly-test-verify.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class AnomalyDetectionTester:
