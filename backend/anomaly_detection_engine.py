@@ -799,11 +799,19 @@ class AnomalyDetectionEngine:
                 start_idx = i * quarter_size
                 end_idx = (i + 1) * quarter_size if i < 3 else len(responses)
                 quarter_responses = responses[start_idx:end_idx]
-                quarter_timings = timings[start_idx:end_idx] if len(timings) >= end_idx else []
                 
                 # Calculate quarter metrics
                 accuracy = sum(1 for r in quarter_responses if r.get('is_correct', False)) / len(quarter_responses)
-                avg_time = statistics.mean([t.get('response_time', 0) for t in quarter_timings if 'response_time' in t]) if quarter_timings else 0
+                
+                # Handle both data formats for response times
+                if timings and len(timings) >= end_idx:
+                    # Format 1: Separate timings array
+                    quarter_timings = timings[start_idx:end_idx]
+                    avg_time = statistics.mean([t.get('response_time', 0) for t in quarter_timings if 'response_time' in t]) if quarter_timings else 0
+                else:
+                    # Format 2: Response times embedded in responses (test data format)
+                    response_times = [r.get('response_time', 0) for r in quarter_responses if 'response_time' in r]
+                    avg_time = statistics.mean(response_times) if response_times else 0
                 
                 quarters.append({
                     'accuracy': accuracy,
