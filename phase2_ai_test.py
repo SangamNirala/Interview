@@ -14,7 +14,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://anomaly-test-verify.preview.emergentagent.com/api"
+BASE_URL = "https://cheating-analyzer.preview.emergentagent.com/api"
 
 class Phase2AITester:
     def __init__(self):

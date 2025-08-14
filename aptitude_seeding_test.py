@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://anomaly-test-verify.preview.emergentagent.com/api"
+BACKEND_URL = "https://cheating-analyzer.preview.emergentagent.com/api"
 
 def test_aptitude_question_seeding():
     """Test the aptitude question seeding endpoints"""

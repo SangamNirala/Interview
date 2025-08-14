@@ -15,7 +15,7 @@ import io
 from typing import Dict, Any, List
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://anomaly-test-verify.preview.emergentagent.com/api"
+BASE_URL = "https://cheating-analyzer.preview.emergentagent.com/api"
 
 class QuestionSelectionTester:
     def __init__(self):
