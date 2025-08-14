@@ -19020,4 +19020,5 @@ async def get_security_interventions(session_id: str):
         logging.error(f"Error retrieving security interventions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to retrieve interventions: {str(e)}")
 
-# Routes already mounted above at line 10881
+# Include the router in the main app after all routes are defined
+app.include_router(api_router)
