@@ -814,6 +814,823 @@ class DeviceFingerprintingEngine:
             self.logger.error(f"Error calculating signature confidence: {str(e)}")
             return 0.5
     
+    # ===== NEW ENHANCED VM DETECTION METHODS =====
+    
+    def _analyze_enhanced_vm_performance_anomalies(self, performance_data: Dict[str, Any], hardware_data: Dict[str, Any]) -> Dict[str, Any]:
+        """ENHANCED: Analyze performance characteristics for comprehensive VM indicators"""
+        anomalies = {
+            'performance_indicators': [],
+            'anomaly_score': 0.0,
+            'timing_anomalies': [],
+            'resource_allocation_anomalies': [],
+            'performance_consistency_score': 0.0
+        }
+        
+        try:
+            # Memory Analysis
+            device_memory = performance_data.get('device_memory', 0)
+            if device_memory > 0:
+                memory_gb = device_memory / (1024 * 1024 * 1024)
+                
+                # VM-typical memory sizes with tighter detection
+                vm_memory_sizes = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64]
+                for vm_size in vm_memory_sizes:
+                    if abs(memory_gb - vm_size) < 0.05:  # More precise detection
+                        anomalies['resource_allocation_anomalies'].append(f"Precise VM memory allocation: {memory_gb:.1f}GB")
+                        break
+            
+            # CPU Concurrency Analysis
+            hardware_concurrency = performance_data.get('hardware_concurrency', 0)
+            logical_processors = hardware_data.get('cpu', {}).get('logical_processors', 0)
+            
+            if hardware_concurrency > 0:
+                # Check for VM-typical CPU allocations
+                vm_cpu_counts = [1, 2, 4, 8, 16, 32]
+                if hardware_concurrency in vm_cpu_counts:
+                    anomalies['resource_allocation_anomalies'].append(f"VM-typical CPU count: {hardware_concurrency}")
+                
+                # Check CPU consistency
+                if logical_processors > 0 and hardware_concurrency != logical_processors:
+                    anomalies['performance_indicators'].append(f"CPU count inconsistency: {hardware_concurrency} vs {logical_processors}")
+            
+            # Performance Timing Analysis
+            connection_rtt = performance_data.get('connection_rtt', 0)
+            if connection_rtt > 0:
+                # Unusually low RTT might indicate local VM
+                if connection_rtt < 0.1:
+                    anomalies['timing_anomalies'].append(f"Suspiciously low network RTT: {connection_rtt}ms")
+            
+            # Calculate performance consistency score
+            total_checks = 3
+            consistent_checks = 0
+            
+            if device_memory > 0:
+                consistent_checks += 1
+            if hardware_concurrency > 0:
+                consistent_checks += 1
+            if connection_rtt >= 0:
+                consistent_checks += 1
+            
+            anomalies['performance_consistency_score'] = consistent_checks / total_checks
+            
+            # Calculate enhanced anomaly score
+            total_anomalies = (len(anomalies['performance_indicators']) + 
+                             len(anomalies['timing_anomalies']) + 
+                             len(anomalies['resource_allocation_anomalies']))
+            
+            anomalies['anomaly_score'] = min(1.0, total_anomalies * 0.2)
+            
+            return anomalies
+            
+        except Exception as e:
+            self.logger.error(f"Error in enhanced performance anomaly analysis: {str(e)}")
+            return {
+                'performance_indicators': [],
+                'anomaly_score': 0.0,
+                'error': str(e)
+            }
+    
+    def _analyze_enhanced_vm_system_indicators(self, browser_data: Dict[str, Any], os_data: Dict[str, Any], hardware_data: Dict[str, Any]) -> Dict[str, Any]:
+        """ENHANCED: Comprehensive system indicators analysis with OS-specific checks"""
+        indicators = {
+            'system_indicators': [],
+            'confidence': 0.0,
+            'registry_indicators': [],
+            'system_file_indicators': [],
+            'driver_indicators': [],
+            'service_indicators': []
+        }
+        
+        try:
+            # Enhanced Browser Plugin Analysis
+            plugins = browser_data.get('plugins', [])
+            if isinstance(plugins, list):
+                vm_plugin_patterns = {
+                    'vmware': 'VMware Tools',
+                    'virtualbox': 'VirtualBox Guest Additions',
+                    'parallels': 'Parallels Tools',
+                    'hyper-v': 'Hyper-V Integration',
+                    'qemu': 'QEMU Guest Agent',
+                    'xen': 'Xen PV Drivers'
+                }
+                
+                for plugin in plugins:
+                    plugin_name = ''
+                    if isinstance(plugin, dict):
+                        plugin_name = str(plugin.get('name', '')).lower()
+                    elif isinstance(plugin, str):
+                        plugin_name = plugin.lower()
+                    
+                    for pattern, vm_name in vm_plugin_patterns.items():
+                        if pattern in plugin_name:
+                            indicators['system_indicators'].append(f"VM plugin detected: {vm_name}")
+            
+            # OS-specific System Analysis
+            platform = str(os_data.get('platform', '')).lower()
+            
+            if 'windows' in platform:
+                indicators['registry_indicators'] = self._analyze_windows_registry_indicators(os_data)
+                indicators['driver_indicators'] = self._analyze_windows_driver_indicators(hardware_data)
+                indicators['service_indicators'] = self._analyze_windows_service_indicators(os_data)
+                
+            elif 'linux' in platform:
+                indicators['system_file_indicators'] = self._analyze_linux_system_indicators(os_data)
+                
+            elif 'mac' in platform or 'darwin' in platform:
+                indicators['system_file_indicators'] = self._analyze_macos_system_indicators(os_data)
+            
+            # Calculate enhanced confidence
+            total_indicators = (len(indicators['system_indicators']) + 
+                              len(indicators['registry_indicators']) + 
+                              len(indicators['system_file_indicators']) + 
+                              len(indicators['driver_indicators']) + 
+                              len(indicators['service_indicators']))
+            
+            indicators['confidence'] = min(1.0, total_indicators * 0.15)
+            
+            return indicators
+            
+        except Exception as e:
+            self.logger.error(f"Error in enhanced VM system indicators analysis: {str(e)}")
+            return {
+                'system_indicators': [],
+                'confidence': 0.0,
+                'error': str(e)
+            }
+    
+    def _analyze_windows_registry_indicators(self, os_data: Dict[str, Any]) -> List[str]:
+        """Analyze Windows registry-based VM indicators"""
+        indicators = []
+        
+        # In a real implementation, this would check registry keys through browser APIs
+        # For now, we simulate based on available OS data
+        os_version = str(os_data.get('version', '')).lower()
+        
+        # Windows versions commonly used in VMs
+        vm_windows_versions = ['server 2019', 'server 2016', 'server 2012', 'embedded']
+        for version in vm_windows_versions:
+            if version in os_version:
+                indicators.append(f"VM-typical Windows version: {version}")
+        
+        return indicators
+    
+    def _analyze_windows_driver_indicators(self, hardware_data: Dict[str, Any]) -> List[str]:
+        """Analyze Windows driver-based VM indicators"""
+        indicators = []
+        
+        # GPU driver analysis
+        gpu_data = hardware_data.get('gpu', {})
+        if gpu_data:
+            gpu_vendor = str(gpu_data.get('vendor', '')).lower()
+            
+            vm_gpu_vendors = ['microsoft corporation', 'vmware, inc.', 'oracle corporation']
+            for vendor in vm_gpu_vendors:
+                if vendor in gpu_vendor:
+                    indicators.append(f"VM GPU driver vendor: {vendor}")
+        
+        return indicators
+    
+    def _analyze_windows_service_indicators(self, os_data: Dict[str, Any]) -> List[str]:
+        """Analyze Windows service-based VM indicators"""
+        indicators = []
+        
+        # This would typically check for VM-specific services
+        # Simulated based on available data
+        return indicators
+    
+    def _analyze_linux_system_indicators(self, os_data: Dict[str, Any]) -> List[str]:
+        """Analyze Linux system file indicators"""
+        indicators = []
+        
+        # Linux kernel version analysis
+        kernel_version = str(os_data.get('kernel_version', '')).lower()
+        
+        # VM-specific kernel patterns
+        vm_kernel_patterns = ['cloud', 'azure', 'aws', 'gcp', 'virtual']
+        for pattern in vm_kernel_patterns:
+            if pattern in kernel_version:
+                indicators.append(f"VM-specific kernel pattern: {pattern}")
+        
+        return indicators
+    
+    def _analyze_macos_system_indicators(self, os_data: Dict[str, Any]) -> List[str]:
+        """Analyze macOS system indicators"""
+        indicators = []
+        
+        # macOS build analysis
+        build_version = str(os_data.get('build_version', '')).lower()
+        
+        # VM-specific macOS patterns (Hackintosh, etc.)
+        if 'server' in build_version:
+            indicators.append("macOS Server build detected")
+        
+        return indicators
+    
+    def _detect_enhanced_vm_software_signatures(self, hardware_data: Dict[str, Any], os_data: Dict[str, Any], browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """ENHANCED: Comprehensive VM software signature detection"""
+        signatures = {
+            'software_signatures': [],
+            'detection_confidence': 0.0,
+            'vm_software_detected': [],
+            'container_indicators': [],
+            'cloud_platform_indicators': []
+        }
+        
+        try:
+            # Platform Analysis
+            platform = str(os_data.get('platform', '')).lower()
+            vm_platform_patterns = {
+                'virtual': 'Generic Virtual Platform',
+                'vm': 'VM Platform',
+                'container': 'Container Platform',
+                'docker': 'Docker Container',
+                'kubernetes': 'Kubernetes Pod'
+            }
+            
+            for pattern, platform_name in vm_platform_patterns.items():
+                if pattern in platform:
+                    signatures['software_signatures'].append(f"VM platform signature: {platform_name}")
+                    if pattern in ['container', 'docker', 'kubernetes']:
+                        signatures['container_indicators'].append(platform_name)
+                    else:
+                        signatures['vm_software_detected'].append(platform_name)
+            
+            # Browser-based signature detection
+            user_agent = str(browser_data.get('user_agent', '')).lower()
+            
+            # Cloud platform signatures
+            cloud_patterns = {
+                'aws': 'Amazon Web Services',
+                'azure': 'Microsoft Azure',
+                'gcp': 'Google Cloud Platform',
+                'digitalocean': 'DigitalOcean',
+                'linode': 'Linode',
+                'vultr': 'Vultr'
+            }
+            
+            for pattern, cloud_name in cloud_patterns.items():
+                if pattern in user_agent or pattern in platform:
+                    signatures['cloud_platform_indicators'].append(cloud_name)
+            
+            # Hardware signature analysis
+            cpu_data = hardware_data.get('cpu', {})
+            if cpu_data:
+                cpu_model = str(cpu_data.get('model', '')).lower()
+                
+                vm_cpu_signatures = {
+                    'qemu': 'QEMU Virtual CPU',
+                    'kvm': 'KVM Virtual CPU',
+                    'virtual': 'Generic Virtual CPU',
+                    'xeon': 'Intel Xeon (Common in VMs)'
+                }
+                
+                for pattern, cpu_type in vm_cpu_signatures.items():
+                    if pattern in cpu_model:
+                        signatures['vm_software_detected'].append(cpu_type)
+            
+            # Calculate enhanced detection confidence
+            total_detections = (len(signatures['software_signatures']) + 
+                              len(signatures['vm_software_detected']) + 
+                              len(signatures['container_indicators']) + 
+                              len(signatures['cloud_platform_indicators']))
+            
+            signatures['detection_confidence'] = min(1.0, total_detections * 0.2)
+            
+            return signatures
+            
+        except Exception as e:
+            self.logger.error(f"Error in enhanced VM software signature detection: {str(e)}")
+            return {
+                'software_signatures': [],
+                'detection_confidence': 0.0,
+                'error': str(e)
+            }
+    
+    def _analyze_vm_network_indicators(self, network_data: Dict[str, Any], browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """NEW: Analyze network-based VM indicators"""
+        analysis = {
+            'network_indicators': [],
+            'confidence': 0.0,
+            'nat_indicators': [],
+            'cloud_network_patterns': []
+        }
+        
+        try:
+            # IP address analysis (if available through browser APIs)
+            ip_address = network_data.get('ip_address', '')
+            if ip_address:
+                # Check for private IP ranges (common in VMs)
+                private_ranges = ['10.', '172.', '192.168.']
+                for range_prefix in private_ranges:
+                    if ip_address.startswith(range_prefix):
+                        analysis['nat_indicators'].append(f"Private IP range detected: {range_prefix}x.x")
+            
+            # Connection type analysis
+            connection_type = str(browser_data.get('connection_type', '')).lower()
+            if 'ethernet' in connection_type and 'wifi' not in connection_type:
+                analysis['network_indicators'].append("Ethernet-only connection (common in VMs)")
+            
+            analysis['confidence'] = min(1.0, (len(analysis['network_indicators']) + len(analysis['nat_indicators'])) * 0.3)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error in VM network analysis: {str(e)}")
+            return {
+                'network_indicators': [],
+                'confidence': 0.0,
+                'error': str(e)
+            }
+    
+    def _analyze_vm_display_indicators(self, screen_data: Dict[str, Any], hardware_data: Dict[str, Any]) -> Dict[str, Any]:
+        """NEW: Analyze display characteristics for VM indicators"""
+        analysis = {
+            'display_indicators': [],
+            'confidence': 0.0,
+            'resolution_anomalies': [],
+            'color_depth_indicators': []
+        }
+        
+        try:
+            # Screen resolution analysis
+            screen_width = screen_data.get('width', 0)
+            screen_height = screen_data.get('height', 0)
+            
+            if screen_width > 0 and screen_height > 0:
+                # VM-typical resolutions
+                vm_resolutions = [
+                    (800, 600), (1024, 768), (1280, 1024), (1366, 768),
+                    (1440, 900), (1680, 1050), (1920, 1080), (1920, 1200)
+                ]
+                
+                for vm_width, vm_height in vm_resolutions:
+                    if screen_width == vm_width and screen_height == vm_height:
+                        analysis['resolution_anomalies'].append(f"Common VM resolution: {vm_width}x{vm_height}")
+                        break
+            
+            # Color depth analysis
+            color_depth = screen_data.get('color_depth', 0)
+            if color_depth in [16, 24]:  # Common VM color depths
+                analysis['color_depth_indicators'].append(f"VM-typical color depth: {color_depth}-bit")
+            
+            analysis['confidence'] = min(1.0, (len(analysis['display_indicators']) + 
+                                             len(analysis['resolution_anomalies']) + 
+                                             len(analysis['color_depth_indicators'])) * 0.25)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error in VM display analysis: {str(e)}")
+            return {
+                'display_indicators': [],
+                'confidence': 0.0,
+                'error': str(e)
+            }
+    
+    def _analyze_vm_consistency_indicators(self, vm_detection_results: Dict[str, Any]) -> Dict[str, Any]:
+        """NEW: Analyze consistency across different VM detection methods"""
+        analysis = {
+            'consistency_score': 0.0,
+            'conflicting_indicators': [],
+            'supporting_indicators': [],
+            'overall_coherence': 'unknown'
+        }
+        
+        try:
+            # Count positive indicators across all methods
+            positive_methods = 0
+            total_methods = 0
+            
+            for method_name, result in vm_detection_results.items():
+                if isinstance(result, dict):
+                    total_methods += 1
+                    
+                    # Check if this method indicates VM presence
+                    method_indicates_vm = False
+                    
+                    if 'vm_probability' in result and result['vm_probability'] > 0.3:
+                        method_indicates_vm = True
+                    elif 'confidence' in result and result['confidence'] > 0.3:
+                        method_indicates_vm = True
+                    elif 'anomaly_score' in result and result['anomaly_score'] > 0.3:
+                        method_indicates_vm = True
+                    elif 'detection_confidence' in result and result['detection_confidence'] > 0.3:
+                        method_indicates_vm = True
+                    
+                    if method_indicates_vm:
+                        positive_methods += 1
+                        analysis['supporting_indicators'].append(method_name)
+                    else:
+                        analysis['conflicting_indicators'].append(method_name)
+            
+            # Calculate consistency score
+            if total_methods > 0:
+                analysis['consistency_score'] = positive_methods / total_methods
+                
+                if analysis['consistency_score'] >= 0.7:
+                    analysis['overall_coherence'] = 'high_vm_confidence'
+                elif analysis['consistency_score'] >= 0.4:
+                    analysis['overall_coherence'] = 'moderate_vm_confidence'
+                elif analysis['consistency_score'] >= 0.2:
+                    analysis['overall_coherence'] = 'low_vm_confidence'
+                else:
+                    analysis['overall_coherence'] = 'physical_machine_likely'
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error in VM consistency analysis: {str(e)}")
+            return {
+                'consistency_score': 0.0,
+                'error': str(e)
+            }
+    
+    def _calculate_enhanced_vm_probability(self, vm_detection_results: Dict[str, Any]) -> float:
+        """ENHANCED: Calculate VM probability with weighted scoring"""
+        try:
+            # Weighted scoring for different detection methods
+            method_weights = {
+                'hardware_indicators': 0.25,
+                'hypervisor_analysis': 0.20,
+                'performance_anomalies': 0.15,
+                'system_analysis': 0.15,
+                'software_signatures': 0.10,
+                'network_analysis': 0.08,
+                'display_analysis': 0.05,
+                'consistency_analysis': 0.02
+            }
+            
+            weighted_score = 0.0
+            total_weight = 0.0
+            
+            for method_name, result in vm_detection_results.items():
+                if isinstance(result, dict) and method_name in method_weights:
+                    weight = method_weights[method_name]
+                    method_score = 0.0
+                    
+                    # Extract score from result
+                    if 'vm_probability' in result:
+                        method_score = float(result['vm_probability'])
+                    elif 'confidence' in result:
+                        method_score = float(result['confidence'])
+                    elif 'anomaly_score' in result:
+                        method_score = float(result['anomaly_score'])
+                    elif 'detection_confidence' in result:
+                        method_score = float(result['detection_confidence'])
+                    
+                    # Ensure score is in valid range
+                    method_score = max(0.0, min(1.0, method_score))
+                    
+                    weighted_score += method_score * weight
+                    total_weight += weight
+            
+            # Normalize by total weight used
+            if total_weight > 0:
+                final_probability = weighted_score / total_weight
+                
+                # Apply consistency bonus/penalty
+                consistency_result = vm_detection_results.get('consistency_analysis', {})
+                if isinstance(consistency_result, dict):
+                    consistency_score = consistency_result.get('consistency_score', 0.5)
+                    
+                    # Boost probability if methods are consistent
+                    if consistency_score > 0.7:
+                        final_probability = min(1.0, final_probability * 1.1)
+                    elif consistency_score < 0.3:
+                        final_probability = final_probability * 0.9
+                
+                return min(1.0, final_probability)
+            else:
+                return 0.0
+                
+        except Exception as e:
+            self.logger.error(f"Error calculating enhanced VM probability: {str(e)}")
+            return 0.0
+    
+    def _classify_enhanced_vm_type(self, vm_detection_results: Dict[str, Any], os_data: Dict[str, Any]) -> str:
+        """ENHANCED: Classify VM type with platform-specific detection"""
+        vm_types = []
+        confidence_scores = {}
+        
+        try:
+            # Analyze all detection results for VM type indicators
+            for method_name, result in vm_detection_results.items():
+                if isinstance(result, dict):
+                    # Look for specific VM type indicators
+                    self._extract_vm_type_indicators(result, vm_types, confidence_scores)
+            
+            # Platform-specific classification
+            platform = str(os_data.get('platform', '')).lower()
+            
+            if vm_types:
+                # Sort by confidence if available
+                if confidence_scores:
+                    sorted_types = sorted(vm_types, key=lambda x: confidence_scores.get(x, 0), reverse=True)
+                    primary_vm_type = sorted_types[0]
+                    
+                    # Add platform context
+                    if 'windows' in platform:
+                        platform_context = 'Windows VM'
+                    elif 'linux' in platform:
+                        platform_context = 'Linux VM'
+                    elif 'mac' in platform or 'darwin' in platform:
+                        platform_context = 'macOS VM'
+                    else:
+                        platform_context = 'VM'
+                    
+                    return f"{primary_vm_type} ({platform_context})"
+                else:
+                    return ', '.join(set(vm_types))
+            else:
+                # Calculate overall probability for fallback
+                vm_probability = self._calculate_enhanced_vm_probability(vm_detection_results)
+                
+                if vm_probability > 0.65:
+                    return f'Unknown VM Type ({platform.capitalize()} Platform)'
+                else:
+                    return 'Physical Machine'
+                    
+        except Exception as e:
+            self.logger.error(f"Error in enhanced VM type classification: {str(e)}")
+            return 'Classification Error'
+    
+    def _extract_vm_type_indicators(self, result: Dict[str, Any], vm_types: List[str], confidence_scores: Dict[str, float]):
+        """Extract VM type indicators from detection results"""
+        # Check for specific VM software mentioned
+        vm_patterns = {
+            'virtualbox': 'VirtualBox',
+            'vmware': 'VMware',
+            'parallels': 'Parallels',
+            'hyper-v': 'Hyper-V',
+            'kvm': 'KVM',
+            'qemu': 'QEMU',
+            'xen': 'Xen',
+            'docker': 'Docker Container',
+            'kubernetes': 'Kubernetes Pod'
+        }
+        
+        # Search through all result values
+        result_text = str(result).lower()
+        
+        for pattern, vm_name in vm_patterns.items():
+            if pattern in result_text:
+                vm_types.append(vm_name)
+                # Calculate confidence based on detection method strength  
+                confidence = result.get('confidence', result.get('detection_confidence', 0.5))
+                confidence_scores[vm_name] = max(confidence_scores.get(vm_name, 0), confidence)
+    
+    def _calculate_enhanced_vm_detection_confidence(self, vm_detection_results: Dict[str, Any]) -> Dict[str, Any]:
+        """ENHANCED: Calculate comprehensive confidence metrics"""
+        confidence_metrics = {
+            'overall_confidence': 0.0,
+            'method_confidence_breakdown': {},
+            'reliability_score': 0.0,
+            'detection_quality': 'unknown'
+        }
+        
+        try:
+            method_confidences = []
+            
+            for method_name, result in vm_detection_results.items():
+                if isinstance(result, dict):
+                    method_confidence = 0.0
+                    
+                    if 'confidence' in result:
+                        method_confidence = float(result['confidence'])
+                    elif 'detection_confidence' in result:
+                        method_confidence = float(result['detection_confidence'])
+                    elif 'vm_probability' in result:
+                        method_confidence = float(result['vm_probability'])
+                    elif 'anomaly_score' in result:
+                        method_confidence = float(result['anomaly_score'])
+                    
+                    method_confidence = max(0.0, min(1.0, method_confidence))
+                    confidence_metrics['method_confidence_breakdown'][method_name] = method_confidence
+                    method_confidences.append(method_confidence)
+            
+            # Calculate overall confidence
+            if method_confidences:
+                confidence_metrics['overall_confidence'] = statistics.mean(method_confidences)
+                
+                # Calculate reliability based on consistency
+                confidence_std = statistics.stdev(method_confidences) if len(method_confidences) > 1 else 0
+                confidence_metrics['reliability_score'] = max(0.0, 1.0 - confidence_std)
+                
+                # Determine detection quality
+                if confidence_metrics['overall_confidence'] >= 0.8 and confidence_metrics['reliability_score'] >= 0.7:
+                    confidence_metrics['detection_quality'] = 'high'
+                elif confidence_metrics['overall_confidence'] >= 0.6 and confidence_metrics['reliability_score'] >= 0.5:
+                    confidence_metrics['detection_quality'] = 'medium'
+                elif confidence_metrics['overall_confidence'] >= 0.3:
+                    confidence_metrics['detection_quality'] = 'low'
+                else:
+                    confidence_metrics['detection_quality'] = 'insufficient'
+            
+            return confidence_metrics
+            
+        except Exception as e:
+            self.logger.error(f"Error calculating enhanced VM detection confidence: {str(e)}")
+            return {
+                'overall_confidence': 0.0,
+                'error': str(e)
+            }
+    
+    def _assess_vm_detection_risk(self, vm_detection_results: Dict[str, Any], vm_probability: float) -> Dict[str, Any]:
+        """NEW: Assess risk level based on VM detection results"""
+        risk_assessment = {
+            'risk_level': 'unknown',
+            'risk_score': 0.0,
+            'risk_factors': [],
+            'mitigation_recommendations': []
+        }
+        
+        try:
+            # Calculate risk score based on VM probability and detection consistency
+            risk_score = vm_probability
+            
+            # Analyze specific risk factors
+            consistency_result = vm_detection_results.get('consistency_analysis', {})
+            if isinstance(consistency_result, dict):
+                consistency_score = consistency_result.get('consistency_score', 0.5)
+                
+                # High consistency + high probability = higher risk
+                if consistency_score > 0.7 and vm_probability > 0.6:
+                    risk_score = min(1.0, risk_score * 1.2)
+                    risk_assessment['risk_factors'].append('High detection consistency')
+                
+                # Multiple detection methods agreeing
+                supporting_methods = len(consistency_result.get('supporting_indicators', []))
+                if supporting_methods >= 4:
+                    risk_assessment['risk_factors'].append(f'{supporting_methods} detection methods in agreement')
+            
+            # Classify risk level
+            if risk_score >= 0.8:
+                risk_assessment['risk_level'] = 'critical'
+                risk_assessment['mitigation_recommendations'] = [
+                    'Block access immediately',
+                    'Require additional authentication',
+                    'Log for security analysis'
+                ]
+            elif risk_score >= 0.6:
+                risk_assessment['risk_level'] = 'high'
+                risk_assessment['mitigation_recommendations'] = [
+                    'Enable enhanced monitoring',
+                    'Require additional verification',
+                    'Limit session duration'
+                ]
+            elif risk_score >= 0.4:
+                risk_assessment['risk_level'] = 'medium'
+                risk_assessment['mitigation_recommendations'] = [
+                    'Enable session monitoring',
+                    'Log user activities'
+                ]
+            elif risk_score >= 0.2:
+                risk_assessment['risk_level'] = 'low'
+                risk_assessment['mitigation_recommendations'] = [
+                    'Standard monitoring',
+                    'Normal session handling'
+                ]
+            else:
+                risk_assessment['risk_level'] = 'minimal'
+                risk_assessment['mitigation_recommendations'] = [
+                    'No special action required'
+                ]
+            
+            risk_assessment['risk_score'] = risk_score
+            
+            return risk_assessment
+            
+        except Exception as e:
+            self.logger.error(f"Error assessing VM detection risk: {str(e)}")
+            return {
+                'risk_level': 'unknown',
+                'risk_score': 0.0,
+                'error': str(e)
+            }
+    
+    def _detect_platform_specific_vm_indicators(self, os_data: Dict[str, Any], vm_detection_results: Dict[str, Any]) -> Dict[str, Any]:
+        """NEW: Platform-specific VM detection summary"""
+        platform_detection = {
+            'detected_platform': 'unknown',
+            'platform_specific_indicators': [],
+            'platform_confidence': 0.0
+        }
+        
+        try:
+            platform = str(os_data.get('platform', '')).lower()
+            
+            if 'windows' in platform:
+                platform_detection['detected_platform'] = 'Windows'
+                platform_detection['platform_specific_indicators'] = self._get_windows_vm_summary(vm_detection_results)
+            elif 'linux' in platform:
+                platform_detection['detected_platform'] = 'Linux'
+                platform_detection['platform_specific_indicators'] = self._get_linux_vm_summary(vm_detection_results)
+            elif 'mac' in platform or 'darwin' in platform:
+                platform_detection['detected_platform'] = 'macOS'
+                platform_detection['platform_specific_indicators'] = self._get_macos_vm_summary(vm_detection_results)
+            
+            # Calculate platform-specific confidence
+            if platform_detection['platform_specific_indicators']:
+                platform_detection['platform_confidence'] = min(1.0, len(platform_detection['platform_specific_indicators']) * 0.2)
+            
+            return platform_detection
+            
+        except Exception as e:
+            self.logger.error(f"Error in platform-specific VM detection: {str(e)}")
+            return {
+                'detected_platform': 'unknown',
+                'error': str(e)
+            }
+    
+    def _get_windows_vm_summary(self, vm_detection_results: Dict[str, Any]) -> List[str]:
+        """Get Windows-specific VM indicators summary"""
+        indicators = []
+        
+        system_analysis = vm_detection_results.get('system_analysis', {})
+        if isinstance(system_analysis, dict):
+            registry_indicators = system_analysis.get('registry_indicators', [])
+            driver_indicators = system_analysis.get('driver_indicators', [])
+            
+            indicators.extend(registry_indicators)
+            indicators.extend(driver_indicators)
+        
+        return indicators
+    
+    def _get_linux_vm_summary(self, vm_detection_results: Dict[str, Any]) -> List[str]:
+        """Get Linux-specific VM indicators summary"""
+        indicators = []
+        
+        system_analysis = vm_detection_results.get('system_analysis', {})
+        if isinstance(system_analysis, dict):
+            system_file_indicators = system_analysis.get('system_file_indicators', [])
+            indicators.extend(system_file_indicators)
+        
+        return indicators
+    
+    def _get_macos_vm_summary(self, vm_detection_results: Dict[str, Any]) -> List[str]:
+        """Get macOS-specific VM indicators summary"""
+        indicators = []
+        
+        system_analysis = vm_detection_results.get('system_analysis', {})
+        if isinstance(system_analysis, dict):
+            system_file_indicators = system_analysis.get('system_file_indicators', [])
+            indicators.extend(system_file_indicators)
+        
+        return indicators
+    
+    def _generate_vm_detection_recommendation(self, vm_probability: float, risk_assessment: Dict[str, Any]) -> str:
+        """NEW: Generate actionable recommendation based on VM detection"""
+        try:
+            risk_level = risk_assessment.get('risk_level', 'unknown')
+            
+            if vm_probability >= 0.8:
+                return f"CRITICAL: High VM probability ({vm_probability:.1%}). Immediate security review recommended."
+            elif vm_probability >= 0.6:
+                return f"HIGH: Likely VM detected ({vm_probability:.1%}). Enhanced monitoring advised."
+            elif vm_probability >= 0.4:
+                return f"MEDIUM: Possible VM indicators ({vm_probability:.1%}). Standard monitoring sufficient."
+            elif vm_probability >= 0.2:
+                return f"LOW: Minimal VM indicators ({vm_probability:.1%}). Normal processing."
+            else:
+                return f"MINIMAL: Physical machine likely ({vm_probability:.1%}). No special action needed."
+                
+        except Exception as e:
+            self.logger.error(f"Error generating VM detection recommendation: {str(e)}")
+            return "Unable to generate recommendation due to analysis error."
+    
+    def _perform_basic_vm_detection_fallback(self, device_data: Dict[str, Any]) -> Dict[str, Any]:
+        """NEW: Fallback basic VM detection when enhanced analysis fails"""
+        try:
+            self.logger.info("Performing basic VM detection fallback")
+            
+            fallback_result = {
+                'vm_probability': 0.0,
+                'vm_classification': 'Unknown',
+                'basic_indicators': [],
+                'fallback_analysis': True
+            }
+            
+            # Basic user agent check
+            user_agent = str(device_data.get('browser', {}).get('user_agent', '')).lower()
+            basic_vm_patterns = ['virtualbox', 'vmware', 'parallels']
+            
+            for pattern in basic_vm_patterns:
+                if pattern in user_agent:
+                    fallback_result['basic_indicators'].append(f"VM pattern in user agent: {pattern}")
+                    fallback_result['vm_probability'] = 0.7
+                    fallback_result['vm_classification'] = pattern.title()
+            
+            return fallback_result
+            
+        except Exception as e:
+            self.logger.error(f"Error in VM detection fallback: {str(e)}")
+            return {
+                'vm_probability': 0.0,
+                'vm_classification': 'Unknown',
+                'error': str(e),
+                'fallback_analysis': True
+            }
+    
     def _initialize_persistence_tracking(self, session_id: str) -> Dict[str, Any]:
         """Initialize persistence tracking for device signature"""
         return {
