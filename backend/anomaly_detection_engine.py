@@ -640,7 +640,7 @@ class AnomalyDetectionEngine:
                     wrong_time_consistency = 1 - (statistics.stdev(wrong_times) / max(statistics.mean(wrong_times), 1e-6))
                     patterns['wrong_answer_consistency'] = {
                         'consistency_score': float(wrong_time_consistency),
-                        'is_suspicious': wrong_time_consistency > 0.8,
+                        'is_suspicious': bool(wrong_time_consistency > 0.8),
                         'confidence': min(wrong_time_consistency, 1.0)
                     }
             
