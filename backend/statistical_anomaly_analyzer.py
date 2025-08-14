@@ -607,7 +607,7 @@ class StatisticalAnomalyAnalyzer:
                 'kolmogorov_smirnov': {
                     'statistic': float(ks_stat),
                     'p_value': float(ks_p_value),
-                    'is_uniform': ks_p_value > 0.05
+                    'is_uniform': bool(ks_p_value > 0.05) if not isinstance(ks_p_value > 0.05, bool) else ks_p_value > 0.05
                 },
                 'overall_uniformity_score': float((p_value + ks_p_value) / 2)
             }
