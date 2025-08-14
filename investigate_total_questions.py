@@ -7,7 +7,7 @@ import requests
 import json
 import io
 
-BASE_URL = "https://irt-calibration-1.preview.emergentagent.com/api"
+BASE_URL = "https://ml-predict-test.preview.emergentagent.com/api"
 
 def test_total_questions_investigation():
     session = requests.Session()

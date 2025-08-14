@@ -19,7 +19,7 @@ import os
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://irt-calibration-1.preview.emergentagent.com/api"
+BASE_URL = "https://ml-predict-test.preview.emergentagent.com/api"
 
 class PlacementEndpointsTester:
     def __init__(self):

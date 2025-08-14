@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://irt-calibration-1.preview.emergentagent.com
+URL: https://ml-predict-test.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
