@@ -1042,7 +1042,7 @@ class AnomalyDetectionEngine:
                 'overall_anomaly_score': float(normalized_score),
                 'confidence': float(overall_confidence),
                 'risk_level': self._determine_risk_level(normalized_score * 100),
-                'anomaly_detected': normalized_score > 0.3
+                'anomaly_detected': bool(normalized_score > 0.3)
             }
             
         except Exception as e:
