@@ -7,7 +7,7 @@ import requests
 import json
 
 # Backend URL
-BASE_URL = "https://score-confidence-api.preview.emergentagent.com/api"
+BASE_URL = "https://fingerprintsys-1.preview.emergentagent.com/api"
 
 def test_simple_connection():
     """Test basic connection to backend"""

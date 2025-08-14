@@ -19,7 +19,7 @@ import os
 from typing import Dict, Any, List, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://score-confidence-api.preview.emergentagent.com/api"
+BASE_URL = "https://fingerprintsys-1.preview.emergentagent.com/api"
 
 class BulkCandidateManagementTester:
     def __init__(self):

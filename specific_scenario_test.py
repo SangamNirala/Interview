@@ -11,7 +11,7 @@ import requests
 import json
 import io
 
-BASE_URL = "https://score-confidence-api.preview.emergentagent.com/api"
+BASE_URL = "https://fingerprintsys-1.preview.emergentagent.com/api"
 
 def test_specific_scenario():
     session = requests.Session()

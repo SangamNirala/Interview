@@ -11,7 +11,7 @@ import re
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://score-confidence-api.preview.emergentagent.com/api"
+BACKEND_URL = "https://fingerprintsys-1.preview.emergentagent.com/api"
 
 def comprehensive_behavioral_test():
     """Comprehensive test of behavioral interview questions PDF formatting enhancements"""

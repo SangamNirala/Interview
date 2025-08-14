@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Backend URL configuration
-BACKEND_URL = "https://score-confidence-api.preview.emergentagent.com/api"
+BACKEND_URL = "https://fingerprintsys-1.preview.emergentagent.com/api"
 
 class MLPredictionTester:
     def __init__(self):

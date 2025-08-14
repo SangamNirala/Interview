@@ -11,7 +11,7 @@ import tempfile
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://score-confidence-api.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://fingerprintsys-1.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 class ResumePreviewTester:
