@@ -435,13 +435,19 @@ class AnomalyDetectionEngine:
             responses = session_data.get('responses', [])
             timings = session_data.get('timings', [])
             
-            if not responses or not timings:
+            if not responses:
                 return {}
             
             features = {'session_id': session_id}
             
-            # Response time features
-            response_times = [t.get('response_time', 0) for t in timings if 'response_time' in t]
+            # Response time features - Handle both data formats
+            response_times = []
+            if timings:
+                # Format 1: Separate timings array
+                response_times = [t.get('response_time', 0) for t in timings if 'response_time' in t]
+            else:
+                # Format 2: Response times embedded in responses (test data format)
+                response_times = [r.get('response_time', 0) for r in responses if 'response_time' in r]
             if response_times:
                 features.update({
                     'avg_response_time': statistics.mean(response_times),
