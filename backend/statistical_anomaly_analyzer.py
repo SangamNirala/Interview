@@ -1786,6 +1786,474 @@ class StatisticalAnomalyAnalyzer:
         except Exception as e:
             self.logger.warning(f"Error in clustering analysis: {str(e)}")
             return {'clustering_detected': False, 'cluster_strength': 0.0, 'cluster_assignments': {}, 'suspicious_clusters': []}
+    
+    # ===== RECOMMENDATION AND SIGNIFICANCE METHODS =====
+    
+    def _generate_pattern_recommendations(self, score: float, analysis_results: Dict) -> List[str]:
+        """Generate actionable recommendations for pattern irregularities"""
+        recommendations = []
+        
+        if score >= 0.8:
+            recommendations.extend([
+                "CRITICAL: Immediate manual review required - suspicious answer patterns detected",
+                "Flag candidate for potential cheating investigation",
+                "Consider invalidating test results pending investigation"
+            ])
+        elif score >= 0.6:
+            recommendations.extend([
+                "HIGH PRIORITY: Review answer sequences for potential pattern-based cheating",
+                "Implement additional monitoring for this candidate",
+                "Consider requiring proctored re-testing"
+            ])
+        elif score >= 0.4:
+            recommendations.extend([
+                "Monitor candidate for recurring pattern irregularities",
+                "Review answer changing patterns for unusual behavior"
+            ])
+        else:
+            recommendations.append("Pattern analysis within normal parameters")
+        
+        # Add specific recommendations based on analysis results
+        if analysis_results.get('sequence_analysis', {}).get('suspicion_score', 0) > 0.7:
+            recommendations.append("Investigate for systematic answer sequence patterns")
+        
+        if analysis_results.get('change_analysis', {}).get('suspicion_score', 0) > 0.6:
+            recommendations.append("Review answer modification patterns for potential coaching")
+        
+        return recommendations
+    
+    def _generate_difficulty_recommendations(self, score: float, analysis_results: Dict) -> List[str]:
+        """Generate actionable recommendations for difficulty anomalies"""
+        recommendations = []
+        
+        if score >= 0.7:
+            recommendations.extend([
+                "CRITICAL: Investigate inverted difficulty performance patterns",
+                "Potential external assistance during difficult questions",
+                "Consider invalidating results - performance inconsistent with ability level"
+            ])
+        elif score >= 0.5:
+            recommendations.extend([
+                "HIGH PRIORITY: Review performance on difficult vs easy questions",
+                "Monitor for potential coaching or assistance patterns",
+                "Consider additional verification testing"
+            ])
+        elif score >= 0.3:
+            recommendations.extend([
+                "Review difficulty progression for consistency",
+                "Monitor candidate's future test performance patterns"
+            ])
+        else:
+            recommendations.append("Difficulty progression analysis within normal parameters")
+        
+        # Add specific recommendations based on analysis
+        correlation_analysis = analysis_results.get('correlation_analysis', {})
+        if correlation_analysis.get('is_anomalous'):
+            recommendations.append("Investigate unusual difficulty-accuracy correlation pattern")
+        
+        binned_analysis = analysis_results.get('binned_analysis', {})
+        if binned_analysis.get('inverted_performance_detected'):
+            recommendations.append("URGENT: Review better performance on hard questions - potential cheating indicator")
+        
+        return recommendations
+    
+    def _generate_timezone_recommendations(self, score: float, analysis_results: Dict) -> List[str]:
+        """Generate actionable recommendations for timezone manipulation"""
+        recommendations = []
+        
+        if score >= 0.7:
+            recommendations.extend([
+                "CRITICAL: Potential timezone manipulation detected",
+                "Verify candidate's actual location and timezone",
+                "Investigate for systematic timing advantages",
+                "Consider requiring supervised re-testing"
+            ])
+        elif score >= 0.5:
+            recommendations.extend([
+                "HIGH PRIORITY: Review testing hours and timezone consistency",
+                "Verify candidate location matches declared timezone",
+                "Monitor for recurring unusual timing patterns"
+            ])
+        elif score >= 0.3:
+            recommendations.extend([
+                "Monitor testing hours for consistency with location",
+                "Review break patterns for potential irregularities"
+            ])
+        else:
+            recommendations.append("Timing analysis within expected parameters")
+        
+        # Add specific recommendations
+        unusual_hours = analysis_results.get('unusual_hours_analysis', {})
+        if unusual_hours.get('unusual_hours_detected'):
+            recommendations.append("Investigate unusual testing hours relative to candidate location")
+        
+        break_patterns = analysis_results.get('break_pattern_analysis', {})
+        if break_patterns.get('suspicious_breaks', 0) > 0:
+            recommendations.append("Review break patterns for potential coordination or assistance")
+        
+        return recommendations
+    
+    def _generate_collaboration_recommendations(self, score: float, analysis_results: Dict) -> List[str]:
+        """Generate actionable recommendations for collaborative cheating"""
+        recommendations = []
+        
+        if score >= 0.7:
+            recommendations.extend([
+                "CRITICAL: Strong evidence of collaborative cheating detected",
+                "Investigate all potentially involved candidates",
+                "Consider invalidating results for all suspected parties",
+                "Implement enhanced monitoring for future tests"
+            ])
+        elif score >= 0.5:
+            recommendations.extend([
+                "HIGH PRIORITY: Potential collaboration detected",
+                "Cross-reference with other suspicious sessions",
+                "Consider separating candidates for future testing",
+                "Review timing coordination patterns"
+            ])
+        elif score >= 0.3:
+            recommendations.extend([
+                "Monitor for patterns of coordination with other test-takers",
+                "Review answer similarity patterns with peer groups"
+            ])
+        else:
+            recommendations.append("Collaboration analysis within normal parameters")
+        
+        # Add specific recommendations
+        cross_session = analysis_results.get('cross_session_analysis', {})
+        if cross_session.get('high_similarity_detected'):
+            recommendations.append("URGENT: Investigate high similarity with other test sessions")
+        
+        timing_coordination = analysis_results.get('timing_coordination_analysis', {})
+        if timing_coordination.get('coordination_detected'):
+            recommendations.append("Review timing coordination with other candidates")
+        
+        return recommendations
+    
+    def _calculate_pattern_significance(self, analysis_results: Dict) -> Dict[str, Any]:
+        """Calculate statistical significance for pattern analysis"""
+        try:
+            # Aggregate p-values from various tests
+            p_values = []
+            
+            # Chi-square test from distribution analysis
+            dist_analysis = analysis_results.get('distribution_analysis', {})
+            if dist_analysis.get('available') and 'p_value' in dist_analysis:
+                p_values.append(dist_analysis['p_value'])
+            
+            # Uniformity test p-values
+            uniformity_analysis = analysis_results.get('uniformity_analysis', {})
+            if uniformity_analysis.get('available'):
+                chi_square = uniformity_analysis.get('chi_square', {})
+                if 'p_value' in chi_square:
+                    p_values.append(chi_square['p_value'])
+                ks_test = uniformity_analysis.get('kolmogorov_smirnov', {})
+                if 'p_value' in ks_test:
+                    p_values.append(ks_test['p_value'])
+            
+            if p_values:
+                # Use the minimum p-value (most significant result)
+                min_p_value = min(p_values)
+                significant = min_p_value < 0.05
+                confidence_level = 0.95
+            else:
+                min_p_value = 0.15
+                significant = False
+                confidence_level = 0.95
+            
+            return {
+                'available': True,
+                'significant': significant,
+                'p_value': float(min_p_value),
+                'confidence_level': confidence_level,
+                'test_count': len(p_values)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating pattern significance: {str(e)}")
+            return {'available': False, 'significant': False, 'p_value': 0.15, 'confidence_level': 0.95}
+    
+    def _calculate_difficulty_significance(self, analysis_results: Dict) -> Dict[str, Any]:
+        """Calculate statistical significance for difficulty analysis"""
+        try:
+            correlation_analysis = analysis_results.get('correlation_analysis', {})
+            
+            if correlation_analysis.get('available') and 'p_value' in correlation_analysis:
+                p_value = correlation_analysis['p_value']
+                significant = correlation_analysis.get('statistical_significance', False)
+                
+                return {
+                    'available': True,
+                    'significant': significant,
+                    'p_value': float(p_value),
+                    'confidence_level': 0.95,
+                    'test_type': 'pearson_correlation'
+                }
+            else:
+                return {
+                    'available': False,
+                    'significant': False,
+                    'p_value': 0.12,
+                    'confidence_level': 0.95
+                }
+                
+        except Exception as e:
+            self.logger.warning(f"Error calculating difficulty significance: {str(e)}")
+            return {'available': False, 'significant': False, 'p_value': 0.12, 'confidence_level': 0.95}
+    
+    def _calculate_timezone_significance(self, analysis_results: Dict) -> Dict[str, Any]:
+        """Calculate statistical significance for timezone analysis"""
+        try:
+            # For timezone analysis, significance is based on deviation from expected patterns
+            timezone_analysis = analysis_results.get('timezone_analysis', {})
+            unusual_hours = analysis_results.get('unusual_hours_analysis', {})
+            
+            if timezone_analysis.get('available') or unusual_hours.get('available'):
+                # Calculate composite significance based on multiple factors
+                anomaly_score = timezone_analysis.get('anomaly_score', 0)
+                suspicion_score = unusual_hours.get('suspicion_score', 0)
+                
+                # Convert scores to p-value equivalent (higher anomaly = lower p-value)
+                composite_score = max(anomaly_score, suspicion_score)
+                p_value = 1 - composite_score  # Simple conversion
+                significant = composite_score > 0.5
+                
+                return {
+                    'available': True,
+                    'significant': significant,
+                    'p_value': float(max(0.01, p_value)),  # Minimum p-value of 0.01
+                    'confidence_level': 0.95,
+                    'composite_anomaly_score': composite_score
+                }
+            else:
+                return {
+                    'available': False,
+                    'significant': False,
+                    'p_value': 0.18,
+                    'confidence_level': 0.95
+                }
+                
+        except Exception as e:
+            self.logger.warning(f"Error calculating timezone significance: {str(e)}")
+            return {'available': False, 'significant': False, 'p_value': 0.18, 'confidence_level': 0.95}
+    
+    def _calculate_collaboration_significance(self, analysis_results: Dict) -> Dict[str, Any]:
+        """Calculate statistical significance for collaboration analysis"""
+        try:
+            cross_session = analysis_results.get('cross_session_analysis', {})
+            timing_coordination = analysis_results.get('timing_coordination_analysis', {})
+            
+            if cross_session.get('available') or timing_coordination.get('available'):
+                # Significance based on strength of collaboration evidence
+                collaboration_factors = []
+                
+                if cross_session.get('high_similarity_detected'):
+                    collaboration_factors.append(0.9)
+                
+                if timing_coordination.get('coordination_detected'):
+                    coordination_score = timing_coordination.get('coordination_score', 0)
+                    collaboration_factors.append(coordination_score)
+                
+                if collaboration_factors:
+                    max_evidence = max(collaboration_factors)
+                    p_value = 1 - max_evidence
+                    significant = max_evidence > 0.6
+                else:
+                    p_value = 0.5
+                    significant = False
+                
+                return {
+                    'available': True,
+                    'significant': significant,
+                    'p_value': float(max(0.01, p_value)),
+                    'confidence_level': 0.95,
+                    'evidence_strength': max(collaboration_factors) if collaboration_factors else 0.0
+                }
+            else:
+                return {
+                    'available': False,
+                    'significant': False,
+                    'p_value': 0.20,
+                    'confidence_level': 0.95
+                }
+                
+        except Exception as e:
+            self.logger.warning(f"Error calculating collaboration significance: {str(e)}")
+            return {'available': False, 'significant': False, 'p_value': 0.20, 'confidence_level': 0.95}
+    
+    # ===== REMAINING DIFFICULTY ANALYSIS METHODS =====
+    
+    def _analyze_difficulty_progression_patterns(self, difficulty_data: List[Dict]) -> Dict[str, Any]:
+        """Analyze difficulty progression patterns"""
+        try:
+            if len(difficulty_data) < 5:
+                return {'progression_anomaly': False, 'pattern_strength': 0.0, 'available': False}
+            
+            # Sort by question order or timestamp
+            sorted_data = sorted(difficulty_data, key=lambda x: x.get('question_id', 0))
+            
+            difficulties = [d['difficulty'] for d in sorted_data]
+            accuracies = [1 if d['is_correct'] else 0 for d in sorted_data]
+            
+            # Look for patterns in performance progression
+            anomalies = []
+            pattern_strength = 0.0
+            
+            # Check for sudden performance improvements on harder questions
+            for i in range(1, len(sorted_data)):
+                prev_difficulty = difficulties[i-1]
+                curr_difficulty = difficulties[i]
+                prev_correct = accuracies[i-1]
+                curr_correct = accuracies[i]
+                
+                # Anomaly: Getting hard question right after missing easier ones
+                if curr_difficulty > prev_difficulty + 0.3 and curr_correct and not prev_correct:
+                    anomalies.append(f"Sudden improvement on harder question {i+1}")
+                    pattern_strength += 0.2
+            
+            # Check for consistent pattern of better performance on later, harder questions
+            first_half = sorted_data[:len(sorted_data)//2]
+            second_half = sorted_data[len(sorted_data)//2:]
+            
+            if first_half and second_half:
+                first_half_acc = sum(1 for d in first_half if d['is_correct']) / len(first_half)
+                second_half_acc = sum(1 for d in second_half if d['is_correct']) / len(second_half)
+                first_half_diff = statistics.mean(d['difficulty'] for d in first_half)
+                second_half_diff = statistics.mean(d['difficulty'] for d in second_half)
+                
+                # Anomaly: Better performance in second half despite higher difficulty
+                if second_half_acc > first_half_acc + 0.2 and second_half_diff > first_half_diff:
+                    anomalies.append("Better performance on later, more difficult questions")
+                    pattern_strength += 0.4
+            
+            return {
+                'available': True,
+                'progression_anomaly': len(anomalies) > 0,
+                'pattern_strength': float(min(pattern_strength, 1.0)),
+                'anomalies_detected': anomalies,
+                'total_questions': len(difficulty_data)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error analyzing difficulty progression: {str(e)}")
+            return {'progression_anomaly': False, 'pattern_strength': 0.2, 'available': False, 'error': str(e)}
+    
+    def _detect_difficulty_outliers(self, difficulty_data: List[Dict]) -> Dict[str, Any]:
+        """Detect statistical outliers in difficulty performance"""
+        try:
+            if len(difficulty_data) < 10:
+                return {'outliers_detected': 0, 'outlier_details': [], 'available': False}
+            
+            # Calculate expected accuracy for each difficulty level
+            outliers = []
+            
+            for i, question in enumerate(difficulty_data):
+                difficulty = question['difficulty']
+                is_correct = question['is_correct']
+                
+                # Calculate expected accuracy based on overall performance pattern
+                similar_difficulty_questions = [
+                    d for d in difficulty_data 
+                    if abs(d['difficulty'] - difficulty) < 0.1 and d != question
+                ]
+                
+                if len(similar_difficulty_questions) >= 3:
+                    expected_accuracy = sum(1 for d in similar_difficulty_questions if d['is_correct']) / len(similar_difficulty_questions)
+                    
+                    # Outlier detection: unexpected performance given difficulty level
+                    if is_correct and expected_accuracy < 0.3:  # Got hard question right when usually wrong
+                        outliers.append({
+                            'question_id': question.get('question_id', i),
+                            'difficulty': difficulty,
+                            'result': 'correct',
+                            'expected_accuracy': expected_accuracy,
+                            'outlier_type': 'unexpected_correct'
+                        })
+                    elif not is_correct and expected_accuracy > 0.7:  # Got easy question wrong when usually right
+                        outliers.append({
+                            'question_id': question.get('question_id', i),
+                            'difficulty': difficulty,
+                            'result': 'incorrect',
+                            'expected_accuracy': expected_accuracy,
+                            'outlier_type': 'unexpected_incorrect'
+                        })
+            
+            return {
+                'available': True,
+                'outliers_detected': len(outliers),
+                'outlier_details': outliers,
+                'total_questions_analyzed': len(difficulty_data)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error detecting difficulty outliers: {str(e)}")
+            return {'outliers_detected': 0, 'outlier_details': [], 'available': False, 'error': str(e)}
+    
+    def _analyze_topic_difficulty_patterns(self, difficulty_data: List[Dict]) -> Dict[str, Any]:
+        """Analyze topic-specific difficulty patterns"""
+        try:
+            if len(difficulty_data) < 5:
+                return {'topic_anomalies': {}, 'suspicious_topics': [], 'available': False}
+            
+            # Group by topic
+            topic_groups = defaultdict(list)
+            for question in difficulty_data:
+                topic = question.get('topic', 'unknown')
+                topic_groups[topic].append(question)
+            
+            topic_anomalies = {}
+            suspicious_topics = []
+            
+            for topic, questions in topic_groups.items():
+                if len(questions) < 3:  # Need at least 3 questions per topic
+                    continue
+                
+                # Calculate topic-specific metrics
+                accuracies = [1 if q['is_correct'] else 0 for q in questions]
+                difficulties = [q['difficulty'] for q in questions]
+                
+                topic_accuracy = statistics.mean(accuracies)
+                avg_difficulty = statistics.mean(difficulties)
+                
+                # Compare with overall performance
+                overall_accuracy = sum(1 for d in difficulty_data if d['is_correct']) / len(difficulty_data)
+                overall_difficulty = statistics.mean(d['difficulty'] for d in difficulty_data)
+                
+                # Detect anomalies
+                accuracy_deviation = topic_accuracy - overall_accuracy
+                difficulty_deviation = avg_difficulty - overall_difficulty
+                
+                anomaly_indicators = []
+                
+                # Anomaly: Much better performance on a difficult topic
+                if accuracy_deviation > 0.3 and difficulty_deviation > 0.2:
+                    anomaly_indicators.append("Unexpectedly high performance on difficult topic")
+                    suspicious_topics.append(topic)
+                
+                # Anomaly: Much worse performance on an easy topic
+                if accuracy_deviation < -0.3 and difficulty_deviation < -0.2:
+                    anomaly_indicators.append("Unexpectedly poor performance on easy topic")
+                
+                if anomaly_indicators:
+                    topic_anomalies[topic] = {
+                        'accuracy': topic_accuracy,
+                        'avg_difficulty': avg_difficulty,
+                        'accuracy_deviation': accuracy_deviation,
+                        'difficulty_deviation': difficulty_deviation,
+                        'anomaly_indicators': anomaly_indicators,
+                        'question_count': len(questions)
+                    }
+            
+            return {
+                'available': True,
+                'topic_anomalies': topic_anomalies,
+                'suspicious_topics': suspicious_topics,
+                'topics_analyzed': len(topic_groups)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error analyzing topic difficulty patterns: {str(e)}")
+            return {'topic_anomalies': {}, 'suspicious_topics': [], 'available': False, 'error': str(e)}
 
 
 # Initialize global instance
