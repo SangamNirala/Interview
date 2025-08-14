@@ -5408,6 +5408,461 @@ async def get_improvement_progress(tracking_id: str):
         logging.error(f"Error retrieving progress report: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to retrieve progress report: {str(e)}")
 
+# ===== PHASE 1.2 STEP 4: INDUSTRY BENCHMARK COMPARISON AGAINST INDUSTRY STANDARDS =====
+
+@api_router.post("/ml/calculate-industry-percentiles")
+async def calculate_comprehensive_industry_percentiles(
+    session_id: str,
+    job_role: str,
+    industry: str,
+    job_level: str = "mid_level",
+    region: str = "north_america",
+    company_size: str = "mid_size"
+):
+    """
+    Calculate comprehensive industry percentiles for candidate performance
+    
+    Args:
+        session_id: Session identifier
+        job_role: Target job role (software_engineer, data_analyst, project_manager, etc.)
+        industry: Industry for benchmarking (tech, finance, healthcare, education, etc.)
+        job_level: Career level (entry_level, mid_level, senior_level)
+        region: Geographic region (north_america, europe, asia_pacific)
+        company_size: Company size (startup, mid_size, enterprise)
+        
+    Returns:
+        Comprehensive percentile analysis with confidence intervals and peer comparisons
+    """
+    try:
+        from industry_benchmark_engine import IndustryBenchmarkEngine
+        
+        # Initialize the industry benchmark engine
+        benchmark_engine = IndustryBenchmarkEngine()
+        
+        # Get session and result data
+        session = await db.aptitude_sessions.find_one(
+            {"session_id": session_id},
+            {
+                "session_id": 1,
+                "answers": 1,
+                "adaptive_score": 1,
+                "timing_data": 1,
+                "time_per_question": 1,
+                "theta_estimates": 1,
+                "se_estimates": 1,
+                "created_at": 1,
+                "end_time": 1
+            }
+        )
+        
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        result = await db.aptitude_results.find_one(
+            {"session_id": session_id}
+        )
+        
+        if not result:
+            return {
+                "success": False,
+                "message": "Session results not available. Complete the test first."
+            }
+        
+        # Extract domain scores for percentile calculation
+        domain_scores = {}
+        topic_scores = result.get('topic_scores', {})
+        
+        for domain in ['numerical_reasoning', 'logical_reasoning', 'verbal_comprehension', 'spatial_reasoning']:
+            topic_data = topic_scores.get(domain, {})
+            domain_scores[domain] = topic_data.get('percentage', 0.0)
+        
+        # Calculate industry percentiles
+        percentile_analysis = benchmark_engine.calculate_industry_percentiles(
+            score=domain_scores,
+            job_role=job_role,
+            industry=industry,
+            job_level=job_level,
+            region=region,
+            company_size=company_size
+        )
+        
+        # Store analysis in database
+        analysis_record = {
+            "analysis_id": percentile_analysis['analysis_id'],
+            "session_id": session_id,
+            "percentile_analysis": percentile_analysis,
+            "created_at": datetime.utcnow(),
+            "analysis_type": "industry_percentile_comparison"
+        }
+        
+        await db.industry_benchmarks.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "analysis_id": percentile_analysis['analysis_id'],
+            "percentile_analysis": percentile_analysis,
+            "benchmark_profile": {
+                "job_role": job_role,
+                "industry": industry,
+                "job_level": job_level,
+                "region": region,
+                "company_size": company_size
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except ImportError as e:
+        logging.error(f"Import error: {e}")
+        raise HTTPException(status_code=500, detail="Industry benchmark engine not available")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Industry percentile calculation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Percentile calculation failed: {str(e)}")
+
+@api_router.post("/ml/generate-peer-comparison")
+async def generate_comprehensive_peer_comparison(
+    session_id: str,
+    job_role: str,
+    industry: str,
+    job_level: str = "mid_level",
+    region: str = "north_america",
+    company_size: str = "mid_size"
+):
+    """
+    Generate comprehensive peer comparison across multiple benchmark groups
+    
+    Args:
+        session_id: Session identifier
+        job_role: Target job role for comparison
+        industry: Primary industry for benchmarking
+        job_level: Career level for comparison
+        region: Geographic region
+        company_size: Company size category
+        
+    Returns:
+        Multi-dimensional peer comparison analysis
+    """
+    try:
+        from industry_benchmark_engine import IndustryBenchmarkEngine
+        
+        benchmark_engine = IndustryBenchmarkEngine()
+        
+        # Get session results
+        result = await db.aptitude_results.find_one({"session_id": session_id})
+        
+        if not result:
+            return {
+                "success": False,
+                "message": "Session results not available. Complete the test first."
+            }
+        
+        # Prepare candidate profile
+        domain_scores = {}
+        topic_scores = result.get('topic_scores', {})
+        
+        for domain in ['numerical_reasoning', 'logical_reasoning', 'verbal_comprehension', 'spatial_reasoning']:
+            topic_data = topic_scores.get(domain, {})
+            domain_scores[domain] = topic_data.get('percentage', 0.0)
+        
+        candidate_profile = {
+            'session_id': session_id,
+            'scores': domain_scores,
+            'job_role': job_role,
+            'industry': industry,
+            'job_level': job_level,
+            'region': region,
+            'company_size': company_size,
+            'overall_score': result.get('questions_correct', 0),
+            'percentage_score': result.get('percentage_score', 0.0),
+            'total_time_taken': result.get('total_time_taken', 0),
+            'questions_attempted': result.get('questions_attempted', 0)
+        }
+        
+        # Generate peer comparison
+        peer_comparison = benchmark_engine.generate_peer_comparison(candidate_profile)
+        
+        # Store analysis in database
+        comparison_record = {
+            "analysis_id": peer_comparison['analysis_id'],
+            "session_id": session_id,
+            "peer_comparison": peer_comparison,
+            "created_at": datetime.utcnow(),
+            "analysis_type": "peer_group_comparison"
+        }
+        
+        await db.industry_benchmarks.insert_one(comparison_record)
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "analysis_id": peer_comparison['analysis_id'],
+            "peer_comparison": peer_comparison,
+            "candidate_profile": candidate_profile,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except ImportError as e:
+        logging.error(f"Import error: {e}")
+        raise HTTPException(status_code=500, detail="Industry benchmark engine not available")
+    except Exception as e:
+        logging.error(f"Peer comparison generation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Peer comparison failed: {str(e)}")
+
+@api_router.post("/ml/create-benchmark-visualizations")
+async def create_comprehensive_benchmark_visualizations(
+    analysis_id: str,
+    visualization_type: str = "comprehensive"
+):
+    """
+    Create comprehensive benchmark visualizations (interactive and static)
+    
+    Args:
+        analysis_id: Analysis ID from percentile or peer comparison
+        visualization_type: Type of visualization (percentile, peer_comparison, comprehensive)
+        
+    Returns:
+        Interactive chart configurations and static image data
+    """
+    try:
+        from industry_benchmark_engine import IndustryBenchmarkEngine
+        
+        benchmark_engine = IndustryBenchmarkEngine()
+        
+        # Retrieve analysis data
+        analysis = await db.industry_benchmarks.find_one({"analysis_id": analysis_id})
+        
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Analysis not found")
+        
+        # Extract analysis data based on type
+        if analysis.get('analysis_type') == 'industry_percentile_comparison':
+            analysis_data = analysis['percentile_analysis']
+        elif analysis.get('analysis_type') == 'peer_group_comparison':
+            analysis_data = analysis['peer_comparison']
+        else:
+            raise HTTPException(status_code=400, detail="Invalid analysis type for visualization")
+        
+        # Create visualizations
+        visualizations = benchmark_engine.create_benchmark_visualizations(
+            analysis_data=analysis_data,
+            visualization_type=visualization_type
+        )
+        
+        # Store visualization data
+        visualization_record = {
+            "visualization_id": visualizations['visualization_id'],
+            "analysis_id": analysis_id,
+            "visualizations": visualizations,
+            "created_at": datetime.utcnow(),
+            "visualization_type": visualization_type
+        }
+        
+        await db.benchmark_visualizations.insert_one(visualization_record)
+        
+        return {
+            "success": True,
+            "analysis_id": analysis_id,
+            "visualization_id": visualizations['visualization_id'],
+            "visualizations": visualizations,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except ImportError as e:
+        logging.error(f"Import error: {e}")
+        raise HTTPException(status_code=500, detail="Industry benchmark engine not available")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Visualization creation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Visualization creation failed: {str(e)}")
+
+@api_router.post("/ml/update-industry-norms")
+async def update_comprehensive_industry_norms(
+    session_id: str,
+    job_role: str,
+    industry: str,
+    job_level: str = "mid_level",
+    region: str = "north_america",
+    company_size: str = "mid_size"
+):
+    """
+    Update industry norms with new candidate performance data
+    
+    Args:
+        session_id: Session ID with new performance data
+        job_role: Job role for benchmark update
+        industry: Industry for benchmark update
+        job_level: Career level
+        region: Geographic region
+        company_size: Company size category
+        
+    Returns:
+        Update summary and impact analysis
+    """
+    try:
+        from industry_benchmark_engine import IndustryBenchmarkEngine
+        
+        benchmark_engine = IndustryBenchmarkEngine()
+        
+        # Get session results
+        result = await db.aptitude_results.find_one({"session_id": session_id})
+        
+        if not result:
+            return {
+                "success": False,
+                "message": "Session results not available. Complete the test first."
+            }
+        
+        # Prepare update data
+        domain_scores = {}
+        topic_scores = result.get('topic_scores', {})
+        
+        for domain in ['numerical_reasoning', 'logical_reasoning', 'verbal_comprehension', 'spatial_reasoning']:
+            topic_data = topic_scores.get(domain, {})
+            domain_scores[domain] = topic_data.get('percentage', 0.0)
+        
+        new_data = {
+            'session_id': session_id,
+            'job_role': job_role,
+            'industry': industry,
+            'job_level': job_level,
+            'region': region,
+            'company_size': company_size,
+            'scores': domain_scores,
+            'overall_score': result.get('questions_correct', 0),
+            'percentage_score': result.get('percentage_score', 0.0),
+            'created_at': datetime.utcnow()
+        }
+        
+        # Update industry norms
+        update_summary = benchmark_engine.update_industry_norms(new_data)
+        
+        # Store update record
+        update_record = {
+            "update_id": update_summary['update_id'],
+            "session_id": session_id,
+            "update_summary": update_summary,
+            "created_at": datetime.utcnow(),
+            "update_type": "industry_norms_update"
+        }
+        
+        await db.industry_norm_updates.insert_one(update_record)
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "update_id": update_summary['update_id'],
+            "update_summary": update_summary,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except ImportError as e:
+        logging.error(f"Import error: {e}")
+        raise HTTPException(status_code=500, detail="Industry benchmark engine not available")
+    except Exception as e:
+        logging.error(f"Industry norms update error: {e}")
+        raise HTTPException(status_code=500, detail=f"Industry norms update failed: {str(e)}")
+
+@api_router.get("/ml/validate-benchmark-accuracy")
+async def validate_comprehensive_benchmark_accuracy():
+    """
+    Validate benchmark accuracy and data quality across all configurations
+    
+    Returns:
+        Comprehensive validation report with quality metrics and recommendations
+    """
+    try:
+        from industry_benchmark_engine import IndustryBenchmarkEngine
+        
+        benchmark_engine = IndustryBenchmarkEngine()
+        
+        # Perform comprehensive validation
+        validation_report = benchmark_engine.validate_benchmark_accuracy()
+        
+        # Store validation record
+        validation_record = {
+            "validation_id": validation_report['validation_id'],
+            "validation_report": validation_report,
+            "created_at": datetime.utcnow(),
+            "validation_type": "comprehensive_benchmark_accuracy"
+        }
+        
+        await db.benchmark_validations.insert_one(validation_record)
+        
+        return {
+            "success": True,
+            "validation_id": validation_report['validation_id'],
+            "validation_report": validation_report,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except ImportError as e:
+        logging.error(f"Import error: {e}")
+        raise HTTPException(status_code=500, detail="Industry benchmark engine not available")
+    except Exception as e:
+        logging.error(f"Benchmark validation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Benchmark validation failed: {str(e)}")
+
+@api_router.get("/ml/industry-benchmarks/{analysis_id}")
+async def get_industry_benchmark_analysis(analysis_id: str):
+    """
+    Retrieve stored industry benchmark analysis by ID
+    
+    Returns:
+        Complete benchmark analysis results
+    """
+    try:
+        analysis = await db.industry_benchmarks.find_one({"analysis_id": analysis_id})
+        
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Benchmark analysis not found")
+        
+        return {
+            "success": True,
+            "analysis_id": analysis_id,
+            "analysis_type": analysis["analysis_type"],
+            "analysis_results": analysis.get("percentile_analysis") or analysis.get("peer_comparison"),
+            "created_at": analysis["created_at"].isoformat(),
+            "session_id": analysis["session_id"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error retrieving benchmark analysis: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve analysis: {str(e)}")
+
+@api_router.get("/ml/benchmark-visualizations/{visualization_id}")
+async def get_benchmark_visualizations(visualization_id: str):
+    """
+    Retrieve stored benchmark visualizations by ID
+    
+    Returns:
+        Complete visualization data (interactive and static)
+    """
+    try:
+        visualization = await db.benchmark_visualizations.find_one({"visualization_id": visualization_id})
+        
+        if not visualization:
+            raise HTTPException(status_code=404, detail="Benchmark visualization not found")
+        
+        return {
+            "success": True,
+            "visualization_id": visualization_id,
+            "visualizations": visualization["visualizations"],
+            "created_at": visualization["created_at"].isoformat(),
+            "analysis_id": visualization["analysis_id"],
+            "visualization_type": visualization["visualization_type"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error retrieving benchmark visualizations: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve visualizations: {str(e)}")
+
 def _get_topic_focus_areas(topic: str) -> List[str]:
     """Get recommended focus areas for each topic"""
     focus_areas = {
