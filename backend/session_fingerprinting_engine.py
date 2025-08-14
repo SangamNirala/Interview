@@ -923,21 +923,39 @@ class DeviceFingerprintingEngine:
             'vm_probability': 0.0
         }
         
-        # GPU analysis
-        gpu_renderer = hardware_data.get('gpu', {}).get('renderer', '').lower()
-        vm_gpu_patterns = ['virtualbox', 'vmware', 'parallels', 'microsoft basic render']
-        
-        for pattern in vm_gpu_patterns:
-            if pattern in gpu_renderer:
-                indicators['suspicious_hardware'].append(f"VM GPU detected: {pattern}")
-        
-        # CPU analysis
-        cpu_vendor = hardware_data.get('cpu', {}).get('vendor', '').lower()
-        if 'virtual' in cpu_vendor or 'qemu' in cpu_vendor:
-            indicators['suspicious_hardware'].append(f"Virtual CPU vendor: {cpu_vendor}")
-        
-        indicators['vm_probability'] = min(1.0, len(indicators['suspicious_hardware']) * 0.4)
-        return indicators
+        try:
+            # Ensure hardware_data is a dictionary
+            if not isinstance(hardware_data, dict):
+                self.logger.warning(f"Hardware data is not a dictionary: {type(hardware_data)}")
+                return indicators
+            
+            # GPU analysis
+            gpu_data = hardware_data.get('gpu', {})
+            if isinstance(gpu_data, dict):
+                gpu_renderer = gpu_data.get('renderer', '').lower() if isinstance(gpu_data.get('renderer'), str) else ''
+                vm_gpu_patterns = ['virtualbox', 'vmware', 'parallels', 'microsoft basic render']
+                
+                for pattern in vm_gpu_patterns:
+                    if pattern in gpu_renderer:
+                        indicators['suspicious_hardware'].append(f"VM GPU detected: {pattern}")
+            
+            # CPU analysis
+            cpu_data = hardware_data.get('cpu', {})
+            if isinstance(cpu_data, dict):
+                cpu_vendor = cpu_data.get('vendor', '').lower() if isinstance(cpu_data.get('vendor'), str) else ''
+                if 'virtual' in cpu_vendor or 'qemu' in cpu_vendor:
+                    indicators['suspicious_hardware'].append(f"Virtual CPU vendor: {cpu_vendor}")
+            
+            indicators['vm_probability'] = min(1.0, len(indicators['suspicious_hardware']) * 0.4)
+            return indicators
+            
+        except Exception as e:
+            self.logger.error(f"Error in hardware VM indicators detection: {str(e)}")
+            return {
+                'suspicious_hardware': [],
+                'vm_probability': 0.0,
+                'error': str(e)
+            }
     
     def _analyze_hypervisor_presence(self, os_data: Dict[str, Any], browser_data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze for hypervisor presence indicators"""
