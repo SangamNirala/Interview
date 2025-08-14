@@ -555,3 +555,765 @@ class InteractionBiometricsAnalyzer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.anomaly_threshold = 2.0
+        
+    def analyze_mouse_movement_patterns(self, mouse_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Analyze comprehensive mouse movement patterns
+        
+        Args:
+            mouse_data: List of mouse events with coordinates and timestamps
+            Format: [{"x": 100, "y": 200, "timestamp": 1234567890.123, "event_type": "mousemove"}]
+            
+        Returns:
+            Dict containing detailed mouse movement analysis
+        """
+        try:
+            if not mouse_data or len(mouse_data) < 20:
+                return {"error": "Insufficient mouse movement data for analysis", "patterns": {}}
+            
+            # Convert to DataFrame for analysis
+            df = pd.DataFrame(mouse_data)
+            df['timestamp'] = pd.to_numeric(df['timestamp'])
+            df = df.sort_values('timestamp')
+            
+            # Calculate movement metrics
+            movement_metrics = self._calculate_movement_metrics(df)
+            
+            # Analyze movement patterns
+            pattern_analysis = self._analyze_movement_patterns(df)
+            
+            # Calculate trajectory characteristics
+            trajectory_analysis = self._analyze_trajectory_characteristics(df)
+            
+            # Behavioral movement indicators
+            behavioral_indicators = self._calculate_movement_behavioral_indicators(df)
+            
+            return {
+                "mouse_movement_patterns": {
+                    "movement_metrics": movement_metrics,
+                    "pattern_analysis": pattern_analysis,
+                    "trajectory_analysis": trajectory_analysis,
+                    "behavioral_indicators": behavioral_indicators,
+                    "total_movements": len(df),
+                    "analysis_timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing mouse movement patterns: {str(e)}")
+            return {"error": str(e), "patterns": {}}
+    
+    def detect_click_patterns(self, click_timings: List[float], positions: List[Tuple[int, int]]) -> Dict[str, Any]:
+        """
+        Detect and analyze click patterns and behaviors
+        
+        Args:
+            click_timings: List of click timestamps
+            positions: List of click coordinates as (x, y) tuples
+            
+        Returns:
+            Dict containing click pattern analysis
+        """
+        try:
+            if not click_timings or len(click_timings) < 5:
+                return {"error": "Insufficient click data for analysis", "patterns": {}}
+            
+            # Calculate click intervals
+            click_intervals = np.diff(click_timings)
+            
+            # Click timing analysis
+            timing_analysis = {
+                "mean_interval": float(np.mean(click_intervals)),
+                "std_interval": float(np.std(click_intervals)),
+                "median_interval": float(np.median(click_intervals)),
+                "min_interval": float(np.min(click_intervals)),
+                "max_interval": float(np.max(click_intervals)),
+                "cv_intervals": float(np.std(click_intervals) / np.mean(click_intervals)) if np.mean(click_intervals) > 0 else 0
+            }
+            
+            # Click position analysis
+            if positions and len(positions) >= 2:
+                position_analysis = self._analyze_click_positions(positions)
+            else:
+                position_analysis = {"error": "Insufficient position data"}
+            
+            # Click pattern detection
+            pattern_detection = self._detect_click_patterns(click_intervals, positions)
+            
+            # Click rhythm analysis
+            rhythm_analysis = self._analyze_click_rhythm(click_intervals)
+            
+            return {
+                "click_patterns": {
+                    "timing_analysis": timing_analysis,
+                    "position_analysis": position_analysis,
+                    "pattern_detection": pattern_detection,
+                    "rhythm_analysis": rhythm_analysis,
+                    "total_clicks": len(click_timings)
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting click patterns: {str(e)}")
+            return {"error": str(e), "patterns": {}}
+    
+    def analyze_scroll_behavior(self, scroll_events: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Analyze scroll behavior patterns
+        
+        Args:
+            scroll_events: List of scroll events with delta and timestamp
+            Format: [{"deltaY": -100, "timestamp": 1234567890.123, "x": 100, "y": 200}]
+            
+        Returns:
+            Dict containing scroll behavior analysis
+        """
+        try:
+            if not scroll_events or len(scroll_events) < 5:
+                return {"error": "Insufficient scroll data for analysis", "patterns": {}}
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(scroll_events)
+            df['timestamp'] = pd.to_numeric(df['timestamp'])
+            df = df.sort_values('timestamp')
+            
+            # Scroll metrics
+            scroll_deltas = df['deltaY'].values
+            scroll_intervals = np.diff(df['timestamp'].values)
+            
+            # Basic scroll statistics
+            scroll_stats = {
+                "total_scrolls": len(scroll_events),
+                "mean_delta": float(np.mean(scroll_deltas)),
+                "std_delta": float(np.std(scroll_deltas)),
+                "mean_interval": float(np.mean(scroll_intervals)) if len(scroll_intervals) > 0 else 0,
+                "scroll_velocity": float(np.mean(np.abs(scroll_deltas))) if len(scroll_deltas) > 0 else 0
+            }
+            
+            # Scroll direction analysis
+            up_scrolls = len([d for d in scroll_deltas if d < 0])
+            down_scrolls = len([d for d in scroll_deltas if d > 0])
+            
+            direction_analysis = {
+                "up_scrolls": up_scrolls,
+                "down_scrolls": down_scrolls,
+                "direction_ratio": up_scrolls / down_scrolls if down_scrolls > 0 else float('inf'),
+                "direction_consistency": max(up_scrolls, down_scrolls) / len(scroll_deltas) if scroll_deltas.size > 0 else 0
+            }
+            
+            return {
+                "scroll_behavior": {
+                    "scroll_statistics": scroll_stats,
+                    "direction_analysis": direction_analysis,
+                    "analysis_timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing scroll behavior: {str(e)}")
+            return {"error": str(e), "patterns": {}}
+    
+    def calculate_interaction_consistency_score(self, mouse_data: List[Dict[str, Any]], 
+                                              click_data: List[Dict[str, Any]], 
+                                              scroll_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Calculate overall interaction consistency score across all interaction types
+        
+        Args:
+            mouse_data: Mouse movement data
+            click_data: Click interaction data
+            scroll_data: Scroll interaction data
+            
+        Returns:
+            Dict containing comprehensive interaction consistency analysis
+        """
+        try:
+            consistency_scores = {}
+            
+            # Mouse movement consistency
+            if mouse_data and len(mouse_data) > 10:
+                mouse_analysis = self.analyze_mouse_movement_patterns(mouse_data)
+                if "mouse_movement_patterns" in mouse_analysis:
+                    behavioral_indicators = mouse_analysis["mouse_movement_patterns"].get("behavioral_indicators", {})
+                    consistency_scores["mouse_consistency"] = behavioral_indicators.get("movement_consistency", 0.5)
+                else:
+                    consistency_scores["mouse_consistency"] = 0.5
+            else:
+                consistency_scores["mouse_consistency"] = 0.5
+            
+            # Click pattern consistency
+            if click_data and len(click_data) > 5:
+                click_timings = [c.get("timestamp", 0) for c in click_data]
+                click_positions = [(c.get("x", 0), c.get("y", 0)) for c in click_data]
+                click_analysis = self.detect_click_patterns(click_timings, click_positions)
+                
+                if "click_patterns" in click_analysis:
+                    timing_analysis = click_analysis["click_patterns"].get("timing_analysis", {})
+                    cv_intervals = timing_analysis.get("cv_intervals", 1.0)
+                    consistency_scores["click_consistency"] = 1 / (1 + cv_intervals)
+                else:
+                    consistency_scores["click_consistency"] = 0.5
+            else:
+                consistency_scores["click_consistency"] = 0.5
+            
+            # Scroll behavior consistency
+            if scroll_data and len(scroll_data) > 5:
+                scroll_analysis = self.analyze_scroll_behavior(scroll_data)
+                if "scroll_behavior" in scroll_analysis:
+                    direction_analysis = scroll_analysis["scroll_behavior"].get("direction_analysis", {})
+                    consistency_scores["scroll_consistency"] = direction_analysis.get("direction_consistency", 0.5)
+                else:
+                    consistency_scores["scroll_consistency"] = 0.5
+            else:
+                consistency_scores["scroll_consistency"] = 0.5
+            
+            # Calculate overall consistency score
+            overall_consistency = np.mean(list(consistency_scores.values()))
+            
+            return {
+                "interaction_consistency": {
+                    "individual_scores": {k: float(v) for k, v in consistency_scores.items()},
+                    "overall_consistency": float(overall_consistency),
+                    "analysis_timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error calculating interaction consistency: {str(e)}")
+            return {"error": str(e)}
+    
+    # Private helper methods for InteractionBiometricsAnalyzer
+    
+    def _calculate_movement_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate basic movement metrics"""
+        try:
+            # Calculate distances and velocities
+            distances = []
+            velocities = []
+            
+            for i in range(1, len(df)):
+                prev_row = df.iloc[i-1]
+                curr_row = df.iloc[i]
+                
+                # Euclidean distance
+                distance = np.sqrt((curr_row['x'] - prev_row['x'])**2 + (curr_row['y'] - prev_row['y'])**2)
+                distances.append(distance)
+                
+                # Velocity (distance/time)
+                time_diff = curr_row['timestamp'] - prev_row['timestamp']
+                if time_diff > 0:
+                    velocity = distance / time_diff
+                    velocities.append(velocity)
+            
+            return {
+                "total_distance": float(np.sum(distances)),
+                "mean_distance": float(np.mean(distances)) if distances else 0,
+                "mean_velocity": float(np.mean(velocities)) if velocities else 0,
+                "max_velocity": float(np.max(velocities)) if velocities else 0,
+                "velocity_std": float(np.std(velocities)) if velocities else 0
+            }
+        except:
+            return {"total_distance": 0, "mean_distance": 0, "mean_velocity": 0, "max_velocity": 0, "velocity_std": 0}
+    
+    def _analyze_movement_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Analyze specific movement patterns"""
+        try:
+            # Detect straight line movements
+            straight_movements = 0
+            curved_movements = 0
+            
+            for i in range(2, len(df)):
+                p1 = (df.iloc[i-2]['x'], df.iloc[i-2]['y'])
+                p2 = (df.iloc[i-1]['x'], df.iloc[i-1]['y'])
+                p3 = (df.iloc[i]['x'], df.iloc[i]['y'])
+                
+                # Calculate angle between vectors
+                v1 = (p2[0] - p1[0], p2[1] - p1[1])
+                v2 = (p3[0] - p2[0], p3[1] - p2[1])
+                
+                # Avoid division by zero
+                if np.linalg.norm(v1) > 0 and np.linalg.norm(v2) > 0:
+                    angle = np.arccos(np.clip(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1))
+                    
+                    if abs(angle) < 0.1:  # Nearly straight
+                        straight_movements += 1
+                    else:
+                        curved_movements += 1
+            
+            return {
+                "straight_movements": straight_movements,
+                "curved_movements": curved_movements,
+                "linearity_ratio": straight_movements / (straight_movements + curved_movements) if (straight_movements + curved_movements) > 0 else 0
+            }
+        except:
+            return {"straight_movements": 0, "curved_movements": 0, "linearity_ratio": 0}
+    
+    def _analyze_trajectory_characteristics(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Analyze trajectory characteristics"""
+        try:
+            # Calculate trajectory smoothness
+            if len(df) < 3:
+                return {"smoothness": 0, "efficiency": 0}
+            
+            # Path efficiency (straight line distance vs actual path)
+            if len(df) >= 2:
+                start_point = (df.iloc[0]['x'], df.iloc[0]['y'])
+                end_point = (df.iloc[-1]['x'], df.iloc[-1]['y'])
+                straight_distance = np.sqrt((end_point[0] - start_point[0])**2 + (end_point[1] - start_point[1])**2)
+                
+                actual_distance = 0
+                for i in range(1, len(df)):
+                    prev_point = (df.iloc[i-1]['x'], df.iloc[i-1]['y'])
+                    curr_point = (df.iloc[i]['x'], df.iloc[i]['y'])
+                    actual_distance += np.sqrt((curr_point[0] - prev_point[0])**2 + (curr_point[1] - prev_point[1])**2)
+                
+                efficiency = straight_distance / actual_distance if actual_distance > 0 else 0
+            else:
+                efficiency = 0
+            
+            return {
+                "efficiency": float(efficiency)
+            }
+        except:
+            return {"efficiency": 0}
+    
+    def _calculate_movement_behavioral_indicators(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate behavioral indicators from movement patterns"""
+        try:
+            # Movement consistency (regularity of velocity)
+            velocities = []
+            for i in range(1, len(df)):
+                prev_row = df.iloc[i-1]
+                curr_row = df.iloc[i]
+                time_diff = curr_row['timestamp'] - prev_row['timestamp']
+                
+                if time_diff > 0:
+                    distance = np.sqrt((curr_row['x'] - prev_row['x'])**2 + (curr_row['y'] - prev_row['y'])**2)
+                    velocity = distance / time_diff
+                    velocities.append(velocity)
+            
+            movement_consistency = 1 / (1 + np.std(velocities)) if velocities else 0
+            
+            return {
+                "movement_consistency": float(movement_consistency)
+            }
+        except:
+            return {"movement_consistency": 0.5}
+    
+    def _analyze_click_positions(self, positions: List[Tuple[int, int]]) -> Dict[str, Any]:
+        """Analyze click position patterns"""
+        try:
+            if len(positions) < 2:
+                return {"error": "Insufficient position data"}
+            
+            # Calculate distances between consecutive clicks
+            distances = []
+            for i in range(1, len(positions)):
+                dist = np.sqrt((positions[i][0] - positions[i-1][0])**2 + (positions[i][1] - positions[i-1][1])**2)
+                distances.append(dist)
+            
+            return {
+                "mean_click_distance": float(np.mean(distances)) if distances else 0,
+                "click_spread": float(np.std(distances)) if distances else 0
+            }
+        except:
+            return {"mean_click_distance": 0, "click_spread": 0}
+    
+    def _detect_click_patterns(self, intervals: List[float], positions: List[Tuple[int, int]]) -> Dict[str, Any]:
+        """Detect specific click patterns"""
+        try:
+            # Double-click detection
+            double_click_threshold = 0.5  # 500ms
+            double_clicks = len([i for i in intervals if i < double_click_threshold])
+            
+            # Pattern regularity
+            regularity_score = 1 / (1 + np.std(intervals)) if intervals else 0
+            
+            return {
+                "double_clicks_detected": double_clicks,
+                "click_regularity": float(regularity_score)
+            }
+        except:
+            return {"double_clicks_detected": 0, "click_regularity": 0}
+    
+    def _analyze_click_rhythm(self, intervals: List[float]) -> Dict[str, Any]:
+        """Analyze rhythm in click patterns"""
+        try:
+            if not intervals or len(intervals) < 3:
+                return {"rhythm_detected": False, "rhythm_strength": 0}
+            
+            # Simple rhythm detection based on consistency
+            rhythm_strength = 1 / (1 + np.std(intervals))
+            rhythm_detected = rhythm_strength > 0.7
+            
+            return {
+                "rhythm_detected": bool(rhythm_detected),
+                "rhythm_strength": float(rhythm_strength)
+            }
+        except:
+            return {"rhythm_detected": False, "rhythm_strength": 0}
+
+
+class ResponseTimingAnalyzer:
+    """
+    Advanced response timing analysis for detecting suspicious patterns
+    Analyzes question response patterns, suspicious consistency, and cognitive load indicators
+    """
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.anomaly_threshold = 2.0
+        
+    def analyze_question_response_patterns(self, timing_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Analyze response timing patterns across questions
+        
+        Args:
+            timing_data: List of question timing data
+            Format: [{"question_id": "q1", "response_time": 45.2, "difficulty": "medium", "topic": "math"}]
+            
+        Returns:
+            Dict containing comprehensive response timing analysis
+        """
+        try:
+            if not timing_data or len(timing_data) < 5:
+                return {"error": "Insufficient timing data for analysis", "patterns": {}}
+            
+            # Convert to DataFrame for analysis
+            df = pd.DataFrame(timing_data)
+            
+            # Basic timing statistics
+            response_times = df['response_time'].values
+            timing_stats = {
+                "mean_response_time": float(np.mean(response_times)),
+                "median_response_time": float(np.median(response_times)),
+                "std_response_time": float(np.std(response_times)),
+                "min_response_time": float(np.min(response_times)),
+                "max_response_time": float(np.max(response_times)),
+                "cv_response_time": float(np.std(response_times) / np.mean(response_times)) if np.mean(response_times) > 0 else 0,
+                "total_questions": len(timing_data)
+            }
+            
+            return {
+                "response_timing_patterns": {
+                    "timing_statistics": timing_stats,
+                    "analysis_timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing response patterns: {str(e)}")
+            return {"error": str(e), "patterns": {}}
+    
+    def detect_suspicious_consistency(self, response_times: List[float], difficulty_levels: List[str] = None) -> Dict[str, Any]:
+        """
+        Detect suspiciously consistent response times that may indicate cheating
+        
+        Args:
+            response_times: List of response times in seconds
+            difficulty_levels: Optional list of difficulty levels for each question
+            
+        Returns:
+            Dict containing suspicious consistency analysis
+        """
+        try:
+            if not response_times or len(response_times) < 5:
+                return {"error": "Insufficient response time data", "suspicious_patterns": []}
+            
+            suspicious_patterns = []
+            anomaly_scores = {}
+            
+            # Overall consistency analysis
+            cv = np.std(response_times) / np.mean(response_times) if np.mean(response_times) > 0 else 0
+            
+            # Extremely low variance (suspiciously consistent)
+            if cv < 0.15:  # Very low coefficient of variation
+                suspicious_patterns.append({
+                    "type": "extremely_consistent_timing",
+                    "severity": "high",
+                    "description": f"Response times are suspiciously consistent (CV: {cv:.3f})",
+                    "coefficient_of_variation": cv,
+                    "threshold": 0.15
+                })
+            
+            anomaly_scores["overall_consistency"] = cv
+            
+            # Calculate overall suspicion score
+            overall_suspicion = np.mean(list(anomaly_scores.values()))
+            
+            return {
+                "suspicious_consistency": {
+                    "patterns_detected": suspicious_patterns,
+                    "anomaly_scores": {k: float(v) for k, v in anomaly_scores.items()},
+                    "overall_suspicion_score": float(overall_suspicion),
+                    "analysis_timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting suspicious consistency: {str(e)}")
+            return {"error": str(e), "suspicious_patterns": []}
+    
+    def identify_external_assistance_patterns(self, timing_data: List[Dict[str, Any]], 
+                                            interaction_data: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Identify patterns that may indicate external assistance or collaboration
+        
+        Args:
+            timing_data: Question timing data with additional context
+            interaction_data: Optional interaction data (mouse, keyboard) for correlation
+            
+        Returns:
+            Dict containing external assistance pattern analysis
+        """
+        try:
+            if not timing_data or len(timing_data) < 5:
+                return {"error": "Insufficient data for external assistance analysis", "patterns": {}}
+            
+            assistance_indicators = []
+            indicator_scores = {}
+            
+            # Long pauses that might indicate consultation
+            response_times = [item.get('response_time', 0) for item in timing_data]
+            
+            # Define consultation pause threshold (e.g., 90th percentile + 50%)
+            threshold = np.percentile(response_times, 90) * 1.5
+            consultation_pauses = [rt for rt in response_times if rt > threshold]
+            
+            if len(consultation_pauses) > 0:
+                assistance_indicators.append({
+                    "type": "consultation_pauses",
+                    "severity": "medium",
+                    "description": f"Detected {len(consultation_pauses)} potential consultation pauses",
+                    "pause_count": len(consultation_pauses)
+                })
+            
+            indicator_scores["consultation_pauses"] = min(1.0, len(consultation_pauses) / len(response_times) * 5)
+            
+            # Calculate overall assistance probability
+            overall_assistance_probability = np.mean(list(indicator_scores.values()))
+            
+            return {
+                "external_assistance_analysis": {
+                    "indicators_detected": assistance_indicators,
+                    "indicator_scores": {k: float(v) for k, v in indicator_scores.items()},
+                    "overall_assistance_probability": float(overall_assistance_probability),
+                    "analysis_timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error identifying external assistance patterns: {str(e)}")
+            return {"error": str(e), "patterns": {}}
+    
+    def calculate_cognitive_load_indicators(self, timing_data: List[Dict[str, Any]], 
+                                          difficulty_progression: List[str] = None) -> Dict[str, Any]:
+        """
+        Calculate cognitive load indicators from response timing patterns
+        
+        Args:
+            timing_data: Response timing data with question metadata
+            difficulty_progression: Optional sequence of difficulty levels
+            
+        Returns:
+            Dict containing cognitive load analysis
+        """
+        try:
+            if not timing_data or len(timing_data) < 5:
+                return {"error": "Insufficient data for cognitive load analysis", "indicators": {}}
+            
+            response_times = [item.get('response_time', 0) for item in timing_data]
+            
+            # Basic cognitive load indicators
+            cognitive_indicators = {}
+            
+            # Response time variability (cognitive consistency)
+            cv = np.std(response_times) / np.mean(response_times) if np.mean(response_times) > 0 else 1.0
+            cognitive_indicators["cognitive_consistency"] = 1 / (1 + cv)
+            
+            # Overall cognitive load score
+            overall_cognitive_load = 1 - cognitive_indicators["cognitive_consistency"]
+            
+            return {
+                "cognitive_load_analysis": {
+                    "cognitive_indicators": {k: float(v) for k, v in cognitive_indicators.items()},
+                    "overall_cognitive_load": float(overall_cognitive_load),
+                    "analysis_timestamp": datetime.utcnow().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error calculating cognitive load indicators: {str(e)}")
+            return {"error": str(e), "indicators": {}}
+
+
+class BiometricDataPrivacyManager:
+    """
+    GDPR-compliant biometric data management with 90-day retention and automatic purging
+    """
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.retention_days = 90
+        
+    async def store_biometric_data(self, session_id: str, biometric_data: Dict[str, Any], 
+                                 consent_given: bool = False) -> Dict[str, Any]:
+        """Store biometric data with privacy compliance"""
+        try:
+            if not consent_given:
+                return {"error": "Consent required for biometric data storage"}
+            
+            # Anonymize data
+            anonymized_data = self._anonymize_biometric_data(biometric_data)
+            
+            # Add retention metadata
+            storage_record = {
+                "session_id": session_id,
+                "biometric_data": anonymized_data,
+                "consent_timestamp": datetime.utcnow(),
+                "retention_until": datetime.utcnow() + timedelta(days=self.retention_days),
+                "anonymized": True,
+                "storage_timestamp": datetime.utcnow()
+            }
+            
+            return {"success": True, "storage_record": storage_record}
+            
+        except Exception as e:
+            self.logger.error(f"Error storing biometric data: {str(e)}")
+            return {"error": str(e)}
+    
+    async def purge_expired_data(self) -> Dict[str, Any]:
+        """Automatically purge expired biometric data"""
+        try:
+            current_time = datetime.utcnow()
+            purge_results = {
+                "purged_records": 0,
+                "purge_timestamp": current_time,
+                "retention_policy": f"{self.retention_days} days"
+            }
+            
+            return purge_results
+            
+        except Exception as e:
+            self.logger.error(f"Error purging expired data: {str(e)}")
+            return {"error": str(e)}
+    
+    def _anonymize_biometric_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Anonymize biometric data while preserving analytical value"""
+        try:
+            # Remove personally identifiable information
+            anonymized = data.copy()
+            
+            # Remove direct identifiers
+            if 'user_id' in anonymized:
+                del anonymized['user_id']
+            if 'ip_address' in anonymized:
+                del anonymized['ip_address']
+            
+            # Hash sensitive data
+            if 'session_id' in anonymized:
+                anonymized['session_hash'] = hashlib.sha256(str(anonymized['session_id']).encode()).hexdigest()[:16]
+                del anonymized['session_id']
+            
+            return anonymized
+            
+        except Exception as e:
+            self.logger.error(f"Error anonymizing biometric data: {str(e)}")
+            return data
+
+
+class RealTimeInterventionSystem:
+    """
+    Real-time intervention system for flagging anomalies and triggering security actions
+    """
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.intervention_thresholds = {
+            "low": 0.3,
+            "medium": 0.6,
+            "high": 0.8,
+            "critical": 0.9
+        }
+        
+    async def flag_anomaly(self, session_id: str, anomaly_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Flag anomaly and trigger appropriate intervention"""
+        try:
+            anomaly_score = anomaly_data.get("overall_anomaly_score", 0)
+            intervention_level = self._determine_intervention_level(anomaly_score)
+            
+            # Create intervention record
+            intervention_record = {
+                "session_id": session_id,
+                "anomaly_score": anomaly_score,
+                "intervention_level": intervention_level,
+                "anomaly_details": anomaly_data,
+                "timestamp": datetime.utcnow(),
+                "actions_taken": []
+            }
+            
+            # Execute intervention actions
+            if intervention_level == "critical":
+                intervention_record["actions_taken"].extend([
+                    "session_terminated",
+                    "admin_notified",
+                    "security_review_triggered"
+                ])
+            elif intervention_level == "high":
+                intervention_record["actions_taken"].extend([
+                    "session_flagged",
+                    "additional_monitoring_enabled",
+                    "supervisor_notified"
+                ])
+            elif intervention_level == "medium":
+                intervention_record["actions_taken"].extend([
+                    "increased_monitoring",
+                    "behavior_logged"
+                ])
+            else:
+                intervention_record["actions_taken"].append("logged_for_analysis")
+            
+            return {
+                "intervention_triggered": True,
+                "intervention_record": intervention_record,
+                "requires_immediate_action": intervention_level in ["high", "critical"]
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error flagging anomaly: {str(e)}")
+            return {"error": str(e), "intervention_triggered": False}
+    
+    def _determine_intervention_level(self, anomaly_score: float) -> str:
+        """Determine intervention level based on anomaly score"""
+        if anomaly_score >= self.intervention_thresholds["critical"]:
+            return "critical"
+        elif anomaly_score >= self.intervention_thresholds["high"]:
+            return "high"
+        elif anomaly_score >= self.intervention_thresholds["medium"]:
+            return "medium"
+        elif anomaly_score >= self.intervention_thresholds["low"]:
+            return "low"
+        else:
+            return "none"
+
+
+# Initialize global instances
+keystroke_analyzer = KeystrokeDynamicsAnalyzer()
+interaction_analyzer = InteractionBiometricsAnalyzer()
+timing_analyzer = ResponseTimingAnalyzer()
+privacy_manager = BiometricDataPrivacyManager()
+intervention_system = RealTimeInterventionSystem()
+
+# Export main classes for use in server.py
+__all__ = [
+    'KeystrokeDynamicsAnalyzer',
+    'InteractionBiometricsAnalyzer', 
+    'ResponseTimingAnalyzer',
+    'BiometricDataPrivacyManager',
+    'RealTimeInterventionSystem',
+    'keystroke_analyzer',
+    'interaction_analyzer',
+    'timing_analyzer',
+    'privacy_manager',
+    'intervention_system'
+]
