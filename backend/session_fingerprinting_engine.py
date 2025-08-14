@@ -2428,65 +2428,575 @@ class DeviceFingerprintingEngine:
     
     def _track_signature_evolution(self, device_id: str, current_signature: Dict[str, Any]) -> Dict[str, Any]:
         """Track how device signature evolves over time"""
-        return {
-            'signature_changes': 0,
-            'stability_score': 0.95,
-            'evolution_trend': 'stable'
-        }
+        try:
+            # Get historical signatures from memory store or MongoDB-like storage
+            historical_signatures = self.device_history.get(device_id, [])
+            
+            if not historical_signatures:
+                # First time seeing this device
+                self.device_history[device_id] = [current_signature]
+                return {
+                    'signature_changes': 0,
+                    'stability_score': 1.0,
+                    'evolution_trend': 'new_device',
+                    'signature_age_hours': 0,
+                    'change_velocity': 0.0,
+                    'signature_entropy': self._calculate_signature_entropy(current_signature),
+                    'signature_drift_score': 0.0
+                }
+            
+            # Calculate signature changes over time
+            last_signature = historical_signatures[-1]
+            changes_detected = self._compare_signatures(last_signature, current_signature)
+            
+            # Add current signature to history (keep last 50 signatures)
+            historical_signatures.append(current_signature)
+            if len(historical_signatures) > 50:
+                historical_signatures.pop(0)
+            self.device_history[device_id] = historical_signatures
+            
+            # Calculate evolution metrics
+            signature_changes = len(changes_detected['changed_fields'])
+            stability_score = self._calculate_signature_stability(historical_signatures)
+            evolution_trend = self._determine_evolution_trend(historical_signatures)
+            change_velocity = self._calculate_change_velocity(historical_signatures)
+            signature_drift = self._calculate_signature_drift(historical_signatures)
+            
+            return {
+                'signature_changes': signature_changes,
+                'stability_score': stability_score,
+                'evolution_trend': evolution_trend,
+                'changed_fields': changes_detected['changed_fields'],
+                'change_severity': changes_detected['severity'],
+                'signature_age_hours': len(historical_signatures),
+                'change_velocity': change_velocity,
+                'signature_entropy': self._calculate_signature_entropy(current_signature),
+                'signature_drift_score': signature_drift,
+                'consistency_over_time': self._analyze_consistency_over_time(historical_signatures)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error tracking signature evolution: {str(e)}")
+            return {
+                'signature_changes': 0,
+                'stability_score': 0.5,
+                'evolution_trend': 'error',
+                'error': str(e)
+            }
     
     def _detect_hardware_changes(self, device_id: str, current_signature: Dict[str, Any]) -> Dict[str, Any]:
         """Detect changes in hardware configuration"""
-        return {
-            'hardware_changes_detected': False,
-            'changed_components': [],
-            'change_severity': 'none'
-        }
+        try:
+            # Get last known hardware configuration
+            historical_signatures = self.device_history.get(device_id, [])
+            
+            if not historical_signatures:
+                return {
+                    'hardware_changes_detected': False,
+                    'changed_components': [],
+                    'change_severity': 'none',
+                    'hardware_stability_score': 1.0,
+                    'change_type': 'baseline'
+                }
+            
+            last_signature = historical_signatures[-1]
+            current_hardware = current_signature.get('hardware', {})
+            last_hardware = last_signature.get('hardware', {})
+            
+            # Detect specific hardware changes
+            hardware_changes = {
+                'cpu_changes': self._compare_cpu_configurations(
+                    last_hardware.get('cpu', {}), 
+                    current_hardware.get('cpu', {})
+                ),
+                'memory_changes': self._compare_memory_configurations(
+                    last_hardware.get('memory', {}), 
+                    current_hardware.get('memory', {})
+                ),
+                'gpu_changes': self._compare_gpu_configurations(
+                    last_hardware.get('gpu', {}), 
+                    current_hardware.get('gpu', {})
+                ),
+                'storage_changes': self._compare_storage_configurations(
+                    last_hardware.get('storage', {}), 
+                    current_hardware.get('storage', {})
+                )
+            }
+            
+            # Analyze overall hardware changes
+            changed_components = []
+            change_severity_scores = []
+            
+            for component, changes in hardware_changes.items():
+                if changes['changed']:
+                    changed_components.append({
+                        'component': component.replace('_changes', ''),
+                        'changes': changes['changes'],
+                        'severity': changes['severity'],
+                        'risk_level': changes['risk_level']
+                    })
+                    change_severity_scores.append(changes['severity_score'])
+            
+            # Calculate overall change severity
+            if change_severity_scores:
+                avg_severity_score = statistics.mean(change_severity_scores)
+                if avg_severity_score > 0.8:
+                    change_severity = 'critical'
+                elif avg_severity_score > 0.6:
+                    change_severity = 'high'
+                elif avg_severity_score > 0.4:
+                    change_severity = 'medium'
+                elif avg_severity_score > 0.2:
+                    change_severity = 'low'
+                else:
+                    change_severity = 'minimal'
+            else:
+                change_severity = 'none'
+                avg_severity_score = 0.0
+            
+            # Calculate hardware stability score
+            hardware_stability = 1.0 - avg_severity_score
+            
+            return {
+                'hardware_changes_detected': len(changed_components) > 0,
+                'changed_components': changed_components,
+                'change_severity': change_severity,
+                'hardware_stability_score': hardware_stability,
+                'change_type': 'hardware_modification' if changed_components else 'stable',
+                'component_analysis': hardware_changes,
+                'vm_indicators': self._check_vm_transition_indicators(last_hardware, current_hardware),
+                'spoofing_indicators': self._check_hardware_spoofing_indicators(hardware_changes)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting hardware changes: {str(e)}")
+            return {
+                'hardware_changes_detected': False,
+                'changed_components': [],
+                'change_severity': 'error',
+                'error': str(e)
+            }
     
     def _analyze_device_switching_patterns(self, device_id: str) -> Dict[str, Any]:
         """Analyze patterns of device switching"""
-        return {
-            'switching_frequency': 0.0,
-            'suspicious_patterns': [],
-            'pattern_risk_score': 0.0
-        }
+        try:
+            # Get device switching history
+            device_sessions = self.device_sessions.get(device_id, [])
+            
+            if len(device_sessions) < 2:
+                return {
+                    'switching_frequency': 0.0,
+                    'suspicious_patterns': [],
+                    'pattern_risk_score': 0.0,
+                    'session_count': len(device_sessions),
+                    'analysis_confidence': 'low'
+                }
+            
+            # Analyze switching patterns
+            switching_analysis = {}
+            
+            # 1. Calculate switching frequency (switches per hour)
+            if len(device_sessions) > 1:
+                time_span_hours = (device_sessions[-1]['timestamp'] - device_sessions[0]['timestamp']).total_seconds() / 3600
+                switching_frequency = (len(device_sessions) - 1) / max(time_span_hours, 1)
+            else:
+                switching_frequency = 0.0
+            
+            # 2. Detect suspicious patterns
+            suspicious_patterns = []
+            
+            # Rapid device switching (> 5 switches per hour)
+            if switching_frequency > 5:
+                suspicious_patterns.append({
+                    'pattern': 'rapid_switching',
+                    'description': f'Device switching {switching_frequency:.1f} times per hour',
+                    'risk_level': 'high',
+                    'confidence': 0.9
+                })
+            
+            # Regular interval switching (botnet behavior)
+            intervals = self._calculate_switching_intervals(device_sessions)
+            if self._detect_regular_intervals(intervals):
+                suspicious_patterns.append({
+                    'pattern': 'regular_interval_switching',
+                    'description': 'Device switches at regular intervals suggesting automation',
+                    'risk_level': 'medium',
+                    'confidence': 0.75
+                })
+            
+            # Unusual time patterns (night switching)
+            night_switches = self._count_night_switches(device_sessions)
+            if night_switches > len(device_sessions) * 0.3:
+                suspicious_patterns.append({
+                    'pattern': 'night_switching',
+                    'description': f'{night_switches} switches during night hours',
+                    'risk_level': 'medium',
+                    'confidence': 0.6
+                })
+            
+            # Geographical inconsistencies
+            geo_inconsistencies = self._detect_geographical_inconsistencies(device_sessions)
+            if geo_inconsistencies['detected']:
+                suspicious_patterns.append({
+                    'pattern': 'geographical_inconsistency',
+                    'description': geo_inconsistencies['description'],
+                    'risk_level': 'high',
+                    'confidence': geo_inconsistencies['confidence']
+                })
+            
+            # 3. Calculate overall pattern risk score
+            risk_scores = []
+            for pattern in suspicious_patterns:
+                risk_weight = {'low': 0.3, 'medium': 0.6, 'high': 0.9}.get(pattern['risk_level'], 0.5)
+                risk_scores.append(risk_weight * pattern['confidence'])
+            
+            pattern_risk_score = statistics.mean(risk_scores) if risk_scores else 0.0
+            
+            # 4. Determine analysis confidence
+            if len(device_sessions) > 10:
+                analysis_confidence = 'high'
+            elif len(device_sessions) > 5:
+                analysis_confidence = 'medium'
+            else:
+                analysis_confidence = 'low'
+            
+            return {
+                'switching_frequency': switching_frequency,
+                'suspicious_patterns': suspicious_patterns,
+                'pattern_risk_score': pattern_risk_score,
+                'session_count': len(device_sessions),
+                'analysis_confidence': analysis_confidence,
+                'switching_intervals': intervals,
+                'temporal_analysis': {
+                    'night_switches': night_switches,
+                    'day_switches': len(device_sessions) - night_switches,
+                    'weekend_switches': self._count_weekend_switches(device_sessions)
+                },
+                'geographical_analysis': geo_inconsistencies
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing device switching patterns: {str(e)}")
+            return {
+                'switching_frequency': 0.0,
+                'suspicious_patterns': [],
+                'pattern_risk_score': 0.0,
+                'error': str(e)
+            }
     
     def _calculate_device_reputation_score(self, device_id: str, consistency_analysis: Dict[str, Any]) -> float:
         """Calculate device reputation score based on historical behavior"""
-        return 0.85  # Placeholder
+        try:
+            reputation_factors = {}
+            
+            # 1. Signature stability factor (0.0 - 1.0)
+            evolution_tracking = consistency_analysis.get('evolution_tracking', {})
+            stability_score = evolution_tracking.get('stability_score', 0.5)
+            reputation_factors['stability'] = stability_score
+            
+            # 2. Hardware consistency factor (0.0 - 1.0)
+            hardware_changes = consistency_analysis.get('hardware_changes', {})
+            hardware_stability = hardware_changes.get('hardware_stability_score', 0.5)
+            reputation_factors['hardware_consistency'] = hardware_stability
+            
+            # 3. Switching pattern factor (0.0 - 1.0)
+            switching_patterns = consistency_analysis.get('switching_patterns', {})
+            pattern_risk = switching_patterns.get('pattern_risk_score', 0.0)
+            switching_factor = 1.0 - pattern_risk  # Invert risk to get positive factor
+            reputation_factors['switching_behavior'] = switching_factor
+            
+            # 4. Session correlation factor (0.0 - 1.0)
+            session_correlation = consistency_analysis.get('session_correlation', {})
+            correlation_score = session_correlation.get('session_correlation', 0.5)
+            reputation_factors['session_correlation'] = correlation_score
+            
+            # 5. Historical behavior factor
+            device_age_factor = self._calculate_device_age_factor(device_id)
+            reputation_factors['device_age'] = device_age_factor
+            
+            # 6. Anomaly detection factor
+            anomaly_factor = self._calculate_anomaly_factor(consistency_analysis)
+            reputation_factors['anomaly_factor'] = anomaly_factor
+            
+            # Calculate weighted reputation score
+            weights = {
+                'stability': 0.25,
+                'hardware_consistency': 0.20,
+                'switching_behavior': 0.20,
+                'session_correlation': 0.15,
+                'device_age': 0.10,
+                'anomaly_factor': 0.10
+            }
+            
+            weighted_score = sum(
+                reputation_factors[factor] * weights[factor]
+                for factor in weights
+                if factor in reputation_factors
+            )
+            
+            # Apply reputation modifiers
+            final_score = self._apply_reputation_modifiers(device_id, weighted_score, consistency_analysis)
+            
+            # Ensure score is between 0.0 and 1.0
+            final_score = max(0.0, min(1.0, final_score))
+            
+            return final_score
+            
+        except Exception as e:
+            self.logger.error(f"Error calculating device reputation score: {str(e)}")
+            return 0.5  # Neutral score on error
     
     def _correlate_cross_session_data(self, device_id: str) -> Dict[str, Any]:
         """Correlate device data across multiple sessions"""
-        return {
-            'session_correlation': 0.92,
-            'behavior_consistency': 0.88,
-            'anomaly_patterns': []
-        }
+        try:
+            device_sessions = self.device_sessions.get(device_id, [])
+            
+            if len(device_sessions) < 2:
+                return {
+                    'session_correlation': 1.0,
+                    'behavior_consistency': 1.0,
+                    'anomaly_patterns': [],
+                    'correlation_confidence': 'low',
+                    'session_count': len(device_sessions)
+                }
+            
+            correlation_analysis = {}
+            
+            # 1. Session correlation analysis
+            session_correlations = []
+            for i in range(1, len(device_sessions)):
+                correlation = self._calculate_session_correlation(
+                    device_sessions[i-1], 
+                    device_sessions[i]
+                )
+                session_correlations.append(correlation)
+            
+            avg_session_correlation = statistics.mean(session_correlations) if session_correlations else 1.0
+            
+            # 2. Behavior consistency analysis
+            behavior_patterns = self._extract_behavior_patterns(device_sessions)
+            behavior_consistency = self._calculate_behavior_consistency(behavior_patterns)
+            
+            # 3. Anomaly pattern detection
+            anomaly_patterns = []
+            
+            # Detect timing anomalies
+            timing_anomalies = self._detect_timing_anomalies(device_sessions)
+            if timing_anomalies:
+                anomaly_patterns.extend(timing_anomalies)
+            
+            # Detect signature anomalies
+            signature_anomalies = self._detect_signature_anomalies(device_sessions)
+            if signature_anomalies:
+                anomaly_patterns.extend(signature_anomalies)
+            
+            # Detect behavioral anomalies
+            behavioral_anomalies = self._detect_behavioral_anomalies(behavior_patterns)
+            if behavioral_anomalies:
+                anomaly_patterns.extend(behavioral_anomalies)
+            
+            # 4. Cross-session feature correlation
+            feature_correlations = self._calculate_feature_correlations(device_sessions)
+            
+            # 5. Session clustering analysis
+            session_clusters = self._perform_session_clustering(device_sessions)
+            
+            # 6. Determine correlation confidence
+            if len(device_sessions) > 20:
+                correlation_confidence = 'high'
+            elif len(device_sessions) > 10:
+                correlation_confidence = 'medium'
+            else:
+                correlation_confidence = 'low'
+            
+            return {
+                'session_correlation': avg_session_correlation,
+                'behavior_consistency': behavior_consistency,
+                'anomaly_patterns': anomaly_patterns,
+                'correlation_confidence': correlation_confidence,
+                'session_count': len(device_sessions),
+                'feature_correlations': feature_correlations,
+                'session_clusters': session_clusters,
+                'temporal_analysis': {
+                    'session_frequency': self._calculate_session_frequency(device_sessions),
+                    'usage_patterns': self._analyze_usage_patterns(device_sessions),
+                    'session_duration_stats': self._calculate_session_duration_stats(device_sessions)
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error correlating cross-session data: {str(e)}")
+            return {
+                'session_correlation': 0.5,
+                'behavior_consistency': 0.5,
+                'anomaly_patterns': [],
+                'error': str(e)
+            }
     
     def _update_device_tracking_record(self, device_id: str, current_signature: Dict[str, Any], 
                                      consistency_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Update device tracking record with new data"""
-        return {
-            'record_updated': True,
-            'update_timestamp': datetime.utcnow().isoformat(),
-            'tracking_version': self.signature_version
-        }
+        try:
+            # Update device session history
+            current_time = datetime.utcnow()
+            session_entry = {
+                'timestamp': current_time,
+                'signature': current_signature,
+                'consistency_score': consistency_analysis.get('reputation_score', 0.5),
+                'session_id': str(uuid.uuid4())
+            }
+            
+            if device_id not in self.device_sessions:
+                self.device_sessions[device_id] = []
+            
+            self.device_sessions[device_id].append(session_entry)
+            
+            # Keep only last 100 sessions per device
+            if len(self.device_sessions[device_id]) > 100:
+                self.device_sessions[device_id] = self.device_sessions[device_id][-100:]
+            
+            # Calculate tracking statistics
+            total_sessions = len(self.device_sessions[device_id])
+            first_seen = self.device_sessions[device_id][0]['timestamp'] if self.device_sessions[device_id] else current_time
+            device_age_days = (current_time - first_seen).days
+            
+            # Update device tracking metadata
+            tracking_metadata = {
+                'device_id': device_id,
+                'total_sessions': total_sessions,
+                'first_seen': first_seen.isoformat(),
+                'last_seen': current_time.isoformat(),
+                'device_age_days': device_age_days,
+                'tracking_version': self.signature_version,
+                'consistency_trend': self._calculate_consistency_trend(device_id),
+                'risk_level_history': self._get_risk_level_history(device_id)
+            }
+            
+            return {
+                'record_updated': True,
+                'update_timestamp': current_time.isoformat(),
+                'tracking_version': self.signature_version,
+                'tracking_metadata': tracking_metadata,
+                'storage_status': 'success'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error updating device tracking record: {str(e)}")
+            return {
+                'record_updated': False,
+                'update_timestamp': datetime.utcnow().isoformat(),
+                'error': str(e)
+            }
     
     def _calculate_overall_consistency_score(self, consistency_analysis: Dict[str, Any]) -> float:
         """Calculate overall device consistency score"""
-        return 0.87  # Placeholder
+        try:
+            consistency_factors = {}
+            
+            # Extract consistency factors from analysis
+            evolution_tracking = consistency_analysis.get('evolution_tracking', {})
+            consistency_factors['signature_stability'] = evolution_tracking.get('stability_score', 0.5)
+            
+            hardware_changes = consistency_analysis.get('hardware_changes', {})
+            consistency_factors['hardware_stability'] = hardware_changes.get('hardware_stability_score', 0.5)
+            
+            switching_patterns = consistency_analysis.get('switching_patterns', {})
+            pattern_risk = switching_patterns.get('pattern_risk_score', 0.0)
+            consistency_factors['switching_consistency'] = 1.0 - pattern_risk
+            
+            session_correlation = consistency_analysis.get('session_correlation', {})
+            consistency_factors['session_consistency'] = session_correlation.get('session_correlation', 0.5)
+            
+            reputation_score = consistency_analysis.get('reputation_score', 0.5)
+            consistency_factors['reputation_consistency'] = reputation_score
+            
+            # Calculate weighted consistency score
+            weights = {
+                'signature_stability': 0.30,
+                'hardware_stability': 0.25,
+                'switching_consistency': 0.20,
+                'session_consistency': 0.15,
+                'reputation_consistency': 0.10
+            }
+            
+            weighted_score = sum(
+                consistency_factors[factor] * weights[factor]
+                for factor in weights
+                if factor in consistency_factors
+            )
+            
+            # Apply consistency modifiers based on data quality
+            data_quality_modifier = self._calculate_data_quality_modifier(consistency_analysis)
+            final_score = weighted_score * data_quality_modifier
+            
+            return max(0.0, min(1.0, final_score))
+            
+        except Exception as e:
+            self.logger.error(f"Error calculating overall consistency score: {str(e)}")
+            return 0.5
     
     def _assess_device_risk_level(self, consistency_analysis: Dict[str, Any]) -> str:
         """Assess overall risk level for the device"""
-        reputation_score = consistency_analysis.get('reputation_score', 0.5)
-        
-        if reputation_score > 0.8:
-            return 'LOW'
-        elif reputation_score > 0.6:
+        try:
+            consistency_score = self._calculate_overall_consistency_score(consistency_analysis)
+            reputation_score = consistency_analysis.get('reputation_score', 0.5)
+            
+            # Get specific risk indicators
+            switching_patterns = consistency_analysis.get('switching_patterns', {})
+            pattern_risk = switching_patterns.get('pattern_risk_score', 0.0)
+            suspicious_patterns = len(switching_patterns.get('suspicious_patterns', []))
+            
+            hardware_changes = consistency_analysis.get('hardware_changes', {})
+            hardware_risk = 1.0 - hardware_changes.get('hardware_stability_score', 0.5)
+            vm_indicators = hardware_changes.get('vm_indicators', {}).get('detected', False)
+            spoofing_indicators = hardware_changes.get('spoofing_indicators', {}).get('detected', False)
+            
+            session_correlation = consistency_analysis.get('session_correlation', {})
+            anomaly_count = len(session_correlation.get('anomaly_patterns', []))
+            
+            # Calculate composite risk score
+            risk_factors = {
+                'consistency_risk': 1.0 - consistency_score,
+                'reputation_risk': 1.0 - reputation_score,
+                'pattern_risk': pattern_risk,
+                'hardware_risk': hardware_risk,
+                'anomaly_risk': min(1.0, anomaly_count * 0.2),
+                'vm_risk': 0.8 if vm_indicators else 0.0,
+                'spoofing_risk': 0.9 if spoofing_indicators else 0.0
+            }
+            
+            # Weighted risk calculation
+            risk_weights = {
+                'consistency_risk': 0.20,
+                'reputation_risk': 0.20,
+                'pattern_risk': 0.15,
+                'hardware_risk': 0.15,
+                'anomaly_risk': 0.10,
+                'vm_risk': 0.10,
+                'spoofing_risk': 0.10
+            }
+            
+            composite_risk = sum(
+                risk_factors[factor] * risk_weights[factor]
+                for factor in risk_weights
+                if factor in risk_factors
+            )
+            
+            # Determine risk level with thresholds
+            if composite_risk > 0.8 or spoofing_indicators or suspicious_patterns > 3:
+                return 'CRITICAL'
+            elif composite_risk > 0.6 or vm_indicators or suspicious_patterns > 1:
+                return 'HIGH'
+            elif composite_risk > 0.4 or pattern_risk > 0.5:
+                return 'MEDIUM'
+            elif composite_risk > 0.2:
+                return 'LOW'
+            else:
+                return 'MINIMAL'
+                
+        except Exception as e:
+            self.logger.error(f"Error assessing device risk level: {str(e)}")
             return 'MEDIUM'
-        elif reputation_score > 0.4:
-            return 'HIGH'
-        else:
-            return 'CRITICAL'
     
     # ===== CLASSIFICATION HELPER METHODS =====
     
