@@ -23,8 +23,12 @@ import json
 import time
 import os
 import uuid
+import urllib3
 from datetime import datetime
 from typing import Dict, List, Any
+
+# Disable SSL warnings for testing
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Get backend URL from environment
 BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://score-confidence-api.preview.emergentagent.com')
