@@ -17675,8 +17675,7 @@ async def health_check():
 async def root():
     return {"message": "AI-Powered Interview Agent API with Voice Support"}
 
-# Include the router in the main app
-app.include_router(api_router)
+# Router will be included after all routes are defined
 
 app.add_middleware(
     CORSMiddleware,
