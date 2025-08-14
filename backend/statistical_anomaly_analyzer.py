@@ -1081,8 +1081,77 @@ class StatisticalAnomalyAnalyzer:
             return {'available': False, 'error': str(e)}
     
     def _calculate_performance_progression(self, bin_performance: Dict) -> Dict[str, Any]:
-        """Calculate performance progression metrics (placeholder implementation)"""
-        return {'trend': 'normal', 'anomaly_detected': False}
+        """Calculate performance progression metrics"""
+        try:
+            if not bin_performance or len(bin_performance) < 2:
+                return {'trend': 'insufficient_data', 'anomaly_detected': False}
+            
+            # Extract accuracy values in order of difficulty
+            ordered_bins = ['easy', 'medium', 'hard']
+            accuracies = []
+            bin_names = []
+            
+            for bin_name in ordered_bins:
+                if bin_name in bin_performance:
+                    accuracies.append(bin_performance[bin_name]['accuracy'])
+                    bin_names.append(bin_name)
+            
+            if len(accuracies) < 2:
+                return {'trend': 'insufficient_data', 'anomaly_detected': False}
+            
+            # Calculate progression trend
+            progression_slope = 0
+            if len(accuracies) >= 2:
+                x_values = list(range(len(accuracies)))
+                try:
+                    slope, intercept, r_value, p_value, std_err = stats.linregress(x_values, accuracies)
+                    progression_slope = float(slope)
+                except:
+                    progression_slope = 0
+            
+            # Determine trend type
+            if progression_slope > 0.1:
+                trend = 'increasing'  # Performance improves with difficulty (suspicious)
+            elif progression_slope < -0.3:
+                trend = 'decreasing'  # Normal expected pattern
+            else:
+                trend = 'flat'  # Consistent performance across difficulties
+            
+            # Check for specific anomalies
+            anomaly_detected = False
+            anomaly_reasons = []
+            
+            # Anomaly 1: Better performance on harder questions
+            if len(accuracies) >= 2 and accuracies[-1] > accuracies[0] + 0.2:
+                anomaly_detected = True
+                anomaly_reasons.append('Performance improves significantly with difficulty')
+            
+            # Anomaly 2: Perfect performance on hard questions but poor on easy ones
+            if len(accuracies) >= 3:
+                if accuracies[-1] >= 0.9 and accuracies[0] <= 0.6:
+                    anomaly_detected = True
+                    anomaly_reasons.append('High performance on hard questions despite poor performance on easy ones')
+            
+            # Anomaly 3: Unusual progression pattern (not monotonic decrease)
+            if len(accuracies) >= 3:
+                diffs = [accuracies[i+1] - accuracies[i] for i in range(len(accuracies)-1)]
+                if sum(1 for d in diffs if d > 0.15) >= len(diffs) // 2:
+                    anomaly_detected = True
+                    anomaly_reasons.append('Non-standard difficulty progression pattern')
+            
+            return {
+                'trend': trend,
+                'anomaly_detected': bool(anomaly_detected),
+                'progression_slope': float(progression_slope),
+                'accuracy_progression': accuracies,
+                'bin_order': bin_names,
+                'anomaly_reasons': anomaly_reasons,
+                'progression_strength': float(abs(progression_slope))
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating performance progression: {str(e)}")
+            return {'trend': 'error', 'anomaly_detected': False, 'error': str(e)}
     
     # Additional placeholder methods for timing, collaboration analysis, etc.
     def _extract_timing_data(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
