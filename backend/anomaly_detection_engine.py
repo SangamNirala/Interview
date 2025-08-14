@@ -587,7 +587,7 @@ class AnomalyDetectionEngine:
                         'value': float(value),
                         'baseline_mean': baseline['mean'],
                         'z_score': float(z_score),
-                        'is_anomalous': is_anomalous,
+                        'is_anomalous': bool(is_anomalous),
                         'percentile': self._calculate_percentile(value, baseline)
                     }
         
