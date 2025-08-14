@@ -18572,4 +18572,453 @@ async def analyze_voice_enhanced(data: dict):
         logging.error(f"Enhanced voice analysis error: {e}")
         raise HTTPException(status_code=500, detail=f"Enhanced voice analysis failed: {str(e)}")
 
+# ===== MODULE 1: BEHAVIORAL BIOMETRIC ANALYSIS API ENDPOINTS =====
+
+@api_router.post("/security/biometric-data/submit")
+async def submit_biometric_data(request: BiometricDataSubmissionRequest):
+    """
+    Submit biometric data for analysis
+    Supports keystroke, mouse, scroll, click, and timing data
+    """
+    try:
+        if not request.consent_given:
+            raise HTTPException(status_code=400, detail="User consent required for biometric data collection")
+        
+        analysis_results = {}
+        
+        # Analyze keystroke dynamics if data provided
+        if request.keystroke_data and len(request.keystroke_data) > 0:
+            keystroke_result = keystroke_analyzer.analyze_typing_patterns(request.keystroke_data)
+            analysis_results["keystroke_analysis"] = keystroke_result
+        
+        # Analyze mouse movement patterns if data provided
+        if request.mouse_data and len(request.mouse_data) > 0:
+            mouse_result = interaction_analyzer.analyze_mouse_movement_patterns(request.mouse_data)
+            analysis_results["mouse_analysis"] = mouse_result
+        
+        # Analyze scroll behavior if data provided
+        if request.scroll_data and len(request.scroll_data) > 0:
+            scroll_result = interaction_analyzer.analyze_scroll_behavior(request.scroll_data)
+            analysis_results["scroll_analysis"] = scroll_result
+        
+        # Analyze click patterns if data provided
+        if request.click_data and len(request.click_data) > 0:
+            click_timings = [c.get("timestamp", 0) for c in request.click_data]
+            click_positions = [(c.get("x", 0), c.get("y", 0)) for c in request.click_data]
+            click_result = interaction_analyzer.detect_click_patterns(click_timings, click_positions)
+            analysis_results["click_analysis"] = click_result
+        
+        # Analyze response timing if data provided
+        if request.timing_data and len(request.timing_data) > 0:
+            timing_result = timing_analyzer.analyze_question_response_patterns(request.timing_data)
+            analysis_results["timing_analysis"] = timing_result
+        
+        # Calculate overall interaction consistency
+        if request.mouse_data or request.click_data or request.scroll_data:
+            consistency_result = interaction_analyzer.calculate_interaction_consistency_score(
+                request.mouse_data or [],
+                request.click_data or [],
+                request.scroll_data or []
+            )
+            analysis_results["interaction_consistency"] = consistency_result
+        
+        # Store biometric data with privacy compliance
+        storage_result = await privacy_manager.store_biometric_data(
+            request.session_id,
+            {
+                "keystroke_data": request.keystroke_data,
+                "mouse_data": request.mouse_data,
+                "scroll_data": request.scroll_data,
+                "click_data": request.click_data,
+                "timing_data": request.timing_data
+            },
+            request.consent_given
+        )
+        
+        # Store analysis results in database
+        try:
+            analysis_record = BiometricAnalysisResult(
+                session_id=request.session_id,
+                analysis_type="comprehensive_biometric_analysis",
+                analysis_results=analysis_results,
+                anomaly_score=0.0,  # Will be calculated in anomaly detection
+                intervention_level="none"
+            )
+            
+            await db.biometric_analysis_results.insert_one(analysis_record.dict())
+            logging.info(f"Stored biometric analysis results for session {request.session_id}")
+        except Exception as e:
+            logging.error(f"Error storing biometric analysis results: {str(e)}")
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "analysis_results": analysis_results,
+            "storage_result": storage_result,
+            "message": "Biometric data submitted and analyzed successfully"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error submitting biometric data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Biometric data submission failed: {str(e)}")
+
+@api_router.post("/security/biometric-analysis/detect-anomalies")
+async def detect_biometric_anomalies(request: BiometricAnalysisRequest):
+    """
+    Detect anomalies in biometric patterns
+    Compare current session against baseline patterns
+    """
+    try:
+        anomaly_results = {}
+        overall_anomaly_score = 0.0
+        intervention_triggered = False
+        
+        # Get current session biometric data
+        current_session_data = await db.biometric_analysis_results.find_one({
+            "session_id": request.session_id
+        })
+        
+        if not current_session_data:
+            raise HTTPException(status_code=404, detail="No biometric data found for session")
+        
+        current_analysis = current_session_data.get("analysis_results", {})
+        
+        # Get baseline data if comparison requested
+        baseline_analysis = None
+        if request.baseline_comparison and request.baseline_session_id:
+            baseline_session_data = await db.biometric_analysis_results.find_one({
+                "session_id": request.baseline_session_id
+            })
+            if baseline_session_data:
+                baseline_analysis = baseline_session_data.get("analysis_results", {})
+        
+        # Detect keystroke anomalies
+        if "keystroke_analysis" in current_analysis and baseline_analysis and "keystroke_analysis" in baseline_analysis:
+            keystroke_anomaly = keystroke_analyzer.detect_typing_anomalies(
+                baseline_analysis["keystroke_analysis"],
+                current_analysis["keystroke_analysis"]
+            )
+            anomaly_results["keystroke_anomalies"] = keystroke_anomaly
+            
+            if keystroke_anomaly.get("overall_anomaly_score", 0) > 0:
+                overall_anomaly_score = max(overall_anomaly_score, keystroke_anomaly["overall_anomaly_score"])
+        
+        # Detect suspicious timing consistency
+        if "timing_analysis" in current_analysis:
+            timing_data = current_analysis["timing_analysis"].get("response_timing_patterns", {})
+            timing_stats = timing_data.get("timing_statistics", {})
+            
+            if timing_stats:
+                # Extract response times for analysis
+                response_times = [timing_stats.get("mean_response_time", 0)] * timing_stats.get("total_questions", 1)
+                
+                suspicious_consistency = timing_analyzer.detect_suspicious_consistency(response_times)
+                anomaly_results["timing_anomalies"] = suspicious_consistency
+                
+                if suspicious_consistency.get("overall_suspicion_score", 0) > 0:
+                    overall_anomaly_score = max(overall_anomaly_score, suspicious_consistency["overall_suspicion_score"])
+        
+        # Detect external assistance patterns
+        if "timing_analysis" in current_analysis:
+            timing_data_list = []  # This would be populated from actual timing data
+            assistance_patterns = timing_analyzer.identify_external_assistance_patterns(timing_data_list)
+            anomaly_results["assistance_patterns"] = assistance_patterns
+            
+            if assistance_patterns.get("overall_assistance_probability", 0) > 0:
+                overall_anomaly_score = max(overall_anomaly_score, assistance_patterns["overall_assistance_probability"])
+        
+        # Trigger intervention if anomaly score is high
+        if overall_anomaly_score > 0.6:  # Medium threshold
+            intervention_result = await intervention_system.flag_anomaly(
+                request.session_id,
+                {
+                    "overall_anomaly_score": overall_anomaly_score,
+                    "anomaly_details": anomaly_results
+                }
+            )
+            intervention_triggered = intervention_result.get("intervention_triggered", False)
+            
+            # Store intervention record
+            if intervention_triggered:
+                try:
+                    intervention_record = SecurityIntervention(
+                        session_id=request.session_id,
+                        intervention_level=intervention_result["intervention_record"]["intervention_level"],
+                        anomaly_score=overall_anomaly_score,
+                        anomaly_details=anomaly_results,
+                        actions_taken=intervention_result["intervention_record"]["actions_taken"],
+                        requires_immediate_action=intervention_result["requires_immediate_action"]
+                    )
+                    
+                    await db.security_interventions.insert_one(intervention_record.dict())
+                    logging.info(f"Security intervention triggered for session {request.session_id}")
+                except Exception as e:
+                    logging.error(f"Error storing security intervention: {str(e)}")
+        
+        # Update analysis record with anomaly scores
+        try:
+            await db.biometric_analysis_results.update_one(
+                {"session_id": request.session_id},
+                {
+                    "$set": {
+                        "anomaly_score": overall_anomaly_score,
+                        "intervention_level": "high" if overall_anomaly_score > 0.8 else "medium" if overall_anomaly_score > 0.4 else "low",
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+        except Exception as e:
+            logging.error(f"Error updating biometric analysis record: {str(e)}")
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "overall_anomaly_score": float(overall_anomaly_score),
+            "anomaly_results": anomaly_results,
+            "intervention_triggered": intervention_triggered,
+            "recommendation": "immediate_review" if overall_anomaly_score > 0.8 else "monitor" if overall_anomaly_score > 0.4 else "normal",
+            "analysis_timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error detecting biometric anomalies: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Anomaly detection failed: {str(e)}")
+
+@api_router.post("/security/biometric-signature/generate")
+async def generate_biometric_signature(session_ids: List[str]):
+    """
+    Generate behavioral biometric signature from multiple sessions
+    Creates unique behavioral fingerprint for user identification
+    """
+    try:
+        if len(session_ids) < 3:
+            raise HTTPException(status_code=400, detail="Minimum 3 sessions required for signature generation")
+        
+        # Collect keystroke history from multiple sessions
+        keystroke_history = []
+        
+        for session_id in session_ids:
+            session_data = await db.biometric_analysis_results.find_one({
+                "session_id": session_id
+            })
+            
+            if session_data and "analysis_results" in session_data:
+                analysis_results = session_data["analysis_results"]
+                if "keystroke_analysis" in analysis_results:
+                    keystroke_history.append(analysis_results["keystroke_analysis"])
+        
+        if len(keystroke_history) < 2:
+            raise HTTPException(status_code=400, detail="Insufficient keystroke data for signature generation")
+        
+        # Generate biometric signature
+        signature_result = keystroke_analyzer.generate_biometric_signature(keystroke_history)
+        
+        if "error" in signature_result:
+            raise HTTPException(status_code=400, detail=signature_result["error"])
+        
+        # Store biometric signature
+        try:
+            biometric_signature = BiometricSignature(
+                user_identifier=hashlib.sha256(f"sessions_{'_'.join(session_ids)}".encode()).hexdigest()[:16],
+                signature_hash=signature_result["biometric_signature"]["signature_hash"],
+                signature_features=signature_result["biometric_signature"]["signature_features"],
+                behavioral_fingerprint=signature_result["biometric_signature"]["behavioral_fingerprint"],
+                confidence_score=signature_result["biometric_signature"]["confidence_score"],
+                generated_from_sessions=len(session_ids)
+            )
+            
+            await db.biometric_signatures.insert_one(biometric_signature.dict())
+            logging.info(f"Generated and stored biometric signature from {len(session_ids)} sessions")
+        except Exception as e:
+            logging.error(f"Error storing biometric signature: {str(e)}")
+        
+        return {
+            "success": True,
+            "signature_result": signature_result,
+            "sessions_analyzed": len(session_ids),
+            "signature_id": biometric_signature.id,
+            "message": "Biometric signature generated successfully"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error generating biometric signature: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Signature generation failed: {str(e)}")
+
+@api_router.post("/security/biometric-config/update")
+async def update_biometric_config(request: BiometricConfigRequest):
+    """
+    Update biometric tracking configuration for a session
+    Admin endpoint to enable/disable biometric tracking per assessment
+    """
+    try:
+        # Store configuration in database
+        config_record = {
+            "session_id": request.session_id,
+            "enable_biometric_tracking": request.enable_biometric_tracking,
+            "tracking_sensitivity": request.tracking_sensitivity,
+            "real_time_analysis": request.real_time_analysis,
+            "intervention_enabled": request.intervention_enabled,
+            "updated_at": datetime.utcnow(),
+            "updated_by": "admin"
+        }
+        
+        await db.biometric_configurations.update_one(
+            {"session_id": request.session_id},
+            {"$set": config_record},
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "configuration": config_record,
+            "message": "Biometric configuration updated successfully"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error updating biometric configuration: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Configuration update failed: {str(e)}")
+
+@api_router.get("/security/biometric-analysis/{session_id}")
+async def get_biometric_analysis(session_id: str):
+    """
+    Get comprehensive biometric analysis results for a session
+    """
+    try:
+        # Get biometric analysis results
+        analysis_data = await db.biometric_analysis_results.find_one({
+            "session_id": session_id
+        })
+        
+        if not analysis_data:
+            raise HTTPException(status_code=404, detail="No biometric analysis found for session")
+        
+        # Get security interventions if any
+        interventions = await db.security_interventions.find({
+            "session_id": session_id
+        }).to_list(None)
+        
+        # Get biometric configuration
+        config = await db.biometric_configurations.find_one({
+            "session_id": session_id
+        })
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "analysis_results": analysis_data["analysis_results"],
+            "anomaly_score": analysis_data.get("anomaly_score", 0.0),
+            "intervention_level": analysis_data.get("intervention_level", "none"),
+            "security_interventions": interventions,
+            "biometric_configuration": config,
+            "analysis_timestamp": analysis_data["created_at"]
+        }
+        
+    except Exception as e:
+        logging.error(f"Error retrieving biometric analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve biometric analysis: {str(e)}")
+
+@api_router.post("/security/data-privacy/consent")
+async def update_biometric_consent(request: BiometricConsentRequest):
+    """
+    Update user consent for biometric data collection
+    GDPR compliance endpoint
+    """
+    try:
+        consent_record = {
+            "session_id": request.session_id,
+            "candidate_id": request.candidate_id,
+            "consent_given": request.consent_given,
+            "data_types": request.data_types,
+            "consent_timestamp": datetime.utcnow(),
+            "ip_address": "anonymized",  # IP should be anonymized
+            "user_agent": "anonymized"   # User agent should be anonymized
+        }
+        
+        await db.biometric_consent_records.update_one(
+            {"session_id": request.session_id},
+            {"$set": consent_record},
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "consent_recorded": True,
+            "session_id": request.session_id,
+            "consent_given": request.consent_given,
+            "data_types": request.data_types,
+            "message": "Biometric consent updated successfully"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error updating biometric consent: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Consent update failed: {str(e)}")
+
+@api_router.post("/security/data-privacy/purge-expired")
+async def purge_expired_biometric_data():
+    """
+    Purge expired biometric data (90-day retention policy)
+    Admin endpoint for GDPR compliance
+    """
+    try:
+        purge_result = await privacy_manager.purge_expired_data()
+        
+        # Also purge from database collections
+        current_time = datetime.utcnow()
+        retention_cutoff = current_time - timedelta(days=90)
+        
+        # Purge expired biometric data
+        biometric_purged = await db.biometric_analysis_results.delete_many({
+            "created_at": {"$lt": retention_cutoff}
+        })
+        
+        # Purge expired consent records
+        consent_purged = await db.biometric_consent_records.delete_many({
+            "consent_timestamp": {"$lt": retention_cutoff}
+        })
+        
+        # Purge expired interventions
+        interventions_purged = await db.security_interventions.delete_many({
+            "created_at": {"$lt": retention_cutoff}
+        })
+        
+        return {
+            "success": True,
+            "purge_results": {
+                "biometric_data_purged": biometric_purged.deleted_count,
+                "consent_records_purged": consent_purged.deleted_count,
+                "interventions_purged": interventions_purged.deleted_count,
+                "purge_timestamp": current_time,
+                "retention_policy": "90 days"
+            },
+            "privacy_manager_result": purge_result,
+            "message": "Expired biometric data purged successfully"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error purging expired biometric data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Data purge failed: {str(e)}")
+
+@api_router.get("/security/interventions/{session_id}")
+async def get_security_interventions(session_id: str):
+    """
+    Get all security interventions for a specific session
+    """
+    try:
+        interventions = await db.security_interventions.find({
+            "session_id": session_id
+        }).sort("created_at", 1).to_list(None)
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "interventions": interventions,
+            "total_interventions": len(interventions),
+            "highest_anomaly_score": max([i.get("anomaly_score", 0) for i in interventions]) if interventions else 0.0
+        }
+        
+    except Exception as e:
+        logging.error(f"Error retrieving security interventions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve interventions: {str(e)}")
+
 # Routes already mounted above at line 10881
