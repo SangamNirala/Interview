@@ -950,6 +950,18 @@ class AptitudeQuestion(BaseModel):
     usage_count: int = 0
     success_rate: float = 0.0
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Enhanced CAT: IRT Parameters
+    discrimination: float = 1.0  # Item discrimination parameter (a)
+    difficulty_value: float = 0.0  # IRT difficulty parameter (b), mapped from difficulty string
+    guessing: float = 0.0  # Pseudo-guessing parameter (c)
+    information_score: float = 0.0  # Calculated information value
+    calibrated: bool = False  # Whether IRT parameters have been calibrated from real data
+    
+    # Enhanced CAT: Analytics & Fraud Detection
+    avg_response_time: float = 60.0  # Average response time in seconds
+    response_time_std: float = 30.0  # Standard deviation of response times
+    fraud_flags: List[str] = []  # Fraud indicators for this question
 
 class AptitudeTestConfig(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
