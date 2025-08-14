@@ -1437,6 +1437,98 @@ class AnomalyDetectionEngine:
         except Exception as e:
             self.logger.warning(f"Error analyzing feature contributions: {str(e)}")
             return {'feature_contributions': {}, 'total_weighted_score': 0.0}
+    
+    def _calculate_fallback_analysis(self, session_data: Dict[str, Any]) -> Dict[str, float]:
+        """Provide fallback anomaly analysis when baseline models aren't available"""
+        try:
+            responses = session_data.get('responses', [])
+            if not responses:
+                return {
+                    'isolation_forest_prob': 0.5,
+                    'statistical_prob': 0.5,
+                    'pca_prob': 0.5
+                }
+            
+            # Simple heuristic-based analysis
+            total_responses = len(responses)
+            correct_responses = sum(1 for r in responses if bool(r.get('is_correct', False)))
+            accuracy = correct_responses / total_responses if total_responses > 0 else 0.5
+            
+            # Calculate response time statistics
+            response_times = []
+            for r in responses:
+                if 'response_time' in r:
+                    response_times.append(r['response_time'])
+            
+            if response_times:
+                avg_time = statistics.mean(response_times)
+                time_std = statistics.stdev(response_times) if len(response_times) > 1 else 0
+                time_cv = time_std / avg_time if avg_time > 0 else 0
+            else:
+                avg_time = 60.0  # Default
+                time_cv = 0.3  # Default variation
+            
+            # Simple probability estimation based on patterns
+            # Suspicious patterns: very high accuracy + very consistent timing
+            accuracy_suspicion = 0.8 if accuracy > 0.95 else (0.3 if accuracy > 0.8 else 0.1)
+            timing_suspicion = 0.7 if time_cv < 0.1 else (0.2 if time_cv < 0.3 else 0.1)
+            speed_suspicion = 0.6 if avg_time < 20 else (0.1 if avg_time < 40 else 0.05)
+            
+            return {
+                'isolation_forest_prob': min((accuracy_suspicion + timing_suspicion) / 2, 1.0),
+                'statistical_prob': min((timing_suspicion + speed_suspicion) / 2, 1.0),
+                'pca_prob': min((accuracy_suspicion + speed_suspicion) / 2, 1.0)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in fallback analysis: {str(e)}")
+            return {
+                'isolation_forest_prob': 0.5,
+                'statistical_prob': 0.5,
+                'pca_prob': 0.5
+            }
+    
+    def _calculate_fallback_inconsistency_probability(self, session_data: Dict[str, Any]) -> float:
+        """Calculate fallback inconsistency probability when baseline analysis fails"""
+        try:
+            responses = session_data.get('responses', [])
+            if not responses:
+                return 0.5
+            
+            # Simple inconsistency metrics based on response patterns
+            inconsistency_scores = []
+            
+            # 1. Response time inconsistency
+            response_times = [r.get('response_time', 60) for r in responses if 'response_time' in r]
+            if len(response_times) > 2:
+                time_cv = statistics.stdev(response_times) / statistics.mean(response_times)
+                # Very low CV suggests unusual consistency
+                time_inconsistency = 0.8 if time_cv < 0.1 else (0.2 if time_cv < 0.3 else 0.1)
+                inconsistency_scores.append(time_inconsistency)
+            
+            # 2. Accuracy-difficulty inconsistency
+            if 'difficulty' in responses[0] if responses else {}:
+                difficult_questions = [r for r in responses if r.get('difficulty', 0.5) > 0.7]
+                easy_questions = [r for r in responses if r.get('difficulty', 0.5) < 0.3]
+                
+                if difficult_questions and easy_questions:
+                    difficult_accuracy = sum(1 for r in difficult_questions if bool(r.get('is_correct', False))) / len(difficult_questions)
+                    easy_accuracy = sum(1 for r in easy_questions if bool(r.get('is_correct', False))) / len(easy_questions)
+                    
+                    # Suspicious if difficult accuracy >= easy accuracy
+                    accuracy_inconsistency = 0.7 if difficult_accuracy >= easy_accuracy else 0.2
+                    inconsistency_scores.append(accuracy_inconsistency)
+            
+            # 3. Overall pattern inconsistency
+            overall_accuracy = sum(1 for r in responses if bool(r.get('is_correct', False))) / len(responses)
+            pattern_inconsistency = 0.6 if overall_accuracy > 0.9 else (0.3 if overall_accuracy > 0.8 else 0.1)
+            inconsistency_scores.append(pattern_inconsistency)
+            
+            return min(statistics.mean(inconsistency_scores) if inconsistency_scores else 0.5, 1.0)
+            
+        except Exception as e:
+            self.logger.warning(f"Error in fallback inconsistency calculation: {str(e)}")
+            return 0.5
 
 
 # Initialize global instance
