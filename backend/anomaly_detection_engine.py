@@ -753,18 +753,18 @@ class AnomalyDetectionEngine:
             for response in responses:
                 difficulty = response.get('difficulty', 1)
                 is_correct = response.get('is_correct', False)
-                difficulty_groups[difficulty].append(is_correct)
+                difficulty_groups[str(difficulty)].append(is_correct)
             
             # Calculate accuracy for each difficulty level
             difficulty_accuracies = {}
-            for difficulty, results in difficulty_groups.items():
+            for difficulty_str, results in difficulty_groups.items():
                 accuracy = sum(results) / len(results)
-                difficulty_accuracies[difficulty] = accuracy
+                difficulty_accuracies[difficulty_str] = accuracy
             
             # Check if accuracy decreases with difficulty
-            sorted_difficulties = sorted(difficulty_accuracies.keys())
+            sorted_difficulties = sorted([float(d) for d in difficulty_accuracies.keys()])
             if len(sorted_difficulties) > 1:
-                accuracies = [difficulty_accuracies[d] for d in sorted_difficulties]
+                accuracies = [difficulty_accuracies[str(d)] for d in sorted_difficulties]
                 
                 # Calculate trend (should be negative for legitimate users)
                 correlation = np.corrcoef(sorted_difficulties, accuracies)[0, 1] if not np.isnan(np.corrcoef(sorted_difficulties, accuracies)[0, 1]) else 0
