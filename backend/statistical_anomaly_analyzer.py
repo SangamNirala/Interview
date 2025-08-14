@@ -2073,9 +2073,314 @@ class StatisticalAnomalyAnalyzer:
             self.logger.warning(f"Error calculating Markov significance: {str(e)}")
             return {'significant': False, 'p_value': 0.5, 'error': str(e)}
     
-    def _detect_difficulty_outliers(self, difficulty_data):
+    def _analyze_difficulty_progression_patterns(self, difficulty_data: List[Dict]) -> Dict[str, Any]:
+        """Analyze difficulty progression patterns for anomalies"""  
+        try:
+            if len(difficulty_data) < 5:
+                return {'progression_anomaly': False, 'pattern_strength': 0.0}
+            
+            # Sort by question order (assuming difficulty_data is in order)
+            difficulties = [d['difficulty'] for d in difficulty_data]
+            accuracies = [1 if d['is_correct'] else 0 for d in difficulty_data]
+            response_times = [d.get('response_time', 0) for d in difficulty_data]
+            
+            # Analyze difficulty progression over time
+            progression_patterns = {}
+            
+            # 1. Check for expected difficulty-accuracy relationship over time
+            # Split into thirds to see if relationship changes
+            third = len(difficulty_data) // 3
+            sections = {
+                'beginning': difficulty_data[:third],
+                'middle': difficulty_data[third:2*third],
+                'end': difficulty_data[2*third:]
+            }
+            
+            section_correlations = {}
+            for section_name, section_data in sections.items():
+                if len(section_data) < 3:
+                    continue
+                    
+                section_difficulties = [d['difficulty'] for d in section_data]
+                section_accuracies = [1 if d['is_correct'] else 0 for d in section_data]
+                
+                if len(set(section_difficulties)) > 1:
+                    try:
+                        correlation, p_value = stats.pearsonr(section_difficulties, section_accuracies)
+                        section_correlations[section_name] = {
+                            'correlation': float(correlation),
+                            'p_value': float(p_value),
+                            'is_significant': p_value < 0.05
+                        }
+                    except:
+                        section_correlations[section_name] = {'correlation': 0, 'p_value': 1, 'is_significant': False}
+            
+            # 2. Detect performance improvement patterns (suspicious if too consistent)
+            rolling_accuracy = []
+            window_size = min(5, len(difficulty_data) // 3)
+            
+            for i in range(len(difficulty_data) - window_size + 1):
+                window_data = difficulty_data[i:i + window_size]
+                window_accuracy = sum(1 for d in window_data if d['is_correct']) / len(window_data)
+                rolling_accuracy.append(window_accuracy)
+            
+            # Check for suspicious improvement patterns
+            improvement_trend = 0
+            if len(rolling_accuracy) > 2:
+                # Linear regression on rolling accuracy
+                x_values = list(range(len(rolling_accuracy)))
+                try:
+                    slope, intercept, r_value, p_value, std_err = stats.linregress(x_values, rolling_accuracy)
+                    improvement_trend = float(slope)
+                except:
+                    improvement_trend = 0
+            
+            # 3. Analyze response time vs difficulty patterns
+            time_difficulty_correlation = 0
+            if len(set(difficulties)) > 1 and any(t > 0 for t in response_times):
+                try:
+                    valid_pairs = [(d, t) for d, t in zip(difficulties, response_times) if t > 0]
+                    if len(valid_pairs) > 3:
+                        valid_difficulties, valid_times = zip(*valid_pairs)
+                        time_difficulty_correlation, _ = stats.pearsonr(valid_difficulties, valid_times)
+                        time_difficulty_correlation = float(time_difficulty_correlation)
+                except:
+                    time_difficulty_correlation = 0
+            
+            # 4. Detect sudden performance changes
+            performance_changes = []
+            change_threshold = 0.3  # 30% change in performance
+            
+            for i in range(1, len(rolling_accuracy)):
+                change = abs(rolling_accuracy[i] - rolling_accuracy[i-1])
+                if change > change_threshold:
+                    performance_changes.append({
+                        'position': i,
+                        'change_magnitude': float(change),
+                        'direction': 'improvement' if rolling_accuracy[i] > rolling_accuracy[i-1] else 'decline'
+                    })
+            
+            # Calculate overall pattern anomaly score
+            anomaly_score = 0.0
+            
+            # Suspicious if improvement trend is too strong (unnatural learning)
+            if improvement_trend > 0.05:  # Strong positive trend
+                anomaly_score += min(improvement_trend * 5, 0.4)
+            
+            # Suspicious if time-difficulty correlation is negative (easier on hard questions)
+            if time_difficulty_correlation < -0.3:
+                anomaly_score += 0.3
+            
+            # Suspicious if many sudden performance changes
+            if len(performance_changes) > 3:
+                anomaly_score += min(len(performance_changes) * 0.1, 0.3)
+            
+            # Check for inverted correlations in different sections
+            inverted_sections = sum(1 for corr in section_correlations.values() 
+                                  if corr['correlation'] > 0.2 and corr['is_significant'])
+            if inverted_sections > 0:
+                anomaly_score += inverted_sections * 0.2
+            
+            return {
+                'progression_anomaly': anomaly_score > 0.3,
+                'pattern_strength': float(min(anomaly_score, 1.0)),
+                'section_correlations': section_correlations,
+                'improvement_trend': float(improvement_trend),
+                'time_difficulty_correlation': float(time_difficulty_correlation),
+                'rolling_accuracy': rolling_accuracy,
+                'performance_changes': performance_changes,
+                'anomaly_indicators': self._identify_progression_anomalies(
+                    improvement_trend, time_difficulty_correlation, performance_changes, inverted_sections
+                )
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error analyzing difficulty progression: {str(e)}")
+            return {'progression_anomaly': False, 'pattern_strength': 0.0, 'error': str(e)}
+    
+    def _identify_progression_anomalies(self, improvement_trend: float, time_difficulty_correlation: float, 
+                                      performance_changes: List, inverted_sections: int) -> List[str]:
+        """Identify specific progression anomalies"""
+        anomalies = []
+        
+        if improvement_trend > 0.05:
+            anomalies.append(f"Unusual improvement trend detected (slope: {improvement_trend:.3f})")
+        
+        if time_difficulty_correlation < -0.3:
+            anomalies.append(f"Inverted time-difficulty relationship (correlation: {time_difficulty_correlation:.3f})")
+        
+        if len(performance_changes) > 3:
+            anomalies.append(f"Multiple sudden performance changes detected ({len(performance_changes)} changes)")
+        
+        if inverted_sections > 0:
+            anomalies.append(f"Positive difficulty-accuracy correlation in {inverted_sections} section(s)")
+        
+        return anomalies
+    
+    def _detect_difficulty_outliers(self, difficulty_data: List[Dict]) -> Dict[str, Any]:
         """Detect statistical outliers in difficulty performance"""
-        return {'outliers_detected': 0, 'outlier_details': []}
+        try:
+            if len(difficulty_data) < 5:
+                return {'outliers_detected': 0, 'outlier_details': []}
+            
+            # Prepare data for outlier detection
+            accuracies = [1 if d['is_correct'] else 0 for d in difficulty_data]
+            difficulties = [d['difficulty'] for d in difficulty_data]
+            response_times = [d.get('response_time', 0) for d in difficulty_data if d.get('response_time', 0) > 0]
+            
+            outliers_detected = []
+            
+            # 1. Accuracy outliers using Z-score
+            if len(accuracies) > 3:
+                mean_accuracy = statistics.mean(accuracies)
+                std_accuracy = statistics.stdev(accuracies) if len(accuracies) > 1 else 0
+                
+                if std_accuracy > 0:
+                    for i, accuracy in enumerate(accuracies):
+                        z_score = abs(accuracy - mean_accuracy) / std_accuracy
+                        if z_score > 2.5:  # Outlier threshold
+                            outliers_detected.append({
+                                'type': 'accuracy_outlier',
+                                'question_index': i,
+                                'question_id': difficulty_data[i].get('question_id', f'q_{i}'),
+                                'value': accuracy,
+                                'z_score': float(z_score),
+                                'difficulty': difficulties[i]
+                            })
+            
+            # 2. Response time outliers (if available)
+            if len(response_times) > 3:
+                mean_time = statistics.mean(response_times)
+                std_time = statistics.stdev(response_times)
+                
+                if std_time > 0:
+                    for i, data in enumerate(difficulty_data):
+                        response_time = data.get('response_time', 0)
+                        if response_time > 0:
+                            z_score = abs(response_time - mean_time) / std_time
+                            if z_score > 2.5:
+                                outliers_detected.append({
+                                    'type': 'response_time_outlier',
+                                    'question_index': i,
+                                    'question_id': data.get('question_id', f'q_{i}'),
+                                    'value': response_time,
+                                    'z_score': float(z_score),
+                                    'difficulty': difficulties[i]
+                                })
+            
+            # 3. Difficulty-performance outliers (unexpected performance on specific difficulty levels)
+            difficulty_performance_outliers = self._detect_difficulty_performance_outliers(difficulty_data)
+            outliers_detected.extend(difficulty_performance_outliers)
+            
+            # 4. Sequential outliers (unusual patterns in consecutive questions)
+            sequential_outliers = self._detect_sequential_outliers(difficulty_data)
+            outliers_detected.extend(sequential_outliers)
+            
+            return {
+                'outliers_detected': len(outliers_detected),
+                'outlier_details': outliers_detected[:20],  # Limit output size
+                'outlier_types': {
+                    'accuracy_outliers': len([o for o in outliers_detected if o['type'] == 'accuracy_outlier']),
+                    'response_time_outliers': len([o for o in outliers_detected if o['type'] == 'response_time_outlier']),
+                    'difficulty_performance_outliers': len([o for o in outliers_detected if 'difficulty_performance' in o['type']]),
+                    'sequential_outliers': len([o for o in outliers_detected if 'sequential' in o['type']])
+                },
+                'outlier_severity': self._assess_outlier_severity(outliers_detected)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error detecting difficulty outliers: {str(e)}")
+            return {'outliers_detected': 0, 'outlier_details': [], 'error': str(e)}
+    
+    def _detect_difficulty_performance_outliers(self, difficulty_data: List[Dict]) -> List[Dict]:
+        """Detect outliers in performance relative to difficulty"""
+        outliers = []
+        
+        try:
+            # Group by difficulty bins
+            difficulty_bins = defaultdict(list)
+            for i, data in enumerate(difficulty_data):
+                bin_key = round(data['difficulty'] * 10) / 10  # Round to nearest 0.1
+                difficulty_bins[bin_key].append({
+                    'index': i,
+                    'data': data,
+                    'accuracy': 1 if data['is_correct'] else 0
+                })
+            
+            # Find outliers within each difficulty bin
+            for bin_key, bin_data in difficulty_bins.items():
+                if len(bin_data) < 3:
+                    continue
+                
+                accuracies = [item['accuracy'] for item in bin_data]
+                mean_acc = statistics.mean(accuracies)
+                
+                # Find questions that deviate significantly from bin average
+                for item in bin_data:
+                    deviation = abs(item['accuracy'] - mean_acc)
+                    if deviation > 0.8 and len(bin_data) >= 3:  # Significant deviation
+                        outliers.append({
+                            'type': 'difficulty_performance_outlier',
+                            'question_index': item['index'],
+                            'question_id': item['data'].get('question_id', f"q_{item['index']}"),
+                            'difficulty_bin': float(bin_key),
+                            'expected_accuracy': float(mean_acc),
+                            'actual_accuracy': item['accuracy'],
+                            'deviation': float(deviation)
+                        })
+        
+        except Exception as e:
+            self.logger.warning(f"Error detecting difficulty-performance outliers: {str(e)}")
+        
+        return outliers
+    
+    def _detect_sequential_outliers(self, difficulty_data: List[Dict]) -> List[Dict]:
+        """Detect outliers in sequential question patterns"""
+        outliers = []
+        
+        try:
+            # Look for unusual consecutive patterns
+            for i in range(len(difficulty_data) - 2):
+                current = difficulty_data[i]
+                next_q = difficulty_data[i + 1]
+                next_next = difficulty_data[i + 2]
+                
+                # Pattern: Wrong-Right-Wrong on similar difficulties
+                if (not current['is_correct'] and next_q['is_correct'] and not next_next['is_correct']):
+                    difficulty_variance = statistics.variance([
+                        current['difficulty'], next_q['difficulty'], next_next['difficulty']
+                    ])
+                    
+                    if difficulty_variance < 0.02:  # Similar difficulties
+                        outliers.append({
+                            'type': 'sequential_pattern_outlier',
+                            'pattern': 'wrong-right-wrong',
+                            'start_index': i,
+                            'question_ids': [
+                                current.get('question_id', f'q_{i}'),
+                                next_q.get('question_id', f'q_{i+1}'),
+                                next_next.get('question_id', f'q_{i+2}')
+                            ],
+                            'difficulty_variance': float(difficulty_variance)
+                        })
+        
+        except Exception as e:
+            self.logger.warning(f"Error detecting sequential outliers: {str(e)}")
+        
+        return outliers
+    
+    def _assess_outlier_severity(self, outliers: List[Dict]) -> str:
+        """Assess the severity of detected outliers"""
+        if len(outliers) == 0:
+            return 'NONE'
+        elif len(outliers) <= 2:
+            return 'LOW'
+        elif len(outliers) <= 5:
+            return 'MEDIUM'
+        elif len(outliers) <= 10:
+            return 'HIGH'
+        else:
+            return 'CRITICAL'
     
     def _analyze_topic_difficulty_patterns(self, difficulty_data):
         """Analyze topic-specific difficulty patterns"""
