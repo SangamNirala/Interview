@@ -14,7 +14,7 @@ import PyPDF2
 import io
 
 # Configuration
-BACKEND_URL = "https://ml-predict-test.preview.emergentagent.com/api"
+BACKEND_URL = "https://industry-standards.preview.emergentagent.com/api"
 
 class ATSScoreTestSuite:
     def __init__(self):

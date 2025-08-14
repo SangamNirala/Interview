@@ -11,7 +11,7 @@ import io
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://ml-predict-test.preview.emergentagent.com/api"
+BASE_URL = "https://industry-standards.preview.emergentagent.com/api"
 
 class SimpleBackendTester:
     def __init__(self):

@@ -9,7 +9,7 @@ import json
 import io
 import time
 
-BASE_URL = "https://ml-predict-test.preview.emergentagent.com/api"
+BASE_URL = "https://industry-standards.preview.emergentagent.com/api"
 
 class ComprehensiveProgressionTest:
     def __init__(self):

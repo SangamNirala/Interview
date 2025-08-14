@@ -9,7 +9,7 @@ import json
 import io
 import base64
 
-BASE_URL = "https://ml-predict-test.preview.emergentagent.com/api"
+BASE_URL = "https://industry-standards.preview.emergentagent.com/api"
 
 def test_core_endpoints():
     """Test all core API endpoints"""

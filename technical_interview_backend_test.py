@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://ml-predict-test.preview.emergentagent.com/api"
+BACKEND_URL = "https://industry-standards.preview.emergentagent.com/api"
 SAMPLE_RESUME_PATH = "/app/sample_resume.txt"
 
 # Test data as specified in the review request

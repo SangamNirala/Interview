@@ -2,7 +2,7 @@
 import requests
 import json
 
-BASE_URL = 'https://ml-predict-test.preview.emergentagent.com/api'
+BASE_URL = 'https://industry-standards.preview.emergentagent.com/api'
 
 def test_tts_text_cleaning():
     session = requests.Session()

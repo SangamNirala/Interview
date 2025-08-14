@@ -17,7 +17,7 @@ import uuid
 import math
 
 # Configuration
-BACKEND_URL = "https://ml-predict-test.preview.emergentagent.com/api"
+BACKEND_URL = "https://industry-standards.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class IRTCalibrationTester:
