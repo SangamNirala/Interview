@@ -46,9 +46,6 @@ class IndustryBenchmarkEngine:
     """
     
     def __init__(self):
-        # Initialize comprehensive industry benchmark database
-        self.industry_benchmarks = self._initialize_benchmark_database()
-        
         # Reasoning domains for benchmarking
         self.reasoning_domains = [
             'numerical_reasoning', 'logical_reasoning', 
@@ -67,6 +64,9 @@ class IndustryBenchmarkEngine:
         # Visualization settings
         plt.style.use('default')
         sns.set_palette("husl")
+        
+        # Initialize comprehensive industry benchmark database (after setting attributes)
+        self.industry_benchmarks = self._initialize_benchmark_database()
         
     def _initialize_benchmark_database(self) -> Dict[str, Any]:
         """
