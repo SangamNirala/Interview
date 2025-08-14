@@ -9,7 +9,7 @@ import json
 import io
 import base64
 
-BASE_URL = "https://keystroke-analysis.preview.emergentagent.com/api"
+BASE_URL = "https://anomaly-detect-eval.preview.emergentagent.com/api"
 
 def test_core_endpoints():
     """Test all core API endpoints"""

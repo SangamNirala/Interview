@@ -19,7 +19,7 @@ import os
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://keystroke-analysis.preview.emergentagent.com/api"
+BASE_URL = "https://anomaly-detect-eval.preview.emergentagent.com/api"
 
 class PlacementEndpointsTester:
     def __init__(self):
