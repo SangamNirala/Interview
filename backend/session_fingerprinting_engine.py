@@ -1047,27 +1047,37 @@ class DeviceFingerprintingEngine:
         """Classify the type of virtual machine if detected"""
         vm_types = []
         
-        # Check for specific VM signatures
-        for result in vm_detection_results.values():
-            if isinstance(result, dict) and 'suspicious_hardware' in result:
-                for indicator in result['suspicious_hardware']:
-                    if 'virtualbox' in indicator.lower():
-                        vm_types.append('VirtualBox')
-                    elif 'vmware' in indicator.lower():
-                        vm_types.append('VMware')
-                    elif 'parallels' in indicator.lower():
-                        vm_types.append('Parallels')
-                    elif 'hyper-v' in indicator.lower():
-                        vm_types.append('Hyper-V')
+        try:
+            # Check for specific VM signatures
+            for result in vm_detection_results.values():
+                if isinstance(result, dict) and 'suspicious_hardware' in result:
+                    suspicious_hardware = result['suspicious_hardware']
+                    if isinstance(suspicious_hardware, list):
+                        for indicator in suspicious_hardware:
+                            # Ensure indicator is a string before calling lower()
+                            if isinstance(indicator, str):
+                                indicator_lower = indicator.lower()
+                                if 'virtualbox' in indicator_lower:
+                                    vm_types.append('VirtualBox')
+                                elif 'vmware' in indicator_lower:
+                                    vm_types.append('VMware')
+                                elif 'parallels' in indicator_lower:
+                                    vm_types.append('Parallels')
+                                elif 'hyper-v' in indicator_lower:
+                                    vm_types.append('Hyper-V')
         
-        if vm_types:
-            return ', '.join(set(vm_types))
-        else:
-            vm_probability = self._calculate_vm_probability(vm_detection_results)
-            if vm_probability > 0.7:
-                return 'Unknown VM'
+            if vm_types:
+                return ', '.join(set(vm_types))
             else:
-                return 'Physical Machine'
+                vm_probability = self._calculate_vm_probability(vm_detection_results)
+                if vm_probability > 0.7:
+                    return 'Unknown VM'
+                else:
+                    return 'Physical Machine'
+                    
+        except Exception as e:
+            self.logger.error(f"Error in VM type classification: {str(e)}")
+            return 'Classification Error'
     
     def _calculate_vm_detection_confidence(self, vm_detection_results: Dict[str, Any]) -> float:
         """Calculate confidence level of VM detection"""
