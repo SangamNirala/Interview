@@ -120,7 +120,7 @@ class EnhancedCATTester:
                 stats_response = self.session.get(f"{self.base_url}/admin/aptitude-questions/stats")
                 if stats_response.status_code == 200:
                     final_stats = stats_response.json()
-                    total_questions = final_stats.get("total_questions", 0)
+                    total_questions = final_stats.get("total", 0)  # Changed from "total_questions" to "total"
                     
                     success = total_questions >= inserted
                     self.log_result("Question Seeding", success, 
