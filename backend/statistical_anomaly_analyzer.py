@@ -1241,17 +1241,228 @@ class StatisticalAnomalyAnalyzer:
             self.logger.warning(f"Error analyzing timezone consistency: {str(e)}")
             return {'consistent': True, 'anomaly_score': 0.0, 'error': str(e)}
     
-    def _detect_unusual_testing_hours(self, timing_data):
-        """Detect unusual testing hours"""
-        return {'unusual_hours_detected': False, 'suspicion_score': 0.1}
+    def _detect_unusual_testing_hours(self, timing_data: Dict) -> Dict[str, Any]:
+        """Detect unusual testing hours based on timezone and activity patterns"""
+        try:
+            timestamps = timing_data.get('timestamps', [])
+            if not timestamps:
+                return {'unusual_hours_detected': False, 'suspicion_score': 0.0}
+            
+            # Convert timestamps to hours
+            hours = []
+            for timestamp in timestamps:
+                if isinstance(timestamp, str):
+                    try:
+                        dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                        hours.append(dt.hour)
+                    except:
+                        continue
+                else:
+                    hours.append(timestamp.hour)
+            
+            if not hours:
+                return {'unusual_hours_detected': False, 'suspicion_score': 0.0}
+            
+            # Define unusual hours (late night/early morning)
+            unusual_hours_range = list(range(0, 6)) + list(range(23, 24))  # 12 AM - 6 AM, 11 PM - 12 AM
+            
+            unusual_count = sum(1 for hour in hours if hour in unusual_hours_range)
+            unusual_percentage = unusual_count / len(hours)
+            
+            # Analyze continuous unusual hour sessions
+            continuous_unusual_sessions = 0
+            in_unusual_session = False
+            
+            for hour in hours:
+                if hour in unusual_hours_range:
+                    if not in_unusual_session:
+                        continuous_unusual_sessions += 1
+                        in_unusual_session = True
+                else:
+                    in_unusual_session = False
+            
+            # Calculate suspicion score
+            suspicion_score = 0.0
+            
+            # Base score from unusual percentage
+            if unusual_percentage > 0.7:  # More than 70% unusual hours
+                suspicion_score += 0.8
+            elif unusual_percentage > 0.5:  # More than 50% unusual hours  
+                suspicion_score += 0.6
+            elif unusual_percentage > 0.3:  # More than 30% unusual hours
+                suspicion_score += 0.4
+            elif unusual_percentage > 0.1:  # More than 10% unusual hours
+                suspicion_score += 0.2
+            
+            # Add score for continuous sessions
+            if continuous_unusual_sessions > 2:
+                suspicion_score += 0.3
+            elif continuous_unusual_sessions > 1:
+                suspicion_score += 0.1
+            
+            # Hour distribution analysis
+            hour_distribution = Counter(hours)
+            most_common_hour = hour_distribution.most_common(1)[0][0] if hour_distribution else 12
+            
+            return {
+                'unusual_hours_detected': unusual_count > 0,
+                'unusual_hour_count': unusual_count,
+                'total_hours_analyzed': len(hours),
+                'unusual_percentage': float(unusual_percentage),
+                'continuous_unusual_sessions': continuous_unusual_sessions,
+                'most_common_hour': most_common_hour,
+                'hour_distribution': dict(hour_distribution),
+                'suspicion_score': float(min(suspicion_score, 1.0)),
+                'unusual_hours_list': list(set(hour for hour in hours if hour in unusual_hours_range))
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error detecting unusual hours: {str(e)}")
+            return {'unusual_hours_detected': False, 'suspicion_score': 0.0, 'error': str(e)}
     
-    def _analyze_break_patterns(self, timing_data):
-        """Analyze break patterns"""
-        return {'suspicious_breaks': 0, 'pattern_score': 0.1}
+    def _analyze_break_patterns(self, timing_data: Dict) -> Dict[str, Any]:
+        """Analyze break patterns for suspicious behavior"""
+        try:
+            activity_gaps = timing_data.get('activity_gaps', [])
+            if not activity_gaps:
+                return {'suspicious_breaks': 0, 'pattern_score': 0.0}
+            
+            # Analyze gap patterns
+            short_gaps = [gap for gap in activity_gaps if gap < 300]  # < 5 minutes
+            medium_gaps = [gap for gap in activity_gaps if 300 <= gap < 1800]  # 5-30 minutes
+            long_gaps = [gap for gap in activity_gaps if 1800 <= gap < 7200]  # 30 minutes - 2 hours
+            very_long_gaps = [gap for gap in activity_gaps if gap >= 7200]  # > 2 hours
+            
+            # Calculate statistics
+            if activity_gaps:
+                mean_gap = statistics.mean(activity_gaps)
+                median_gap = statistics.median(activity_gaps)
+                std_gap = statistics.stdev(activity_gaps) if len(activity_gaps) > 1 else 0
+            else:
+                mean_gap = median_gap = std_gap = 0
+            
+            # Detect suspicious patterns
+            suspicious_breaks = 0
+            pattern_score = 0.0
+            
+            # Very long gaps are suspicious (could indicate getting help)
+            if very_long_gaps:
+                suspicious_breaks += len(very_long_gaps)
+                pattern_score += min(len(very_long_gaps) * 0.3, 0.6)
+            
+            # Multiple long gaps
+            if len(long_gaps) > 3:
+                suspicious_breaks += 1
+                pattern_score += 0.2
+            
+            # Irregular gap patterns (high standard deviation)
+            if std_gap > mean_gap and mean_gap > 0:
+                pattern_score += 0.2
+            
+            # Too many medium gaps (could indicate assistance)
+            if len(medium_gaps) > len(activity_gaps) * 0.4:
+                suspicious_breaks += 1
+                pattern_score += 0.15
+            
+            # Pattern regularity check (suspicious if too regular)
+            if len(set(round(gap / 60) for gap in activity_gaps)) < len(activity_gaps) * 0.3:
+                pattern_score += 0.15
+            
+            return {
+                'suspicious_breaks': suspicious_breaks,
+                'pattern_score': float(min(pattern_score, 1.0)),
+                'total_gaps': len(activity_gaps),
+                'gap_categories': {
+                    'short_gaps': len(short_gaps),
+                    'medium_gaps': len(medium_gaps), 
+                    'long_gaps': len(long_gaps),
+                    'very_long_gaps': len(very_long_gaps)
+                },
+                'gap_statistics': {
+                    'mean_gap_seconds': float(mean_gap),
+                    'median_gap_seconds': float(median_gap),
+                    'std_gap_seconds': float(std_gap)
+                },
+                'longest_gap_seconds': float(max(activity_gaps)) if activity_gaps else 0,
+                'gap_regularity_score': float(len(set(round(gap / 60) for gap in activity_gaps)) / len(activity_gaps)) if activity_gaps else 1.0
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error analyzing break patterns: {str(e)}")
+            return {'suspicious_breaks': 0, 'pattern_score': 0.0, 'error': str(e)}
     
-    def _analyze_session_duration_anomalies(self, timing_data):
-        """Analyze session duration anomalies"""
-        return {'duration_anomaly': False, 'anomaly_score': 0.0}
+    def _analyze_session_duration_anomalies(self, timing_data: Dict) -> Dict[str, Any]:
+        """Analyze session duration for anomalies"""
+        try:
+            total_duration = timing_data.get('total_duration_minutes', 0)
+            response_times = timing_data.get('response_times', [])
+            
+            if total_duration <= 0:
+                return {'duration_anomaly': False, 'anomaly_score': 0.0}
+            
+            # Calculate expected vs actual duration
+            if response_times:
+                total_response_time = sum(response_times) / 60  # Convert to minutes
+                overhead_time = total_duration - total_response_time
+                overhead_percentage = overhead_time / total_duration if total_duration > 0 else 0
+            else:
+                overhead_percentage = 0
+                overhead_time = 0
+            
+            anomaly_score = 0.0
+            anomalies_detected = []
+            
+            # Check for extremely long sessions
+            if total_duration > 480:  # > 8 hours
+                anomalies_detected.append(f"Extremely long session: {total_duration:.1f} minutes")
+                anomaly_score += 0.5
+            elif total_duration > 240:  # > 4 hours
+                anomalies_detected.append(f"Very long session: {total_duration:.1f} minutes")
+                anomaly_score += 0.3
+            
+            # Check for extremely short sessions
+            if total_duration < 10 and len(response_times) > 10:  # < 10 minutes for many questions
+                anomalies_detected.append(f"Unusually fast completion: {total_duration:.1f} minutes")
+                anomaly_score += 0.4
+            
+            # Check overhead time percentage
+            if overhead_percentage > 0.7:  # More than 70% overhead
+                anomalies_detected.append(f"High overhead time: {overhead_percentage:.1%}")
+                anomaly_score += 0.3
+            elif overhead_percentage < 0.1 and total_duration > 30:  # Very low overhead for long sessions
+                anomalies_detected.append(f"Unusually low overhead time: {overhead_percentage:.1%}")
+                anomaly_score += 0.2
+            
+            # Check for duration inconsistent with response patterns
+            if response_times:
+                avg_response_time = statistics.mean(response_times)
+                expected_duration = (len(response_times) * avg_response_time) / 60 * 1.5  # 50% overhead expected
+                
+                duration_ratio = total_duration / expected_duration if expected_duration > 0 else 1
+                if duration_ratio > 3:  # Duration 3x longer than expected
+                    anomalies_detected.append(f"Duration much longer than expected (ratio: {duration_ratio:.1f})")
+                    anomaly_score += 0.2
+                elif duration_ratio < 0.7:  # Duration much shorter than expected
+                    anomalies_detected.append(f"Duration shorter than expected (ratio: {duration_ratio:.1f})")
+                    anomaly_score += 0.2
+            
+            return {
+                'duration_anomaly': len(anomalies_detected) > 0,
+                'anomaly_score': float(min(anomaly_score, 1.0)),
+                'total_duration_minutes': float(total_duration),
+                'anomalies_detected': anomalies_detected,
+                'duration_analysis': {
+                    'total_response_time_minutes': float(total_response_time) if 'total_response_time' in locals() else 0,
+                    'overhead_time_minutes': float(overhead_time),
+                    'overhead_percentage': float(overhead_percentage),
+                    'expected_duration_minutes': float(expected_duration) if 'expected_duration' in locals() else 0,
+                    'duration_ratio': float(duration_ratio) if 'duration_ratio' in locals() else 1.0
+                }
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error analyzing session duration: {str(e)}")
+            return {'duration_anomaly': False, 'anomaly_score': 0.0, 'error': str(e)}
     
     def _compare_with_expected_timing_patterns(self, timing_data, session_data):
         """Compare with expected timing patterns"""
