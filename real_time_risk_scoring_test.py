@@ -33,6 +33,17 @@ BASE_URL = f"{BACKEND_URL}/api"
 class RealTimeRiskScoringTester:
     def __init__(self):
         self.session = requests.Session()
+        # Add headers and disable SSL verification for testing
+        self.session.headers.update({
+            'User-Agent': 'RealTimeRiskScoringTester/1.0',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        })
+        self.session.verify = False  # Disable SSL verification for testing
+        # Disable SSL warnings
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
         self.admin_authenticated = False
         self.test_session_id = str(uuid.uuid4())
         self.test_results = []
