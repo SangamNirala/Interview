@@ -34,7 +34,8 @@ class HardwareAnalysisTester:
         """Test admin authentication with Game@1234 password"""
         try:
             response = self.session.post(f"{BASE_URL}/admin/login", 
-                                       json={"password": "Game@1234"})
+                                       json={"password": "Game@1234"},
+                                       timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
@@ -52,6 +53,9 @@ class HardwareAnalysisTester:
                             f"HTTP {response.status_code}: {response.text}")
                 return False
                 
+        except requests.exceptions.RequestException as e:
+            self.log_test("Admin Authentication", "FAIL", f"Request Exception: {str(e)}")
+            return False
         except Exception as e:
             self.log_test("Admin Authentication", "FAIL", f"Exception: {str(e)}")
             return False
