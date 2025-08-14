@@ -1318,10 +1318,549 @@ class StatisticalAnomalyAnalyzer:
         """Calculate statistical significance for collaboration analysis"""
         return {'significant': False, 'p_value': 0.20, 'confidence_level': 0.95}
     
-    # Additional helper methods for remaining implementations
-    def _analyze_difficulty_progression_patterns(self, difficulty_data):
-        """Analyze difficulty progression patterns"""
-        return {'progression_anomaly': False, 'pattern_strength': 0.2}
+    def detect_markov_chain_anomalies(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        ENHANCEMENT METHOD: Advanced Markov Chain Analysis for Sophisticated Cheating Detection
+        
+        This method uses Markov Chain analysis to detect subtle patterns that indicate:
+        - Non-random answer selection patterns
+        - Hidden dependencies between consecutive answers
+        - Sophisticated pattern-based cheating strategies
+        - Statistical deviations from expected transition probabilities
+        
+        Args:
+            session_data: Session data containing responses
+            
+        Returns:
+            Comprehensive Markov chain anomaly analysis
+        """
+        try:
+            session_id = session_data.get('session_id', 'unknown')
+            responses = session_data.get('responses', [])
+            
+            if len(responses) < 10:
+                return self._create_empty_analysis('markov_chain_anomalies', session_id, "Insufficient data for Markov analysis")
+            
+            self.logger.info(f"Analyzing Markov chain patterns for session: {session_id}")
+            
+            # Extract answer sequence
+            answer_sequence = [r.get('response', 'X') for r in responses if 'response' in r]
+            
+            if len(answer_sequence) < 10:
+                return self._create_empty_analysis('markov_chain_anomalies', session_id, "Insufficient answer sequence")
+            
+            analysis_results = {}
+            
+            # 1. First-Order Markov Chain Analysis
+            first_order_analysis = self._analyze_first_order_markov(answer_sequence)
+            analysis_results['first_order_markov'] = first_order_analysis
+            
+            # 2. Second-Order Markov Chain Analysis
+            second_order_analysis = self._analyze_second_order_markov(answer_sequence)
+            analysis_results['second_order_markov'] = second_order_analysis
+            
+            # 3. Transition Probability Anomaly Detection
+            transition_anomalies = self._detect_transition_anomalies(answer_sequence)
+            analysis_results['transition_anomalies'] = transition_anomalies
+            
+            # 4. Entropy Analysis
+            entropy_analysis = self._analyze_markov_entropy(answer_sequence)
+            analysis_results['entropy_analysis'] = entropy_analysis
+            
+            # 5. Stationarity Testing
+            stationarity_analysis = self._test_markov_stationarity(answer_sequence)
+            analysis_results['stationarity_analysis'] = stationarity_analysis
+            
+            # Calculate composite Markov anomaly score
+            markov_anomaly_score = self._calculate_markov_anomaly_score(analysis_results)
+            
+            # Risk assessment
+            risk_level = self._assess_markov_risk(markov_anomaly_score)
+            
+            return {
+                'success': True,
+                'session_id': session_id,
+                'analysis_type': 'markov_chain_anomalies',
+                'analysis_timestamp': datetime.utcnow().isoformat(),
+                'sequence_length': len(answer_sequence),
+                'unique_answers': len(set(answer_sequence)),
+                'markov_anomaly_score': float(markov_anomaly_score),
+                'risk_level': risk_level,
+                'detailed_analysis': analysis_results,
+                'recommendations': self._generate_markov_recommendations(markov_anomaly_score, analysis_results),
+                'statistical_significance': self._calculate_markov_significance(analysis_results)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error in Markov chain analysis: {str(e)}")
+            return {
+                'success': False,
+                'session_id': session_data.get('session_id', 'unknown'),
+                'analysis_type': 'markov_chain_anomalies',
+                'error': str(e)
+            }
+    
+    def _analyze_first_order_markov(self, sequence: List[str]) -> Dict[str, Any]:
+        """Analyze first-order Markov chain properties"""
+        try:
+            # Build transition matrix
+            transitions = defaultdict(lambda: defaultdict(int))
+            unique_states = sorted(set(sequence))
+            
+            for i in range(len(sequence) - 1):
+                current_state = sequence[i]
+                next_state = sequence[i + 1]
+                transitions[current_state][next_state] += 1
+            
+            # Convert to probabilities
+            transition_probabilities = {}
+            for current_state in unique_states:
+                total_transitions = sum(transitions[current_state].values())
+                if total_transitions > 0:
+                    transition_probabilities[current_state] = {
+                        next_state: count / total_transitions
+                        for next_state, count in transitions[current_state].items()
+                    }
+                else:
+                    transition_probabilities[current_state] = {}
+            
+            # Calculate expected uniform probabilities
+            expected_prob = 1.0 / len(unique_states)
+            
+            # Measure deviation from uniform distribution
+            max_deviation = 0.0
+            transition_entropy = 0.0
+            
+            for current_state in unique_states:
+                state_probs = transition_probabilities.get(current_state, {})
+                
+                # Calculate entropy for this state's transitions
+                state_entropy = 0.0
+                for prob in state_probs.values():
+                    if prob > 0:
+                        state_entropy -= prob * math.log2(prob)
+                
+                transition_entropy += state_entropy
+                
+                # Calculate maximum deviation from uniform
+                for next_state in unique_states:
+                    actual_prob = state_probs.get(next_state, 0)
+                    deviation = abs(actual_prob - expected_prob)
+                    max_deviation = max(max_deviation, deviation)
+            
+            # Normalize entropy
+            max_entropy = len(unique_states) * math.log2(len(unique_states))
+            normalized_entropy = transition_entropy / max_entropy if max_entropy > 0 else 0
+            
+            # Calculate chi-square test for uniformity
+            chi_square_stats = []
+            for current_state in unique_states:
+                observed = [transitions[current_state].get(next_state, 0) for next_state in unique_states]
+                total_obs = sum(observed)
+                if total_obs > 0:
+                    expected = [total_obs / len(unique_states)] * len(unique_states)
+                    try:
+                        chi2_stat, p_value = stats.chisquare(observed, expected)
+                        chi_square_stats.append({
+                            'state': current_state,
+                            'chi2_statistic': float(chi2_stat),
+                            'p_value': float(p_value),
+                            'is_uniform': p_value > 0.05
+                        })
+                    except:
+                        continue
+            
+            return {
+                'available': True,
+                'transition_matrix': {k: dict(v) for k, v in transitions.items()},
+                'transition_probabilities': transition_probabilities,
+                'unique_states': unique_states,
+                'max_deviation_from_uniform': float(max_deviation),
+                'normalized_entropy': float(normalized_entropy),
+                'chi_square_tests': chi_square_stats,
+                'anomaly_score': float(max_deviation * 2)  # Scale to 0-1 range approximately
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in first-order Markov analysis: {str(e)}")
+            return {'available': False, 'error': str(e)}
+    
+    def _analyze_second_order_markov(self, sequence: List[str]) -> Dict[str, Any]:
+        """Analyze second-order Markov chain properties"""
+        try:
+            if len(sequence) < 3:
+                return {'available': False, 'message': 'Insufficient data for second-order analysis'}
+            
+            # Build second-order transition matrix
+            transitions = defaultdict(lambda: defaultdict(int))
+            
+            for i in range(len(sequence) - 2):
+                current_pair = (sequence[i], sequence[i + 1])
+                next_state = sequence[i + 2]
+                transitions[current_pair][next_state] += 1
+            
+            # Convert to probabilities and analyze patterns
+            second_order_patterns = {}
+            strong_dependencies = []
+            
+            for pair, next_states in transitions.items():
+                total_transitions = sum(next_states.values())
+                if total_transitions >= 2:  # Only consider pairs with multiple transitions
+                    probabilities = {
+                        state: count / total_transitions
+                        for state, count in next_states.items()
+                    }
+                    
+                    # Find strong second-order dependencies
+                    max_prob = max(probabilities.values())
+                    if max_prob > 0.7:  # Strong dependency threshold
+                        most_likely_next = max(probabilities.items(), key=lambda x: x[1])
+                        strong_dependencies.append({
+                            'pattern': f"{pair[0]}-{pair[1]}-{most_likely_next[0]}",
+                            'probability': float(most_likely_next[1]),
+                            'occurrences': next_states[most_likely_next[0]]
+                        })
+                    
+                    second_order_patterns[f"{pair[0]}-{pair[1]}"] = probabilities
+            
+            # Calculate second-order entropy
+            total_entropy = 0.0
+            pattern_count = 0
+            
+            for probs in second_order_patterns.values():
+                pattern_entropy = 0.0
+                for prob in probs.values():
+                    if prob > 0:
+                        pattern_entropy -= prob * math.log2(prob)
+                total_entropy += pattern_entropy
+                pattern_count += 1
+            
+            avg_entropy = total_entropy / pattern_count if pattern_count > 0 else 0
+            
+            return {
+                'available': True,
+                'second_order_patterns': {k: dict(v) for k, v in second_order_patterns.items()},
+                'strong_dependencies': strong_dependencies,
+                'average_entropy': float(avg_entropy),
+                'pattern_count': pattern_count,
+                'dependency_strength': float(len(strong_dependencies) / max(1, pattern_count))
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in second-order Markov analysis: {str(e)}")
+            return {'available': False, 'error': str(e)}
+    
+    def _detect_transition_anomalies(self, sequence: List[str]) -> Dict[str, Any]:
+        """Detect anomalous transition patterns"""
+        try:
+            # Calculate transition frequencies
+            transition_counts = defaultdict(lambda: defaultdict(int))
+            for i in range(len(sequence) - 1):
+                transition_counts[sequence[i]][sequence[i + 1]] += 1
+            
+            # Identify unusual transition patterns
+            anomalous_transitions = []
+            unique_states = sorted(set(sequence))
+            
+            for from_state in unique_states:
+                transitions_from_state = transition_counts[from_state]
+                if not transitions_from_state:
+                    continue
+                    
+                total_from_state = sum(transitions_from_state.values())
+                
+                for to_state in unique_states:
+                    observed_count = transitions_from_state.get(to_state, 0)
+                    expected_count = total_from_state / len(unique_states)
+                    
+                    # Check for significant deviations
+                    if expected_count > 0:
+                        deviation_ratio = observed_count / expected_count
+                        
+                        # Flag both over-representation and under-representation
+                        if deviation_ratio > 2.0 or (deviation_ratio < 0.5 and expected_count >= 2):
+                            anomalous_transitions.append({
+                                'from_state': from_state,
+                                'to_state': to_state,
+                                'observed_count': observed_count,
+                                'expected_count': float(expected_count),
+                                'deviation_ratio': float(deviation_ratio),
+                                'anomaly_type': 'over_represented' if deviation_ratio > 2.0 else 'under_represented'
+                            })
+            
+            # Sort by deviation magnitude
+            anomalous_transitions.sort(key=lambda x: abs(math.log(x['deviation_ratio'])), reverse=True)
+            
+            return {
+                'available': True,
+                'anomalous_transitions': anomalous_transitions[:10],  # Top 10 anomalies
+                'total_anomalies': len(anomalous_transitions),
+                'anomaly_strength': float(len(anomalous_transitions) / max(1, len(unique_states) ** 2))
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error detecting transition anomalies: {str(e)}")
+            return {'available': False, 'error': str(e)}
+    
+    def _analyze_markov_entropy(self, sequence: List[str]) -> Dict[str, Any]:
+        """Analyze entropy patterns in the Markov chain"""
+        try:
+            # Calculate various entropy measures
+            unique_states = sorted(set(sequence))
+            
+            # 1. Base entropy (overall distribution)
+            state_counts = Counter(sequence)
+            total_count = len(sequence)
+            base_entropy = 0.0
+            
+            for count in state_counts.values():
+                prob = count / total_count
+                base_entropy -= prob * math.log2(prob)
+            
+            max_base_entropy = math.log2(len(unique_states))
+            normalized_base_entropy = base_entropy / max_base_entropy if max_base_entropy > 0 else 0
+            
+            # 2. Conditional entropy (transition entropy)
+            conditional_entropy = 0.0
+            transition_counts = defaultdict(lambda: defaultdict(int))
+            
+            for i in range(len(sequence) - 1):
+                transition_counts[sequence[i]][sequence[i + 1]] += 1
+            
+            total_transitions = len(sequence) - 1
+            
+            for from_state, to_states in transition_counts.items():
+                from_count = sum(to_states.values())
+                state_prob = from_count / total_transitions
+                
+                state_entropy = 0.0
+                for to_count in to_states.values():
+                    trans_prob = to_count / from_count
+                    state_entropy -= trans_prob * math.log2(trans_prob)
+                
+                conditional_entropy += state_prob * state_entropy
+            
+            # 3. Entropy rate (information content per symbol)
+            entropy_rate = conditional_entropy
+            
+            return {
+                'available': True,
+                'base_entropy': float(base_entropy),
+                'normalized_base_entropy': float(normalized_base_entropy),
+                'conditional_entropy': float(conditional_entropy),
+                'entropy_rate': float(entropy_rate),
+                'max_possible_entropy': float(max_base_entropy),
+                'entropy_efficiency': float(normalized_base_entropy),
+                'predictability_score': float(1 - normalized_base_entropy)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in Markov entropy analysis: {str(e)}")
+            return {'available': False, 'error': str(e)}
+    
+    def _test_markov_stationarity(self, sequence: List[str]) -> Dict[str, Any]:
+        """Test stationarity of the Markov chain"""
+        try:
+            if len(sequence) < 20:
+                return {'available': False, 'message': 'Insufficient data for stationarity test'}
+            
+            # Split sequence into chunks and compare transition matrices
+            chunk_size = len(sequence) // 4
+            chunks = [sequence[i:i+chunk_size] for i in range(0, len(sequence), chunk_size)]
+            chunks = [chunk for chunk in chunks if len(chunk) >= 5]  # Filter out small chunks
+            
+            if len(chunks) < 2:
+                return {'available': False, 'message': 'Insufficient chunks for comparison'}
+            
+            # Calculate transition matrices for each chunk
+            chunk_matrices = []
+            unique_states = sorted(set(sequence))
+            
+            for chunk in chunks:
+                transitions = defaultdict(lambda: defaultdict(int))
+                for i in range(len(chunk) - 1):
+                    transitions[chunk[i]][chunk[i + 1]] += 1
+                
+                # Convert to probabilities
+                matrix = {}
+                for from_state in unique_states:
+                    total = sum(transitions[from_state].values())
+                    if total > 0:
+                        matrix[from_state] = {
+                            to_state: transitions[from_state].get(to_state, 0) / total
+                            for to_state in unique_states
+                        }
+                    else:
+                        matrix[from_state] = {to_state: 0 for to_state in unique_states}
+                
+                chunk_matrices.append(matrix)
+            
+            # Compare matrices using KL divergence
+            stationarity_violations = []
+            avg_kl_divergence = 0.0
+            comparison_count = 0
+            
+            for i in range(len(chunk_matrices)):
+                for j in range(i + 1, len(chunk_matrices)):
+                    kl_div = self._calculate_matrix_kl_divergence(
+                        chunk_matrices[i], chunk_matrices[j], unique_states
+                    )
+                    avg_kl_divergence += kl_div
+                    comparison_count += 1
+                    
+                    if kl_div > 1.0:  # Threshold for significant difference
+                        stationarity_violations.append({
+                            'chunk_1': i,
+                            'chunk_2': j,
+                            'kl_divergence': float(kl_div)
+                        })
+            
+            avg_kl_divergence = avg_kl_divergence / comparison_count if comparison_count > 0 else 0
+            
+            # Determine stationarity
+            is_stationary = len(stationarity_violations) == 0 and avg_kl_divergence < 0.5
+            
+            return {
+                'available': True,
+                'is_stationary': bool(is_stationary),
+                'average_kl_divergence': float(avg_kl_divergence),
+                'stationarity_violations': stationarity_violations,
+                'chunks_analyzed': len(chunks),
+                'non_stationarity_score': float(min(avg_kl_divergence, 2.0) / 2.0)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in stationarity testing: {str(e)}")
+            return {'available': False, 'error': str(e)}
+    
+    def _calculate_matrix_kl_divergence(self, matrix1: Dict, matrix2: Dict, states: List[str]) -> float:
+        """Calculate KL divergence between two transition matrices"""
+        try:
+            total_kl = 0.0
+            
+            for from_state in states:
+                dist1 = matrix1.get(from_state, {})
+                dist2 = matrix2.get(from_state, {})
+                
+                state_kl = 0.0
+                for to_state in states:
+                    p1 = dist1.get(to_state, 1e-10)  # Small epsilon to avoid log(0)
+                    p2 = dist2.get(to_state, 1e-10)
+                    
+                    if p1 > 1e-10:
+                        state_kl += p1 * math.log2(p1 / p2)
+                
+                total_kl += state_kl
+            
+            return total_kl / len(states)
+            
+        except Exception as e:
+            return 0.0
+    
+    def _calculate_markov_anomaly_score(self, analysis_results: Dict) -> float:
+        """Calculate composite Markov anomaly score"""
+        try:
+            score = 0.0
+            weights = {
+                'first_order_markov': 0.25,
+                'second_order_markov': 0.20,
+                'transition_anomalies': 0.25,
+                'entropy_analysis': 0.15,
+                'stationarity_analysis': 0.15
+            }
+            
+            for analysis_type, weight in weights.items():
+                if analysis_type in analysis_results and analysis_results[analysis_type].get('available'):
+                    analysis = analysis_results[analysis_type]
+                    
+                    if analysis_type == 'first_order_markov':
+                        score += analysis.get('anomaly_score', 0) * weight
+                    
+                    elif analysis_type == 'second_order_markov':
+                        score += analysis.get('dependency_strength', 0) * weight
+                    
+                    elif analysis_type == 'transition_anomalies':
+                        score += min(analysis.get('anomaly_strength', 0) * 2, 1.0) * weight
+                    
+                    elif analysis_type == 'entropy_analysis':
+                        # Low entropy indicates patterns (potential cheating)
+                        score += (1 - analysis.get('normalized_base_entropy', 0.5)) * weight
+                    
+                    elif analysis_type == 'stationarity_analysis':
+                        score += analysis.get('non_stationarity_score', 0) * weight
+            
+            return min(score, 1.0)
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating Markov anomaly score: {str(e)}")
+            return 0.5
+    
+    def _assess_markov_risk(self, score: float) -> str:
+        """Assess risk level based on Markov anomaly score"""
+        return self._assess_pattern_risk(score)  # Use same thresholds
+    
+    def _generate_markov_recommendations(self, score: float, analysis_results: Dict) -> List[str]:
+        """Generate recommendations based on Markov analysis"""
+        recommendations = []
+        
+        if score > 0.7:
+            recommendations.append("CRITICAL: Strong evidence of non-random answer patterns detected")
+            recommendations.append("Immediate investigation recommended for potential sophisticated cheating")
+        elif score > 0.5:
+            recommendations.append("HIGH: Unusual answer transition patterns detected")
+            recommendations.append("Manual review of answer sequences recommended")
+        elif score > 0.3:
+            recommendations.append("MODERATE: Some pattern irregularities detected")
+            recommendations.append("Monitor for consistent patterns across multiple sessions")
+        else:
+            recommendations.append("Answer patterns appear consistent with random selection")
+        
+        # Add specific recommendations based on analysis components
+        if analysis_results.get('entropy_analysis', {}).get('available'):
+            entropy_data = analysis_results['entropy_analysis']
+            if entropy_data.get('predictability_score', 0) > 0.6:
+                recommendations.append("Low entropy detected - answers may follow predictable patterns")
+        
+        if analysis_results.get('stationarity_analysis', {}).get('available'):
+            stationarity_data = analysis_results['stationarity_analysis']
+            if not stationarity_data.get('is_stationary', True):
+                recommendations.append("Non-stationary behavior detected - answer patterns change over time")
+        
+        return recommendations
+    
+    def _calculate_markov_significance(self, analysis_results: Dict) -> Dict[str, Any]:
+        """Calculate statistical significance for Markov analysis"""
+        try:
+            # Aggregate p-values from various tests
+            p_values = []
+            
+            if analysis_results.get('first_order_markov', {}).get('available'):
+                chi_tests = analysis_results['first_order_markov'].get('chi_square_tests', [])
+                p_values.extend([test['p_value'] for test in chi_tests])
+            
+            if p_values:
+                # Use Fisher's method to combine p-values
+                from scipy.stats import combine_pvalues
+                combined_stat, combined_p = combine_pvalues(p_values, method='fisher')
+                
+                return {
+                    'significant': bool(combined_p < 0.05),
+                    'combined_p_value': float(combined_p),
+                    'test_statistic': float(combined_stat),
+                    'confidence_level': 0.95,
+                    'individual_tests': len(p_values)
+                }
+            else:
+                return {
+                    'significant': False,
+                    'combined_p_value': 0.5,
+                    'confidence_level': 0.95,
+                    'message': 'No statistical tests available for significance calculation'
+                }
+                
+        except Exception as e:
+            self.logger.warning(f"Error calculating Markov significance: {str(e)}")
+            return {'significant': False, 'p_value': 0.5, 'error': str(e)}
     
     def _detect_difficulty_outliers(self, difficulty_data):
         """Detect statistical outliers in difficulty performance"""
