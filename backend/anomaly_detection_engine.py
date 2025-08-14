@@ -1188,7 +1188,7 @@ class AnomalyDetectionEngine:
             timing_anomaly = 1.0 if cv < 0.1 or cv > 2.0 else max(0, abs(cv - 0.5) / 0.5)
             
             # Accuracy patterns
-            accuracy = sum(1 for r in responses if r.get('is_correct', False)) / len(responses)
+            accuracy = sum(1 for r in responses if bool(r.get('is_correct', False))) / len(responses)
             accuracy_anomaly = 1.0 if accuracy > 0.95 or accuracy < 0.1 else 0.0
             
             # Combine indicators
