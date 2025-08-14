@@ -633,6 +633,8 @@ class StatisticalAnomalyAnalyzer:
             # Expected correlation should be negative (harder questions, lower accuracy)
             expected_correlation = self.expected_patterns['difficulty_correlation_threshold']
             correlation_anomaly = bool(correlation > expected_correlation)
+            # Ensure JSON serializable boolean
+            correlation_anomaly = True if correlation_anomaly else False
             
             # Calculate strength of anomaly
             anomaly_strength = max(0, correlation - expected_correlation) if correlation_anomaly else 0
