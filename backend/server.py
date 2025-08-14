@@ -5019,22 +5019,25 @@ async def get_model_performance_metrics():
         raise HTTPException(status_code=500, detail=f"Failed to get model metrics: {str(e)}")
 
 @api_router.post("/ml/skill-gap-analysis")
-async def perform_skill_gap_analysis(session_id: str):
+async def perform_comprehensive_skill_gap_analysis(session_id: str, target_profile: str = "experienced"):
     """
-    Perform comprehensive skill gap analysis for a candidate
+    Perform comprehensive skill gap analysis using advanced SkillGapAnalysisEngine
+    
+    Args:
+        session_id: Session identifier
+        target_profile: Target skill level ('entry_level', 'experienced', 'senior', 'expert')
     
     Returns:
-    - Multi-dimensional skill assessment
-    - Gap identification against benchmarks
-    - Personalized improvement recommendations
+        - Multi-dimensional skill assessment with statistical analysis
+        - Gap identification against target benchmarks 
+        - Personalized improvement pathways with difficulty progression
+        - Resource recommendations and study plan creation
     """
     try:
-        global ml_performance_predictor
-        if 'ml_performance_predictor' not in globals():
-            return {
-                "success": False,
-                "message": "ML prediction models not trained. Please train models first."
-            }
+        from skill_gap_analysis_engine import SkillGapAnalysisEngine
+        
+        # Initialize the advanced skill gap analysis engine
+        skill_engine = SkillGapAnalysisEngine()
         
         # Get session and result data
         session = await db.aptitude_sessions.find_one(
@@ -5044,7 +5047,11 @@ async def perform_skill_gap_analysis(session_id: str):
                 "answers": 1,
                 "adaptive_score": 1,
                 "timing_data": 1,
-                "created_at": 1
+                "time_per_question": 1,
+                "theta_estimates": 1,
+                "se_estimates": 1,
+                "created_at": 1,
+                "end_time": 1
             }
         )
         
@@ -5061,86 +5068,91 @@ async def perform_skill_gap_analysis(session_id: str):
                 "message": "Session results not available. Complete the test first."
             }
         
-        # Combine session and result data
-        combined_data = {**session, 'result': result}
-        
-        # Get topic performance predictions
-        topic_predictions = ml_performance_predictor.predict_topic_performance(combined_data)
-        
-        # Analyze skill gaps
-        skill_gaps = {}
-        improvement_pathways = {}
-        
-        benchmark_scores = {
-            'numerical_reasoning': 65.0,
-            'logical_reasoning': 60.0,
-            'verbal_comprehension': 70.0,
-            'spatial_reasoning': 55.0
+        # Prepare comprehensive test results for analysis
+        comprehensive_test_results = {
+            "session_id": session_id,
+            "topic_scores": result.get('topic_scores', {}),
+            "overall_score": result.get('questions_correct', 0),
+            "percentage_score": result.get('percentage_score', 0.0),
+            "total_time_taken": result.get('total_time_taken', 0),
+            "questions_attempted": result.get('questions_attempted', 0),
+            "difficulty_performance": result.get('difficulty_performance', {}),
+            "theta_final": result.get('theta_final', session.get('theta_estimates', {})),
+            "se_final": result.get('se_final', session.get('se_estimates', {})),
+            "detailed_answers": session.get('answers', {}),
+            "timing_patterns": session.get('time_per_question', {}),
+            "adaptive_progression": session.get('adaptive_score', 0.0)
         }
         
-        topic_scores = result.get('topic_scores', {})
+        # Perform comprehensive skill gap analysis
+        skill_gap_analysis = skill_engine.analyze_skill_gaps(
+            comprehensive_test_results, 
+            target_profile
+        )
         
-        for topic in ml_performance_predictor.topics:
-            topic_result = topic_scores.get(topic, {})
-            actual_score = topic_result.get('percentage', 0.0)
-            benchmark = benchmark_scores.get(topic, 60.0)
-            
-            gap = benchmark - actual_score
-            topic_pred = topic_predictions.get('topic_predictions', {}).get(topic, {})
-            
-            skill_gaps[topic] = {
-                'actual_score': actual_score,
-                'benchmark_score': benchmark,
-                'gap_points': gap,
-                'gap_percentage': (gap / benchmark) * 100 if benchmark > 0 else 0,
-                'performance_level': 'above_benchmark' if gap <= 0 else 'needs_improvement',
-                'predicted_success_probability': topic_pred.get('success_probability', 0.5),
-                'confidence': topic_pred.get('confidence', 0.0)
+        # Extract current ability levels for pathway generation
+        current_ability = {}
+        for domain in ['numerical_reasoning', 'logical_reasoning', 'verbal_comprehension', 'spatial_reasoning']:
+            topic_data = comprehensive_test_results['topic_scores'].get(domain, {})
+            current_ability[domain] = topic_data.get('percentage', 0.0)
+        
+        # Generate improvement pathways
+        improvement_pathways = skill_engine.generate_improvement_pathways(current_ability, target_profile)
+        
+        # Generate practice recommendations
+        practice_recommendations = skill_engine.recommend_practice_areas(skill_gap_analysis)
+        
+        # Create personalized study plan (default 10 hours per week)
+        study_plan = skill_engine.create_personalized_study_plan(
+            skill_gap_analysis['individual_gaps'],
+            improvement_pathways,
+            available_time_per_week=10
+        )
+        
+        # Combine all analysis results
+        comprehensive_analysis = {
+            "skill_gap_analysis": skill_gap_analysis,
+            "improvement_pathways": improvement_pathways,
+            "practice_recommendations": practice_recommendations,
+            "personalized_study_plan": study_plan,
+            "analysis_summary": {
+                "total_domains_analyzed": len(skill_gap_analysis['individual_gaps']),
+                "domains_needing_improvement": len([g for g in skill_gap_analysis['individual_gaps'].values() if g['gap_points'] > 0]),
+                "overall_improvement_potential": skill_gap_analysis['overall_analysis'].get('average_gap_percentage', 0),
+                "recommended_study_duration_weeks": study_plan['plan_summary'].get('total_study_duration_weeks', 8),
+                "success_likelihood": skill_gap_analysis['overall_analysis'].get('success_likelihood', 0.7),
+                "priority_focus_areas": skill_gap_analysis['overall_analysis'].get('priority_improvement_domains', [])
             }
-            
-            # Generate improvement pathway
-            if gap > 0:
-                improvement_pathways[topic] = {
-                    'priority': 'high' if gap > 15 else 'medium' if gap > 5 else 'low',
-                    'estimated_improvement_time_weeks': min(12, max(2, int(gap / 5))),
-                    'recommended_focus_areas': _get_topic_focus_areas(topic),
-                    'practice_intensity': 'intensive' if gap > 20 else 'moderate' if gap > 10 else 'light',
-                    'success_probability_with_effort': min(0.9, topic_pred.get('success_probability', 0.5) + 0.3)
-                }
-            else:
-                improvement_pathways[topic] = {
-                    'priority': 'maintenance',
-                    'estimated_improvement_time_weeks': 1,
-                    'recommended_focus_areas': ['maintain_current_level', 'advanced_applications'],
-                    'practice_intensity': 'light',
-                    'success_probability_with_effort': min(0.95, topic_pred.get('success_probability', 0.8))
-                }
+        }
         
-        # Overall analysis
-        total_gap = sum(max(0, gap['gap_points']) for gap in skill_gaps.values())
-        priority_areas = [topic for topic, gap in skill_gaps.items() if gap['gap_points'] > 10]
+        # Store analysis in database for tracking
+        analysis_record = {
+            "analysis_id": skill_gap_analysis['analysis_id'],
+            "session_id": session_id,
+            "target_profile": target_profile,
+            "analysis_results": comprehensive_analysis,
+            "created_at": datetime.utcnow(),
+            "analysis_type": "comprehensive_skill_gap"
+        }
+        
+        await db.skill_gap_analyses.insert_one(analysis_record)
         
         return {
             "success": True,
             "session_id": session_id,
-            "skill_gap_analysis": {
-                "individual_gaps": skill_gaps,
-                "improvement_pathways": improvement_pathways,
-                "overall_analysis": {
-                    "total_gap_points": total_gap,
-                    "priority_improvement_areas": priority_areas,
-                    "estimated_total_improvement_time_weeks": min(16, max(4, int(total_gap / 10))),
-                    "overall_performance_level": "strong" if total_gap < 20 else "moderate" if total_gap < 50 else "needs_significant_improvement"
-                },
-                "recommendations": _generate_personalized_recommendations(skill_gaps, improvement_pathways)
-            },
+            "analysis_id": skill_gap_analysis['analysis_id'],
+            "target_profile": target_profile,
+            "comprehensive_analysis": comprehensive_analysis,
             "timestamp": datetime.utcnow().isoformat()
         }
         
+    except ImportError as e:
+        logging.error(f"Import error: {e}")
+        raise HTTPException(status_code=500, detail="Skill gap analysis engine not available")
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Skill gap analysis error: {e}")
+        logging.error(f"Comprehensive skill gap analysis error: {e}")
         raise HTTPException(status_code=500, detail=f"Skill gap analysis failed: {str(e)}")
 
 def _get_topic_focus_areas(topic: str) -> List[str]:
