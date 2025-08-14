@@ -643,6 +643,10 @@ class StatisticalAnomalyAnalyzer:
             # Calculate Pearson correlation
             correlation, p_value = stats.pearsonr(difficulties, accuracies)
             
+            # Ensure JSON serializable
+            correlation = float(correlation) if hasattr(correlation, 'item') else float(correlation)
+            p_value = float(p_value) if hasattr(p_value, 'item') else float(p_value)
+            
             # Expected correlation should be negative (harder questions, lower accuracy)
             expected_correlation = self.expected_patterns['difficulty_correlation_threshold']
             correlation_anomaly = bool(correlation > expected_correlation)
