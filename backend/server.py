@@ -19451,6 +19451,300 @@ async def get_anomaly_detection_model_status():
         logging.error(f"Error getting model status: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get model status: {str(e)}")
 
+# ===== STATISTICAL ANOMALY ANALYZER ENDPOINTS (Step 2.2) =====
+
+@api_router.post("/statistical-analysis/detect-answer-pattern-irregularities")
+async def detect_answer_pattern_irregularities(request: AnswerPatternAnalysisRequest):
+    """
+    Detect suspicious answer patterns that may indicate cheating
+    
+    Analyzes:
+    - Answer sequence patterns and clustering
+    - Statistical distribution of choices  
+    - Response uniformity and irregularities
+    - Answer changing patterns and sequences
+    """
+    try:
+        if not request.session_data:
+            raise HTTPException(status_code=400, detail="Session data is required")
+        
+        session_id = request.session_data.get('session_id')
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required in session data")
+        
+        # Perform answer pattern analysis
+        analysis_results = statistical_anomaly_analyzer.detect_answer_pattern_irregularities(request.session_data)
+        
+        if not analysis_results.get('success'):
+            error_msg = analysis_results.get('error', 'Unknown error in pattern analysis')
+            raise HTTPException(status_code=500, detail=f"Pattern analysis failed: {error_msg}")
+        
+        # Store analysis in database
+        analysis_record = {
+            "analysis_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "analysis_type": "answer_pattern_irregularities",
+            "analysis_timestamp": datetime.utcnow(),
+            "analysis_results": analysis_results,
+            "irregularity_score": analysis_results.get('irregularity_score', 0.0),
+            "risk_level": analysis_results.get('risk_level', 'MINIMAL'),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.statistical_anomaly_analyses.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "message": "Answer pattern analysis completed",
+            "analysis_id": analysis_record["analysis_id"],
+            "session_id": session_id,
+            "analysis_results": analysis_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in answer pattern analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Pattern analysis failed: {str(e)}")
+
+@api_router.post("/statistical-analysis/analyze-difficulty-progression-anomalies")
+async def analyze_difficulty_progression_anomalies(request: DifficultyProgressionAnalysisRequest):
+    """
+    Analyze performance patterns across difficulty levels to detect anomalies
+    
+    Detects:
+    - Inverted difficulty curves (better performance on harder questions)
+    - Suspicious difficulty jumps and inconsistencies
+    - Statistical outliers in difficulty-accuracy correlation
+    """
+    try:
+        if not request.session_data:
+            raise HTTPException(status_code=400, detail="Session data is required")
+        
+        session_id = request.session_data.get('session_id')
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required in session data")
+        
+        # Perform difficulty progression analysis
+        analysis_results = statistical_anomaly_analyzer.analyze_difficulty_progression_anomalies(request.session_data)
+        
+        if not analysis_results.get('success'):
+            error_msg = analysis_results.get('error', 'Unknown error in difficulty analysis')
+            raise HTTPException(status_code=500, detail=f"Difficulty analysis failed: {error_msg}")
+        
+        # Store analysis in database
+        analysis_record = {
+            "analysis_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "analysis_type": "difficulty_progression_anomalies",
+            "analysis_timestamp": datetime.utcnow(),
+            "analysis_results": analysis_results,
+            "anomaly_score": analysis_results.get('anomaly_score', 0.0),
+            "risk_level": analysis_results.get('risk_level', 'MINIMAL'),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.statistical_anomaly_analyses.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "message": "Difficulty progression analysis completed",
+            "analysis_id": analysis_record["analysis_id"],
+            "session_id": session_id,
+            "analysis_results": analysis_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in difficulty progression analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Difficulty analysis failed: {str(e)}")
+
+@api_router.post("/statistical-analysis/identify-timezone-manipulation")
+async def identify_timezone_manipulation(request: TimezoneManipulationAnalysisRequest):
+    """
+    Identify suspicious timing patterns that may indicate timezone manipulation
+    
+    Detects:
+    - Tests taken at unusual hours for candidate's location
+    - Patterns suggesting timezone gaming for extended time
+    - Suspicious breaks and resume patterns
+    """
+    try:
+        if not request.session_data:
+            raise HTTPException(status_code=400, detail="Session data is required")
+        
+        session_id = request.session_data.get('session_id')
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required in session data")
+        
+        # Perform timezone manipulation analysis
+        analysis_results = statistical_anomaly_analyzer.identify_time_zone_manipulation(request.session_data)
+        
+        if not analysis_results.get('success'):
+            error_msg = analysis_results.get('error', 'Unknown error in timezone analysis')
+            raise HTTPException(status_code=500, detail=f"Timezone analysis failed: {error_msg}")
+        
+        # Store analysis in database
+        analysis_record = {
+            "analysis_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "analysis_type": "timezone_manipulation",
+            "analysis_timestamp": datetime.utcnow(),
+            "analysis_results": analysis_results,
+            "manipulation_score": analysis_results.get('manipulation_score', 0.0),
+            "risk_level": analysis_results.get('risk_level', 'MINIMAL'),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.statistical_anomaly_analyses.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "message": "Timezone manipulation analysis completed",
+            "analysis_id": analysis_record["analysis_id"],
+            "session_id": session_id,
+            "analysis_results": analysis_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in timezone manipulation analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Timezone analysis failed: {str(e)}")
+
+@api_router.post("/statistical-analysis/detect-collaborative-cheating-patterns")
+async def detect_collaborative_cheating_patterns(request: CollaborativeCheatingAnalysisRequest):
+    """
+    Detect patterns suggesting collaborative cheating between test-takers
+    
+    Detects:
+    - Similar answer patterns across sessions
+    - Coordinated timing patterns between candidates
+    - Statistical evidence of information sharing
+    """
+    try:
+        if not request.session_data:
+            raise HTTPException(status_code=400, detail="Session data is required")
+        
+        session_id = request.session_data.get('session_id')
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required in session data")
+        
+        # Perform collaborative cheating analysis
+        analysis_results = statistical_anomaly_analyzer.detect_collaborative_cheating_patterns(
+            request.session_data, 
+            request.comparison_sessions
+        )
+        
+        if not analysis_results.get('success'):
+            error_msg = analysis_results.get('error', 'Unknown error in collaboration analysis')
+            raise HTTPException(status_code=500, detail=f"Collaboration analysis failed: {error_msg}")
+        
+        # Store analysis in database
+        analysis_record = {
+            "analysis_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "analysis_type": "collaborative_cheating_patterns",
+            "analysis_timestamp": datetime.utcnow(),
+            "analysis_results": analysis_results,
+            "collaboration_score": analysis_results.get('collaboration_score', 0.0),
+            "risk_level": analysis_results.get('risk_level', 'MINIMAL'),
+            "comparison_sessions_count": len(request.comparison_sessions) if request.comparison_sessions else 0,
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.statistical_anomaly_analyses.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "message": "Collaborative cheating analysis completed",
+            "analysis_id": analysis_record["analysis_id"],
+            "session_id": session_id,
+            "analysis_results": analysis_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in collaborative cheating analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Collaboration analysis failed: {str(e)}")
+
+@api_router.get("/statistical-analysis/session-analysis/{session_id}")
+async def get_statistical_anomaly_analysis(session_id: str):
+    """
+    Get all statistical anomaly analyses for a specific session
+    """
+    try:
+        # Get all statistical analyses for the session
+        analyses = await db.statistical_anomaly_analyses.find(
+            {"session_id": session_id}
+        ).to_list(None)
+        
+        if not analyses:
+            raise HTTPException(status_code=404, detail=f"No statistical analyses found for session {session_id}")
+        
+        # Convert ObjectIds to strings for JSON serialization
+        for analysis in analyses:
+            if '_id' in analysis:
+                analysis['_id'] = str(analysis['_id'])
+            if 'created_at' in analysis:
+                analysis['created_at'] = analysis['created_at'].isoformat()
+            if 'analysis_timestamp' in analysis:
+                analysis['analysis_timestamp'] = analysis['analysis_timestamp'].isoformat()
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "total_analyses": len(analyses),
+            "analyses": analyses,
+            "retrieved_at": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error retrieving statistical analyses: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve analyses: {str(e)}")
+
+@api_router.get("/statistical-analysis/model-status")
+async def get_statistical_analysis_status():
+    """
+    Get current status of the Statistical Anomaly Analyzer
+    """
+    try:
+        # Get analysis statistics
+        total_analyses = await db.statistical_anomaly_analyses.count_documents({})
+        high_risk_analyses = await db.statistical_anomaly_analyses.count_documents({"risk_level": {"$in": ["HIGH", "CRITICAL"]}})
+        
+        # Get analysis type distribution
+        pipeline = [
+            {"$group": {"_id": "$analysis_type", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
+        ]
+        analysis_distribution = await db.statistical_anomaly_analyses.aggregate(pipeline).to_list(None)
+        
+        return {
+            "success": True,
+            "analyzer_status": "operational",
+            "available_analyses": [
+                "answer_pattern_irregularities",
+                "difficulty_progression_anomalies", 
+                "timezone_manipulation",
+                "collaborative_cheating_patterns"
+            ],
+            "analysis_statistics": {
+                "total_analyses": total_analyses,
+                "high_risk_analyses": high_risk_analyses,
+                "analysis_distribution": analysis_distribution
+            },
+            "last_updated": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting statistical analyzer status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+
 # Helper function for overall session risk calculation
 async def _calculate_overall_session_risk(analyses: Dict[str, Any]) -> Dict[str, Any]:
     """Calculate overall session risk from multiple analyses"""
