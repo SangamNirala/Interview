@@ -975,7 +975,248 @@ class DeviceFingerprintingEngine:
             self.logger.error(f"Error calculating hash entropy: {str(e)}")
             return 0.0
     
-    # ===== VIRTUAL MACHINE DETECTION HELPER METHODS =====
+    # ===== ENHANCED VIRTUAL MACHINE DETECTION HELPER METHODS =====
+    
+    def _validate_and_normalize_device_data(self, device_data: Any) -> Dict[str, Any]:
+        """Validate and normalize device data input"""
+        if not isinstance(device_data, dict):
+            self.logger.warning(f"Device data is not a dictionary: {type(device_data)}")
+            return {}
+        
+        # Ensure all main components are dictionaries
+        normalized_data = {}
+        required_components = ['hardware', 'os', 'browser', 'performance', 'network', 'screen']
+        
+        for component in required_components:
+            component_data = device_data.get(component, {})
+            if not isinstance(component_data, dict):
+                self.logger.warning(f"{component.capitalize()} data is not a dictionary: {type(component_data)}")
+                normalized_data[component] = {}
+            else:
+                normalized_data[component] = component_data
+        
+        return normalized_data
+    
+    def _detect_enhanced_hardware_vm_indicators(self, hardware_data: Dict[str, Any], performance_data: Dict[str, Any]) -> Dict[str, Any]:
+        """ENHANCED: Detect hardware-based VM indicators with comprehensive analysis"""
+        indicators = {
+            'suspicious_hardware': [],
+            'vm_probability': 0.0,
+            'hardware_consistency_score': 0.0,
+            'anomalous_characteristics': [],
+            'vm_hardware_patterns': []
+        }
+        
+        try:
+            # CPU Analysis
+            cpu_info = hardware_data.get('cpu', {})
+            if cpu_info:
+                cpu_cores = cpu_info.get('cores', 0)
+                cpu_threads = cpu_info.get('threads', 0)
+                cpu_model = str(cpu_info.get('model', '')).lower()
+                
+                # Check for VM-typical CPU configurations
+                if cpu_cores in [1, 2, 4, 8, 16]:  # Common VM allocations
+                    indicators['suspicious_hardware'].append(f"Common VM CPU core count: {cpu_cores}")
+                
+                # Check for VM-specific CPU models/vendors
+                vm_cpu_patterns = ['virtual', 'qemu', 'kvm', 'xen', 'hyperv', 'vmware']
+                for pattern in vm_cpu_patterns:
+                    if pattern in cpu_model:
+                        indicators['vm_hardware_patterns'].append(f"VM CPU pattern detected: {pattern}")
+                
+                # Check CPU/thread ratio anomalies
+                if cpu_threads > 0 and cpu_cores > 0:
+                    ratio = cpu_threads / cpu_cores
+                    if ratio not in [1.0, 2.0]:  # Not typical physical CPU ratios
+                        indicators['anomalous_characteristics'].append(f"Unusual CPU thread ratio: {ratio}")
+            
+            # Memory Analysis  
+            memory_info = hardware_data.get('memory', {})
+            device_memory = performance_data.get('device_memory', 0)
+            
+            if device_memory > 0:
+                memory_gb = device_memory / (1024 * 1024 * 1024)  # Convert to GB
+                
+                # Check for VM-typical memory allocations
+                vm_memory_sizes = [0.5, 1, 2, 4, 8, 16, 32]  # Common VM memory allocations
+                for vm_size in vm_memory_sizes:
+                    if abs(memory_gb - vm_size) < 0.1:
+                        indicators['suspicious_hardware'].append(f"VM-typical memory size: {memory_gb:.1f}GB")
+                        break
+            
+            # GPU Analysis
+            gpu_info = hardware_data.get('gpu', {})
+            if gpu_info:
+                gpu_vendor = str(gpu_info.get('vendor', '')).lower()
+                gpu_renderer = str(gpu_info.get('renderer', '')).lower()
+                
+                # Check for VM GPU indicators
+                vm_gpu_patterns = ['virtual', 'vmware', 'virtualbox', 'parallels', 'qxl', 'cirrus']
+                for pattern in vm_gpu_patterns:
+                    if pattern in gpu_vendor or pattern in gpu_renderer:
+                        indicators['vm_hardware_patterns'].append(f"VM GPU detected: {pattern}")
+                
+                # Check for missing or basic GPU
+                if 'software' in gpu_renderer or 'basic' in gpu_renderer:
+                    indicators['anomalous_characteristics'].append("Software/basic GPU rendering detected")
+            
+            # Storage Analysis
+            storage_info = hardware_data.get('storage', {})
+            if storage_info:
+                storage_type = str(storage_info.get('type', '')).lower()
+                
+                # Check for VM storage patterns
+                vm_storage_patterns = ['virtual', 'vmdk', 'vdi', 'qcow']
+                for pattern in vm_storage_patterns:
+                    if pattern in storage_type:
+                        indicators['vm_hardware_patterns'].append(f"VM storage type: {pattern}")
+            
+            # Calculate hardware consistency score
+            total_checks = 4  # CPU, Memory, GPU, Storage
+            consistent_checks = 0
+            
+            if cpu_info:
+                consistent_checks += 1
+            if memory_info or device_memory > 0:
+                consistent_checks += 1
+            if gpu_info:
+                consistent_checks += 1
+            if storage_info:
+                consistent_checks += 1
+            
+            indicators['hardware_consistency_score'] = consistent_checks / total_checks
+            
+            # Calculate enhanced VM probability
+            vm_score = 0.0
+            vm_score += len(indicators['suspicious_hardware']) * 0.2
+            vm_score += len(indicators['vm_hardware_patterns']) * 0.3
+            vm_score += len(indicators['anomalous_characteristics']) * 0.1
+            
+            indicators['vm_probability'] = min(1.0, vm_score)
+            
+            return indicators
+            
+        except Exception as e:
+            self.logger.error(f"Error in enhanced hardware VM detection: {str(e)}")
+            return {
+                'suspicious_hardware': [],
+                'vm_probability': 0.0,
+                'error': str(e)
+            }
+    
+    def _analyze_enhanced_hypervisor_presence(self, os_data: Dict[str, Any], browser_data: Dict[str, Any], hardware_data: Dict[str, Any]) -> Dict[str, Any]:
+        """ENHANCED: Comprehensive hypervisor presence analysis across all platforms"""
+        analysis = {
+            'hypervisor_indicators': [],
+            'confidence': 0.0,
+            'platform_specific_indicators': {},
+            'hypervisor_type_detected': [],
+            'virtualization_technology': []
+        }
+        
+        try:
+            # User Agent Analysis
+            user_agent = str(browser_data.get('user_agent', '')).lower()
+            hypervisor_patterns = {
+                'virtualbox': 'Oracle VirtualBox',
+                'vmware': 'VMware',
+                'parallels': 'Parallels Desktop',
+                'hyper-v': 'Microsoft Hyper-V',
+                'kvm': 'KVM',
+                'qemu': 'QEMU',
+                'xen': 'Xen Hypervisor',
+                'docker': 'Docker Container',
+                'lxc': 'LXC Container'
+            }
+            
+            for pattern, hypervisor_name in hypervisor_patterns.items():
+                if pattern in user_agent:
+                    analysis['hypervisor_indicators'].append(f"Hypervisor in user agent: {hypervisor_name}")
+                    analysis['hypervisor_type_detected'].append(hypervisor_name)
+            
+            # Platform-specific Analysis
+            platform = str(os_data.get('platform', '')).lower()
+            
+            # Windows-specific indicators
+            if 'windows' in platform or 'win32' in platform:
+                analysis['platform_specific_indicators']['windows'] = self._analyze_windows_vm_indicators(os_data, hardware_data)
+            
+            # Linux-specific indicators  
+            elif 'linux' in platform:
+                analysis['platform_specific_indicators']['linux'] = self._analyze_linux_vm_indicators(os_data, hardware_data)
+            
+            # macOS-specific indicators
+            elif 'mac' in platform or 'darwin' in platform:
+                analysis['platform_specific_indicators']['macos'] = self._analyze_macos_vm_indicators(os_data, hardware_data)
+            
+            # Browser-based hypervisor detection
+            webgl_vendor = str(browser_data.get('webgl_vendor', '')).lower()
+            webgl_renderer = str(browser_data.get('webgl_renderer', '')).lower()
+            
+            vm_webgl_patterns = ['vmware', 'virtualbox', 'parallels', 'microsoft basic render']
+            for pattern in vm_webgl_patterns:
+                if pattern in webgl_vendor or pattern in webgl_renderer:
+                    analysis['hypervisor_indicators'].append(f"VM WebGL signature: {pattern}")
+            
+            # Calculate confidence
+            total_indicators = len(analysis['hypervisor_indicators'])
+            platform_indicators = sum(len(indicators) for indicators in analysis['platform_specific_indicators'].values())
+            
+            analysis['confidence'] = min(1.0, (total_indicators + platform_indicators) * 0.25)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error in enhanced hypervisor presence analysis: {str(e)}")
+            return {
+                'hypervisor_indicators': [],
+                'confidence': 0.0,
+                'error': str(e)
+            }
+    
+    def _analyze_windows_vm_indicators(self, os_data: Dict[str, Any], hardware_data: Dict[str, Any]) -> List[str]:
+        """Analyze Windows-specific VM indicators"""
+        indicators = []
+        
+        # Windows version patterns that suggest VM
+        os_version = str(os_data.get('version', '')).lower()
+        
+        # Check for VM-specific Windows versions or editions
+        vm_windows_patterns = ['server core', 'windows pe', 'embedded']
+        for pattern in vm_windows_patterns:
+            if pattern in os_version:
+                indicators.append(f"VM-typical Windows version: {pattern}")
+        
+        return indicators
+    
+    def _analyze_linux_vm_indicators(self, os_data: Dict[str, Any], hardware_data: Dict[str, Any]) -> List[str]:
+        """Analyze Linux-specific VM indicators"""
+        indicators = []
+        
+        # Linux distribution patterns
+        distribution = str(os_data.get('distribution', '')).lower()
+        
+        # Common VM Linux distributions
+        vm_distro_patterns = ['cloud', 'container', 'minimal', 'server']
+        for pattern in vm_distro_patterns:
+            if pattern in distribution:
+                indicators.append(f"VM-typical Linux distribution: {pattern}")
+        
+        return indicators
+    
+    def _analyze_macos_vm_indicators(self, os_data: Dict[str, Any], hardware_data: Dict[str, Any]) -> List[str]:
+        """Analyze macOS-specific VM indicators"""
+        indicators = []
+        
+        # macOS version analysis
+        os_version = str(os_data.get('version', '')).lower()
+        
+        # Check for virtualized macOS patterns
+        if 'server' in os_version:
+            indicators.append("macOS Server version detected")
+        
+        return indicators
     
     def _detect_hardware_vm_indicators(self, hardware_data: Dict[str, Any]) -> Dict[str, Any]:
         """Detect hardware-based VM indicators"""
