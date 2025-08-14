@@ -267,6 +267,26 @@ except Exception as e:
         def detect_collaborative_cheating_patterns(self, *args, **kwargs): return {"error": "Module not loaded"}
     
     statistical_anomaly_analyzer = StatisticalAnomalyAnalyzer()
+
+# Load Real-time Risk Calculator (Step 2.3)
+try:
+    from real_time_risk_calculator import RealTimeRiskCalculator
+    real_time_risk_calculator = RealTimeRiskCalculator(
+        anomaly_engine=anomaly_detection_engine,
+        statistical_analyzer=statistical_anomaly_analyzer
+    )
+    print("✅ Real-time Risk Calculator loaded successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Could not load Real-time Risk Calculator - {e}")
+    # Create stub class
+    class RealTimeRiskCalculator:
+        def __init__(self, *args, **kwargs): pass
+        async def calculate_composite_risk_score(self, *args, **kwargs): return {"error": "Module not loaded"}
+        async def update_risk_factors_continuously(self, *args, **kwargs): return {"error": "Module not loaded"}
+        async def trigger_intervention_alerts(self, *args, **kwargs): return {"error": "Module not loaded"}
+        async def generate_confidence_intervals(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    real_time_risk_calculator = RealTimeRiskCalculator()
     # Create stub classes
     class KeystrokeDynamicsAnalyzer:
         def __init__(self): pass
