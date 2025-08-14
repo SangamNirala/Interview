@@ -982,8 +982,103 @@ class StatisticalAnomalyAnalyzer:
             return {'available': False, 'error': str(e)}
     
     def _find_positional_answer_clusters(self, answer_choices: List[str]) -> Dict[str, Any]:
-        """Find positional clustering in answers (placeholder implementation)"""
-        return {'available': True, 'clustering_strength': 0.2}
+        """Find positional clustering in answers based on question position"""
+        try:
+            if len(answer_choices) < 5:
+                return {'available': False, 'message': 'Insufficient data for positional analysis'}
+            
+            # Analyze answer distribution across different sections of the test
+            total_questions = len(answer_choices)
+            section_size = total_questions // 3
+            
+            sections = {
+                'beginning': answer_choices[:section_size],
+                'middle': answer_choices[section_size:section_size*2],
+                'end': answer_choices[section_size*2:]
+            }
+            
+            # Calculate answer distribution in each section
+            section_distributions = {}
+            overall_distribution = Counter(answer_choices)
+            
+            for section_name, section_answers in sections.items():
+                if not section_answers:
+                    continue
+                    
+                section_counter = Counter(section_answers)
+                section_distributions[section_name] = dict(section_counter)
+            
+            # Look for clustering patterns
+            clustering_patterns = []
+            clustering_strength = 0.0
+            
+            # Check if certain answers cluster in specific sections
+            for choice in overall_distribution.keys():
+                choice_positions = [i for i, ans in enumerate(answer_choices) if ans == choice]
+                
+                if len(choice_positions) < 2:
+                    continue
+                
+                # Calculate position clustering using coefficient of variation
+                mean_pos = statistics.mean(choice_positions)
+                std_pos = statistics.stdev(choice_positions) if len(choice_positions) > 1 else 0
+                
+                # Normalize by total length
+                normalized_std = std_pos / total_questions if total_questions > 0 else 0
+                
+                # Lower normalized std indicates clustering
+                position_clustering_score = max(0, 1 - (normalized_std * 3))  # Scale factor
+                
+                if position_clustering_score > 0.5:  # Threshold for significant clustering
+                    pattern = {
+                        'choice': choice,
+                        'count': len(choice_positions),
+                        'positions': choice_positions[:10],  # Limit for output size
+                        'mean_position': float(mean_pos),
+                        'std_position': float(std_pos),
+                        'clustering_score': float(position_clustering_score),
+                        'section_distribution': {
+                            section: section_distributions[section].get(choice, 0) 
+                            for section in section_distributions
+                        }
+                    }
+                    clustering_patterns.append(pattern)
+                    clustering_strength = max(clustering_strength, position_clustering_score)
+            
+            # Analyze sequential runs (consecutive same answers)
+            sequential_runs = []
+            current_run = {'choice': answer_choices[0], 'start': 0, 'length': 1}
+            
+            for i in range(1, len(answer_choices)):
+                if answer_choices[i] == current_run['choice']:
+                    current_run['length'] += 1
+                else:
+                    if current_run['length'] >= 3:  # Only report runs of 3+
+                        sequential_runs.append(dict(current_run))
+                    current_run = {'choice': answer_choices[i], 'start': i, 'length': 1}
+            
+            # Check final run
+            if current_run['length'] >= 3:
+                sequential_runs.append(dict(current_run))
+            
+            # Adjust clustering strength based on sequential runs
+            if sequential_runs:
+                max_run_length = max(run['length'] for run in sequential_runs)
+                run_clustering_bonus = min(max_run_length / total_questions, 0.5)
+                clustering_strength = min(clustering_strength + run_clustering_bonus, 1.0)
+            
+            return {
+                'available': True,
+                'clustering_strength': float(clustering_strength),
+                'clustering_patterns': clustering_patterns,
+                'sequential_runs': sequential_runs,
+                'section_distributions': section_distributions,
+                'is_suspicious': clustering_strength > 0.6
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in positional clustering analysis: {str(e)}")
+            return {'available': False, 'error': str(e)}
     
     def _calculate_performance_progression(self, bin_performance: Dict) -> Dict[str, Any]:
         """Calculate performance progression metrics (placeholder implementation)"""
