@@ -644,7 +644,7 @@ class StatisticalAnomalyAnalyzer:
                 'correlation_coefficient': float(correlation),
                 'p_value': float(p_value),
                 'expected_correlation': expected_correlation,
-                'is_anomalous': bool(correlation_anomaly),
+                'is_anomalous': correlation_anomaly,
                 'anomaly_strength': float(anomaly_strength),
                 'statistical_significance': p_value < 0.05
             }
