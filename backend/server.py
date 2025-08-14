@@ -1005,6 +1005,21 @@ class AptitudeTestSession(BaseModel):
     ip_address: str = ""
     user_agent: str = ""
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Enhanced CAT: Multi-dimensional IRT
+    theta_estimates: Dict[str, float] = {}  # topic -> ability estimate
+    se_estimates: Dict[str, float] = {}  # topic -> standard error
+    confidence_intervals: Dict[str, Dict[str, float]] = {}  # topic -> {"lower": X, "upper": Y}
+    cat_se: float = 1.0  # Overall standard error
+    cat_info_sum: float = 0.0  # Cumulative information sum
+    ability_history: List[Dict[str, Any]] = []  # History of ability estimates
+    
+    # Enhanced CAT: Fraud Detection
+    fraud_score: float = 0.0  # Overall fraud risk score (0-1)
+    fraud_flags: List[str] = []  # List of detected fraud indicators
+    response_patterns: Dict[str, Any] = {}  # Detected response patterns
+    timing_anomalies: List[Dict[str, Any]] = []  # Suspicious timing events
+    behavioral_flags: List[str] = []  # Behavioral anomaly flags
 
 class AptitudeTestResult(BaseModel):
     result_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
