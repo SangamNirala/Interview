@@ -90,7 +90,7 @@ def create_comprehensive_session_data(scenario="normal"):
                 "question_id": f"q_{i+1}",
                 "response": random.choice(["A", "B", "C", "D"]),
                 "is_correct": is_correct,
-                "difficulty": difficulty,
+                "difficulty": 0.3 if difficulty == "easy" else (0.6 if difficulty == "medium" else 0.9),
                 "response_time": random.uniform(30, 120),
                 "timestamp": (base_time + timedelta(minutes=i*1.5)).isoformat(),
                 "topic": topic
