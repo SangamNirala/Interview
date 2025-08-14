@@ -464,7 +464,7 @@ class AnomalyDetectionEngine:
                 })
             
             # Accuracy features
-            correct_responses = [r for r in responses if r.get('is_correct', False)]
+            correct_responses = [r for r in responses if bool(r.get('is_correct', False))]
             features.update({
                 'accuracy_rate': len(correct_responses) / len(responses) if responses else 0,
                 'total_responses': len(responses),
