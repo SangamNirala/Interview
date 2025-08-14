@@ -648,8 +648,8 @@ class AnomalyDetectionEngine:
             if responses and 'difficulty' in responses[0]:
                 difficult_questions = [r for r in responses if r.get('difficulty', 1) >= 4]
                 if difficult_questions:
-                    difficult_accuracy = sum(1 for r in difficult_questions if r.get('is_correct', False)) / len(difficult_questions)
-                    overall_accuracy = sum(1 for r in responses if r.get('is_correct', False)) / len(responses)
+                    difficult_accuracy = sum(1 for r in difficult_questions if bool(r.get('is_correct', False))) / len(difficult_questions)
+                    overall_accuracy = sum(1 for r in responses if bool(r.get('is_correct', False))) / len(responses)
                     
                     patterns['difficult_question_performance'] = {
                         'difficult_accuracy': float(difficult_accuracy),
