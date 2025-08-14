@@ -234,7 +234,7 @@ class StatisticalAnomalyAnalyzer:
             # Risk assessment
             risk_level = self._assess_difficulty_risk(anomaly_score)
             
-            return {
+            return ensure_json_serializable({
                 'success': True,
                 'session_id': session_id,
                 'analysis_type': 'difficulty_progression_anomalies',
@@ -250,7 +250,7 @@ class StatisticalAnomalyAnalyzer:
                 'detailed_analysis': analysis_results,
                 'recommendations': self._generate_difficulty_recommendations(anomaly_score, analysis_results),
                 'statistical_significance': self._calculate_difficulty_significance(analysis_results)
-            }
+            })
             
         except Exception as e:
             self.logger.error(f"Error in difficulty progression analysis: {str(e)}")
