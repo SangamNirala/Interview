@@ -4613,88 +4613,124 @@ async def get_fraud_monitoring_details(session_id: str):
 @api_router.post("/admin/calibrate-irt-parameters")
 async def calibrate_irt_parameters():
     """
-    Calibrate IRT parameters for questions based on historical response data
+    Enhanced ML-powered IRT calibration using 3PL Maximum Likelihood Estimation
+    
+    Features:
+    - 3PL IRT Maximum Likelihood Estimation for parameters a, b, c
+    - Random Forest and Gradient Boosting for pattern analysis
+    - Advanced parameter validation and quality metrics
+    - Historical response data analytics
     """
     try:
-        # Get all completed sessions for calibration
+        from .advanced_item_calibration_engine import AdvancedItemCalibrationEngine
+        
+        # Get comprehensive session data for ML calibration
         sessions = await db.aptitude_sessions.find(
             {"status": "completed"},
-            {"answers": 1, "adaptive_score": 1}
-        ).to_list(length=1000)  # Limit to recent 1000 sessions
+            {
+                "session_id": 1, 
+                "answers": 1, 
+                "adaptive_score": 1,
+                "timing_data": 1,
+                "created_at": 1
+            }
+        ).to_list(length=2000)  # Increased limit for better ML analysis
         
         if len(sessions) < 10:
-            return {"message": "Insufficient data for calibration (minimum 10 sessions required)"}
+            return {
+                "success": False,
+                "message": "Insufficient data for calibration (minimum 10 sessions required)",
+                "total_sessions_analyzed": len(sessions)
+            }
         
-        # Collect response data by question
-        question_responses = {}
+        # Initialize advanced calibration engine
+        calibration_engine = AdvancedItemCalibrationEngine()
         
-        for session in sessions:
-            theta = session.get("adaptive_score", 0.0)
-            answers = session.get("answers", {})
-            
-            for question_id, answer_data in answers.items():
-                if question_id not in question_responses:
-                    question_responses[question_id] = []
+        # Perform ML-powered calibration
+        calibration_results = calibration_engine.calibrate_difficulty_parameters(sessions)
+        
+        if calibration_results['status'] != 'success':
+            return {
+                "success": False,
+                "message": calibration_results.get('message', 'Calibration failed'),
+                "error_details": calibration_results
+            }
+        
+        # Update database with calibrated parameters
+        calibrated_items = calibration_results['calibrated_items']
+        updated_count = 0
+        
+        for question_id, calibration_data in calibrated_items.items():
+            try:
+                # Update question with ML-calibrated parameters
+                update_result = await db.aptitude_questions.update_one(
+                    {"id": question_id},
+                    {"$set": {
+                        "discrimination": calibration_data['discrimination'],
+                        "difficulty_value": calibration_data['difficulty'],
+                        "guessing": calibration_data['guessing'],
+                        "calibrated": True,
+                        "calibration_data": {
+                            "method": calibration_data['calibration_method'],
+                            "sample_size": calibration_data['sample_size'],
+                            "success_rate": calibration_data['success_rate'],
+                            "log_likelihood": calibration_data['log_likelihood'],
+                            "pseudo_r2": calibration_data['pseudo_r2'],
+                            "aic": calibration_data['aic'],
+                            "bic": calibration_data['bic'],
+                            "convergence": calibration_data['convergence'],
+                            "calibrated_at": datetime.utcnow().isoformat()
+                        }
+                    }}
+                )
                 
-                question_responses[question_id].append({
-                    "theta": theta,
-                    "correct": answer_data.get("correct", False)
-                })
-        
-        # Calibrate parameters for each question with sufficient data
-        calibrated_count = 0
-        
-        for question_id, responses in question_responses.items():
-            if len(responses) < 5:  # Need minimum responses for calibration
+                if update_result.modified_count > 0:
+                    updated_count += 1
+                    
+            except Exception as e:
+                logging.error(f"Error updating question {question_id}: {e}")
                 continue
-            
-            # Simple calibration using success rates at different ability levels
-            thetas = [r["theta"] for r in responses]
-            corrects = [r["correct"] for r in responses]
-            
-            # Calculate difficulty (point where p=0.5)
-            mean_theta = sum(thetas) / len(thetas)
-            success_rate = sum(corrects) / len(corrects)
-            
-            # Estimate difficulty parameter (b)
-            if success_rate > 0.01 and success_rate < 0.99:
-                import math
-                difficulty_b = mean_theta - math.log(success_rate / (1 - success_rate))
-            else:
-                difficulty_b = mean_theta
-            
-            # Estimate discrimination (a) from variance in responses
-            theta_variance = sum((t - mean_theta)**2 for t in thetas) / len(thetas)
-            discrimination_a = min(3.0, max(0.5, 1.0 / max(0.1, theta_variance)))
-            
-            # Update question with calibrated parameters
-            await db.aptitude_questions.update_one(
-                {"id": question_id},
-                {"$set": {
-                    "discrimination": discrimination_a,
-                    "difficulty_value": difficulty_b,
-                    "calibrated": True,
-                    "calibration_data": {
-                        "sample_size": len(responses),
-                        "success_rate": success_rate,
-                        "mean_theta": mean_theta,
-                        "calibrated_at": datetime.utcnow().isoformat()
-                    }
-                }}
-            )
-            
-            calibrated_count += 1
+        
+        # Detect misfitting items for quality assurance
+        misfitting_items = calibration_engine.detect_misfitting_items(calibration_results)
+        
+        # Prepare comprehensive response
+        summary = calibration_results['summary']
+        ml_performance = calibration_results['ml_performance']
         
         return {
             "success": True,
-            "calibrated_questions": calibrated_count,
-            "total_sessions_analyzed": len(sessions),
-            "message": f"Successfully calibrated IRT parameters for {calibrated_count} questions"
+            "message": f"Advanced ML calibration completed successfully",
+            "summary": {
+                "total_questions_analyzed": summary['total_questions'],
+                "successful_calibrations": summary['successful_calibrations'],
+                "database_updates": updated_count,
+                "success_rate": summary['success_rate'],
+                "total_responses": summary['total_responses'],
+                "unique_candidates": summary['unique_candidates'],
+                "avg_model_fit": summary['avg_pseudo_r2'],
+                "avg_sample_size": summary['avg_sample_size']
+            },
+            "ml_analysis": {
+                "random_forest_auc": ml_performance.get('rf_score', 0.0),
+                "gradient_boosting_auc": ml_performance.get('gb_score', 0.0),
+                "ml_training_status": ml_performance.get('status', 'unknown')
+            },
+            "quality_control": {
+                "misfitting_items_detected": len(misfitting_items),
+                "high_priority_issues": len([item for item in misfitting_items if item['priority'] == 'high']),
+                "items_needing_review": [item['question_id'] for item in misfitting_items[:5]]
+            },
+            "calibration_method": "3PL_IRT_MLE_with_ML_Analysis",
+            "timestamp": calibration_results['timestamp']
         }
         
+    except ImportError as e:
+        logging.error(f"Import error: {e}")
+        raise HTTPException(status_code=500, detail="Advanced calibration engine not available")
     except Exception as e:
-        logging.error(f"IRT calibration error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to calibrate IRT parameters")
+        logging.error(f"Advanced IRT calibration error: {e}")
+        raise HTTPException(status_code=500, detail=f"Advanced calibration failed: {str(e)}")
 
 # Anti-cheat utility function (enhanced)
 async def mark_anti_cheat_flag(session_id: str, flag_type: str, details: dict):
