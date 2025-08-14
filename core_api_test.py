@@ -9,7 +9,7 @@ import json
 import io
 import base64
 
-BASE_URL = "https://adaptive-testing-1.preview.emergentagent.com/api"
+BASE_URL = "https://irt-calibration-1.preview.emergentagent.com/api"
 
 def test_core_endpoints():
     """Test all core API endpoints"""
