@@ -165,9 +165,23 @@ class EnhancedCATTester:
     def create_test_configuration(self) -> str:
         """Create a test configuration and return config_id"""
         try:
+            config_request = {
+                "created_by": "enhanced_cat_tester",
+                "test_name": self.test_config["test_name"],
+                "job_title": self.test_config["job_title"],
+                "job_description": self.test_config["job_description"],
+                "topics": self.test_config["topics"],
+                "questions_per_topic": self.test_config["questions_per_topic"],
+                "difficulty_distribution": self.test_config["difficulty_distribution"],
+                "total_time_limit": self.test_config["total_time_limit"],
+                "adaptive_mode": self.test_config["adaptive_mode"],
+                "randomize_questions": self.test_config["randomize_questions"],
+                "randomize_options": self.test_config["randomize_options"]
+            }
+            
             response = self.session.post(
-                f"{self.base_url}/admin/aptitude-test/create-config",
-                json=self.test_config
+                f"{self.base_url}/placement-preparation/aptitude-test-config",
+                json=config_request
             )
             
             if response.status_code == 200:
