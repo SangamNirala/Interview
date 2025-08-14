@@ -661,7 +661,7 @@ class StatisticalAnomalyAnalyzer:
                 'expected_correlation': expected_correlation,
                 'is_anomalous': bool(correlation_anomaly),
                 'anomaly_strength': float(anomaly_strength),
-                'statistical_significance': p_value < 0.05
+                'statistical_significance': bool(p_value < 0.05)
             }
             
         except Exception as e:
