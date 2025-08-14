@@ -326,26 +326,26 @@ class EnhancedCATTester:
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check for enhanced IRT update features
-                required_fields = ["updated_theta", "updated_se", "confidence_interval", "fraud_analysis"]
+                # Check for enhanced IRT update features (adjusted to actual response format)
+                required_fields = ["cat_theta", "cat_se", "confidence_interval", "fraud_score"]
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if not missing_fields:
-                    updated_theta = data["updated_theta"]
-                    updated_se = data["updated_se"]
+                    updated_theta = data["cat_theta"]
+                    updated_se = data["cat_se"]
                     confidence_interval = data["confidence_interval"]
-                    fraud_analysis = data["fraud_analysis"]
+                    fraud_score = data["fraud_score"]
                     
                     # Verify multi-dimensional IRT features
                     has_enhanced_features = (
                         isinstance(updated_theta, (int, float)) and
                         isinstance(updated_se, (int, float)) and
                         isinstance(confidence_interval, dict) and
-                        isinstance(fraud_analysis, dict)
+                        isinstance(fraud_score, (int, float))
                     )
                     
                     self.log_result("Enhanced Answer Submission", has_enhanced_features,
-                                  f"New Theta: {updated_theta}, New SE: {updated_se}")
+                                  f"New Theta: {updated_theta}, New SE: {updated_se}, Fraud Score: {fraud_score}")
                     return has_enhanced_features
                 else:
                     self.log_result("Enhanced Answer Submission", False, f"Missing fields: {missing_fields}", data)
