@@ -946,16 +946,27 @@ class DeviceFingerprintingEngine:
             'confidence': 0.0
         }
         
-        # User agent analysis
-        user_agent = browser_data.get('user_agent', '').lower()
-        hypervisor_patterns = ['virtualbox', 'vmware', 'parallels', 'hyper-v']
-        
-        for pattern in hypervisor_patterns:
-            if pattern in user_agent:
-                analysis['hypervisor_indicators'].append(f"Hypervisor in user agent: {pattern}")
-        
-        analysis['confidence'] = min(1.0, len(analysis['hypervisor_indicators']) * 0.5)
-        return analysis
+        try:
+            # User agent analysis - ensure we have a string
+            user_agent = browser_data.get('user_agent', '')
+            if isinstance(user_agent, str):
+                user_agent_lower = user_agent.lower()
+                hypervisor_patterns = ['virtualbox', 'vmware', 'parallels', 'hyper-v']
+                
+                for pattern in hypervisor_patterns:
+                    if pattern in user_agent_lower:
+                        analysis['hypervisor_indicators'].append(f"Hypervisor in user agent: {pattern}")
+            
+            analysis['confidence'] = min(1.0, len(analysis['hypervisor_indicators']) * 0.5)
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error in hypervisor presence analysis: {str(e)}")
+            return {
+                'hypervisor_indicators': [],
+                'confidence': 0.0,
+                'error': str(e)
+            }
     
     def _analyze_vm_performance_anomalies(self, performance_data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze performance characteristics for VM indicators"""
