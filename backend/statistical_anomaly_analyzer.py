@@ -700,7 +700,7 @@ class StatisticalAnomalyAnalyzer:
             return {
                 'available': True,
                 'bin_performance': bin_performance,
-                'inverted_performance_detected': bool(anomaly_detected),
+                'inverted_performance_detected': True if anomaly_detected else False,
                 'performance_progression': self._calculate_performance_progression(bin_performance)
             }
             
