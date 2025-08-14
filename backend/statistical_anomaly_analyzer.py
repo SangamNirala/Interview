@@ -594,6 +594,10 @@ class StatisticalAnomalyAnalyzer:
             
             chi2_stat, p_value = stats.chisquare(observed, expected)
             
+            # Ensure JSON serializable
+            chi2_stat = float(chi2_stat) if hasattr(chi2_stat, 'item') else float(chi2_stat)
+            p_value = float(p_value) if hasattr(p_value, 'item') else float(p_value)
+            
             # Kolmogorov-Smirnov test (convert to numeric)
             choice_to_num = {choice: i for i, choice in enumerate(sorted(answer_counts.keys()))}
             numeric_choices = [choice_to_num[choice] for choice in answer_choices]
@@ -601,6 +605,10 @@ class StatisticalAnomalyAnalyzer:
             # Test against uniform distribution
             uniform_data = np.random.uniform(0, len(answer_counts)-1, len(answer_choices))
             ks_stat, ks_p_value = stats.ks_2samp(numeric_choices, uniform_data)
+            
+            # Ensure JSON serializable
+            ks_stat = float(ks_stat) if hasattr(ks_stat, 'item') else float(ks_stat)
+            ks_p_value = float(ks_p_value) if hasattr(ks_p_value, 'item') else float(ks_p_value)
             
             return {
                 'available': True,
