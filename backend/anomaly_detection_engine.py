@@ -801,7 +801,7 @@ class AnomalyDetectionEngine:
                 quarter_responses = responses[start_idx:end_idx]
                 
                 # Calculate quarter metrics
-                accuracy = sum(1 for r in quarter_responses if r.get('is_correct', False)) / len(quarter_responses)
+                accuracy = sum(1 for r in quarter_responses if bool(r.get('is_correct', False))) / len(quarter_responses)
                 
                 # Handle both data formats for response times
                 if timings and len(timings) >= end_idx:
