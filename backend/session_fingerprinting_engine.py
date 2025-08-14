@@ -78,6 +78,12 @@ class DeviceFingerprintingEngine:
         self.confidence_threshold = 0.85
         self.tracking_retention_days = 365  # 1 year retention
         
+        # Device tracking data structures (in-memory storage)
+        # In production, these would be backed by MongoDB or another persistent store
+        self.device_history = {}  # device_id -> List[signature_dict]
+        self.device_sessions = {}  # device_id -> List[session_dict]
+        self.device_tracking_records = {}  # device_id -> DeviceTrackingRecord
+        
         # Hardware component weights for signature generation
         self.hardware_weights = {
             'cpu_characteristics': 0.25,
