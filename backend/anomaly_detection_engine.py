@@ -827,7 +827,7 @@ class AnomalyDetectionEngine:
             time_trend = (times[0] - times[-1]) / max(times[0], 1) if times[0] > 0 else 0
             
             # Suspicious patterns: sudden improvement, no learning, performance degradation
-            is_suspicious = (accuracy_trend > 0.5) or (accuracy_trend < -0.3) or (abs(time_trend) < 0.1 and accuracy_trend > 0.3)
+            is_suspicious = bool((accuracy_trend > 0.5) or (accuracy_trend < -0.3) or (abs(time_trend) < 0.1 and accuracy_trend > 0.3))
             
             learning_score = max(0, min(1, 0.5 + accuracy_trend - abs(time_trend - 0.2)))
             
