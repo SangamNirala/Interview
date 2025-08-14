@@ -435,9 +435,9 @@ class MLPredictionTester:
         try:
             session_id, mock_session = self.create_mock_session_data()
             
+            # First check the endpoint signature - it expects session_id as query parameter
             response = self.session.post(
-                f"{BACKEND_URL}/ml/skill-gap-analysis",
-                json={"session_id": session_id},
+                f"{BACKEND_URL}/ml/skill-gap-analysis?session_id={session_id}",
                 timeout=20
             )
             
