@@ -1012,21 +1012,39 @@ class DeviceFingerprintingEngine:
             'anomaly_score': 0.0
         }
         
-        # Memory analysis
-        device_memory = performance_data.get('device_memory', 0)
-        if device_memory > 0:
-            memory_gb = device_memory / 1024  # Convert to GB
-            common_vm_sizes = [2, 4, 8, 16]
-            if any(abs(memory_gb - size) < 0.1 for size in common_vm_sizes):
-                anomalies['performance_indicators'].append(f"Suspicious memory size: {memory_gb}GB")
-        
-        # CPU concurrency analysis
-        hardware_concurrency = performance_data.get('hardware_concurrency', 0)
-        if hardware_concurrency in [1, 2, 4, 8]:
-            anomalies['performance_indicators'].append(f"Common VM CPU count: {hardware_concurrency}")
-        
-        anomalies['anomaly_score'] = min(1.0, len(anomalies['performance_indicators']) * 0.3)
-        return anomalies
+        try:
+            # Ensure performance_data is a dictionary
+            if not isinstance(performance_data, dict):
+                self.logger.warning(f"Performance data is not a dictionary: {type(performance_data)}")
+                return anomalies
+            
+            # Memory analysis
+            device_memory = performance_data.get('device_memory', 0)
+            if isinstance(device_memory, (int, float)) and device_memory > 0:
+                memory_gb = device_memory / 1024  # Convert to GB
+                common_vm_sizes = [2, 4, 8, 16]
+                if any(abs(memory_gb - size) < 0.1 for size in common_vm_sizes):
+                    anomalies['performance_indicators'].append(f"Suspicious memory size: {memory_gb}GB")
+            
+            # CPU concurrency analysis
+            hardware_concurrency = performance_data.get('hardware_concurrency', 0)
+            # Convert string numbers to int if needed
+            if isinstance(hardware_concurrency, str) and hardware_concurrency.isdigit():
+                hardware_concurrency = int(hardware_concurrency)
+            
+            if isinstance(hardware_concurrency, int) and hardware_concurrency in [1, 2, 4, 8]:
+                anomalies['performance_indicators'].append(f"Common VM CPU count: {hardware_concurrency}")
+            
+            anomalies['anomaly_score'] = min(1.0, len(anomalies['performance_indicators']) * 0.3)
+            return anomalies
+            
+        except Exception as e:
+            self.logger.error(f"Error in VM performance anomalies analysis: {str(e)}")
+            return {
+                'performance_indicators': [],
+                'anomaly_score': 0.0,
+                'error': str(e)
+            }
     
     def _analyze_vm_system_indicators(self, browser_data: Dict[str, Any], os_data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze system indicators for VM presence"""
