@@ -996,7 +996,7 @@ class StatisticalAnomalyAnalyzer:
                 'unusual_hour_ratio': unusual_ratio,
                 'midnight_activity_ratio': midnight_ratio,
                 'unusual_patterns': unusual_patterns,
-                'hour_distribution': dict(hour_counts)
+                'hour_distribution': {str(k): v for k, v in hour_counts.items()}
             }
             
         except Exception as e:
