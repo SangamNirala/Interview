@@ -868,7 +868,7 @@ class AnomalyDetectionEngine:
                     response_time = timings[i].get('response_time', 0)
                 else:
                     response_time = response.get('response_time', 0)
-                is_correct = response.get('is_correct', False)
+                is_correct = bool(response.get('is_correct', False))
                 
                 # Expected cognitive load based on difficulty
                 expected_time = difficulty * 30  # Rough baseline: 30 seconds per difficulty point
