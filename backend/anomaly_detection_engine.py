@@ -655,7 +655,7 @@ class AnomalyDetectionEngine:
                         'difficult_accuracy': float(difficult_accuracy),
                         'overall_accuracy': float(overall_accuracy),
                         'performance_ratio': float(difficult_accuracy / max(overall_accuracy, 0.01)),
-                        'is_suspicious': difficult_accuracy > overall_accuracy * 1.5,
+                        'is_suspicious': bool(difficult_accuracy > overall_accuracy * 1.5),
                         'confidence': abs(difficult_accuracy - overall_accuracy)
                     }
             
