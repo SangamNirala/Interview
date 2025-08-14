@@ -1037,16 +1037,27 @@ class DeviceFingerprintingEngine:
             'detection_confidence': 0.0
         }
         
-        # Platform analysis
-        platform = os_data.get('platform', '').lower()
-        vm_platform_patterns = ['virtual', 'vm', 'container']
-        
-        for pattern in vm_platform_patterns:
-            if pattern in platform:
-                signatures['software_signatures'].append(f"VM platform signature: {pattern}")
-        
-        signatures['detection_confidence'] = min(1.0, len(signatures['software_signatures']) * 0.5)
-        return signatures
+        try:
+            # Platform analysis
+            platform = os_data.get('platform', '')
+            if isinstance(platform, str):
+                platform_lower = platform.lower()
+                vm_platform_patterns = ['virtual', 'vm', 'container']
+                
+                for pattern in vm_platform_patterns:
+                    if pattern in platform_lower:
+                        signatures['software_signatures'].append(f"VM platform signature: {pattern}")
+            
+            signatures['detection_confidence'] = min(1.0, len(signatures['software_signatures']) * 0.5)
+            return signatures
+            
+        except Exception as e:
+            self.logger.error(f"Error in VM software signature detection: {str(e)}")
+            return {
+                'software_signatures': [],
+                'detection_confidence': 0.0,
+                'error': str(e)
+            }
     
     def _calculate_vm_probability(self, vm_detection_results: Dict[str, Any]) -> float:
         """Calculate overall VM probability from all detection methods"""
