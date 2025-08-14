@@ -367,7 +367,7 @@ class HardwareAnalysisTester:
             }
             
             response = self.session.post(f"{BASE_URL}/session-fingerprinting/analyze-hardware", 
-                                       json=test_data)
+                                       json=test_data, timeout=30)
             
             if response.status_code in [200, 500]:  # 500 might be expected if engine not loaded
                 self.log_test("Hardware Analysis Endpoint Accessibility", "PASS", 
@@ -378,6 +378,9 @@ class HardwareAnalysisTester:
                             f"Unexpected status code: {response.status_code}")
                 return False
                 
+        except requests.exceptions.RequestException as e:
+            self.log_test("Hardware Analysis Endpoint Accessibility", "FAIL", f"Request Exception: {str(e)}")
+            return False
         except Exception as e:
             self.log_test("Hardware Analysis Endpoint Accessibility", "FAIL", f"Exception: {str(e)}")
             return False
