@@ -272,7 +272,7 @@ class AnomalyDetectionEngine:
             
             self.logger.info(f"Analyzing performance inconsistencies for session: {session_id}")
             
-            if not responses or not timings:
+            if not responses:
                 return {
                     'success': False,
                     'error': 'Insufficient data for performance analysis'
@@ -280,8 +280,15 @@ class AnomalyDetectionEngine:
             
             inconsistencies = {}
             
-            # 1. Response time inconsistency analysis
-            response_times = [t.get('response_time', 0) for t in timings if 'response_time' in t]
+            # 1. Response time inconsistency analysis - Handle both data formats
+            response_times = []
+            if timings:
+                # Format 1: Separate timings array
+                response_times = [t.get('response_time', 0) for t in timings if 'response_time' in t]
+            else:
+                # Format 2: Response times embedded in responses (test data format)
+                response_times = [r.get('response_time', 0) for r in responses if 'response_time' in r]
+                
             if response_times:
                 time_analysis = self._analyze_response_time_consistency(response_times)
                 inconsistencies['response_time'] = time_analysis
