@@ -20185,5 +20185,389 @@ async def get_confidence_intervals(session_id: str):
         logging.error(f"Error in confidence interval calculation: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Confidence interval calculation failed: {str(e)}")
 
+# ===== MODULE 3: ADVANCED SESSION FINGERPRINTING SYSTEM ENDPOINTS =====
+
+# Import Device Fingerprinting Engine
+try:
+    from session_fingerprinting_engine import (
+        DeviceFingerprintingEngine, 
+        DeviceFingerprint, 
+        DeviceTrackingRecord,
+        device_fingerprinting_engine
+    )
+    print("✅ Device Fingerprinting Engine loaded successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Could not load Device Fingerprinting Engine - {e}")
+    # Create stub class
+    class DeviceFingerprintingEngine:
+        def __init__(self): pass
+        def generate_device_signature(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def detect_virtual_machines(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def analyze_hardware_characteristics(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def track_device_consistency(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    device_fingerprinting_engine = DeviceFingerprintingEngine()
+
+# Pydantic models for API requests
+class DeviceFingerprintRequest(BaseModel):
+    device_data: Dict[str, Any]
+    session_id: str
+
+class DeviceTrackingRequest(BaseModel):
+    device_id: str
+    current_signature: Dict[str, Any]
+
+@api_router.post("/session-fingerprinting/generate-device-signature")
+async def generate_device_signature(request: DeviceFingerprintRequest):
+    """
+    Generate comprehensive device signature with hardware fingerprinting,
+    OS analysis, and collision-resistant hash generation
+    
+    Expected device_data format:
+    {
+        "hardware": {
+            "cpu": {"cores": 8, "architecture": "x64", "vendor": "Intel", "model": "Core i7", "frequency": 3200},
+            "gpu": {"vendor": "NVIDIA", "renderer": "GeForce RTX 3070", "version": "OpenGL 4.6", "memory": 8192},
+            "memory": {"total_memory": 17179869184, "available_memory": 8589934592, "memory_type": "DDR4", "speed": 3200},
+            "storage": {"total_storage": 1099511627776, "available_storage": 549755813888, "storage_type": "SSD", "filesystem": "NTFS"}
+        },
+        "os": {
+            "platform": "Windows 10", "version": "10.0.19042", "architecture": "AMD64", "build": "19042",
+            "kernel_version": "10.0.19042", "language": "en-US", "timezone": "America/New_York", "timezone_offset": -300
+        },
+        "browser": {
+            "user_agent": "Mozilla/5.0...", "browser_name": "Chrome", "browser_version": "96.0.4664.110",
+            "engine_name": "Blink", "engine_version": "96.0.4664.110", "plugins": [], "mime_types": [],
+            "languages": ["en-US", "en"], "cookie_enabled": true, "local_storage": true, "session_storage": true,
+            "webgl_support": true, "canvas_support": true
+        },
+        "network": {
+            "connection_type": "ethernet", "effective_type": "4g", "downlink": 10, "rtt": 50, "save_data": false,
+            "ip_address": "192.168.1.100", "country": "US", "region": "NY", "city": "New York", "timezone": "America/New_York"
+        },
+        "screen": {
+            "width": 1920, "height": 1080, "available_width": 1920, "available_height": 1040,
+            "color_depth": 24, "pixel_depth": 24, "device_pixel_ratio": 1, "orientation": "landscape",
+            "touch_support": false, "max_touch_points": 0
+        },
+        "performance": {
+            "memory_usage": {"used": 8589934592, "total": 17179869184}, "cpu_usage": 25,
+            "battery_level": 85, "battery_charging": false, "device_memory": 16384, "hardware_concurrency": 8,
+            "max_touch_points": 0, "benchmarks": {"javascript_performance": 1200}
+        }
+    }
+    """
+    try:
+        logging.info(f"Generating device signature for session: {request.session_id}")
+        
+        # Generate device signature using the engine
+        result = device_fingerprinting_engine.generate_device_signature(request.device_data)
+        
+        if result.get('success'):
+            # Store device signature in MongoDB
+            device_signature_doc = {
+                "device_id": result['device_fingerprint']['device_id'],
+                "session_id": request.session_id,
+                "signature_hash": result['device_fingerprint']['signature_hash'],
+                "confidence_score": result['device_fingerprint']['confidence_score'],
+                "collision_resistance_score": result['device_fingerprint']['collision_resistance_score'],
+                "hardware_analysis": result['hardware_analysis'],
+                "environment_analysis": result['environment_analysis'],
+                "integration_analysis": result['integration_analysis'],
+                "persistence_tracking": result['persistence_tracking'],
+                "signature_version": result['signature_version'],
+                "created_at": datetime.utcnow(),
+                "device_data_hash": hashlib.sha256(json.dumps(request.device_data, sort_keys=True).encode()).hexdigest()[:16]
+            }
+            
+            # Insert into device_fingerprints collection
+            await db.device_fingerprints.insert_one(device_signature_doc)
+            logging.info(f"Device signature stored successfully for device: {result['device_fingerprint']['device_id']}")
+            
+            return {
+                "success": True,
+                "device_signature": result,
+                "storage_confirmation": "Device signature stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Device signature generation failed'))
+        
+    except Exception as e:
+        logging.error(f"Error generating device signature: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Device signature generation failed: {str(e)}")
+
+@api_router.post("/session-fingerprinting/detect-virtual-machines")
+async def detect_virtual_machines(request: DeviceFingerprintRequest):
+    """
+    Comprehensive virtual machine detection through hardware indicators,
+    hypervisor presence analysis, and performance characteristics
+    """
+    try:
+        logging.info(f"Performing VM detection for session: {request.session_id}")
+        
+        # Perform VM detection using the engine
+        result = device_fingerprinting_engine.detect_virtual_machines(request.device_data)
+        
+        if result.get('success'):
+            # Store VM detection results in MongoDB
+            vm_detection_doc = {
+                "session_id": request.session_id,
+                "vm_detection_results": result['vm_detection_results'],
+                "vm_probability": result['vm_probability'],
+                "vm_classification": result['vm_classification'],
+                "is_virtual_machine": result['is_virtual_machine'],
+                "confidence_level": result['confidence_level'],
+                "analysis_timestamp": result['analysis_timestamp'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into vm_detections collection
+            await db.vm_detections.insert_one(vm_detection_doc)
+            logging.info(f"VM detection results stored for session: {request.session_id}")
+            
+            return {
+                "success": True,
+                "vm_detection": result,
+                "storage_confirmation": "VM detection results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'VM detection failed'))
+        
+    except Exception as e:
+        logging.error(f"Error in VM detection: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"VM detection failed: {str(e)}")
+
+@api_router.post("/session-fingerprinting/analyze-hardware")
+async def analyze_hardware_characteristics(request: DeviceFingerprintRequest):
+    """
+    Comprehensive hardware characteristics analysis including CPU, memory,
+    graphics, storage, and hardware consistency validation
+    """
+    try:
+        logging.info(f"Analyzing hardware characteristics for session: {request.session_id}")
+        
+        # Extract hardware data from device data
+        hardware_data = request.device_data.get('hardware', {})
+        
+        # Perform hardware analysis using the engine
+        result = device_fingerprinting_engine.analyze_hardware_characteristics(hardware_data)
+        
+        if result.get('success'):
+            # Store hardware analysis results in MongoDB
+            hardware_analysis_doc = {
+                "session_id": request.session_id,
+                "hardware_analysis": result['hardware_analysis'],
+                "hardware_profile": result['hardware_profile'],
+                "hardware_anomalies": result['hardware_anomalies'],
+                "overall_hardware_score": result['overall_hardware_score'],
+                "analysis_timestamp": result['analysis_timestamp'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into hardware_analyses collection
+            await db.hardware_analyses.insert_one(hardware_analysis_doc)
+            logging.info(f"Hardware analysis stored for session: {request.session_id}")
+            
+            return {
+                "success": True,
+                "hardware_analysis": result,
+                "storage_confirmation": "Hardware analysis stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Hardware analysis failed'))
+        
+    except Exception as e:
+        logging.error(f"Error analyzing hardware characteristics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Hardware analysis failed: {str(e)}")
+
+@api_router.post("/session-fingerprinting/track-device-consistency")
+async def track_device_consistency(request: DeviceTrackingRequest):
+    """
+    Track device signature evolution, hardware change detection,
+    and suspicious device switching patterns
+    """
+    try:
+        logging.info(f"Tracking device consistency for device: {request.device_id}")
+        
+        # Perform device consistency tracking using the engine
+        result = device_fingerprinting_engine.track_device_consistency(
+            request.device_id, 
+            request.current_signature
+        )
+        
+        if result.get('success'):
+            # Store device tracking results in MongoDB
+            device_tracking_doc = {
+                "device_id": request.device_id,
+                "consistency_analysis": result['consistency_analysis'],
+                "tracking_update": result['tracking_update'],
+                "consistency_score": result['consistency_score'],
+                "risk_assessment": result['risk_assessment'],
+                "analysis_timestamp": result['analysis_timestamp'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into device_tracking collection
+            await db.device_tracking.insert_one(device_tracking_doc)
+            
+            # Update or create device tracking record
+            device_record = {
+                "device_id": request.device_id,
+                "last_seen": datetime.utcnow(),
+                "consistency_score": result['consistency_score'],
+                "risk_assessment": result['risk_assessment'],
+                "signature_evolution": result['consistency_analysis'].get('evolution_tracking', {}),
+                "updated_at": datetime.utcnow()
+            }
+            
+            # Upsert device record in device_records collection
+            await db.device_records.update_one(
+                {"device_id": request.device_id},
+                {"$set": device_record, "$setOnInsert": {"first_seen": datetime.utcnow(), "session_count": 0}},
+                upsert=True
+            )
+            
+            # Increment session count
+            await db.device_records.update_one(
+                {"device_id": request.device_id},
+                {"$inc": {"session_count": 1}}
+            )
+            
+            logging.info(f"Device consistency tracking stored for device: {request.device_id}")
+            
+            return {
+                "success": True,
+                "device_tracking": result,
+                "storage_confirmation": "Device tracking results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Device tracking failed'))
+        
+    except Exception as e:
+        logging.error(f"Error tracking device consistency: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Device tracking failed: {str(e)}")
+
+@api_router.get("/session-fingerprinting/device-consistency/{device_id}")
+async def get_device_consistency_history(device_id: str):
+    """
+    Retrieve device consistency history and tracking information
+    """
+    try:
+        logging.info(f"Retrieving device consistency history for device: {device_id}")
+        
+        # Get device record
+        device_record = await db.device_records.find_one({"device_id": device_id})
+        
+        # Get recent tracking entries
+        tracking_history = await db.device_tracking.find(
+            {"device_id": device_id}
+        ).sort("created_at", -1).limit(10).to_list(10)
+        
+        # Get device fingerprints history
+        fingerprint_history = await db.device_fingerprints.find(
+            {"device_id": device_id}
+        ).sort("created_at", -1).limit(5).to_list(5)
+        
+        # Convert ObjectIds to strings
+        if device_record and "_id" in device_record:
+            device_record["_id"] = str(device_record["_id"])
+        
+        for entry in tracking_history + fingerprint_history:
+            if "_id" in entry:
+                entry["_id"] = str(entry["_id"])
+        
+        return {
+            "success": True,
+            "device_id": device_id,
+            "device_record": device_record,
+            "tracking_history": tracking_history,
+            "fingerprint_history": fingerprint_history,
+            "analysis_timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error retrieving device consistency history: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve device history: {str(e)}")
+
+@api_router.get("/session-fingerprinting/device-analytics/{session_id}")
+async def get_session_device_analytics(session_id: str):
+    """
+    Get comprehensive device analytics for a specific session
+    """
+    try:
+        logging.info(f"Retrieving device analytics for session: {session_id}")
+        
+        # Get device fingerprint
+        device_fingerprint = await db.device_fingerprints.find_one({"session_id": session_id})
+        
+        # Get VM detection results
+        vm_detection = await db.vm_detections.find_one({"session_id": session_id})
+        
+        # Get hardware analysis
+        hardware_analysis = await db.hardware_analyses.find_one({"session_id": session_id})
+        
+        # Convert ObjectIds to strings
+        for doc in [device_fingerprint, vm_detection, hardware_analysis]:
+            if doc and "_id" in doc:
+                doc["_id"] = str(doc["_id"])
+        
+        # Compile comprehensive analytics
+        analytics = {
+            "session_id": session_id,
+            "device_fingerprint": device_fingerprint,
+            "vm_detection": vm_detection,
+            "hardware_analysis": hardware_analysis,
+            "analysis_summary": {
+                "device_identified": device_fingerprint is not None,
+                "vm_detected": vm_detection.get('is_virtual_machine', False) if vm_detection else False,
+                "hardware_analyzed": hardware_analysis is not None,
+                "overall_risk_score": _calculate_session_risk_score(device_fingerprint, vm_detection, hardware_analysis)
+            }
+        }
+        
+        return {
+            "success": True,
+            "analytics": analytics,
+            "analysis_timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error retrieving device analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve device analytics: {str(e)}")
+
+def _calculate_session_risk_score(device_fingerprint, vm_detection, hardware_analysis):
+    """Helper function to calculate overall session risk score"""
+    try:
+        risk_factors = []
+        
+        # VM detection risk
+        if vm_detection and vm_detection.get('is_virtual_machine', False):
+            risk_factors.append(vm_detection.get('vm_probability', 0) * 0.8)
+        
+        # Device confidence risk (inverse)
+        if device_fingerprint:
+            confidence = device_fingerprint.get('confidence_score', 0.5)
+            risk_factors.append((1 - confidence) * 0.6)
+        
+        # Hardware anomalies risk
+        if hardware_analysis:
+            anomalies_count = len(hardware_analysis.get('hardware_anomalies', []))
+            risk_factors.append(min(1.0, anomalies_count * 0.3))
+        
+        # Integration analysis risk
+        if device_fingerprint and 'integration_analysis' in device_fingerprint:
+            integration_risk = device_fingerprint['integration_analysis'].get('cross_module_risk_score', 0)
+            risk_factors.append(integration_risk)
+        
+        # Calculate weighted average risk
+        if risk_factors:
+            return round(sum(risk_factors) / len(risk_factors), 3)
+        else:
+            return 0.0
+            
+    except Exception as e:
+        logging.error(f"Error calculating session risk score: {str(e)}")
+        return 0.0
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
