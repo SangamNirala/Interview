@@ -4622,7 +4622,7 @@ async def calibrate_irt_parameters():
     - Historical response data analytics
     """
     try:
-        from .advanced_item_calibration_engine import AdvancedItemCalibrationEngine
+        from advanced_item_calibration_engine import AdvancedItemCalibrationEngine
         
         # Get comprehensive session data for ML calibration
         sessions = await db.aptitude_sessions.find(
