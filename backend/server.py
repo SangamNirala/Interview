@@ -19833,5 +19833,357 @@ async def _calculate_overall_session_risk(analyses: Dict[str, Any]) -> Dict[str,
             "error": str(e)
         }
 
+# ===== REAL-TIME RISK SCORING SYSTEM ENDPOINTS (Step 2.3) =====
+
+# Pydantic models for risk scoring endpoints
+class CompositeRiskRequest(BaseModel):
+    session_id: str
+    current_response_data: Optional[Dict[str, Any]] = None
+
+class RiskFactorUpdateRequest(BaseModel):
+    session_id: str
+    new_response_data: Dict[str, Any]
+
+class AlertTriggerRequest(BaseModel):
+    session_id: str
+    current_risk_assessment: Optional[Dict[str, Any]] = None
+
+class ConfidenceIntervalRequest(BaseModel):
+    session_id: str
+    risk_factors: Optional[List[Dict[str, Any]]] = None
+
+@api_router.post("/risk-scoring/calculate-composite-score")
+async def calculate_composite_risk_score(request: CompositeRiskRequest):
+    """
+    Aggregate risk scores from multiple anomaly detection engines
+    
+    Combines scores from:
+    - AnomalyDetectionEngine (ML predictions)
+    - StatisticalAnomalyAnalyzer (statistical anomalies)
+    - Behavioral biometric scores
+    - Response pattern irregularities
+    """
+    try:
+        logging.info(f"Calculating composite risk score for session: {request.session_id}")
+        
+        # Calculate composite risk score using RealTimeRiskCalculator
+        risk_assessment = await real_time_risk_calculator.calculate_composite_risk_score(
+            session_id=request.session_id,
+            current_response_data=request.current_response_data
+        )
+        
+        if not risk_assessment.get('success'):
+            error_msg = risk_assessment.get('error', 'Unknown error in composite risk calculation')
+            raise HTTPException(status_code=500, detail=f"Composite risk calculation failed: {error_msg}")
+        
+        # Store risk assessment in database
+        session_id = request.session_id
+        risk_score_record = {
+            "session_id": session_id,
+            "risk_assessment": risk_assessment,
+            "composite_risk_score": risk_assessment.get('composite_risk_score', 0.0),
+            "risk_level": risk_assessment.get('risk_level', 'MEDIUM'),
+            "risk_breakdown": risk_assessment.get('risk_breakdown', {}),
+            "confidence_intervals": risk_assessment.get('confidence_intervals', {}),
+            "alerts_triggered": risk_assessment.get('alerts_triggered', []),
+            "created_at": datetime.utcnow()
+        }
+        
+        # Insert into real_time_risk_scores collection
+        result = await db.real_time_risk_scores.insert_one(risk_score_record)
+        risk_assessment['risk_score_id'] = str(result.inserted_id)
+        
+        logging.info(f"Composite risk score calculated successfully for session {session_id}: {risk_assessment.get('composite_risk_score', 0.0):.3f}")
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "analysis_timestamp": datetime.utcnow(),
+            "risk_assessment": risk_assessment
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in composite risk score calculation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Composite risk calculation failed: {str(e)}")
+
+@api_router.post("/risk-scoring/update-risk-factors")
+async def update_risk_factors_continuously(request: RiskFactorUpdateRequest):
+    """
+    Real-time updating of risk factors as session progresses
+    
+    Features:
+    - Sliding window analysis for recent activity patterns
+    - Dynamic weight adjustment based on session evolution
+    - Incremental risk calculation for performance
+    - Risk factor history and trend analysis
+    """
+    try:
+        logging.info(f"Updating risk factors continuously for session: {request.session_id}")
+        
+        # Update risk factors using RealTimeRiskCalculator
+        updated_assessment = await real_time_risk_calculator.update_risk_factors_continuously(
+            session_id=request.session_id,
+            new_response_data=request.new_response_data
+        )
+        
+        if not updated_assessment.get('success'):
+            error_msg = updated_assessment.get('error', 'Unknown error in risk factor update')
+            raise HTTPException(status_code=500, detail=f"Risk factor update failed: {error_msg}")
+        
+        # Store updated risk factors in database
+        session_id = request.session_id
+        risk_update_record = {
+            "session_id": session_id,
+            "updated_assessment": updated_assessment,
+            "previous_risk_score": updated_assessment.get('previous_risk_score', 0.0),
+            "current_risk_score": updated_assessment.get('composite_risk_score', 0.0),
+            "trend_analysis": updated_assessment.get('trend_analysis', {}),
+            "incremental_metrics": updated_assessment.get('incremental_metrics', {}),
+            "significant_change_detected": updated_assessment.get('significant_change_detected', False),
+            "created_at": datetime.utcnow()
+        }
+        
+        # Insert into risk_factor_updates collection 
+        result = await db.risk_factor_updates.insert_one(risk_update_record)
+        updated_assessment['update_record_id'] = str(result.inserted_id)
+        
+        logging.info(f"Risk factors updated successfully for session {session_id}")
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "update_timestamp": datetime.utcnow(),
+            "updated_assessment": updated_assessment
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in risk factor update: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Risk factor update failed: {str(e)}")
+
+@api_router.get("/risk-scoring/current-risk/{session_id}")
+async def get_current_risk_score(session_id: str):
+    """
+    Get current risk score and assessment for a specific session
+    """
+    try:
+        logging.info(f"Getting current risk score for session: {session_id}")
+        
+        # Get latest risk assessment from database
+        latest_risk_assessment = await db.real_time_risk_scores.find_one(
+            {"session_id": session_id},
+            sort=[("created_at", -1)]
+        )
+        
+        if not latest_risk_assessment:
+            # If no stored assessment, calculate new one
+            risk_assessment = await real_time_risk_calculator.calculate_composite_risk_score(session_id)
+            if not risk_assessment.get('success'):
+                raise HTTPException(status_code=404, detail=f"No risk assessment found for session {session_id}")
+            
+            return {
+                "success": True,
+                "session_id": session_id,
+                "risk_assessment": risk_assessment,
+                "source": "calculated"
+            }
+        
+        # Remove MongoDB ObjectId for JSON serialization
+        if '_id' in latest_risk_assessment:
+            del latest_risk_assessment['_id']
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "risk_assessment": latest_risk_assessment,
+            "source": "database",
+            "retrieved_at": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error getting current risk score: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get current risk score: {str(e)}")
+
+@api_router.post("/risk-scoring/trigger-alerts")
+async def trigger_intervention_alerts(request: AlertTriggerRequest):
+    """
+    Define risk thresholds for different intervention levels and generate real-time alerts
+    
+    Alert Levels:
+    - LOW (0.3): Monitoring alert
+    - MEDIUM (0.5): Supervisor notification
+    - HIGH (0.7): Immediate manual review required
+    - CRITICAL (0.9): Test termination recommended
+    """
+    try:
+        logging.info(f"Triggering intervention alerts for session: {request.session_id}")
+        
+        # Trigger alerts using RealTimeRiskCalculator
+        alert_results = await real_time_risk_calculator.trigger_intervention_alerts(
+            session_id=request.session_id,
+            current_risk_assessment=request.current_risk_assessment
+        )
+        
+        if not alert_results.get('success'):
+            error_msg = alert_results.get('error', 'Unknown error in alert triggering')
+            raise HTTPException(status_code=500, detail=f"Alert triggering failed: {error_msg}")
+        
+        # Store alert results in database
+        session_id = request.session_id
+        if alert_results.get('alerts_generated', 0) > 0:
+            alert_record = {
+                "session_id": session_id,
+                "alert_results": alert_results,
+                "current_risk_score": alert_results.get('current_risk_score', 0.0),
+                "current_risk_level": alert_results.get('current_risk_level', 'MEDIUM'),
+                "alerts_generated": alert_results.get('alerts_generated', 0),
+                "escalation_actions": alert_results.get('escalation_actions', []),
+                "alert_details": alert_results.get('alert_details', []),
+                "notification_results": alert_results.get('notification_results', {}),
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into risk_alerts collection
+            result = await db.risk_alerts.insert_one(alert_record)
+            alert_results['alert_record_id'] = str(result.inserted_id)
+        
+        logging.info(f"Intervention alerts processed for session {session_id}: {alert_results.get('alerts_generated', 0)} alerts generated")
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "alert_timestamp": datetime.utcnow(),
+            "alert_results": alert_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in intervention alert triggering: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Alert triggering failed: {str(e)}")
+
+@api_router.get("/risk-scoring/risk-history/{session_id}")
+async def get_risk_history(session_id: str, limit: int = 50):
+    """
+    Get risk score history for a specific session
+    """
+    try:
+        logging.info(f"Getting risk history for session: {session_id}")
+        
+        # Get risk score history from database
+        risk_history = await db.real_time_risk_scores.find(
+            {"session_id": session_id},
+            sort=[("created_at", -1)]
+        ).limit(limit).to_list(None)
+        
+        # Also get risk factor updates
+        factor_updates = await db.risk_factor_updates.find(
+            {"session_id": session_id},
+            sort=[("created_at", -1)]
+        ).limit(limit).to_list(None)
+        
+        # Get alert history
+        alert_history = await db.risk_alerts.find(
+            {"session_id": session_id},
+            sort=[("created_at", -1)]
+        ).limit(limit).to_list(None)
+        
+        # Remove MongoDB ObjectIds for JSON serialization
+        for record in risk_history + factor_updates + alert_history:
+            if '_id' in record:
+                del record['_id']
+        
+        # Calculate risk trend statistics
+        risk_scores = [r.get('composite_risk_score', 0.0) for r in risk_history if 'composite_risk_score' in r]
+        trend_stats = {}
+        if len(risk_scores) > 1:
+            trend_stats = {
+                "current_score": risk_scores[0] if risk_scores else 0.0,
+                "initial_score": risk_scores[-1] if risk_scores else 0.0,
+                "score_change": risk_scores[0] - risk_scores[-1] if len(risk_scores) > 1 else 0.0,
+                "average_score": statistics.mean(risk_scores),
+                "max_score": max(risk_scores),
+                "min_score": min(risk_scores),
+                "score_volatility": statistics.stdev(risk_scores) if len(risk_scores) > 1 else 0.0,
+                "trend_direction": "increasing" if risk_scores[0] > risk_scores[-1] else "decreasing" if risk_scores[0] < risk_scores[-1] else "stable"
+            }
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "risk_history": {
+                "risk_assessments": risk_history,
+                "factor_updates": factor_updates,
+                "alert_history": alert_history
+            },
+            "trend_statistics": trend_stats,
+            "record_counts": {
+                "risk_assessments": len(risk_history),
+                "factor_updates": len(factor_updates), 
+                "alerts": len(alert_history)
+            },
+            "retrieved_at": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error getting risk history: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get risk history: {str(e)}")
+
+@api_router.get("/risk-scoring/confidence-intervals/{session_id}")
+async def get_confidence_intervals(session_id: str):
+    """
+    Statistical confidence intervals for risk scores
+    
+    Features:
+    - Multiple confidence levels (80%, 90%, 95%, 99%)
+    - Bootstrap and analytical confidence interval methods
+    - Uncertainty quantification in risk assessment
+    - Confidence-based decision making support
+    """
+    try:
+        logging.info(f"Getting confidence intervals for session: {session_id}")
+        
+        # Generate confidence intervals using RealTimeRiskCalculator
+        confidence_results = await real_time_risk_calculator.generate_confidence_intervals(session_id)
+        
+        if not confidence_results.get('success'):
+            error_msg = confidence_results.get('error', 'Unknown error in confidence interval calculation')
+            raise HTTPException(status_code=500, detail=f"Confidence interval calculation failed: {error_msg}")
+        
+        # Store confidence interval results (optional)
+        confidence_record = {
+            "session_id": session_id,
+            "confidence_results": confidence_results,
+            "confidence_intervals": confidence_results.get('confidence_intervals', {}),
+            "uncertainty_metrics": confidence_results.get('uncertainty_metrics', {}),
+            "statistical_summary": confidence_results.get('statistical_summary', {}),
+            "created_at": datetime.utcnow()
+        }
+        
+        # Optional: Store in database for caching
+        # await db.confidence_intervals.insert_one(confidence_record)
+        
+        logging.info(f"Confidence intervals calculated for session {session_id}")
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "calculation_timestamp": datetime.utcnow(),
+            "confidence_results": confidence_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in confidence interval calculation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Confidence interval calculation failed: {str(e)}")
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
