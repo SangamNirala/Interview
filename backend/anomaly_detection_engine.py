@@ -633,7 +633,7 @@ class AnomalyDetectionEngine:
         
         try:
             # Pattern 1: Suspicious consistency in wrong answers
-            wrong_responses = [r for r in responses if not r.get('is_correct', False)]
+            wrong_responses = [r for r in responses if not bool(r.get('is_correct', False))]
             if len(wrong_responses) > 5:
                 wrong_times = [r.get('response_time', 0) for r in wrong_responses if 'response_time' in r]
                 if wrong_times:
