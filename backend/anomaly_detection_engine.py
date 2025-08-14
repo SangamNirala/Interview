@@ -133,9 +133,13 @@ class AnomalyDetectionEngine:
             self.baseline_models['statistical'] = baseline_stats
             
             # 4. PCA for dimensionality reduction and reconstruction error
-            pca = PCA(n_components=min(10, X_scaled.shape[1]))
-            pca.fit(X_scaled)
-            self.baseline_models['pca'] = pca
+            n_components = min(10, X_scaled.shape[0] - 1, X_scaled.shape[1])  # Ensure valid PCA dimensions
+            if n_components > 0:
+                pca = PCA(n_components=n_components)
+                pca.fit(X_scaled)
+                self.baseline_models['pca'] = pca
+            else:
+                self.logger.warning("Insufficient data for PCA - skipping PCA model")
             
             # Calculate training metrics
             isolation_scores = isolation_forest.decision_function(X_scaled)
