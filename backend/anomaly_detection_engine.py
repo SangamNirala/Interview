@@ -1246,7 +1246,7 @@ class AnomalyDetectionEngine:
             z_score = abs(probability - 0.5) / 0.1  # Assuming std error of 0.1
             p_value = 2 * (1 - stats.norm.cdf(z_score))  # Two-tailed test
             
-            is_significant = p_value < 0.05
+            is_significant = bool(p_value < 0.05)
             significance_level = 'significant' if is_significant else 'not_significant'
             
             return {
