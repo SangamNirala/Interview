@@ -242,20 +242,18 @@ class HardwareAnalysisTester:
                         "cas_latency": 14,
                         "manufacturer": "G.Skill"
                     },
-                    "storage": [
-                        {
-                            "type": "SSD",
-                            "interface": "NVMe",
-                            "total_storage": 2199023255552,  # 2TB
-                            "available_storage": 1649267441664,  # 1.5TB available
-                            "filesystem": "NTFS",
-                            "model": "Samsung 980 PRO",
-                            "read_speed": 7000,
-                            "write_speed": 5000,
-                            "form_factor": "M.2 2280",
-                            "health_status": "Excellent"
-                        }
-                    ]
+                    "storage": {
+                        "type": "SSD",
+                        "interface": "NVMe",
+                        "total_storage": 2199023255552,  # 2TB
+                        "available_storage": 1649267441664,  # 1.5TB available
+                        "filesystem": "NTFS",
+                        "model": "Samsung 980 PRO",
+                        "read_speed": 7000,
+                        "write_speed": 5000,
+                        "form_factor": "M.2 2280",
+                        "health_status": "Excellent"
+                    }
                 }
             }
         
