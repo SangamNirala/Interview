@@ -1152,9 +1152,94 @@ class StatisticalAnomalyAnalyzer:
             self.logger.warning(f"Error extracting timing data: {str(e)}")
             return {'timestamps': [], 'response_times': [], 'activity_gaps': []}
     
-    def _analyze_timezone_consistency(self, timing_data, session_data):
-        """Analyze timezone consistency"""
-        return {'consistent': True, 'anomaly_score': 0.2}
+    def _analyze_timezone_consistency(self, timing_data: Dict, session_data: Dict) -> Dict[str, Any]:
+        """Analyze timezone consistency and detect manipulation"""
+        try:
+            timestamps = timing_data.get('timestamps', [])
+            if not timestamps:
+                return {'consistent': True, 'anomaly_score': 0.0, 'message': 'No timestamps available'}
+            
+            # Extract timezone and location information
+            reported_timezone = timing_data.get('timezone_info')
+            location_info = timing_data.get('location_info', {})
+            ip_address = timing_data.get('ip_address')
+            
+            anomaly_indicators = []
+            anomaly_score = 0.0
+            
+            # Check timezone vs location consistency
+            if reported_timezone and location_info.get('country'):
+                country = location_info['country']
+                expected_timezones = {
+                    'US': ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Anchorage', 'Pacific/Honolulu'],
+                    'GB': ['Europe/London'],
+                    'CA': ['America/Toronto', 'America/Vancouver', 'America/Edmonton'],
+                    'AU': ['Australia/Sydney', 'Australia/Melbourne', 'Australia/Perth'],
+                    'IN': ['Asia/Kolkata'],
+                    'DE': ['Europe/Berlin'],
+                    'FR': ['Europe/Paris'],
+                    'JP': ['Asia/Tokyo']
+                }
+                
+                if country in expected_timezones:
+                    if not any(tz in reported_timezone for tz in expected_timezones[country]):
+                        anomaly_indicators.append(f"Timezone {reported_timezone} inconsistent with country {country}")
+                        anomaly_score += 0.3
+            
+            # Analyze testing hours patterns
+            if timestamps and reported_timezone:
+                local_hours = []
+                for timestamp in timestamps:
+                    # Convert to local hour (simplified - assumes UTC input)
+                    local_hour = timestamp.hour
+                    local_hours.append(local_hour)
+                
+                # Check for unusual testing hours (very late night/early morning)
+                unusual_hours = sum(1 for hour in local_hours if hour < 5 or hour > 23)
+                if unusual_hours > len(local_hours) * 0.3:  # More than 30% unusual hours
+                    anomaly_indicators.append(f"High percentage of unusual testing hours: {unusual_hours}/{len(local_hours)}")
+                    anomaly_score += 0.25
+                
+                # Check for timezone hopping patterns
+                hour_variation = max(local_hours) - min(local_hours) if local_hours else 0
+                if hour_variation > 18:  # Suspicious hour variation
+                    anomaly_indicators.append(f"Suspicious hour variation: {hour_variation} hours")
+                    anomaly_score += 0.2
+            
+            # Check session duration vs expected timezone patterns
+            total_duration = timing_data.get('total_duration_minutes', 0)
+            if total_duration > 480:  # More than 8 hours
+                anomaly_indicators.append(f"Unusually long session duration: {total_duration:.1f} minutes")
+                anomaly_score += 0.15
+            
+            # Activity gap analysis for timezone manipulation
+            activity_gaps = timing_data.get('activity_gaps', [])
+            if activity_gaps:
+                large_gaps = [gap for gap in activity_gaps if gap > 3600]  # Gaps > 1 hour
+                if large_gaps:
+                    avg_large_gap = statistics.mean(large_gaps) / 3600  # Convert to hours
+                    anomaly_indicators.append(f"Large activity gaps detected: {len(large_gaps)} gaps, avg {avg_large_gap:.1f} hours")
+                    anomaly_score += min(len(large_gaps) * 0.1, 0.3)
+            
+            consistency_score = max(0, 1 - anomaly_score)
+            
+            return {
+                'consistent': anomaly_score < 0.4,
+                'anomaly_score': float(min(anomaly_score, 1.0)),
+                'consistency_score': float(consistency_score),
+                'anomaly_indicators': anomaly_indicators,
+                'reported_timezone': reported_timezone,
+                'location_consistency': location_info,
+                'testing_hour_analysis': {
+                    'local_hours': local_hours if 'local_hours' in locals() else [],
+                    'unusual_hour_count': unusual_hours if 'unusual_hours' in locals() else 0,
+                    'hour_variation': hour_variation if 'hour_variation' in locals() else 0
+                }
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error analyzing timezone consistency: {str(e)}")
+            return {'consistent': True, 'anomaly_score': 0.0, 'error': str(e)}
     
     def _detect_unusual_testing_hours(self, timing_data):
         """Detect unusual testing hours"""
