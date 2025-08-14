@@ -839,34 +839,350 @@ class StatisticalAnomalyAnalyzer:
         """Calculate performance progression metrics (placeholder implementation)"""
         return {'trend': 'normal', 'anomaly_detected': False}
     
-    # Additional placeholder methods for timing, collaboration analysis, etc.
-    def _extract_timing_data(self, session_data):
-        """Extract timing data from session"""
-        return {'timestamps': [], 'session_start': None, 'session_end': None, 'total_duration_minutes': 0}
+    # ===== TIMING ANALYSIS HELPER METHODS =====
     
-    def _analyze_timezone_consistency(self, timing_data, session_data):
-        """Analyze timezone consistency"""
-        return {'consistent': True, 'anomaly_score': 0.2}
+    def _extract_timing_data(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract comprehensive timing data from session"""
+        try:
+            responses = session_data.get('responses', [])
+            session_start = session_data.get('session_start_timestamp')
+            session_end = session_data.get('session_end_timestamp')
+            
+            # Extract timestamps from responses
+            timestamps = []
+            response_intervals = []
+            
+            for i, response in enumerate(responses):
+                if 'timestamp' in response:
+                    timestamp = response['timestamp']
+                    if isinstance(timestamp, str):
+                        try:
+                            timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                        except:
+                            timestamp = datetime.utcnow()
+                    timestamps.append(timestamp)
+                    
+                    # Calculate intervals between responses
+                    if i > 0 and len(timestamps) > 1:
+                        interval = (timestamps[-1] - timestamps[-2]).total_seconds()
+                        response_intervals.append(interval)
+            
+            # Calculate session duration
+            total_duration_minutes = 0
+            if session_start and session_end:
+                if isinstance(session_start, str):
+                    session_start = datetime.fromisoformat(session_start.replace('Z', '+00:00'))
+                if isinstance(session_end, str):
+                    session_end = datetime.fromisoformat(session_end.replace('Z', '+00:00'))
+                total_duration_minutes = (session_end - session_start).total_seconds() / 60
+            elif timestamps:
+                total_duration_minutes = (timestamps[-1] - timestamps[0]).total_seconds() / 60
+            
+            return {
+                'timestamps': timestamps,
+                'session_start': session_start,
+                'session_end': session_end,
+                'total_duration_minutes': total_duration_minutes,
+                'response_intervals': response_intervals,
+                'average_interval': statistics.mean(response_intervals) if response_intervals else 0,
+                'total_responses': len(responses)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error extracting timing data: {str(e)}")
+            return {'timestamps': [], 'session_start': None, 'session_end': None, 'total_duration_minutes': 0}
     
-    def _detect_unusual_testing_hours(self, timing_data):
-        """Detect unusual testing hours"""
-        return {'unusual_hours_detected': False, 'suspicion_score': 0.1}
+    def _analyze_timezone_consistency(self, timing_data: Dict, session_data: Dict) -> Dict[str, Any]:
+        """Analyze timezone consistency and detect suspicious patterns"""
+        try:
+            timestamps = timing_data.get('timestamps', [])
+            if not timestamps:
+                return {'consistent': True, 'anomaly_score': 0.0, 'available': False}
+            
+            # Extract hours from timestamps
+            hours = [ts.hour for ts in timestamps if ts]
+            if not hours:
+                return {'consistent': True, 'anomaly_score': 0.0, 'available': False}
+            
+            # Analyze hour distribution
+            hour_distribution = Counter(hours)
+            most_common_hours = hour_distribution.most_common(5)
+            
+            # Check for unusual patterns
+            suspicious_patterns = []
+            anomaly_score = 0.0
+            
+            # Pattern 1: Testing during typical sleep hours (2 AM - 5 AM)
+            sleep_hours = [2, 3, 4, 5]
+            sleep_hour_count = sum(hour_distribution[hour] for hour in sleep_hours)
+            if sleep_hour_count > len(timestamps) * 0.3:  # More than 30% during sleep hours
+                suspicious_patterns.append("High activity during typical sleep hours")
+                anomaly_score += 0.4
+            
+            # Pattern 2: Extreme time clustering (all responses within 2-hour window)
+            if len(set(hours)) <= 2 and len(timestamps) > 10:
+                suspicious_patterns.append("Extremely concentrated timing pattern")
+                anomaly_score += 0.3
+            
+            # Pattern 3: Inconsistent with declared timezone
+            declared_timezone = session_data.get('timezone', 'UTC')
+            expected_active_hours = self._get_expected_active_hours(declared_timezone)
+            actual_active_hours = set(hours)
+            overlap = len(actual_active_hours.intersection(expected_active_hours))
+            expected_overlap = len(expected_active_hours)
+            
+            if expected_overlap > 0 and overlap / expected_overlap < 0.3:
+                suspicious_patterns.append("Low overlap with expected active hours for timezone")
+                anomaly_score += 0.5
+            
+            return {
+                'available': True,
+                'consistent': anomaly_score < 0.3,
+                'anomaly_score': float(min(anomaly_score, 1.0)),
+                'hour_distribution': dict(hour_distribution),
+                'most_common_hours': most_common_hours,
+                'suspicious_patterns': suspicious_patterns,
+                'sleep_hour_activity_ratio': sleep_hour_count / len(timestamps) if timestamps else 0
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in timezone consistency analysis: {str(e)}")
+            return {'consistent': True, 'anomaly_score': 0.2, 'available': False, 'error': str(e)}
     
-    def _analyze_break_patterns(self, timing_data):
-        """Analyze break patterns"""
-        return {'suspicious_breaks': 0, 'pattern_score': 0.1}
+    def _detect_unusual_testing_hours(self, timing_data: Dict) -> Dict[str, Any]:
+        """Detect unusual testing hours that may indicate timezone manipulation"""
+        try:
+            timestamps = timing_data.get('timestamps', [])
+            if not timestamps:
+                return {'unusual_hours_detected': False, 'suspicion_score': 0.0, 'available': False}
+            
+            # Extract unique hours and calculate statistics
+            hours = [ts.hour for ts in timestamps if ts]
+            unique_hours = set(hours)
+            hour_counts = Counter(hours)
+            
+            unusual_patterns = []
+            suspicion_score = 0.0
+            
+            # Check for extremely late/early hours (11 PM - 5 AM)
+            unusual_hours = {23, 0, 1, 2, 3, 4, 5}
+            unusual_hour_activity = sum(hour_counts[hour] for hour in unusual_hours if hour in hour_counts)
+            unusual_ratio = unusual_hour_activity / len(timestamps) if timestamps else 0
+            
+            if unusual_ratio > 0.4:  # More than 40% activity during unusual hours
+                unusual_patterns.append(f"High activity during unusual hours ({unusual_ratio:.1%})")
+                suspicion_score += unusual_ratio * 0.6
+            
+            # Check for midnight sessions (activity around midnight)
+            midnight_hours = {22, 23, 0, 1, 2}
+            midnight_activity = sum(hour_counts[hour] for hour in midnight_hours if hour in hour_counts)
+            midnight_ratio = midnight_activity / len(timestamps) if timestamps else 0
+            
+            if midnight_ratio > 0.5:
+                unusual_patterns.append("Significant midnight period activity")
+                suspicion_score += 0.3
+            
+            # Check for consistent off-hours pattern
+            if len(unique_hours) >= 3 and all(hour in unusual_hours for hour in unique_hours):
+                unusual_patterns.append("Exclusively unusual hours pattern")
+                suspicion_score += 0.5
+            
+            return {
+                'available': True,
+                'unusual_hours_detected': len(unusual_patterns) > 0,
+                'suspicion_score': float(min(suspicion_score, 1.0)),
+                'unusual_hour_ratio': unusual_ratio,
+                'midnight_activity_ratio': midnight_ratio,
+                'unusual_patterns': unusual_patterns,
+                'hour_distribution': dict(hour_counts)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error detecting unusual testing hours: {str(e)}")
+            return {'unusual_hours_detected': False, 'suspicion_score': 0.1, 'available': False, 'error': str(e)}
     
-    def _analyze_session_duration_anomalies(self, timing_data):
-        """Analyze session duration anomalies"""
-        return {'duration_anomaly': False, 'anomaly_score': 0.0}
+    def _analyze_break_patterns(self, timing_data: Dict) -> Dict[str, Any]:
+        """Analyze break patterns for suspicious behavior"""
+        try:
+            response_intervals = timing_data.get('response_intervals', [])
+            if len(response_intervals) < 3:
+                return {'suspicious_breaks': 0, 'pattern_score': 0.0, 'available': False}
+            
+            # Identify potential breaks (intervals > 5 minutes = 300 seconds)
+            break_threshold = 300  # 5 minutes
+            long_breaks = [interval for interval in response_intervals if interval > break_threshold]
+            very_long_breaks = [interval for interval in response_intervals if interval > 1800]  # 30 minutes
+            
+            suspicious_patterns = []
+            pattern_score = 0.0
+            
+            # Pattern 1: Too many long breaks
+            if len(long_breaks) > len(response_intervals) * 0.2:  # More than 20% are breaks
+                suspicious_patterns.append("Excessive break frequency")
+                pattern_score += 0.3
+            
+            # Pattern 2: Very long breaks (might indicate external assistance)
+            if very_long_breaks:
+                suspicious_patterns.append(f"Very long breaks detected ({len(very_long_breaks)} breaks > 30 min)")
+                pattern_score += len(very_long_breaks) * 0.2
+            
+            # Pattern 3: Consistent break timing (might indicate coordination)
+            if len(long_breaks) >= 3:
+                break_intervals = []
+                last_break_pos = -1
+                for i, interval in enumerate(response_intervals):
+                    if interval > break_threshold:
+                        if last_break_pos >= 0:
+                            break_intervals.append(i - last_break_pos)
+                        last_break_pos = i
+                
+                if break_intervals and len(set(break_intervals)) <= 2:  # Very regular pattern
+                    suspicious_patterns.append("Suspiciously regular break timing")
+                    pattern_score += 0.4
+            
+            # Calculate break statistics
+            avg_break_duration = statistics.mean(long_breaks) if long_breaks else 0
+            total_break_time = sum(long_breaks)
+            total_session_time = sum(response_intervals)
+            break_time_ratio = total_break_time / total_session_time if total_session_time > 0 else 0
+            
+            return {
+                'available': True,
+                'suspicious_breaks': len(suspicious_patterns),
+                'pattern_score': float(min(pattern_score, 1.0)),
+                'total_breaks': len(long_breaks),
+                'very_long_breaks': len(very_long_breaks),
+                'average_break_duration': avg_break_duration,
+                'break_time_ratio': break_time_ratio,
+                'suspicious_patterns': suspicious_patterns
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error analyzing break patterns: {str(e)}")
+            return {'suspicious_breaks': 0, 'pattern_score': 0.1, 'available': False, 'error': str(e)}
     
-    def _compare_with_expected_timing_patterns(self, timing_data, session_data):
-        """Compare with expected timing patterns"""
-        return {'matches_expected': True, 'deviation_score': 0.1}
+    def _analyze_session_duration_anomalies(self, timing_data: Dict) -> Dict[str, Any]:
+        """Analyze session duration for anomalies"""
+        try:
+            total_duration = timing_data.get('total_duration_minutes', 0)
+            total_responses = timing_data.get('total_responses', 0)
+            
+            if total_duration <= 0 or total_responses <= 0:
+                return {'duration_anomaly': False, 'anomaly_score': 0.0, 'available': False}
+            
+            # Calculate metrics
+            avg_time_per_response = total_duration / total_responses
+            response_intervals = timing_data.get('response_intervals', [])
+            
+            anomalies = []
+            anomaly_score = 0.0
+            
+            # Anomaly 1: Extremely fast completion (< 30 seconds per question)
+            if avg_time_per_response < 0.5:  # Less than 30 seconds per response
+                anomalies.append("Extremely fast completion time")
+                anomaly_score += 0.6
+            
+            # Anomaly 2: Extremely slow completion (> 10 minutes per question)
+            elif avg_time_per_response > 10:
+                anomalies.append("Extremely slow completion time")
+                anomaly_score += 0.4
+            
+            # Anomaly 3: Inconsistent pacing
+            if response_intervals:
+                interval_std = statistics.stdev(response_intervals) if len(response_intervals) > 1 else 0
+                interval_mean = statistics.mean(response_intervals)
+                cv = interval_std / interval_mean if interval_mean > 0 else 0  # Coefficient of variation
+                
+                if cv > 2.0:  # High variability in response times
+                    anomalies.append("Highly inconsistent response timing")
+                    anomaly_score += 0.3
+            
+            return {
+                'available': True,
+                'duration_anomaly': len(anomalies) > 0,
+                'anomaly_score': float(min(anomaly_score, 1.0)),
+                'total_duration_minutes': total_duration,
+                'avg_time_per_response': avg_time_per_response,
+                'anomalies_detected': anomalies,
+                'pacing_consistency': 1 - (cv / 3) if 'cv' in locals() else 0.5
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error analyzing session duration: {str(e)}")
+            return {'duration_anomaly': False, 'anomaly_score': 0.0, 'available': False, 'error': str(e)}
     
-    def _calculate_timezone_manipulation_score(self, analysis_results):
-        """Calculate timezone manipulation score"""
-        return 0.25  # Placeholder
+    def _compare_with_expected_timing_patterns(self, timing_data: Dict, session_data: Dict) -> Dict[str, Any]:
+        """Compare actual timing with expected patterns"""
+        try:
+            total_duration = timing_data.get('total_duration_minutes', 0)
+            total_responses = timing_data.get('total_responses', 0)
+            
+            if total_responses <= 0:
+                return {'matches_expected': True, 'deviation_score': 0.0, 'available': False}
+            
+            # Get expected timing based on question types/difficulty
+            expected_time_per_response = self._calculate_expected_response_time(session_data)
+            expected_total_duration = expected_time_per_response * total_responses
+            
+            # Calculate deviations
+            duration_ratio = total_duration / expected_total_duration if expected_total_duration > 0 else 1
+            deviation_score = abs(1 - duration_ratio)
+            
+            # Classification
+            deviations = []
+            if duration_ratio < 0.5:
+                deviations.append("Completion significantly faster than expected")
+            elif duration_ratio > 2.0:
+                deviations.append("Completion significantly slower than expected")
+            
+            matches_expected = deviation_score < 0.5  # Within 50% of expected
+            
+            return {
+                'available': True,
+                'matches_expected': matches_expected,
+                'deviation_score': float(min(deviation_score, 1.0)),
+                'actual_duration': total_duration,
+                'expected_duration': expected_total_duration,
+                'duration_ratio': duration_ratio,
+                'deviations': deviations
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error comparing timing patterns: {str(e)}")
+            return {'matches_expected': True, 'deviation_score': 0.1, 'available': False, 'error': str(e)}
+    
+    def _calculate_timezone_manipulation_score(self, analysis_results: Dict) -> float:
+        """Calculate comprehensive timezone manipulation score"""
+        try:
+            score = 0.0
+            weights = {
+                'timezone_analysis': 0.3,
+                'unusual_hours_analysis': 0.25,
+                'break_pattern_analysis': 0.2,
+                'duration_analysis': 0.15,
+                'expected_pattern_analysis': 0.1
+            }
+            
+            for analysis_type, weight in weights.items():
+                if analysis_type in analysis_results and analysis_results[analysis_type].get('available'):
+                    analysis = analysis_results[analysis_type]
+                    
+                    if analysis_type == 'timezone_analysis':
+                        score += analysis.get('anomaly_score', 0) * weight
+                    elif analysis_type == 'unusual_hours_analysis':
+                        score += analysis.get('suspicion_score', 0) * weight
+                    elif analysis_type == 'break_pattern_analysis':
+                        score += analysis.get('pattern_score', 0) * weight
+                    elif analysis_type == 'duration_analysis':
+                        score += analysis.get('anomaly_score', 0) * weight
+                    elif analysis_type == 'expected_pattern_analysis':
+                        score += analysis.get('deviation_score', 0) * weight
+            
+            return min(score, 1.0)
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating timezone manipulation score: {str(e)}")
+            return 0.25
     
     def _analyze_internal_consistency(self, responses):
         """Analyze internal consistency within session"""
