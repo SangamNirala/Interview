@@ -2,7 +2,7 @@
 import requests
 import json
 
-BASE_URL = 'https://anomaly-test-verify.preview.emergentagent.com/api'
+BASE_URL = 'https://integrity-check-2.preview.emergentagent.com/api'
 
 def test_tts_text_cleaning():
     session = requests.Session()

@@ -7,7 +7,7 @@ import requests
 import json
 
 # Backend URL
-BASE_URL = "https://anomaly-test-verify.preview.emergentagent.com/api"
+BASE_URL = "https://integrity-check-2.preview.emergentagent.com/api"
 
 def test_simple_connection():
     """Test basic connection to backend"""

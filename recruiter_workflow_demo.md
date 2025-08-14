@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://anomaly-test-verify.preview.emergentagent.com
+URL: https://integrity-check-2.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

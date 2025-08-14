@@ -9,7 +9,7 @@ import json
 import io
 import time
 
-BASE_URL = "https://anomaly-test-verify.preview.emergentagent.com/api"
+BASE_URL = "https://integrity-check-2.preview.emergentagent.com/api"
 
 class ComprehensiveProgressionTest:
     def __init__(self):

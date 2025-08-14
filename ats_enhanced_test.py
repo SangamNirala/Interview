@@ -14,7 +14,7 @@ import PyPDF2
 import io
 
 # Configuration
-BACKEND_URL = "https://anomaly-test-verify.preview.emergentagent.com/api"
+BACKEND_URL = "https://integrity-check-2.preview.emergentagent.com/api"
 
 class ATSScoreTestSuite:
     def __init__(self):
