@@ -998,18 +998,37 @@ class DeviceFingerprintingEngine:
             'confidence': 0.0
         }
         
-        # Browser plugin analysis
-        plugins = browser_data.get('plugins', [])
-        vm_plugin_patterns = ['vmware', 'virtualbox', 'parallels']
-        
-        for plugin in plugins:
-            plugin_name = plugin.get('name', '').lower()
-            for pattern in vm_plugin_patterns:
-                if pattern in plugin_name:
-                    indicators['system_indicators'].append(f"VM plugin detected: {plugin_name}")
-        
-        indicators['confidence'] = min(1.0, len(indicators['system_indicators']) * 0.6)
-        return indicators
+        try:
+            # Browser plugin analysis
+            plugins = browser_data.get('plugins', [])
+            if isinstance(plugins, list):
+                vm_plugin_patterns = ['vmware', 'virtualbox', 'parallels']
+                
+                for plugin in plugins:
+                    if isinstance(plugin, dict):
+                        plugin_name = plugin.get('name', '')
+                        if isinstance(plugin_name, str):
+                            plugin_name_lower = plugin_name.lower()
+                            for pattern in vm_plugin_patterns:
+                                if pattern in plugin_name_lower:
+                                    indicators['system_indicators'].append(f"VM plugin detected: {plugin_name}")
+                    elif isinstance(plugin, str):
+                        # Handle case where plugin is just a string
+                        plugin_lower = plugin.lower()
+                        for pattern in vm_plugin_patterns:
+                            if pattern in plugin_lower:
+                                indicators['system_indicators'].append(f"VM plugin detected: {plugin}")
+            
+            indicators['confidence'] = min(1.0, len(indicators['system_indicators']) * 0.6)
+            return indicators
+            
+        except Exception as e:
+            self.logger.error(f"Error in VM system indicators analysis: {str(e)}")
+            return {
+                'system_indicators': [],
+                'confidence': 0.0,
+                'error': str(e)
+            }
     
     def _detect_vm_software_signatures(self, hardware_data: Dict[str, Any], os_data: Dict[str, Any]) -> Dict[str, Any]:
         """Detect VM software signatures"""
