@@ -731,7 +731,7 @@ class AnomalyDetectionEngine:
             # Very high variation (> 1.2) might indicate inconsistent assistance
             
             consistency_score = 1 - min(cv, 2.0) / 2.0
-            is_suspicious = cv < 0.2 or cv > 1.2
+            is_suspicious = bool(cv < 0.2 or cv > 1.2)
             
             return {
                 'consistency_score': float(consistency_score),
