@@ -171,6 +171,60 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 # Phase 2: AI-Powered Screening & Shortlisting Engine - Temporarily disabled due to dependency issues
 # from phase2_screening_engine import AIResumeAnalysisEngine, SmartScoringSystem, AutoShortlistingEngine
 
+# MODULE 1: Behavioral Biometric Analysis Engine Import
+try:
+    from behavioral_biometrics_engine import (
+        KeystrokeDynamicsAnalyzer,
+        InteractionBiometricsAnalyzer,
+        ResponseTimingAnalyzer,
+        BiometricDataPrivacyManager,
+        RealTimeInterventionSystem,
+        keystroke_analyzer,
+        interaction_analyzer,
+        timing_analyzer,
+        privacy_manager,
+        intervention_system
+    )
+    print("✅ Behavioral Biometric Analysis Engine loaded successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Could not load Behavioral Biometric Analysis Engine - {e}")
+    # Create stub classes
+    class KeystrokeDynamicsAnalyzer:
+        def __init__(self): pass
+        def analyze_typing_patterns(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def detect_typing_anomalies(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def generate_biometric_signature(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    class InteractionBiometricsAnalyzer:
+        def __init__(self): pass
+        def analyze_mouse_movement_patterns(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def detect_click_patterns(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def analyze_scroll_behavior(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def calculate_interaction_consistency_score(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    class ResponseTimingAnalyzer:
+        def __init__(self): pass
+        def analyze_question_response_patterns(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def detect_suspicious_consistency(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def identify_external_assistance_patterns(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def calculate_cognitive_load_indicators(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    class BiometricDataPrivacyManager:
+        def __init__(self): pass
+        async def store_biometric_data(self, *args, **kwargs): return {"error": "Module not loaded"}
+        async def purge_expired_data(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    class RealTimeInterventionSystem:
+        def __init__(self): pass
+        async def flag_anomaly(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    # Initialize stub instances
+    keystroke_analyzer = KeystrokeDynamicsAnalyzer()
+    interaction_analyzer = InteractionBiometricsAnalyzer()
+    timing_analyzer = ResponseTimingAnalyzer()
+    privacy_manager = BiometricDataPrivacyManager()
+    intervention_system = RealTimeInterventionSystem()
+
 # Temporary stub classes to avoid breaking the code
 class AIResumeAnalysisEngine:
     def __init__(self):
