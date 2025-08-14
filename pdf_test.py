@@ -7,7 +7,7 @@ import requests
 import tempfile
 import os
 
-BACKEND_URL = "https://vm-analysis-test.preview.emergentagent.com"
+BACKEND_URL = "https://system-scanner-1.preview.emergentagent.com"
 ATS_ENDPOINT = f"{BACKEND_URL}/api/placement-preparation/ats-score-calculate"
 
 def test_pdf_generation():

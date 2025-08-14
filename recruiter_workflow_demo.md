@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://vm-analysis-test.preview.emergentagent.com
+URL: https://system-scanner-1.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

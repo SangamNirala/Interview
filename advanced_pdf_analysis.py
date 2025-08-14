@@ -12,7 +12,7 @@ from datetime import datetime
 import PyPDF2
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://vm-analysis-test.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://system-scanner-1.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 def analyze_rejection_pdf_content():

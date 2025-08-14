@@ -11,7 +11,7 @@ import requests
 import json
 import io
 
-BASE_URL = "https://vm-analysis-test.preview.emergentagent.com/api"
+BASE_URL = "https://system-scanner-1.preview.emergentagent.com/api"
 
 def test_specific_scenario():
     session = requests.Session()

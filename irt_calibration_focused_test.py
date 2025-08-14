@@ -15,7 +15,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://vm-analysis-test.preview.emergentagent.com/api"
+BACKEND_URL = "https://system-scanner-1.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class FocusedIRTCalibrationTester:
