@@ -19051,5 +19051,401 @@ async def get_security_interventions(session_id: str):
         logging.error(f"Error retrieving security interventions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to retrieve interventions: {str(e)}")
 
+# ===== MODULE 2: STATISTICAL ANOMALY DETECTION API ENDPOINTS =====
+
+from pydantic import BaseModel
+from typing import Optional
+
+class BaselineTrainingRequest(BaseModel):
+    historical_data: List[Dict]
+    
+class AnomalyDetectionRequest(BaseModel):
+    current_session: Dict[str, Any]
+    
+class PerformanceAnalysisRequest(BaseModel):
+    session_data: Dict[str, Any]
+    
+class ProbabilityCalculationRequest(BaseModel):
+    session_data: Dict[str, Any]
+
+@api_router.post("/anomaly-detection/train-baseline-models")
+async def train_baseline_models(request: BaselineTrainingRequest):
+    """
+    Train baseline ML models from historical legitimate user data
+    
+    This endpoint trains multiple anomaly detection models including:
+    - Isolation Forest for outlier detection
+    - DBSCAN for density-based clustering  
+    - Statistical baseline models for each feature
+    - PCA for dimensionality reduction
+    """
+    try:
+        if not request.historical_data:
+            raise HTTPException(status_code=400, detail="Historical data is required for training")
+        
+        # Train the baseline models
+        training_results = anomaly_detection_engine.train_baseline_models(request.historical_data)
+        
+        if not training_results.get('success'):
+            raise HTTPException(status_code=500, detail="Model training failed")
+        
+        # Store training metadata in database
+        training_record = {
+            "training_id": str(uuid.uuid4()),
+            "training_date": datetime.utcnow(),
+            "num_training_samples": training_results.get('num_training_samples', 0),
+            "num_features": training_results.get('num_features', 0),
+            "feature_names": training_results.get('feature_names', []),
+            "model_performance": {
+                "isolation_forest_score_range": training_results.get('isolation_forest_score_range', {}),
+                "dbscan_clusters": training_results.get('dbscan_clusters', 0),
+                "pca_explained_variance": training_results.get('pca_explained_variance', 0.0)
+            },
+            "statistical_baselines": training_results.get('statistical_baselines', {}),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.anomaly_model_training.insert_one(training_record)
+        
+        return {
+            "success": True,
+            "message": "Baseline models trained successfully",
+            "training_id": training_record["training_id"],
+            "training_results": training_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in baseline model training: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+
+@api_router.post("/anomaly-detection/detect-response-pattern-anomalies")
+async def detect_response_pattern_anomalies(request: AnomalyDetectionRequest):
+    """
+    Detect anomalies in current session response patterns using trained models
+    
+    Uses multiple ML approaches:
+    - Isolation Forest anomaly detection
+    - Statistical anomaly detection  
+    - PCA reconstruction error analysis
+    - Response pattern specific anomalies
+    """
+    try:
+        if not request.current_session:
+            raise HTTPException(status_code=400, detail="Current session data is required")
+        
+        session_id = request.current_session.get('session_id')
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required in session data")
+        
+        # Detect response pattern anomalies
+        anomaly_results = anomaly_detection_engine.detect_response_pattern_anomalies(request.current_session)
+        
+        if not anomaly_results.get('success'):
+            error_msg = anomaly_results.get('error', 'Unknown error in anomaly detection')
+            raise HTTPException(status_code=500, detail=f"Anomaly detection failed: {error_msg}")
+        
+        # Store anomaly analysis in database
+        anomaly_record = {
+            "analysis_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "analysis_timestamp": datetime.utcnow(),
+            "anomaly_results": anomaly_results,
+            "overall_assessment": anomaly_results.get('overall_assessment', {}),
+            "risk_level": anomaly_results.get('overall_assessment', {}).get('risk_level', 'MEDIUM'),
+            "anomaly_detected": anomaly_results.get('overall_assessment', {}).get('anomaly_detected', False),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.anomaly_analyses.insert_one(anomaly_record)
+        
+        return {
+            "success": True,
+            "message": "Response pattern anomaly detection completed",
+            "analysis_id": anomaly_record["analysis_id"],
+            "session_id": session_id,
+            "anomaly_results": anomaly_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in response pattern anomaly detection: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Anomaly detection failed: {str(e)}")
+
+@api_router.post("/anomaly-detection/analyze-performance-inconsistencies")
+async def analyze_performance_inconsistencies(request: PerformanceAnalysisRequest):
+    """
+    Analyze performance inconsistencies that may indicate cheating
+    
+    Analyzes multiple inconsistency types:
+    - Response time consistency patterns
+    - Accuracy vs difficulty inconsistencies
+    - Learning curve anomalies
+    - Cognitive load indicators
+    - Answer change patterns
+    """
+    try:
+        if not request.session_data:
+            raise HTTPException(status_code=400, detail="Session data is required")
+        
+        session_id = request.session_data.get('session_id')
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required in session data")
+        
+        # Analyze performance inconsistencies
+        inconsistency_results = anomaly_detection_engine.analyze_performance_inconsistencies(request.session_data)
+        
+        if not inconsistency_results.get('success'):
+            error_msg = inconsistency_results.get('error', 'Unknown error in inconsistency analysis')
+            raise HTTPException(status_code=500, detail=f"Performance analysis failed: {error_msg}")
+        
+        # Store inconsistency analysis in database
+        inconsistency_record = {
+            "analysis_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "analysis_timestamp": datetime.utcnow(),
+            "inconsistency_results": inconsistency_results,
+            "composite_inconsistency_score": inconsistency_results.get('composite_inconsistency_score', 0.0),
+            "risk_level": inconsistency_results.get('risk_level', 'MEDIUM'),
+            "detailed_findings": inconsistency_results.get('detailed_findings', []),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.performance_inconsistency_analyses.insert_one(inconsistency_record)
+        
+        return {
+            "success": True,
+            "message": "Performance inconsistency analysis completed",
+            "analysis_id": inconsistency_record["analysis_id"],
+            "session_id": session_id,
+            "inconsistency_results": inconsistency_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in performance inconsistency analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Performance analysis failed: {str(e)}")
+
+@api_router.post("/anomaly-detection/calculate-anomaly-probability-scores")
+async def calculate_anomaly_probability_scores(request: ProbabilityCalculationRequest):
+    """
+    Calculate comprehensive anomaly probability scores with confidence intervals
+    
+    Provides:
+    - Composite anomaly probability from all detection methods
+    - Confidence intervals and statistical significance
+    - Risk classification and detailed probability breakdown
+    - Actionable recommendations based on probability scores
+    """
+    try:
+        if not request.session_data:
+            raise HTTPException(status_code=400, detail="Session data is required")
+        
+        session_id = request.session_data.get('session_id')
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required in session data")
+        
+        # Calculate anomaly probability scores
+        probability_results = anomaly_detection_engine.calculate_anomaly_probability_scores(request.session_data)
+        
+        if not probability_results.get('success'):
+            error_msg = probability_results.get('error', 'Unknown error in probability calculation')
+            raise HTTPException(status_code=500, detail=f"Probability calculation failed: {error_msg}")
+        
+        # Store probability analysis in database
+        probability_record = {
+            "analysis_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "analysis_timestamp": datetime.utcnow(),
+            "probability_results": probability_results,
+            "composite_anomaly_probability": probability_results.get('composite_anomaly_probability', 0.0),
+            "risk_classification": probability_results.get('risk_classification', {}),
+            "statistical_significance": probability_results.get('statistical_significance', {}),
+            "confidence_intervals": probability_results.get('confidence_intervals', {}),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.anomaly_probability_analyses.insert_one(probability_record)
+        
+        return {
+            "success": True,
+            "message": "Anomaly probability calculation completed",
+            "analysis_id": probability_record["analysis_id"],
+            "session_id": session_id,
+            "probability_results": probability_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in anomaly probability calculation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Probability calculation failed: {str(e)}")
+
+@api_router.get("/anomaly-detection/session-analysis/{session_id}")
+async def get_session_anomaly_analysis(session_id: str):
+    """
+    Get comprehensive anomaly analysis results for a specific session
+    """
+    try:
+        # Get all anomaly analyses for the session
+        analyses = {}
+        
+        # Get anomaly detection results
+        anomaly_analysis = await db.anomaly_analyses.find_one({"session_id": session_id}, sort=[("created_at", -1)])
+        if anomaly_analysis:
+            analyses['response_pattern_anomalies'] = anomaly_analysis
+        
+        # Get performance inconsistency results
+        inconsistency_analysis = await db.performance_inconsistency_analyses.find_one({"session_id": session_id}, sort=[("created_at", -1)])
+        if inconsistency_analysis:
+            analyses['performance_inconsistencies'] = inconsistency_analysis
+        
+        # Get probability calculation results
+        probability_analysis = await db.anomaly_probability_analyses.find_one({"session_id": session_id}, sort=[("created_at", -1)])
+        if probability_analysis:
+            analyses['probability_scores'] = probability_analysis
+        
+        if not analyses:
+            raise HTTPException(status_code=404, detail=f"No anomaly analyses found for session {session_id}")
+        
+        # Convert ObjectIds to strings for JSON serialization
+        for analysis_type, analysis_data in analyses.items():
+            if analysis_data and "_id" in analysis_data:
+                analysis_data["_id"] = str(analysis_data["_id"])
+        
+        # Calculate overall session risk assessment
+        overall_assessment = await _calculate_overall_session_risk(analyses)
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "analyses": analyses,
+            "overall_assessment": overall_assessment,
+            "analysis_timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error retrieving session anomaly analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve analysis: {str(e)}")
+
+@api_router.get("/anomaly-detection/model-status")
+async def get_anomaly_detection_model_status():
+    """
+    Get current status of anomaly detection models
+    """
+    try:
+        # Check if models are trained
+        latest_training = await db.anomaly_model_training.find_one(sort=[("created_at", -1)])
+        
+        model_status = {
+            "models_trained": latest_training is not None,
+            "training_date": latest_training.get("training_date").isoformat() if latest_training else None,
+            "num_training_samples": latest_training.get("num_training_samples", 0) if latest_training else 0,
+            "num_features": latest_training.get("num_features", 0) if latest_training else 0,
+            "feature_names": latest_training.get("feature_names", []) if latest_training else [],
+            "available_models": [
+                "isolation_forest",
+                "statistical_baseline",
+                "pca_reconstruction",
+                "dbscan_clustering"
+            ],
+            "model_performance": latest_training.get("model_performance", {}) if latest_training else {}
+        }
+        
+        # Get analysis statistics
+        total_analyses = await db.anomaly_analyses.count_documents({})
+        high_risk_analyses = await db.anomaly_analyses.count_documents({"risk_level": {"$in": ["HIGH", "CRITICAL"]}})
+        
+        analysis_stats = {
+            "total_analyses": total_analyses,
+            "high_risk_analyses": high_risk_analyses,
+            "high_risk_rate": high_risk_analyses / max(total_analyses, 1)
+        }
+        
+        return {
+            "success": True,
+            "model_status": model_status,
+            "analysis_statistics": analysis_stats,
+            "engine_status": "operational",
+            "last_updated": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting model status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get model status: {str(e)}")
+
+# Helper function for overall session risk calculation
+async def _calculate_overall_session_risk(analyses: Dict[str, Any]) -> Dict[str, Any]:
+    """Calculate overall session risk from multiple analyses"""
+    try:
+        risk_scores = []
+        risk_levels = []
+        
+        # Extract risk scores from different analyses
+        if 'response_pattern_anomalies' in analyses:
+            anomaly_data = analyses['response_pattern_anomalies']
+            overall_assessment = anomaly_data.get('anomaly_results', {}).get('overall_assessment', {})
+            if 'overall_anomaly_score' in overall_assessment:
+                risk_scores.append(overall_assessment['overall_anomaly_score'])
+                risk_levels.append(overall_assessment.get('risk_level', 'MEDIUM'))
+        
+        if 'performance_inconsistencies' in analyses:
+            inconsistency_data = analyses['performance_inconsistencies']
+            inconsistency_score = inconsistency_data.get('composite_inconsistency_score', 0.0)
+            risk_scores.append(inconsistency_score / 100.0)  # Normalize to 0-1
+            risk_levels.append(inconsistency_data.get('risk_level', 'MEDIUM'))
+        
+        if 'probability_scores' in analyses:
+            probability_data = analyses['probability_scores']
+            probability_score = probability_data.get('composite_anomaly_probability', 0.0)
+            risk_scores.append(probability_score)
+            risk_level = probability_data.get('risk_classification', {}).get('level', 'MEDIUM')
+            risk_levels.append(risk_level)
+        
+        # Calculate composite risk score
+        if risk_scores:
+            composite_risk = statistics.mean(risk_scores)
+            max_risk = max(risk_scores)
+            
+            # Determine overall risk level
+            risk_level_priorities = {'MINIMAL': 1, 'LOW': 2, 'MEDIUM': 3, 'HIGH': 4, 'CRITICAL': 5}
+            highest_priority = max(risk_level_priorities.get(level, 3) for level in risk_levels)
+            overall_risk_level = next(level for level, priority in risk_level_priorities.items() if priority == highest_priority)
+            
+            return {
+                "composite_risk_score": float(composite_risk),
+                "max_risk_score": float(max_risk),
+                "overall_risk_level": overall_risk_level,
+                "individual_risk_levels": risk_levels,
+                "risk_score_components": [float(score) for score in risk_scores],
+                "analysis_count": len(risk_scores)
+            }
+        else:
+            return {
+                "composite_risk_score": 0.5,
+                "max_risk_score": 0.5,
+                "overall_risk_level": "MEDIUM",
+                "individual_risk_levels": [],
+                "risk_score_components": [],
+                "analysis_count": 0
+            }
+    
+    except Exception as e:
+        logging.warning(f"Error calculating overall session risk: {str(e)}")
+        return {
+            "composite_risk_score": 0.5,
+            "max_risk_score": 0.5,
+            "overall_risk_level": "MEDIUM",
+            "individual_risk_levels": [],
+            "risk_score_components": [],
+            "analysis_count": 0,
+            "error": str(e)
+        }
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
