@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Backend URL configuration
-BACKEND_URL = "https://irt-calibration-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://ml-predict-test.preview.emergentagent.com/api"
 
 class SkillGapAnalysisTester:
     def __init__(self):
