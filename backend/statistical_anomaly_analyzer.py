@@ -941,7 +941,7 @@ class StatisticalAnomalyAnalyzer:
                 'available': True,
                 'consistent': anomaly_score < 0.3,
                 'anomaly_score': float(min(anomaly_score, 1.0)),
-                'hour_distribution': dict(hour_distribution),
+                'hour_distribution': {str(k): v for k, v in hour_distribution.items()},
                 'most_common_hours': most_common_hours,
                 'suspicious_patterns': suspicious_patterns,
                 'sleep_hour_activity_ratio': sleep_hour_count / len(timestamps) if timestamps else 0
