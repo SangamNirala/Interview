@@ -888,7 +888,7 @@ class AnomalyDetectionEngine:
             
             # High variance in cognitive load might indicate inconsistent assistance
             consistency_score = max(0, 1 - load_variance)
-            is_suspicious = load_variance > 0.3 or avg_load < 0.3
+            is_suspicious = bool(load_variance > 0.3 or avg_load < 0.3)
             
             return {
                 'cognitive_load_score': float(consistency_score),
