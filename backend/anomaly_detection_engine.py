@@ -509,8 +509,14 @@ class AnomalyDetectionEngine:
         features = {}
         
         try:
-            # Response time variability as cognitive load indicator
-            response_times = [t.get('response_time', 0) for t in timings if 'response_time' in t]
+            # Response time variability as cognitive load indicator - Handle both data formats
+            response_times = []
+            if timings:
+                # Format 1: Separate timings array
+                response_times = [t.get('response_time', 0) for t in timings if 'response_time' in t]
+            else:
+                # Format 2: Response times embedded in responses (test data format)
+                response_times = [r.get('response_time', 0) for r in responses if 'response_time' in r]
             
             if len(response_times) > 2:
                 # Calculate variability patterns
