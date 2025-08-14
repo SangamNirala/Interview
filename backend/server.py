@@ -189,6 +189,25 @@ try:
     print("✅ Behavioral Biometric Analysis Engine loaded successfully")
 except Exception as e:
     print(f"⚠️  Warning: Could not load Behavioral Biometric Analysis Engine - {e}")
+
+# MODULE 2: Statistical Anomaly Detection System Import
+try:
+    from anomaly_detection_engine import (
+        AnomalyDetectionEngine,
+        anomaly_detection_engine
+    )
+    print("✅ Statistical Anomaly Detection Engine loaded successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Could not load Statistical Anomaly Detection Engine - {e}")
+    # Create stub class
+    class AnomalyDetectionEngine:
+        def __init__(self): pass
+        def train_baseline_models(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def detect_response_pattern_anomalies(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def analyze_performance_inconsistencies(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def calculate_anomaly_probability_scores(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    anomaly_detection_engine = AnomalyDetectionEngine()
     # Create stub classes
     class KeystrokeDynamicsAnalyzer:
         def __init__(self): pass
