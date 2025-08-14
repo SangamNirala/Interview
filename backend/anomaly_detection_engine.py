@@ -846,7 +846,14 @@ class AnomalyDetectionEngine:
     def _analyze_cognitive_load_inconsistencies(self, responses: List[Dict], timings: List[Dict]) -> Dict[str, Any]:
         """Analyze cognitive load patterns for inconsistencies"""
         try:
-            response_times = [t.get('response_time', 0) for t in timings if 'response_time' in t]
+            # Handle both data formats for response times
+            response_times = []
+            if timings:
+                # Format 1: Separate timings array
+                response_times = [t.get('response_time', 0) for t in timings if 'response_time' in t]
+            else:
+                # Format 2: Response times embedded in responses (test data format)
+                response_times = [r.get('response_time', 0) for r in responses if 'response_time' in r]
             
             if len(response_times) < 5:
                 return {'cognitive_load_score': 0.5, 'is_suspicious': False}
@@ -854,9 +861,13 @@ class AnomalyDetectionEngine:
             # Analyze response time patterns relative to question characteristics
             load_indicators = []
             
-            for i, (response, timing) in enumerate(zip(responses, timings)):
+            for i, response in enumerate(responses):
                 difficulty = response.get('difficulty', 1)
-                response_time = timing.get('response_time', 0)
+                # Get response time from appropriate source
+                if timings and i < len(timings):
+                    response_time = timings[i].get('response_time', 0)
+                else:
+                    response_time = response.get('response_time', 0)
                 is_correct = response.get('is_correct', False)
                 
                 # Expected cognitive load based on difficulty
