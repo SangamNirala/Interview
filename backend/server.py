@@ -19670,6 +19670,56 @@ async def detect_collaborative_cheating_patterns(request: CollaborativeCheatingA
         logging.error(f"Error in collaborative cheating analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Collaboration analysis failed: {str(e)}")
 
+@api_router.post("/statistical-analysis/detect-markov-chain-anomalies")
+async def detect_markov_chain_anomalies(request: AnswerPatternAnalysisRequest):
+    """
+    ENHANCEMENT: Advanced Markov Chain Analysis for Sophisticated Cheating Detection
+    
+    Detects:
+    - Non-random answer selection patterns using Markov chains
+    - Hidden dependencies between consecutive answers
+    - Sophisticated pattern-based cheating strategies
+    - Statistical deviations from expected transition probabilities
+    """
+    try:
+        session_id = request.session_data.get('session_id')
+        if not session_id:
+            raise HTTPException(status_code=400, detail="Session ID is required")
+        
+        # Perform Markov chain anomaly analysis
+        analysis_results = statistical_anomaly_analyzer.detect_markov_chain_anomalies(request.session_data)
+        
+        if not analysis_results.get('success'):
+            raise HTTPException(status_code=400, detail=f"Markov analysis failed: {analysis_results.get('error', 'Unknown error')}")
+        
+        # Store analysis in database
+        analysis_record = {
+            "analysis_id": str(uuid.uuid4()),
+            "session_id": session_id,
+            "analysis_type": "markov_chain_anomalies",
+            "analysis_results": analysis_results,
+            "markov_anomaly_score": analysis_results.get('markov_anomaly_score', 0.0),
+            "risk_level": analysis_results.get('risk_level', 'MINIMAL'),
+            "sequence_length": analysis_results.get('sequence_length', 0),
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.statistical_anomaly_analyses.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "message": "Markov chain anomaly analysis completed",
+            "analysis_id": analysis_record["analysis_id"],
+            "session_id": session_id,
+            "analysis_results": analysis_results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in Markov chain analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Markov analysis failed: {str(e)}")
+
 @api_router.get("/statistical-analysis/session-analysis/{session_id}")
 async def get_statistical_anomaly_analysis(session_id: str):
     """
