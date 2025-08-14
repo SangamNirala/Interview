@@ -4393,9 +4393,324 @@ async def enforce_candidate_restrictions(tok: dict, request: Request):
         if not em.lower().endswith("@" + res.get("email_domain").lower()):
             raise HTTPException(status_code=403, detail="Email domain restriction failed")
 
-async def mark_anti_cheat_flag(session_id: str, reason: str, meta: Dict[str, Any] = None):
+# ===== ENHANCED CAT ANALYTICS & MONITORING ENDPOINTS =====
+
+@api_router.get("/aptitude-test/analytics/{session_id}")
+async def get_session_analytics(session_id: str):
+    """
+    Get detailed analytics for a test session including ability progression and fraud analysis
+    """
     try:
-        await db.aptitude_sessions.update_one({"session_id": session_id}, {"$push": {"anti_cheat_flags": {"reason": reason, "meta": meta or {}, "ts": datetime.utcnow().isoformat()}}})
+        sess = await db.aptitude_sessions.find_one({"session_id": session_id})
+        if not sess:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Calculate comprehensive analytics
+        ability_history = sess.get("ability_history", [])
+        theta_estimates = sess.get("theta_estimates", {})
+        se_estimates = sess.get("se_estimates", {})
+        confidence_intervals = sess.get("confidence_intervals", {})
+        
+        # Ability progression analysis
+        progression_data = []
+        for i, entry in enumerate(ability_history):
+            progression_data.append({
+                "question_number": i + 1,
+                "theta": entry.get("theta", 0.0),
+                "se": entry.get("se", 1.0),
+                "confidence_interval": entry.get("confidence_interval", {}),
+                "correct": entry.get("correct", False)
+            })
+        
+        # Topic-wise performance summary
+        topic_performance = {}
+        for topic, theta in theta_estimates.items():
+            se = se_estimates.get(topic, 1.0)
+            ci = confidence_intervals.get(topic, {})
+            
+            topic_performance[topic] = {
+                "ability_estimate": theta,
+                "standard_error": se,
+                "confidence_interval": ci,
+                "measurement_precision": 1.0 / se if se > 0 else 0.0,
+                "reliability": 1.0 - (se ** 2) if se < 1.0 else 0.0
+            }
+        
+        # Fraud analysis summary
+        fraud_analysis = {
+            "overall_score": sess.get("fraud_score", 0.0),
+            "flags": sess.get("fraud_flags", []),
+            "behavioral_flags": sess.get("behavioral_flags", []),
+            "risk_level": "low" if sess.get("fraud_score", 0.0) < 0.3 else "medium" if sess.get("fraud_score", 0.0) < 0.7 else "high"
+        }
+        
+        # Response time analysis
+        time_per_question = sess.get("time_per_question", {})
+        if time_per_question:
+            times = list(time_per_question.values())
+            timing_analysis = {
+                "average_time": sum(times) / len(times),
+                "median_time": sorted(times)[len(times)//2],
+                "std_deviation": (sum((t - sum(times)/len(times))**2 for t in times) / len(times))**0.5,
+                "fastest_response": min(times),
+                "slowest_response": max(times)
+            }
+        else:
+            timing_analysis = {}
+        
+        return {
+            "session_id": session_id,
+            "overall_theta": sess.get("adaptive_score", 0.0),
+            "overall_se": sess.get("cat_se", 1.0),
+            "measurement_precision": 1.0 / sess.get("cat_se", 1.0) if sess.get("cat_se", 1.0) > 0 else 0.0,
+            "ability_progression": progression_data,
+            "topic_performance": topic_performance,
+            "fraud_analysis": fraud_analysis,
+            "timing_analysis": timing_analysis,
+            "questions_attempted": len(sess.get("answers", {})),
+            "test_efficiency": len(sess.get("answers", {})) / max(1, sum(sess.get("config", {}).get("questions_per_topic", {}).values())) if sess.get("config") else 0.0
+        }
+        
+    except Exception as e:
+        logging.error(f"Session analytics error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get session analytics")
+
+@api_router.get("/aptitude-test/ability-estimate/{session_id}")
+async def get_current_ability_estimate(session_id: str):
+    """
+    Get current ability estimates with confidence intervals for all dimensions
+    """
+    try:
+        sess = await db.aptitude_sessions.find_one({"session_id": session_id})
+        if not sess:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Overall ability estimate
+        theta = sess.get("adaptive_score", 0.0)
+        se = sess.get("cat_se", 1.0)
+        ci_lower, ci_upper = enhanced_cat_engine.calculate_confidence_interval(theta, se)
+        
+        overall_estimate = {
+            "theta": theta,
+            "standard_error": se,
+            "confidence_interval": {"lower": ci_lower, "upper": ci_upper},
+            "measurement_precision": 1.0 / se if se > 0 else 0.0,
+            "reliability": max(0.0, 1.0 - se**2) if se < 1.0 else 0.0
+        }
+        
+        # Topic-specific estimates
+        topic_estimates = {}
+        theta_estimates = sess.get("theta_estimates", {})
+        se_estimates = sess.get("se_estimates", {})
+        confidence_intervals = sess.get("confidence_intervals", {})
+        
+        for topic in ["numerical_reasoning", "logical_reasoning", "verbal_comprehension", "spatial_reasoning"]:
+            if topic in theta_estimates:
+                topic_theta = theta_estimates[topic]
+                topic_se = se_estimates.get(topic, 1.0)
+                topic_ci = confidence_intervals.get(topic, {})
+                
+                topic_estimates[topic] = {
+                    "theta": topic_theta,
+                    "standard_error": topic_se,
+                    "confidence_interval": topic_ci,
+                    "measurement_precision": 1.0 / topic_se if topic_se > 0 else 0.0,
+                    "reliability": max(0.0, 1.0 - topic_se**2) if topic_se < 1.0 else 0.0
+                }
+        
+        return {
+            "session_id": session_id,
+            "overall": overall_estimate,
+            "by_topic": topic_estimates,
+            "questions_answered": len(sess.get("answers", {})),
+            "test_status": sess.get("status", "in_progress")
+        }
+        
+    except Exception as e:
+        logging.error(f"Ability estimate error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get ability estimate")
+
+@api_router.get("/admin/fraud-monitoring/session/{session_id}")
+async def get_fraud_monitoring_details(session_id: str):
+    """
+    Detailed fraud analysis for administrators
+    """
+    try:
+        sess = await db.aptitude_sessions.find_one({"session_id": session_id})
+        if not sess:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get all answers for detailed analysis
+        answers = sess.get("answers", {})
+        time_per_question = sess.get("time_per_question", {})
+        
+        if not answers:
+            return {"message": "No answers available for analysis"}
+        
+        # Prepare data for comprehensive fraud analysis
+        response_times = list(time_per_question.values())
+        responses = [a.get("correct", False) for a in answers.values()]
+        
+        # Get question difficulties
+        difficulties = []
+        question_ids = list(answers.keys())
+        for qid in question_ids:
+            q = await db.aptitude_questions.find_one({"id": qid}, {"difficulty": 1})
+            if q:
+                difficulties.append(q.get("difficulty", "medium"))
+        
+        # Run comprehensive fraud detection
+        fraud_analysis = enhanced_cat_engine.detect_fraud_patterns(
+            session_data=sess,
+            response_times=response_times,
+            responses=responses,
+            question_difficulties=difficulties
+        )
+        
+        # Additional administrative insights
+        detailed_analysis = {
+            "session_overview": {
+                "session_id": session_id,
+                "candidate_name": sess.get("candidate_name", ""),
+                "candidate_email": sess.get("candidate_email", ""),
+                "start_time": sess.get("start_time"),
+                "end_time": sess.get("end_time"),
+                "ip_address": sess.get("ip_address", ""),
+                "user_agent": sess.get("user_agent", "")
+            },
+            "fraud_analysis": fraud_analysis,
+            "response_pattern_details": {
+                "total_questions": len(answers),
+                "correct_answers": sum(responses),
+                "accuracy_rate": sum(responses) / len(responses) if responses else 0.0,
+                "average_response_time": sum(response_times) / len(response_times) if response_times else 0.0,
+                "response_time_variance": sum((t - sum(response_times)/len(response_times))**2 for t in response_times) / len(response_times) if response_times else 0.0
+            },
+            "ability_consistency": {
+                "theta_progression": [h.get("theta", 0.0) for h in sess.get("ability_history", [])],
+                "se_progression": [h.get("se", 1.0) for h in sess.get("ability_history", [])],
+                "final_theta": sess.get("adaptive_score", 0.0),
+                "final_se": sess.get("cat_se", 1.0)
+            },
+            "recommendations": []
+        }
+        
+        # Generate recommendations based on fraud score
+        if fraud_analysis.get("fraud_score", 0.0) > 0.7:
+            detailed_analysis["recommendations"].append("HIGH RISK: Manual review required")
+            detailed_analysis["recommendations"].append("Consider invalidating test results")
+        elif fraud_analysis.get("fraud_score", 0.0) > 0.4:
+            detailed_analysis["recommendations"].append("MEDIUM RISK: Additional verification recommended")
+        else:
+            detailed_analysis["recommendations"].append("LOW RISK: Results appear valid")
+        
+        return detailed_analysis
+        
+    except Exception as e:
+        logging.error(f"Fraud monitoring error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get fraud monitoring details")
+
+@api_router.post("/admin/calibrate-irt-parameters")
+async def calibrate_irt_parameters():
+    """
+    Calibrate IRT parameters for questions based on historical response data
+    """
+    try:
+        # Get all completed sessions for calibration
+        sessions = await db.aptitude_sessions.find(
+            {"status": "completed"},
+            {"answers": 1, "adaptive_score": 1}
+        ).to_list(length=1000)  # Limit to recent 1000 sessions
+        
+        if len(sessions) < 10:
+            return {"message": "Insufficient data for calibration (minimum 10 sessions required)"}
+        
+        # Collect response data by question
+        question_responses = {}
+        
+        for session in sessions:
+            theta = session.get("adaptive_score", 0.0)
+            answers = session.get("answers", {})
+            
+            for question_id, answer_data in answers.items():
+                if question_id not in question_responses:
+                    question_responses[question_id] = []
+                
+                question_responses[question_id].append({
+                    "theta": theta,
+                    "correct": answer_data.get("correct", False)
+                })
+        
+        # Calibrate parameters for each question with sufficient data
+        calibrated_count = 0
+        
+        for question_id, responses in question_responses.items():
+            if len(responses) < 5:  # Need minimum responses for calibration
+                continue
+            
+            # Simple calibration using success rates at different ability levels
+            thetas = [r["theta"] for r in responses]
+            corrects = [r["correct"] for r in responses]
+            
+            # Calculate difficulty (point where p=0.5)
+            mean_theta = sum(thetas) / len(thetas)
+            success_rate = sum(corrects) / len(corrects)
+            
+            # Estimate difficulty parameter (b)
+            if success_rate > 0.01 and success_rate < 0.99:
+                import math
+                difficulty_b = mean_theta - math.log(success_rate / (1 - success_rate))
+            else:
+                difficulty_b = mean_theta
+            
+            # Estimate discrimination (a) from variance in responses
+            theta_variance = sum((t - mean_theta)**2 for t in thetas) / len(thetas)
+            discrimination_a = min(3.0, max(0.5, 1.0 / max(0.1, theta_variance)))
+            
+            # Update question with calibrated parameters
+            await db.aptitude_questions.update_one(
+                {"id": question_id},
+                {"$set": {
+                    "discrimination": discrimination_a,
+                    "difficulty_value": difficulty_b,
+                    "calibrated": True,
+                    "calibration_data": {
+                        "sample_size": len(responses),
+                        "success_rate": success_rate,
+                        "mean_theta": mean_theta,
+                        "calibrated_at": datetime.utcnow().isoformat()
+                    }
+                }}
+            )
+            
+            calibrated_count += 1
+        
+        return {
+            "success": True,
+            "calibrated_questions": calibrated_count,
+            "total_sessions_analyzed": len(sessions),
+            "message": f"Successfully calibrated IRT parameters for {calibrated_count} questions"
+        }
+        
+    except Exception as e:
+        logging.error(f"IRT calibration error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to calibrate IRT parameters")
+
+# Anti-cheat utility function (enhanced)
+async def mark_anti_cheat_flag(session_id: str, flag_type: str, details: dict):
+    """Enhanced anti-cheat flag marking with detailed logging"""
+    try:
+        await db.aptitude_sessions.update_one(
+            {"session_id": session_id},
+            {"$push": {
+                "fraud_flags": flag_type,
+                "timing_anomalies": {
+                    "type": flag_type,
+                    "details": details,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }}
+        )
     except Exception as e:
         logging.error(f"Anti-cheat flag error: {e}")
 
