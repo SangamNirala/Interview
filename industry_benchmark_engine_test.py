@@ -72,37 +72,25 @@ class IndustryBenchmarkEngineTest:
         print("\n📋 TEST 2: Mock Test Session Creation")
         
         try:
-            # Generate test session ID
-            self.test_session_id = str(uuid.uuid4())
+            # Read the session ID from the file created by the mock data script
+            try:
+                with open('/app/test_session_id.txt', 'r') as f:
+                    self.test_session_id = f.read().strip()
+                print(f"✅ Using existing session ID from database: {self.test_session_id}")
+            except FileNotFoundError:
+                print("⚠️  No existing session ID found, creating new mock data...")
+                # Run the mock data creation script
+                import subprocess
+                result = subprocess.run(['python', '/app/create_mock_benchmark_data.py'], 
+                                      capture_output=True, text=True, cwd='/app')
+                if result.returncode == 0:
+                    with open('/app/test_session_id.txt', 'r') as f:
+                        self.test_session_id = f.read().strip()
+                    print(f"✅ Created new session ID: {self.test_session_id}")
+                else:
+                    raise Exception(f"Failed to create mock data: {result.stderr}")
             
-            # Mock test results data
-            mock_session_data = {
-                "session_id": self.test_session_id,
-                "answers": {
-                    "1": {"selected": "A", "correct": True, "time_taken": 45},
-                    "2": {"selected": "B", "correct": False, "time_taken": 67},
-                    "3": {"selected": "C", "correct": True, "time_taken": 52},
-                    "4": {"selected": "A", "correct": True, "time_taken": 38},
-                    "5": {"selected": "D", "correct": True, "time_taken": 71}
-                },
-                "adaptive_score": 75.5,
-                "timing_data": {"total_time": 273, "average_time": 54.6},
-                "theta_estimates": {
-                    "numerical_reasoning": 0.8,
-                    "logical_reasoning": 0.6,
-                    "verbal_comprehension": 0.9,
-                    "spatial_reasoning": 0.4
-                },
-                "se_estimates": {
-                    "numerical_reasoning": 0.15,
-                    "logical_reasoning": 0.18,
-                    "verbal_comprehension": 0.12,
-                    "spatial_reasoning": 0.22
-                },
-                "created_at": datetime.utcnow(),
-                "end_time": datetime.utcnow()
-            }
-            
+            # Mock test results data for display purposes
             mock_result_data = {
                 "session_id": self.test_session_id,
                 "topic_scores": {
@@ -134,16 +122,8 @@ class IndustryBenchmarkEngineTest:
                 "questions_correct": 36,
                 "questions_total": 55,
                 "percentage_score": 65.5,
-                "total_time_taken": 273,
-                "questions_attempted": 55,
-                "difficulty_performance": {
-                    "easy": {"correct": 15, "total": 18, "percentage": 83.3},
-                    "medium": {"correct": 15, "total": 22, "percentage": 68.2},
-                    "hard": {"correct": 6, "total": 15, "percentage": 40.0}
-                },
-                "theta_final": mock_session_data["theta_estimates"],
-                "se_final": mock_session_data["se_estimates"],
-                "created_at": datetime.utcnow()
+                "total_time_taken": 2475,
+                "questions_attempted": 55
             }
             
             print("✅ Mock test session created successfully")
@@ -155,7 +135,6 @@ class IndustryBenchmarkEngineTest:
                 print(f"     {topic.replace('_', ' ').title()}: {scores['percentage']:.1f}%")
             
             # Store mock data for later use
-            self.mock_session = mock_session_data
             self.mock_result = mock_result_data
             
             return True
