@@ -7,7 +7,7 @@ import requests
 import json
 import time
 
-BASE_URL = 'https://keystroke-dynamics.preview.emergentagent.com/api'
+BASE_URL = 'https://keystroke-analysis.preview.emergentagent.com/api'
 
 def test_comprehensive_enhanced_features():
     session = requests.Session()

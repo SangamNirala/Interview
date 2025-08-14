@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://keystroke-dynamics.preview.emergentagent.com
+URL: https://keystroke-analysis.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
