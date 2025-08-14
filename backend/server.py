@@ -5018,6 +5018,8 @@ async def get_model_performance_metrics():
         logging.error(f"Model metrics error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get model metrics: {str(e)}")
 
+# ===== PHASE 1.2 STEP 3: SKILL GAP ANALYSIS WITH IMPROVEMENT PATHWAYS =====
+
 @api_router.post("/ml/skill-gap-analysis")
 async def perform_comprehensive_skill_gap_analysis(session_id: str, target_profile: str = "experienced"):
     """
@@ -5154,6 +5156,257 @@ async def perform_comprehensive_skill_gap_analysis(session_id: str, target_profi
     except Exception as e:
         logging.error(f"Comprehensive skill gap analysis error: {e}")
         raise HTTPException(status_code=500, detail=f"Skill gap analysis failed: {str(e)}")
+
+@api_router.post("/ml/create-personalized-study-plan")
+async def create_personalized_study_plan(
+    session_id: str, 
+    target_profile: str = "experienced",
+    available_hours_per_week: int = 10
+):
+    """
+    Create a personalized study plan based on skill gap analysis
+    
+    Args:
+        session_id: Session identifier
+        target_profile: Target skill level
+        available_hours_per_week: Available study time per week
+    
+    Returns:
+        Detailed personalized study plan with schedules and milestones
+    """
+    try:
+        from skill_gap_analysis_engine import SkillGapAnalysisEngine
+        
+        skill_engine = SkillGapAnalysisEngine()
+        
+        # Get existing skill gap analysis or create new one
+        existing_analysis = await db.skill_gap_analyses.find_one(
+            {
+                "session_id": session_id,
+                "target_profile": target_profile,
+                "analysis_type": "comprehensive_skill_gap"
+            },
+            sort=[("created_at", -1)]
+        )
+        
+        if not existing_analysis:
+            # Perform skill gap analysis first
+            analysis_response = await perform_comprehensive_skill_gap_analysis(session_id, target_profile)
+            if not analysis_response.get("success"):
+                return analysis_response
+            
+            skill_gaps = analysis_response["comprehensive_analysis"]["skill_gap_analysis"]["individual_gaps"]
+            improvement_pathways = analysis_response["comprehensive_analysis"]["improvement_pathways"]
+        else:
+            skill_gaps = existing_analysis["analysis_results"]["skill_gap_analysis"]["individual_gaps"]
+            improvement_pathways = existing_analysis["analysis_results"]["improvement_pathways"]
+        
+        # Create personalized study plan
+        study_plan = skill_engine.create_personalized_study_plan(
+            skill_gaps,
+            improvement_pathways, 
+            available_hours_per_week
+        )
+        
+        # Store study plan in database
+        study_plan_record = {
+            "plan_id": study_plan['plan_id'],
+            "session_id": session_id,
+            "target_profile": target_profile,
+            "available_hours_per_week": available_hours_per_week,
+            "study_plan": study_plan,
+            "created_at": datetime.utcnow(),
+            "status": "active"
+        }
+        
+        await db.personalized_study_plans.insert_one(study_plan_record)
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "plan_id": study_plan['plan_id'],
+            "target_profile": target_profile,
+            "study_plan": study_plan,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Study plan creation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Study plan creation failed: {str(e)}")
+
+@api_router.post("/ml/track-improvement-progress")
+async def track_improvement_progress(
+    study_plan_id: str,
+    current_session_id: str
+):
+    """
+    Track improvement progress against a study plan
+    
+    Args:
+        study_plan_id: ID of the study plan being tracked
+        current_session_id: Session ID of current assessment
+    
+    Returns:
+        Comprehensive progress tracking analysis with adaptations
+    """
+    try:
+        from skill_gap_analysis_engine import SkillGapAnalysisEngine
+        
+        skill_engine = SkillGapAnalysisEngine()
+        
+        # Get study plan
+        study_plan = await db.personalized_study_plans.find_one({"plan_id": study_plan_id})
+        if not study_plan:
+            raise HTTPException(status_code=404, detail="Study plan not found")
+        
+        baseline_session_id = study_plan['session_id']
+        
+        # Get baseline results
+        baseline_result = await db.aptitude_results.find_one({"session_id": baseline_session_id})
+        if not baseline_result:
+            raise HTTPException(status_code=404, detail="Baseline results not found")
+        
+        # Get current assessment results
+        current_result = await db.aptitude_results.find_one({"session_id": current_session_id})
+        if not current_result:
+            return {
+                "success": False,
+                "message": "Current assessment results not available. Complete the test first."
+            }
+        
+        # Extract baseline scores
+        baseline_scores = {}
+        for domain in ['numerical_reasoning', 'logical_reasoning', 'verbal_comprehension', 'spatial_reasoning']:
+            topic_data = baseline_result.get('topic_scores', {}).get(domain, {})
+            baseline_scores[domain] = topic_data.get('percentage', 0.0)
+        
+        # Prepare current assessment data
+        current_assessment = {
+            "session_id": current_session_id,
+            "topic_scores": current_result.get('topic_scores', {}),
+            "overall_score": current_result.get('questions_correct', 0),
+            "percentage_score": current_result.get('percentage_score', 0.0),
+            "total_time_taken": current_result.get('total_time_taken', 0),
+            "questions_attempted": current_result.get('questions_attempted', 0)
+        }
+        
+        # Track improvement progress
+        progress_report = skill_engine.track_improvement_progress(
+            study_plan_id,
+            current_assessment,
+            baseline_scores
+        )
+        
+        # Store progress report in database
+        progress_record = {
+            "tracking_id": progress_report['tracking_id'],
+            "study_plan_id": study_plan_id,
+            "baseline_session_id": baseline_session_id,
+            "current_session_id": current_session_id,
+            "progress_report": progress_report,
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.improvement_progress_tracking.insert_one(progress_record)
+        
+        return {
+            "success": True,
+            "study_plan_id": study_plan_id,
+            "tracking_id": progress_report['tracking_id'],
+            "progress_report": progress_report,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Progress tracking error: {e}")
+        raise HTTPException(status_code=500, detail=f"Progress tracking failed: {str(e)}")
+
+@api_router.get("/ml/skill-gap-analysis/{analysis_id}")
+async def get_skill_gap_analysis(analysis_id: str):
+    """
+    Retrieve stored skill gap analysis by ID
+    
+    Returns:
+        Complete skill gap analysis results
+    """
+    try:
+        analysis = await db.skill_gap_analyses.find_one({"analysis_id": analysis_id})
+        
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Skill gap analysis not found")
+        
+        return {
+            "success": True,
+            "analysis_id": analysis_id,
+            "analysis_results": analysis["analysis_results"],
+            "created_at": analysis["created_at"].isoformat(),
+            "target_profile": analysis["target_profile"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error retrieving skill gap analysis: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve analysis: {str(e)}")
+
+@api_router.get("/ml/study-plan/{plan_id}")
+async def get_study_plan(plan_id: str):
+    """
+    Retrieve stored study plan by ID
+    
+    Returns:
+        Complete study plan details
+    """
+    try:
+        study_plan = await db.personalized_study_plans.find_one({"plan_id": plan_id})
+        
+        if not study_plan:
+            raise HTTPException(status_code=404, detail="Study plan not found")
+        
+        return {
+            "success": True,
+            "plan_id": plan_id,
+            "study_plan": study_plan["study_plan"],
+            "created_at": study_plan["created_at"].isoformat(),
+            "status": study_plan["status"],
+            "target_profile": study_plan["target_profile"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error retrieving study plan: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve study plan: {str(e)}")
+
+@api_router.get("/ml/improvement-progress/{tracking_id}")
+async def get_improvement_progress(tracking_id: str):
+    """
+    Retrieve improvement progress report by ID
+    
+    Returns:
+        Complete progress tracking report
+    """
+    try:
+        progress = await db.improvement_progress_tracking.find_one({"tracking_id": tracking_id})
+        
+        if not progress:
+            raise HTTPException(status_code=404, detail="Progress report not found")
+        
+        return {
+            "success": True,
+            "tracking_id": tracking_id,
+            "progress_report": progress["progress_report"],
+            "created_at": progress["created_at"].isoformat(),
+            "study_plan_id": progress["study_plan_id"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error retrieving progress report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve progress report: {str(e)}")
 
 def _get_topic_focus_areas(topic: str) -> List[str]:
     """Get recommended focus areas for each topic"""
