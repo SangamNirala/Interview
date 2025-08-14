@@ -7,7 +7,7 @@ import requests
 import json
 import io
 
-BASE_URL = "https://cheating-analyzer.preview.emergentagent.com/api"
+BASE_URL = "https://score-confidence-api.preview.emergentagent.com/api"
 
 def test_total_questions_investigation():
     session = requests.Session()

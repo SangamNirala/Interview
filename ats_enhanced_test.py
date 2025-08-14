@@ -14,7 +14,7 @@ import PyPDF2
 import io
 
 # Configuration
-BACKEND_URL = "https://cheating-analyzer.preview.emergentagent.com/api"
+BACKEND_URL = "https://score-confidence-api.preview.emergentagent.com/api"
 
 class ATSScoreTestSuite:
     def __init__(self):

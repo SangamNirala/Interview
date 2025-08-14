@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://cheating-analyzer.preview.emergentagent.com
+URL: https://score-confidence-api.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

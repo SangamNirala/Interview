@@ -9,7 +9,7 @@ import json
 import io
 import time
 
-BASE_URL = "https://cheating-analyzer.preview.emergentagent.com/api"
+BASE_URL = "https://score-confidence-api.preview.emergentagent.com/api"
 
 class ComprehensiveProgressionTest:
     def __init__(self):
