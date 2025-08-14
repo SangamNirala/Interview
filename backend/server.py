@@ -1037,6 +1037,18 @@ class AptitudeTestResult(BaseModel):
     recommendations: List[str] = []
     detailed_analysis: str = ""
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Enhanced CAT: Multi-dimensional Results
+    theta_final: Dict[str, float] = {}  # Final ability estimates per topic
+    se_final: Dict[str, float] = {}  # Final standard errors per topic
+    confidence_intervals_final: Dict[str, Dict[str, float]] = {}  # Final confidence intervals
+    measurement_precision: float = 0.0  # Overall measurement precision (1/SE)
+    adaptive_efficiency: float = 0.0  # Efficiency compared to fixed-length test
+    
+    # Enhanced CAT: Fraud Analysis Results
+    fraud_analysis: Dict[str, Any] = {}  # Complete fraud detection analysis
+    integrity_score: float = 1.0  # Test integrity score (1 = clean, 0 = high fraud risk)
+    reliability_score: float = 1.0  # Result reliability considering fraud factors
 
 
 class CreateTagRequest(BaseModel):
