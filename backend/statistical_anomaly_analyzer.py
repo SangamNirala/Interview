@@ -1184,29 +1184,287 @@ class StatisticalAnomalyAnalyzer:
             self.logger.warning(f"Error calculating timezone manipulation score: {str(e)}")
             return 0.25
     
-    def _analyze_internal_consistency(self, responses):
+    # ===== COLLABORATION ANALYSIS HELPER METHODS =====
+    
+    def _analyze_internal_consistency(self, responses: List[Dict]) -> Dict[str, Any]:
         """Analyze internal consistency within session"""
-        return {'consistency_score': 0.8, 'anomalies_detected': []}
+        try:
+            if len(responses) < 5:
+                return {'consistency_score': 0.8, 'anomalies_detected': [], 'available': False}
+            
+            # Extract response patterns
+            correct_answers = [r for r in responses if r.get('is_correct', False)]
+            incorrect_answers = [r for r in responses if not r.get('is_correct', True)]
+            response_times = [r.get('response_time', 0) for r in responses if r.get('response_time', 0) > 0]
+            
+            anomalies = []
+            consistency_metrics = {}
+            
+            # 1. Accuracy consistency across difficulty levels
+            if correct_answers and incorrect_answers:
+                easy_questions = [r for r in responses if r.get('difficulty', 0.5) < 0.4]
+                hard_questions = [r for r in responses if r.get('difficulty', 0.5) > 0.7]
+                
+                if easy_questions and hard_questions:
+                    easy_accuracy = sum(1 for q in easy_questions if q.get('is_correct', False)) / len(easy_questions)
+                    hard_accuracy = sum(1 for q in hard_questions if q.get('is_correct', False)) / len(hard_questions)
+                    
+                    # Anomaly: Better performance on hard questions
+                    if hard_accuracy > easy_accuracy + 0.2:
+                        anomalies.append("Better performance on difficult questions than easy ones")
+                    
+                    consistency_metrics['difficulty_consistency'] = abs(easy_accuracy - hard_accuracy)
+            
+            # 2. Response time consistency
+            if len(response_times) >= 5:
+                avg_time = statistics.mean(response_times)
+                time_std = statistics.stdev(response_times)
+                cv_time = time_std / avg_time if avg_time > 0 else 0
+                
+                # Very consistent timing might indicate automation
+                if cv_time < 0.15:  # Very low variability
+                    anomalies.append("Unusually consistent response timing")
+                elif cv_time > 3.0:  # Very high variability
+                    anomalies.append("Extremely inconsistent response timing")
+                
+                consistency_metrics['timing_variability'] = cv_time
+            
+            # 3. Answer choice distribution consistency
+            answer_choices = [r.get('response', '') for r in responses if r.get('response')]
+            if len(answer_choices) >= 10:
+                choice_distribution = Counter(answer_choices)
+                most_common_ratio = choice_distribution.most_common(1)[0][1] / len(answer_choices)
+                
+                # Extreme bias toward one choice
+                if most_common_ratio > 0.6:
+                    anomalies.append("Extreme bias toward specific answer choice")
+                
+                consistency_metrics['choice_distribution_bias'] = most_common_ratio
+            
+            # Calculate overall consistency score
+            consistency_score = 1.0
+            if anomalies:
+                consistency_score -= len(anomalies) * 0.2
+            consistency_score = max(0.0, min(1.0, consistency_score))
+            
+            return {
+                'available': True,
+                'consistency_score': float(consistency_score),
+                'anomalies_detected': anomalies,
+                'consistency_metrics': consistency_metrics,
+                'total_responses': len(responses)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in internal consistency analysis: {str(e)}")
+            return {'consistency_score': 0.8, 'anomalies_detected': [], 'available': False, 'error': str(e)}
     
-    def _analyze_cross_session_similarities(self, session_data, comparison_sessions):
+    def _analyze_cross_session_similarities(self, session_data: Dict, comparison_sessions: Optional[List[Dict]]) -> Dict[str, Any]:
         """Analyze similarities across sessions"""
-        return {'similarity_scores': [], 'high_similarity_detected': False}
+        try:
+            if not comparison_sessions:
+                return {'similarity_scores': [], 'high_similarity_detected': False, 'available': False}
+            
+            current_responses = session_data.get('responses', [])
+            if not current_responses:
+                return {'similarity_scores': [], 'high_similarity_detected': False, 'available': False}
+            
+            similarity_scores = []
+            high_similarity_pairs = []
+            
+            for comp_session in comparison_sessions:
+                comp_responses = comp_session.get('responses', [])
+                if not comp_responses:
+                    continue
+                
+                # Calculate similarity metrics
+                similarity_metrics = self._calculate_session_similarity(current_responses, comp_responses)
+                
+                if similarity_metrics['overall_similarity'] > 0.8:  # High similarity threshold
+                    high_similarity_pairs.append({
+                        'session_id': comp_session.get('session_id', 'unknown'),
+                        'similarity_score': similarity_metrics['overall_similarity'],
+                        'similar_aspects': similarity_metrics['similar_aspects']
+                    })
+                
+                similarity_scores.append({
+                    'session_id': comp_session.get('session_id', 'unknown'),
+                    'similarity_metrics': similarity_metrics
+                })
+            
+            return {
+                'available': True,
+                'similarity_scores': similarity_scores,
+                'high_similarity_detected': len(high_similarity_pairs) > 0,
+                'high_similarity_pairs': high_similarity_pairs,
+                'total_comparisons': len(comparison_sessions)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in cross-session similarity analysis: {str(e)}")
+            return {'similarity_scores': [], 'high_similarity_detected': False, 'available': False, 'error': str(e)}
     
-    def _analyze_timing_coordination(self, session_data, comparison_sessions):
+    def _analyze_timing_coordination(self, session_data: Dict, comparison_sessions: Optional[List[Dict]]) -> Dict[str, Any]:
         """Analyze timing coordination between sessions"""
-        return {'coordination_detected': False, 'coordination_score': 0.1}
+        try:
+            if not comparison_sessions:
+                return {'coordination_detected': False, 'coordination_score': 0.0, 'available': False}
+            
+            current_timing = self._extract_timing_data(session_data)
+            if not current_timing.get('timestamps'):
+                return {'coordination_detected': False, 'coordination_score': 0.0, 'available': False}
+            
+            coordination_evidence = []
+            coordination_scores = []
+            
+            for comp_session in comparison_sessions:
+                comp_timing = self._extract_timing_data(comp_session)
+                if not comp_timing.get('timestamps'):
+                    continue
+                
+                # Check for simultaneous or coordinated timing patterns
+                coordination_metrics = self._calculate_timing_coordination(current_timing, comp_timing)
+                coordination_scores.append(coordination_metrics['coordination_score'])
+                
+                if coordination_metrics['coordination_score'] > 0.7:
+                    coordination_evidence.append({
+                        'session_id': comp_session.get('session_id', 'unknown'),
+                        'coordination_type': coordination_metrics['coordination_type'],
+                        'score': coordination_metrics['coordination_score']
+                    })
+            
+            overall_coordination_score = max(coordination_scores) if coordination_scores else 0.0
+            
+            return {
+                'available': True,
+                'coordination_detected': len(coordination_evidence) > 0,
+                'coordination_score': float(overall_coordination_score),
+                'coordination_evidence': coordination_evidence,
+                'coordination_scores': coordination_scores
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in timing coordination analysis: {str(e)}")
+            return {'coordination_detected': False, 'coordination_score': 0.1, 'available': False, 'error': str(e)}
     
-    def _analyze_answer_pattern_similarities(self, session_data, comparison_sessions):
+    def _analyze_answer_pattern_similarities(self, session_data: Dict, comparison_sessions: Optional[List[Dict]]) -> Dict[str, Any]:
         """Analyze answer pattern similarities"""
-        return {'pattern_similarity_score': 0.2, 'suspicious_similarities': []}
+        try:
+            if not comparison_sessions:
+                return {'pattern_similarity_score': 0.0, 'suspicious_similarities': [], 'available': False}
+            
+            current_responses = session_data.get('responses', [])
+            current_patterns = self._extract_answer_patterns(current_responses)
+            
+            if not current_patterns:
+                return {'pattern_similarity_score': 0.0, 'suspicious_similarities': [], 'available': False}
+            
+            suspicious_similarities = []
+            similarity_scores = []
+            
+            for comp_session in comparison_sessions:
+                comp_responses = comp_session.get('responses', [])
+                comp_patterns = self._extract_answer_patterns(comp_responses)
+                
+                if comp_patterns:
+                    pattern_similarity = self._calculate_pattern_similarity(current_patterns, comp_patterns)
+                    similarity_scores.append(pattern_similarity)
+                    
+                    if pattern_similarity > 0.75:  # High pattern similarity
+                        suspicious_similarities.append({
+                            'session_id': comp_session.get('session_id', 'unknown'),
+                            'similarity_score': pattern_similarity,
+                            'similar_patterns': self._identify_similar_patterns(current_patterns, comp_patterns)
+                        })
+            
+            overall_similarity_score = max(similarity_scores) if similarity_scores else 0.0
+            
+            return {
+                'available': True,
+                'pattern_similarity_score': float(overall_similarity_score),
+                'suspicious_similarities': suspicious_similarities,
+                'similarity_scores': similarity_scores
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in answer pattern similarity analysis: {str(e)}")
+            return {'pattern_similarity_score': 0.2, 'suspicious_similarities': [], 'available': False, 'error': str(e)}
     
-    def _analyze_statistical_clustering(self, session_data, comparison_sessions):
+    def _analyze_statistical_clustering(self, session_data: Dict, comparison_sessions: Optional[List[Dict]]) -> Dict[str, Any]:
         """Analyze statistical clustering between sessions"""
-        return {'clustering_detected': False, 'cluster_strength': 0.1}
+        try:
+            if not comparison_sessions or len(comparison_sessions) < 2:
+                return {'clustering_detected': False, 'cluster_strength': 0.0, 'available': False}
+            
+            # Extract feature vectors from all sessions
+            all_sessions = [session_data] + comparison_sessions
+            feature_vectors = []
+            session_ids = []
+            
+            for session in all_sessions:
+                features = self._extract_session_features(session)
+                if features:
+                    feature_vectors.append(features)
+                    session_ids.append(session.get('session_id', 'unknown'))
+            
+            if len(feature_vectors) < 3:
+                return {'clustering_detected': False, 'cluster_strength': 0.0, 'available': False}
+            
+            # Perform clustering analysis
+            cluster_results = self._perform_clustering_analysis(feature_vectors, session_ids)
+            
+            return {
+                'available': True,
+                'clustering_detected': cluster_results['clustering_detected'],
+                'cluster_strength': cluster_results['cluster_strength'],
+                'cluster_assignments': cluster_results['cluster_assignments'],
+                'suspicious_clusters': cluster_results['suspicious_clusters']
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in statistical clustering analysis: {str(e)}")
+            return {'clustering_detected': False, 'cluster_strength': 0.1, 'available': False, 'error': str(e)}
     
-    def _calculate_collaboration_score(self, analysis_results):
-        """Calculate collaboration score"""
-        return 0.3  # Placeholder
+    def _calculate_collaboration_score(self, analysis_results: Dict) -> float:
+        """Calculate comprehensive collaboration score"""
+        try:
+            score = 0.0
+            weights = {
+                'internal_analysis': 0.2,
+                'cross_session_analysis': 0.3,
+                'timing_coordination_analysis': 0.25,
+                'pattern_similarity_analysis': 0.15,
+                'clustering_analysis': 0.1
+            }
+            
+            for analysis_type, weight in weights.items():
+                if analysis_type in analysis_results and analysis_results[analysis_type].get('available'):
+                    analysis = analysis_results[analysis_type]
+                    
+                    if analysis_type == 'internal_analysis':
+                        # Lower consistency might indicate collaboration
+                        consistency = analysis.get('consistency_score', 0.8)
+                        score += (1 - consistency) * weight
+                    
+                    elif analysis_type == 'cross_session_analysis':
+                        if analysis.get('high_similarity_detected'):
+                            score += 0.8 * weight
+                    
+                    elif analysis_type == 'timing_coordination_analysis':
+                        score += analysis.get('coordination_score', 0) * weight
+                    
+                    elif analysis_type == 'pattern_similarity_analysis':
+                        score += analysis.get('pattern_similarity_score', 0) * weight
+                    
+                    elif analysis_type == 'clustering_analysis':
+                        if analysis.get('clustering_detected'):
+                            score += analysis.get('cluster_strength', 0) * weight
+            
+            return min(score, 1.0)
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating collaboration score: {str(e)}")
+            return 0.3
     
     # Recommendation and significance methods (placeholders)
     def _generate_pattern_recommendations(self, score, analysis_results):
