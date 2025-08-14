@@ -21,7 +21,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Configuration
-BACKEND_URL = "https://fingerprintsys-1.preview.emergentagent.com"
+BACKEND_URL = "https://vm-analysis-test.preview.emergentagent.com"
 ADMIN_PASSWORD = "Game@1234"
 
 class IndustryBenchmarkEngineTest:

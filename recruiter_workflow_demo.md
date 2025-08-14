@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://fingerprintsys-1.preview.emergentagent.com
+URL: https://vm-analysis-test.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

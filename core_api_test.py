@@ -9,7 +9,7 @@ import json
 import io
 import base64
 
-BASE_URL = "https://fingerprintsys-1.preview.emergentagent.com/api"
+BASE_URL = "https://vm-analysis-test.preview.emergentagent.com/api"
 
 def test_core_endpoints():
     """Test all core API endpoints"""
