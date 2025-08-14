@@ -1066,17 +1066,22 @@ class DeviceFingerprintingEngine:
             
             for key, result in vm_detection_results.items():
                 if isinstance(result, dict):
-                    if 'vm_probability' in result:
-                        probabilities.append(result['vm_probability'])
-                    elif 'anomaly_score' in result:
-                        probabilities.append(result['anomaly_score'])
-                    elif 'confidence' in result:
-                        probabilities.append(result['confidence'])
-                    elif 'detection_confidence' in result:
-                        probabilities.append(result['detection_confidence'])
+                    if 'vm_probability' in result and isinstance(result['vm_probability'], (int, float)):
+                        probabilities.append(float(result['vm_probability']))
+                    elif 'anomaly_score' in result and isinstance(result['anomaly_score'], (int, float)):
+                        probabilities.append(float(result['anomaly_score']))
+                    elif 'confidence' in result and isinstance(result['confidence'], (int, float)):
+                        probabilities.append(float(result['confidence']))
+                    elif 'detection_confidence' in result and isinstance(result['detection_confidence'], (int, float)):
+                        probabilities.append(float(result['detection_confidence']))
             
             if probabilities:
-                return min(1.0, statistics.mean(probabilities) * 1.2)  # Slight boost for multiple indicators
+                # Filter out invalid probabilities
+                valid_probabilities = [p for p in probabilities if 0 <= p <= 1]
+                if valid_probabilities:
+                    return min(1.0, statistics.mean(valid_probabilities) * 1.2)  # Slight boost for multiple indicators
+                else:
+                    return 0.0
             else:
                 return 0.0
                 
