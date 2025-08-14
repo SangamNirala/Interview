@@ -311,6 +311,9 @@ def test_anomaly_probability_calculation(session_type="normal"):
             if data.get('success'):
                 print(f"✅ Anomaly probability calculation successful for {session_type} session")
                 
+                # Get the probability results from the nested structure
+                probability_results = data.get('probability_results', {})
+                
                 # Verify expected response structure
                 required_fields = [
                     'composite_anomaly_probability',
@@ -324,7 +327,7 @@ def test_anomaly_probability_calculation(session_type="normal"):
                 
                 missing_fields = []
                 for field in required_fields:
-                    if field not in data:
+                    if field not in probability_results:
                         missing_fields.append(field)
                 
                 if missing_fields:
@@ -333,9 +336,9 @@ def test_anomaly_probability_calculation(session_type="normal"):
                     print("✅ All expected response fields present")
                 
                 # Display key results
-                print(f"   🎯 Composite Anomaly Probability: {data.get('composite_anomaly_probability', 'N/A')}")
-                print(f"   📊 Risk Level: {data.get('risk_classification', {}).get('level', 'N/A')}")
-                print(f"   🔍 Statistical Significance: {data.get('statistical_significance', {}).get('p_value', 'N/A')}")
+                print(f"   🎯 Composite Anomaly Probability: {probability_results.get('composite_anomaly_probability', 'N/A')}")
+                print(f"   📊 Risk Level: {probability_results.get('risk_classification', {}).get('level', 'N/A')}")
+                print(f"   🔍 Statistical Significance: {probability_results.get('statistical_significance', {}).get('p_value', 'N/A')}")
                 
                 # Check for numpy boolean encoding issues
                 response_str = response.text
