@@ -565,7 +565,7 @@ class HardwareAnalysisTester:
     def test_storage_device_characteristics(self):
         """Test storage device characteristics and performance analysis"""
         try:
-            # Test multiple storage devices
+            # Test storage device
             hardware_data = self.create_comprehensive_hardware_data("normal")
             
             test_data = {
@@ -574,21 +574,19 @@ class HardwareAnalysisTester:
             }
             
             response = self.session.post(f"{BASE_URL}/session-fingerprinting/analyze-hardware", 
-                                       json=test_data)
+                                       json=test_data, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
                 
                 if data.get("success"):
-                    storage_devices = hardware_data["hardware"]["storage"]
+                    storage_device = hardware_data["hardware"]["storage"]
                     
-                    storage_summary = []
-                    for device in storage_devices:
-                        size_gb = device["total_storage"] / (1024**3)
-                        storage_summary.append(f"{device['type']} {size_gb:.0f}GB ({device['interface']})")
+                    size_gb = storage_device["total_storage"] / (1024**3)
+                    storage_summary = f"{storage_device['type']} {size_gb:.0f}GB ({storage_device['interface']})"
                     
                     self.log_test("Storage Device Characteristics", "PASS", 
-                                f"Storage analysis completed: {', '.join(storage_summary)}")
+                                f"Storage analysis completed: {storage_summary}")
                     return True
                 else:
                     self.log_test("Storage Device Characteristics", "FAIL", 
@@ -599,6 +597,9 @@ class HardwareAnalysisTester:
                             f"HTTP {response.status_code}: {response.text}")
                 return False
                 
+        except requests.exceptions.RequestException as e:
+            self.log_test("Storage Device Characteristics", "FAIL", f"Request Exception: {str(e)}")
+            return False
         except Exception as e:
             self.log_test("Storage Device Characteristics", "FAIL", f"Exception: {str(e)}")
             return False
