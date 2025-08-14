@@ -440,7 +440,6 @@ class StatisticalAnomalyTester:
                     missing_fields = [field for field in required_fields if field not in analysis]
                     
                     if not missing_fields:
-                        score = analysis.get('manipulation_score', 0)
                         risk_level = analysis.get('risk_level', 'UNKNOWN')
                         
                         self.log_test(
