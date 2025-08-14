@@ -906,8 +906,80 @@ class StatisticalAnomalyAnalyzer:
             return {'detected': False, 'patterns': [], 'strength': 0.0}
     
     def _find_temporal_answer_clusters(self, answer_choices: List[str], response_times: List[float]) -> Dict[str, Any]:
-        """Find temporal clustering in answers (placeholder implementation)"""
-        return {'available': True, 'clustering_strength': 0.3}
+        """Find temporal clustering in answers based on response timing"""
+        try:
+            if len(answer_choices) != len(response_times) or len(answer_choices) < 5:
+                return {'available': False, 'message': 'Insufficient or mismatched timing data'}
+            
+            # Group answers by choice and analyze timing patterns
+            choice_timings = defaultdict(list)
+            for choice, time in zip(answer_choices, response_times):
+                choice_timings[choice].append(time)
+            
+            clustering_metrics = {}
+            overall_clustering_strength = 0.0
+            
+            for choice, times in choice_timings.items():
+                if len(times) < 2:
+                    continue
+                
+                # Calculate coefficient of variation for response times
+                mean_time = statistics.mean(times)
+                std_time = statistics.stdev(times) if len(times) > 1 else 0
+                cv = std_time / mean_time if mean_time > 0 else 0
+                
+                # Lower CV indicates more consistent timing (potential clustering)
+                consistency_score = max(0, 1 - cv) if cv <= 2 else 0
+                
+                # Analyze sequential clustering (same answers appearing close together)
+                sequential_clusters = 0
+                for i in range(len(answer_choices) - 1):
+                    if answer_choices[i] == choice and answer_choices[i + 1] == choice:
+                        sequential_clusters += 1
+                
+                sequential_clustering_score = min(sequential_clusters / max(1, len(times) - 1), 1.0)
+                
+                # Combined clustering strength for this choice
+                choice_clustering = (consistency_score * 0.6) + (sequential_clustering_score * 0.4)
+                
+                clustering_metrics[choice] = {
+                    'count': len(times),
+                    'mean_response_time': float(mean_time),
+                    'std_response_time': float(std_time),
+                    'coefficient_of_variation': float(cv),
+                    'consistency_score': float(consistency_score),
+                    'sequential_clusters': sequential_clusters,
+                    'sequential_clustering_score': float(sequential_clustering_score),
+                    'overall_clustering_score': float(choice_clustering)
+                }
+                
+                overall_clustering_strength += choice_clustering * (len(times) / len(answer_choices))
+            
+            # Detect time-based patterns (e.g., all fast responses for certain answers)
+            all_times = list(response_times)
+            median_time = statistics.median(all_times)
+            
+            fast_response_patterns = {}
+            for choice, times in choice_timings.items():
+                fast_responses = sum(1 for t in times if t < median_time * 0.7)
+                if len(times) > 2 and fast_responses / len(times) > 0.75:
+                    fast_response_patterns[choice] = {
+                        'fast_response_rate': float(fast_responses / len(times)),
+                        'average_fast_time': float(statistics.mean([t for t in times if t < median_time * 0.7]))
+                    }
+            
+            return {
+                'available': True,
+                'clustering_strength': float(overall_clustering_strength),
+                'choice_clustering_metrics': clustering_metrics,
+                'fast_response_patterns': fast_response_patterns,
+                'median_response_time': float(median_time),
+                'is_suspicious': overall_clustering_strength > 0.6
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in temporal clustering analysis: {str(e)}")
+            return {'available': False, 'error': str(e)}
     
     def _find_positional_answer_clusters(self, answer_choices: List[str]) -> Dict[str, Any]:
         """Find positional clustering in answers (placeholder implementation)"""
