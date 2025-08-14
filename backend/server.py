@@ -4693,13 +4693,57 @@ def _sigmoid(x: float) -> float:
     except Exception:
         return 0.5
 
+# ===== ENHANCED CAT (Computer Adaptive Testing) ENGINE =====
+# Phase 1.1: Advanced CAT Algorithms with Multi-dimensional IRT Implementation
+
+from enhanced_cat_engine import enhanced_cat_engine
+
+def _sigmoid(x):
+    try:
+        import math
+        return 1.0 / (1.0 + math.exp(-x))
+    except Exception:
+        return 0.5
+
 def cat_update_ability(theta: float, b: float, correct: bool, lr: float = 0.7) -> (float, float):
-    # Rasch-like update: theta_new = theta + lr*(x - P)
-    x = 1.0 if correct else 0.0
-    P = _sigmoid(theta - b)
-    info = max(1e-6, P * (1 - P))
-    theta_new = theta + lr * (x - P)
-    return theta_new, info
+    """
+    Enhanced ability update using full IRT model from enhanced_cat_engine
+    """
+    try:
+        # Create item parameters for IRT calculation
+        item_params = {
+            'discrimination': 1.0,  # Default discrimination
+            'difficulty': b,  # Difficulty parameter
+            'guessing': 0.25 if correct else 0.0  # Guessing parameter
+        }
+        
+        # Use enhanced CAT engine for proper IRT update
+        theta_new, se_new, info_new = enhanced_cat_engine.update_ability_estimate(
+            current_theta=theta,
+            current_se=1.0,  # Will be calculated properly
+            item_params=item_params,
+            response=correct,
+            info_sum=0.0
+        )
+        
+        # Calculate information for backward compatibility
+        info = enhanced_cat_engine.item_information_function(
+            theta=theta,
+            a=item_params['discrimination'],
+            b=item_params['difficulty'],
+            c=item_params['guessing']
+        )
+        
+        return theta_new, info
+        
+    except Exception as e:
+        logging.error(f"Enhanced CAT update error: {e}")
+        # Fallback to simple Rasch-like update
+        x = 1.0 if correct else 0.0
+        P = _sigmoid(theta - b)
+        info = max(1e-6, P * (1 - P))
+        theta_new = theta + lr * (x - P)
+        return theta_new, info
 
 def cat_choose_topic(cfg: dict, sess: dict) -> Optional[str]:
     quotas = cfg.get("questions_per_topic", {}) or {}
