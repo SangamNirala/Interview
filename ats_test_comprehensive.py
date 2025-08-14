@@ -12,7 +12,7 @@ import traceback
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://industry-standards.preview.emergentagent.com"
+BACKEND_URL = "https://keystroke-dynamics.preview.emergentagent.com"
 ATS_ENDPOINT = f"{BACKEND_URL}/api/placement-preparation/ats-score-calculate"
 
 class ATSTestRunner:

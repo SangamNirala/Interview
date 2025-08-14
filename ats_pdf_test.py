@@ -12,7 +12,7 @@ from datetime import datetime
 import tempfile
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://industry-standards.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://keystroke-dynamics.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class ATSPDFTester:

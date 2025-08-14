@@ -7,7 +7,7 @@ import requests
 import json
 import io
 
-BASE_URL = "https://industry-standards.preview.emergentagent.com/api"
+BASE_URL = "https://keystroke-dynamics.preview.emergentagent.com/api"
 
 def test_total_questions_investigation():
     session = requests.Session()
