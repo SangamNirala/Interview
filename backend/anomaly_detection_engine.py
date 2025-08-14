@@ -770,7 +770,7 @@ class AnomalyDetectionEngine:
                 correlation = np.corrcoef(sorted_difficulties, accuracies)[0, 1] if not np.isnan(np.corrcoef(sorted_difficulties, accuracies)[0, 1]) else 0
                 
                 # Positive correlation (accuracy increases with difficulty) is suspicious
-                is_suspicious = correlation > 0.3
+                is_suspicious = bool(correlation > 0.3)
                 consistency_score = max(0, 1 - abs(correlation + 0.5))  # Expected correlation is around -0.5
                 
                 return {
