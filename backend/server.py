@@ -1064,6 +1064,80 @@ class UpdateCandidateRequest(BaseModel):
     tags: Optional[List[str]] = None
     notes: Optional[str] = None
 
+# ===== MODULE 1: BEHAVIORAL BIOMETRIC ANALYSIS MODELS =====
+
+class BiometricDataModel(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    data_type: str  # "keystroke", "mouse", "scroll", "timing"
+    biometric_data: Dict[str, Any]
+    consent_given: bool = False
+    anonymized: bool = True
+    retention_until: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class BiometricAnalysisResult(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    analysis_type: str  # "keystroke_dynamics", "interaction_patterns", "response_timing"
+    analysis_results: Dict[str, Any]
+    anomaly_score: float = 0.0
+    intervention_level: str = "none"  # "none", "low", "medium", "high", "critical"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class BiometricSignature(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_identifier: str  # Anonymous identifier
+    signature_hash: str
+    signature_features: Dict[str, Any]
+    behavioral_fingerprint: str
+    confidence_score: float
+    generated_from_sessions: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class SecurityIntervention(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    intervention_level: str
+    anomaly_score: float
+    anomaly_details: Dict[str, Any]
+    actions_taken: List[str]
+    requires_immediate_action: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    resolved_at: Optional[datetime] = None
+    resolution_notes: str = ""
+
+# Request Models for Biometric API Endpoints
+
+class BiometricDataSubmissionRequest(BaseModel):
+    session_id: str
+    keystroke_data: Optional[List[Dict[str, Any]]] = []
+    mouse_data: Optional[List[Dict[str, Any]]] = []
+    scroll_data: Optional[List[Dict[str, Any]]] = []
+    click_data: Optional[List[Dict[str, Any]]] = []
+    timing_data: Optional[List[Dict[str, Any]]] = []
+    consent_given: bool = False
+
+class BiometricAnalysisRequest(BaseModel):
+    session_id: str
+    analysis_types: List[str] = ["keystroke_dynamics", "interaction_patterns", "response_timing"]
+    baseline_comparison: bool = False
+    baseline_session_id: Optional[str] = None
+
+class BiometricConsentRequest(BaseModel):
+    session_id: str
+    candidate_id: str
+    consent_given: bool
+    data_types: List[str] = ["keystroke", "mouse", "scroll", "timing"]
+
+class BiometricConfigRequest(BaseModel):
+    session_id: str
+    enable_biometric_tracking: bool = True
+    tracking_sensitivity: str = "medium"  # "low", "medium", "high"
+    real_time_analysis: bool = True
+    intervention_enabled: bool = True
+
 # ===== PHASE 2: AI SCREENING & SHORTLISTING MODELS =====
 
 class JobRequirements(BaseModel):
