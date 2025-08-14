@@ -226,7 +226,7 @@ class AnomalyDetectionEngine:
                 pca_score = self._calculate_pca_anomaly_score(X_scaled[0], self.baseline_models['pca'])
                 anomaly_results['pca_reconstruction'] = {
                     'reconstruction_error': float(pca_score),
-                    'anomaly_detected': pca_score > 2.0,  # Threshold for reconstruction error
+                    'anomaly_detected': bool(pca_score > 2.0),  # Threshold for reconstruction error
                     'confidence': min(float(pca_score / 2.0), 1.0)
                 }
             
