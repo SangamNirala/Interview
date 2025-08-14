@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://question-validation.preview.emergentagent.com
+URL: https://adaptive-testing-1.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
