@@ -236,15 +236,15 @@ class EnhancedCATTester:
     def start_test_session(self, token: str) -> str:
         """Start a test session and return session_id"""
         try:
-            session_data = {
+            session_request = {
                 "token": token,
                 "candidate_name": self.test_candidate["name"],
                 "candidate_email": self.test_candidate["email"]
             }
             
             response = self.session.post(
-                f"{self.base_url}/aptitude-test/start",
-                json=session_data
+                f"{self.base_url}/aptitude-test/validate-token",
+                json=session_request
             )
             
             if response.status_code == 200:
