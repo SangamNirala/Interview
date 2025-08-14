@@ -4732,6 +4732,485 @@ async def calibrate_irt_parameters():
         logging.error(f"Advanced IRT calibration error: {e}")
         raise HTTPException(status_code=500, detail=f"Advanced calibration failed: {str(e)}")
 
+# ===== PHASE 1.2 STEP 2: CANDIDATE PERFORMANCE PREDICTION MODELS =====
+
+@api_router.post("/ml/train-prediction-models")
+async def train_prediction_models():
+    """
+    Train ML models for candidate performance prediction using historical data
+    
+    Features:
+    - Random Forest, Gradient Boosting, and Neural Networks
+    - Feature engineering from response patterns, timing data, ability progression
+    - Cross-validation and model performance metrics
+    """
+    try:
+        from candidate_performance_predictor_ml import CandidatePerformancePredictorML
+        
+        # Get historical session data for training
+        sessions = await db.aptitude_sessions.find(
+            {"status": "completed"},
+            {
+                "session_id": 1,
+                "answers": 1,
+                "adaptive_score": 1,
+                "timing_data": 1,
+                "total_time": 1,
+                "created_at": 1
+            }
+        ).to_list(length=1000)
+        
+        if len(sessions) < 20:
+            return {
+                "success": False,
+                "message": f"Insufficient training data (minimum 20 sessions required, found {len(sessions)})",
+                "training_samples": len(sessions)
+            }
+        
+        # Get corresponding results data
+        session_ids = [session.get('session_id') for session in sessions]
+        results = await db.aptitude_results.find(
+            {"session_id": {"$in": session_ids}}
+        ).to_list(length=1000)
+        
+        # Merge sessions with results
+        result_dict = {result['session_id']: result for result in results}
+        training_data = []
+        
+        for session in sessions:
+            session_id = session.get('session_id')
+            if session_id in result_dict:
+                combined_data = {**session, 'result': result_dict[session_id]}
+                training_data.append(combined_data)
+        
+        if len(training_data) < 20:
+            return {
+                "success": False,
+                "message": f"Insufficient complete training data (need session + result pairs, found {len(training_data)})",
+                "available_sessions": len(sessions),
+                "available_results": len(results)
+            }
+        
+        # Initialize and train prediction models
+        predictor = CandidatePerformancePredictorML()
+        training_results = predictor.train_models(training_data)
+        
+        if training_results['status'] != 'success':
+            return {
+                "success": False,
+                "message": training_results.get('message', 'Training failed'),
+                "error_details": training_results
+            }
+        
+        # Store the trained predictor (in production, save to persistent storage)
+        global ml_performance_predictor
+        ml_performance_predictor = predictor
+        
+        return {
+            "success": True,
+            "message": "ML performance prediction models trained successfully",
+            "training_summary": {
+                "training_samples": training_results['training_samples'],
+                "feature_dimensions": training_results['feature_dimensions'],
+                "models_trained": ['random_forest', 'gradient_boosting', 'neural_network'],
+                "prediction_targets": ['final_score', 'completion_time', 'topic_performance']
+            },
+            "model_performance": training_results['model_performance'],
+            "timestamp": training_results['timestamp']
+        }
+        
+    except ImportError as e:
+        logging.error(f"Import error: {e}")
+        raise HTTPException(status_code=500, detail="Performance prediction engine not available")
+    except Exception as e:
+        logging.error(f"Model training error: {e}")
+        raise HTTPException(status_code=500, detail=f"Model training failed: {str(e)}")
+
+@api_router.get("/ml/performance-prediction/{session_id}")
+async def get_performance_prediction(session_id: str):
+    """
+    Get real-time performance predictions for ongoing session
+    
+    Returns:
+    - Final score prediction with confidence intervals
+    - Completion time estimate
+    - Topic-specific performance predictions
+    """
+    try:
+        global ml_performance_predictor
+        if 'ml_performance_predictor' not in globals():
+            return {
+                "success": False,
+                "message": "ML prediction models not trained. Please train models first.",
+                "predictions": {}
+            }
+        
+        # Get current session data
+        session = await db.aptitude_sessions.find_one(
+            {"session_id": session_id},
+            {
+                "session_id": 1,
+                "answers": 1,
+                "adaptive_score": 1,
+                "timing_data": 1,
+                "status": 1,
+                "created_at": 1
+            }
+        )
+        
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Calculate elapsed time
+        created_at = session.get('created_at')
+        if created_at:
+            elapsed_seconds = (datetime.utcnow() - created_at).total_seconds()
+        else:
+            elapsed_seconds = 0.0
+        
+        # Prepare session data for prediction
+        session_data = {
+            **session,
+            'elapsed_time': elapsed_seconds
+        }
+        
+        # Get predictions
+        score_prediction = ml_performance_predictor.predict_final_score(session_data)
+        time_prediction = ml_performance_predictor.predict_completion_time(session_data)
+        topic_prediction = ml_performance_predictor.predict_topic_performance(session_data)
+        confidence_analysis = ml_performance_predictor.get_prediction_confidence(session_data)
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "predictions": {
+                "final_score": score_prediction,
+                "completion_time": time_prediction,
+                "topic_performance": topic_prediction
+            },
+            "confidence_analysis": confidence_analysis,
+            "session_progress": {
+                "questions_answered": len(session.get('answers', {})),
+                "elapsed_minutes": elapsed_seconds / 60.0,
+                "current_status": session.get('status', 'unknown')
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Performance prediction error: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+@api_router.post("/ml/update-prediction-models")
+async def update_prediction_models():
+    """
+    Update ML models with recent session data using incremental learning
+    """
+    try:
+        global ml_performance_predictor
+        if 'ml_performance_predictor' not in globals():
+            return {
+                "success": False,
+                "message": "ML prediction models not initialized. Please train models first."
+            }
+        
+        # Get recent completed sessions (last 24 hours)
+        cutoff_time = datetime.utcnow() - timedelta(hours=24)
+        recent_sessions = await db.aptitude_sessions.find(
+            {
+                "status": "completed",
+                "created_at": {"$gte": cutoff_time}
+            },
+            {
+                "session_id": 1,
+                "answers": 1,
+                "adaptive_score": 1,
+                "timing_data": 1,
+                "total_time": 1,
+                "created_at": 1
+            }
+        ).to_list(length=100)
+        
+        if len(recent_sessions) == 0:
+            return {
+                "success": True,
+                "message": "No recent sessions available for model update",
+                "update_status": "no_new_data"
+            }
+        
+        # Get corresponding results
+        session_ids = [session.get('session_id') for session in recent_sessions]
+        recent_results = await db.aptitude_results.find(
+            {"session_id": {"$in": session_ids}}
+        ).to_list(length=100)
+        
+        # Merge and update models
+        result_dict = {result['session_id']: result for result in recent_results}
+        update_results = []
+        
+        for session in recent_sessions:
+            session_id = session.get('session_id')
+            if session_id in result_dict:
+                combined_data = {**session, 'result': result_dict[session_id]}
+                update_result = ml_performance_predictor.update_model_realtime(combined_data)
+                update_results.append(update_result)
+        
+        # Aggregate update results
+        successful_updates = sum(1 for result in update_results if result.get('status') in ['updated', 'buffered'])
+        
+        return {
+            "success": True,
+            "message": f"Model update completed with {len(recent_sessions)} recent sessions",
+            "update_summary": {
+                "sessions_processed": len(recent_sessions),
+                "successful_updates": successful_updates,
+                "time_window_hours": 24
+            },
+            "update_details": update_results[-1] if update_results else {},
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Model update error: {e}")
+        raise HTTPException(status_code=500, detail=f"Model update failed: {str(e)}")
+
+@api_router.get("/ml/model-performance-metrics")
+async def get_model_performance_metrics():
+    """
+    Get comprehensive performance metrics for all ML models
+    """
+    try:
+        global ml_performance_predictor
+        if 'ml_performance_predictor' not in globals():
+            return {
+                "success": False,
+                "message": "ML prediction models not trained"
+            }
+        
+        # Get model training status
+        training_status = ml_performance_predictor.trained_models
+        
+        # Get feature importance
+        feature_importance = getattr(ml_performance_predictor, 'feature_importance', {})
+        
+        # Get recent prediction accuracy (simplified for demo)
+        model_metrics = {
+            "training_status": training_status,
+            "model_types": ["random_forest", "gradient_boosting", "neural_network"],
+            "prediction_targets": ["final_score", "completion_time", "topic_performance"],
+            "feature_importance": dict(list(feature_importance.items())[:10]) if feature_importance else {},
+            "buffer_status": {
+                "current_size": len(getattr(ml_performance_predictor, 'incremental_buffer', [])),
+                "max_size": getattr(ml_performance_predictor, 'buffer_max_size', 100)
+            }
+        }
+        
+        return {
+            "success": True,
+            "model_metrics": model_metrics,
+            "system_status": "operational" if all(training_status.values()) else "partially_trained",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Model metrics error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get model metrics: {str(e)}")
+
+@api_router.post("/ml/skill-gap-analysis")
+async def perform_skill_gap_analysis(session_id: str):
+    """
+    Perform comprehensive skill gap analysis for a candidate
+    
+    Returns:
+    - Multi-dimensional skill assessment
+    - Gap identification against benchmarks
+    - Personalized improvement recommendations
+    """
+    try:
+        global ml_performance_predictor
+        if 'ml_performance_predictor' not in globals():
+            return {
+                "success": False,
+                "message": "ML prediction models not trained. Please train models first."
+            }
+        
+        # Get session and result data
+        session = await db.aptitude_sessions.find_one(
+            {"session_id": session_id},
+            {
+                "session_id": 1,
+                "answers": 1,
+                "adaptive_score": 1,
+                "timing_data": 1,
+                "created_at": 1
+            }
+        )
+        
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        result = await db.aptitude_results.find_one(
+            {"session_id": session_id}
+        )
+        
+        if not result:
+            return {
+                "success": False,
+                "message": "Session results not available. Complete the test first."
+            }
+        
+        # Combine session and result data
+        combined_data = {**session, 'result': result}
+        
+        # Get topic performance predictions
+        topic_predictions = ml_performance_predictor.predict_topic_performance(combined_data)
+        
+        # Analyze skill gaps
+        skill_gaps = {}
+        improvement_pathways = {}
+        
+        benchmark_scores = {
+            'numerical_reasoning': 65.0,
+            'logical_reasoning': 60.0,
+            'verbal_comprehension': 70.0,
+            'spatial_reasoning': 55.0
+        }
+        
+        topic_scores = result.get('topic_scores', {})
+        
+        for topic in ml_performance_predictor.topics:
+            topic_result = topic_scores.get(topic, {})
+            actual_score = topic_result.get('percentage', 0.0)
+            benchmark = benchmark_scores.get(topic, 60.0)
+            
+            gap = benchmark - actual_score
+            topic_pred = topic_predictions.get('topic_predictions', {}).get(topic, {})
+            
+            skill_gaps[topic] = {
+                'actual_score': actual_score,
+                'benchmark_score': benchmark,
+                'gap_points': gap,
+                'gap_percentage': (gap / benchmark) * 100 if benchmark > 0 else 0,
+                'performance_level': 'above_benchmark' if gap <= 0 else 'needs_improvement',
+                'predicted_success_probability': topic_pred.get('success_probability', 0.5),
+                'confidence': topic_pred.get('confidence', 0.0)
+            }
+            
+            # Generate improvement pathway
+            if gap > 0:
+                improvement_pathways[topic] = {
+                    'priority': 'high' if gap > 15 else 'medium' if gap > 5 else 'low',
+                    'estimated_improvement_time_weeks': min(12, max(2, int(gap / 5))),
+                    'recommended_focus_areas': _get_topic_focus_areas(topic),
+                    'practice_intensity': 'intensive' if gap > 20 else 'moderate' if gap > 10 else 'light',
+                    'success_probability_with_effort': min(0.9, topic_pred.get('success_probability', 0.5) + 0.3)
+                }
+            else:
+                improvement_pathways[topic] = {
+                    'priority': 'maintenance',
+                    'estimated_improvement_time_weeks': 1,
+                    'recommended_focus_areas': ['maintain_current_level', 'advanced_applications'],
+                    'practice_intensity': 'light',
+                    'success_probability_with_effort': min(0.95, topic_pred.get('success_probability', 0.8))
+                }
+        
+        # Overall analysis
+        total_gap = sum(max(0, gap['gap_points']) for gap in skill_gaps.values())
+        priority_areas = [topic for topic, gap in skill_gaps.items() if gap['gap_points'] > 10]
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "skill_gap_analysis": {
+                "individual_gaps": skill_gaps,
+                "improvement_pathways": improvement_pathways,
+                "overall_analysis": {
+                    "total_gap_points": total_gap,
+                    "priority_improvement_areas": priority_areas,
+                    "estimated_total_improvement_time_weeks": min(16, max(4, int(total_gap / 10))),
+                    "overall_performance_level": "strong" if total_gap < 20 else "moderate" if total_gap < 50 else "needs_significant_improvement"
+                },
+                "recommendations": _generate_personalized_recommendations(skill_gaps, improvement_pathways)
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Skill gap analysis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Skill gap analysis failed: {str(e)}")
+
+def _get_topic_focus_areas(topic: str) -> List[str]:
+    """Get recommended focus areas for each topic"""
+    focus_areas = {
+        'numerical_reasoning': [
+            'arithmetic_operations',
+            'percentage_calculations',
+            'ratio_and_proportion',
+            'data_interpretation',
+            'number_sequences'
+        ],
+        'logical_reasoning': [
+            'pattern_recognition',
+            'logical_deduction',
+            'analytical_reasoning',
+            'cause_and_effect',
+            'logical_sequences'
+        ],
+        'verbal_comprehension': [
+            'reading_comprehension',
+            'vocabulary_building',
+            'critical_reading',
+            'inference_skills',
+            'passage_analysis'
+        ],
+        'spatial_reasoning': [
+            'spatial_visualization',
+            'mental_rotation',
+            'pattern_completion',
+            'spatial_relationships',
+            '3d_manipulation'
+        ]
+    }
+    
+    return focus_areas.get(topic, ['general_practice'])
+
+def _generate_personalized_recommendations(skill_gaps: Dict, improvement_pathways: Dict) -> List[str]:
+    """Generate personalized improvement recommendations"""
+    recommendations = []
+    
+    # Priority-based recommendations
+    high_priority_topics = [topic for topic, pathway in improvement_pathways.items() 
+                           if pathway.get('priority') == 'high']
+    
+    if high_priority_topics:
+        recommendations.append(f"Focus intensively on {', '.join(high_priority_topics)} - these areas need immediate attention")
+    
+    # Time management recommendations
+    total_weeks = sum(pathway.get('estimated_improvement_time_weeks', 0) 
+                     for pathway in improvement_pathways.values())
+    
+    if total_weeks > 12:
+        recommendations.append("Consider a structured 3-4 month improvement plan with weekly goals")
+    elif total_weeks > 6:
+        recommendations.append("A focused 6-8 week improvement program would be beneficial")
+    else:
+        recommendations.append("Short-term focused practice (2-4 weeks) should show significant improvement")
+    
+    # Strength-based recommendations
+    strong_areas = [topic for topic, gap in skill_gaps.items() if gap['performance_level'] == 'above_benchmark']
+    
+    if strong_areas:
+        recommendations.append(f"Leverage your strengths in {', '.join(strong_areas)} to build confidence while improving other areas")
+    
+    return recommendations
+
+# Initialize global ML predictor variable
+ml_performance_predictor = None
+
 # Anti-cheat utility function (enhanced)
 async def mark_anti_cheat_flag(session_id: str, flag_type: str, details: dict):
     """Enhanced anti-cheat flag marking with detailed logging"""
