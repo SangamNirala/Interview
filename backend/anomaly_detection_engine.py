@@ -474,7 +474,7 @@ class AnomalyDetectionEngine:
             # Difficulty progression features
             if 'difficulty' in responses[0] if responses else {}:
                 difficulties = [r.get('difficulty', 1) for r in responses]
-                accuracies = [1 if r.get('is_correct', False) else 0 for r in responses]
+                accuracies = [1 if bool(r.get('is_correct', False)) else 0 for r in responses]
                 
                 # Calculate difficulty-accuracy correlation
                 if len(difficulties) > 1 and len(set(difficulties)) > 1:
