@@ -930,7 +930,7 @@ class AnomalyDetectionEngine:
             improvement_rate = sum(1 for cp in change_patterns if cp['improved']) / len(change_patterns)
             
             # Suspicious patterns: too many changes, too high improvement rate
-            is_suspicious = change_rate > 0.5 or improvement_rate > 0.8
+            is_suspicious = bool(change_rate > 0.5 or improvement_rate > 0.8)
             
             change_score = max(0, 1 - change_rate) * max(0, 1 - abs(improvement_rate - 0.3))
             
