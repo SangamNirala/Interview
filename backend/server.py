@@ -248,6 +248,25 @@ except Exception as e:
         def calculate_anomaly_probability_scores(self, *args, **kwargs): return {"error": "Module not loaded"}
     
     anomaly_detection_engine = AnomalyDetectionEngine()
+
+# Load Statistical Anomaly Analyzer (Step 2.2)
+try:
+    from statistical_anomaly_analyzer import (
+        StatisticalAnomalyAnalyzer,
+        statistical_anomaly_analyzer
+    )
+    print("✅ Statistical Anomaly Analyzer loaded successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Could not load Statistical Anomaly Analyzer - {e}")
+    # Create stub class
+    class StatisticalAnomalyAnalyzer:
+        def __init__(self): pass
+        def detect_answer_pattern_irregularities(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def analyze_difficulty_progression_anomalies(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def identify_time_zone_manipulation(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def detect_collaborative_cheating_patterns(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    statistical_anomaly_analyzer = StatisticalAnomalyAnalyzer()
     # Create stub classes
     class KeystrokeDynamicsAnalyzer:
         def __init__(self): pass
