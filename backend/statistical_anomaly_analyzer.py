@@ -602,7 +602,7 @@ class StatisticalAnomalyAnalyzer:
                 'chi_square': {
                     'statistic': float(chi2_stat),
                     'p_value': float(p_value),
-                    'is_uniform': p_value > 0.05
+                    'is_uniform': bool(p_value > 0.05) if not isinstance(p_value > 0.05, bool) else p_value > 0.05
                 },
                 'kolmogorov_smirnov': {
                     'statistic': float(ks_stat),
