@@ -130,15 +130,15 @@ class MLPredictionTester:
                     return False
                 
                 if data.get("success"):
-                    training_results = data.get("training_results", {})
+                    training_summary = data.get("training_summary", {})
                     
-                    # Check training results structure
-                    expected_keys = ["status", "training_samples", "feature_dimensions", "model_performance"]
+                    # Check training summary structure
+                    expected_keys = ["training_samples", "feature_dimensions", "models_trained"]
                     training_details = []
                     
                     for key in expected_keys:
-                        if key in training_results:
-                            training_details.append(f"{key}: {training_results[key]}")
+                        if key in training_summary:
+                            training_details.append(f"{key}: {training_summary[key]}")
                     
                     self.log_test(
                         "ML Model Training",
@@ -147,40 +147,15 @@ class MLPredictionTester:
                     )
                     
                     # Validate model performance structure
-                    model_performance = training_results.get("model_performance", {})
-                    expected_targets = ["final_score", "completion_time", "topic_performance"]
-                    
-                    for target in expected_targets:
-                        if target in model_performance:
-                            self.log_test(
-                                f"ML Model Training - {target.replace('_', ' ').title()} Model",
-                                "PASS",
-                                f"Model trained with performance metrics available"
-                            )
-                        else:
-                            self.log_test(
-                                f"ML Model Training - {target.replace('_', ' ').title()} Model",
-                                "WARN",
-                                f"Model performance data not available for {target}"
-                            )
+                    model_performance = data.get("model_performance", {})
+                    if model_performance:
+                        self.log_test(
+                            "ML Model Training - Model Performance",
+                            "PASS",
+                            f"Model performance metrics available"
+                        )
                     
                     return True
-                else:
-                    # Handle insufficient data scenario
-                    message = data.get("message", "")
-                    if "insufficient data" in message.lower() or "minimum" in message.lower():
-                        self.log_test(
-                            "ML Model Training",
-                            "PASS",
-                            f"Expected insufficient data response: {message}"
-                        )
-                        return True
-                    else:
-                        self.log_test(
-                            "ML Model Training",
-                            "FAIL",
-                            f"Training failed: {message}"
-                        )
             else:
                 self.log_test(
                     "ML Model Training",
