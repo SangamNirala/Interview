@@ -5118,87 +5118,124 @@ async def get_session_status(session_id: str):
 
 @api_router.get("/aptitude-test/question/{session_id}")
 async def get_next_question(session_id: str, request: Request):
+    """
+    Enhanced question selection using multi-dimensional IRT and optimal information criterion
+    """
     try:
         ip = request.client.host if request.client else ""
         check_rate_limit("next_question", ip, limit=120, window_sec=60)
+        
         sess = await db.aptitude_sessions.find_one({"session_id": session_id})
         if not sess:
             raise HTTPException(status_code=404, detail="Session not found")
+            
         cfg = await db.aptitude_configs.find_one({"id": sess["config_id"]})
         if not cfg:
             raise HTTPException(status_code=404, detail="Config not found")
-        # CAT state defaults
+        
+        # Enhanced CAT state management
         theta = float(sess.get("adaptive_score", 0.0))
         se = float(sess.get("cat_se", 1.0))
         asked_ids: List[str] = sess.get("questions_sequence", []) or []
-        # If we should end early due to CAT reliability/time
-        if cat_should_end(cfg, sess):
-            return {"message": "no_more_questions"}
-        # On first call, pick first question adaptively (medium difficulty, topic with highest quota)
-        if not asked_ids:
-            topic = cat_choose_topic(cfg, sess)
-            desired_diff = _value_to_difficulty(theta)
-            qdoc = await db.aptitude_questions.find_one({"topic": topic, "difficulty": desired_diff})
-            if not qdoc:
-                # fallback any medium
-                qdoc = await db.aptitude_questions.find_one({"topic": topic})
-            if not qdoc:
-                raise HTTPException(status_code=404, detail="No questions available for configured topics")
-            asked_ids = [qdoc["id"]]
-            await db.aptitude_sessions.update_one({"session_id": session_id}, {"$set": {"questions_sequence": asked_ids, "current_question_index": 0, "adaptive_score": theta, "cat_se": se}})
-        # Determine current question
-        idx = int(sess.get("current_question_index", 0))
-        if idx >= len(asked_ids):
-            # Need to choose next adaptively
-            topic = cat_choose_topic(cfg, sess)
-            desired_diff = _value_to_difficulty(theta)
-            # sample avoid_ids from asked_ids
-            avoid_ids = asked_ids[-200:]
-            # choose one nearby difficulty
-            # prefer async await path
-            picked = None
-            for dtry in [desired_diff, _value_to_difficulty(theta+0.3), _value_to_difficulty(theta-0.3)]:
-                pipeline = [{"$match": {"topic": topic, "difficulty": dtry, "id": {"$nin": avoid_ids}}}, {"$sample": {"size": 25}}]
-                docs = await db.aptitude_questions.aggregate(pipeline).to_list(length=None)
-                if docs:
-                    # choose closest by ability mapping
-                    best = None
-                    best_delta = 999
-                    for doc in docs:
-                        bv = _difficulty_to_value(doc.get("difficulty", "medium"))
-                        delta = abs(theta - bv)
-                        if delta < best_delta:
-                            best = doc
-                            best_delta = delta
-                    picked = best
-                    break
-            if not picked:
-                picked = await db.aptitude_questions.find_one({"topic": topic, "id": {"$nin": avoid_ids}})
-            if not picked:
-                return {"message": "no_more_questions"}
-            asked_ids.append(picked["id"])
-            await db.aptitude_sessions.update_one({"session_id": session_id}, {"$set": {"questions_sequence": asked_ids}})
-            qdoc = picked
-            idx = len(asked_ids)-1
-        else:
-            qid = asked_ids[idx]
-            qdoc = await db.aptitude_questions.find_one({"id": qid})
-            if not qdoc:
-                await db.aptitude_sessions.update_one({"session_id": session_id}, {"$inc": {"current_question_index": 1}})
-                return await get_next_question(session_id)
-        # Randomize options if config says so
-        if cfg.get("randomize_options", True) and qdoc.get("question_type") == "multiple_choice":
-            opts = qdoc.get("options", [])[:]
+        info_sum = float(sess.get("cat_info_sum", 0.0))
+        
+        # Get topic requirements and current counts
+        topic_requirements = cfg.get("questions_per_topic", {})
+        current_topic_counts = {}
+        
+        # Calculate current topic distribution from answered questions
+        if asked_ids:
+            for qid in asked_ids:
+                qdoc = await db.aptitude_questions.find_one({"id": qid}, {"topic": 1})
+                if qdoc:
+                    topic = qdoc.get("topic", "")
+                    current_topic_counts[topic] = current_topic_counts.get(topic, 0) + 1
+        
+        # Check if test should terminate using enhanced criteria
+        should_end, reason = enhanced_cat_engine.should_terminate_test(
+            current_se=se,
+            questions_asked=len(asked_ids),
+            time_elapsed=(datetime.utcnow() - sess.get("start_time", datetime.utcnow())).total_seconds() if sess.get("start_time") else 0,
+            topic_requirements=topic_requirements,
+            current_topic_counts=current_topic_counts
+        )
+        
+        if should_end:
+            return {"message": "no_more_questions", "termination_reason": reason}
+        
+        # Get available questions for optimal selection
+        available_questions = []
+        for topic in cfg.get("topics", []):
+            # Get questions for this topic (limit to reasonable sample size)
+            topic_questions = await db.aptitude_questions.find(
+                {"topic": topic, "id": {"$nin": asked_ids}}
+            ).limit(100).to_list(length=None)
+            available_questions.extend(topic_questions)
+        
+        if not available_questions:
+            return {"message": "no_more_questions", "termination_reason": "no_questions_available"}
+        
+        # Use enhanced CAT engine for optimal question selection
+        optimal_question = enhanced_cat_engine.select_optimal_question(
+            candidate_theta=theta,
+            available_questions=available_questions,
+            asked_questions=asked_ids,
+            topic_requirements=topic_requirements,
+            current_topic_counts=current_topic_counts
+        )
+        
+        if not optimal_question:
+            return {"message": "no_more_questions", "termination_reason": "selection_failed"}
+        
+        # Update session with selected question
+        asked_ids.append(optimal_question["id"])
+        idx = len(asked_ids) - 1
+        
+        # Calculate confidence intervals
+        ci_lower, ci_upper = enhanced_cat_engine.calculate_confidence_interval(theta, se)
+        
+        # Update session state
+        await db.aptitude_sessions.update_one(
+            {"session_id": session_id},
+            {"$set": {
+                "questions_sequence": asked_ids,
+                "current_question_index": idx,
+                "adaptive_score": theta,
+                "cat_se": se,
+                "cat_info_sum": info_sum,
+                "confidence_intervals": {
+                    "overall": {"lower": ci_lower, "upper": ci_upper}
+                }
+            }}
+        )
+        
+        # Randomize options if configured
+        if cfg.get("randomize_options", True) and optimal_question.get("question_type") == "multiple_choice":
+            opts = optimal_question.get("options", [])[:]
             random.shuffle(opts)
-            qdoc["options"] = opts
-        # Do not send correct_answer to client
-        qdoc_slim = {k: v for k, v in qdoc.items() if k not in ["_id", "correct_answer"]}
-        total_target = sum((cfg.get("questions_per_topic", {}) or {}).values())
-        return {"question": qdoc_slim, "index": idx, "total_target": total_target, "cat_theta": theta, "cat_se": se}
+            optimal_question["options"] = opts
+        
+        # Remove sensitive data before sending to client
+        question_slim = {k: v for k, v in optimal_question.items() 
+                        if k not in ["_id", "correct_answer", "discrimination", "difficulty_value", "guessing"]}
+        
+        total_target = sum(topic_requirements.values())
+        
+        return {
+            "question": question_slim,
+            "index": idx,
+            "total_target": total_target,
+            "cat_theta": theta,
+            "cat_se": se,
+            "confidence_interval": {"lower": ci_lower, "upper": ci_upper},
+            "measurement_precision": 1.0 / se if se > 0 else 0.0,
+            "questions_remaining": max(0, total_target - len(asked_ids))
+        }
+        
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Get next question error: {e}")
+        logging.error(f"Enhanced get next question error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get question")
 
 class SubmitAnswerRequest(BaseModel):
