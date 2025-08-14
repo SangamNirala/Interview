@@ -260,10 +260,29 @@ class DeviceFingerprintingEngine:
         try:
             self.logger.info("Performing comprehensive VM detection analysis")
             
+            # Ensure device_data is a dictionary and extract components safely
+            if not isinstance(device_data, dict):
+                self.logger.warning(f"Device data is not a dictionary: {type(device_data)}")
+                device_data = {}
+            
             hardware_data = device_data.get('hardware', {})
             os_data = device_data.get('os', {})
             browser_data = device_data.get('browser', {})
             performance_data = device_data.get('performance', {})
+            
+            # Ensure all components are dictionaries
+            if not isinstance(hardware_data, dict):
+                self.logger.warning(f"Hardware data is not a dictionary: {type(hardware_data)}")
+                hardware_data = {}
+            if not isinstance(os_data, dict):
+                self.logger.warning(f"OS data is not a dictionary: {type(os_data)}")
+                os_data = {}
+            if not isinstance(browser_data, dict):
+                self.logger.warning(f"Browser data is not a dictionary: {type(browser_data)}")
+                browser_data = {}
+            if not isinstance(performance_data, dict):
+                self.logger.warning(f"Performance data is not a dictionary: {type(performance_data)}")
+                performance_data = {}
             
             vm_detection_results = {}
             
