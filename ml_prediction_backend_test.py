@@ -427,7 +427,8 @@ class MLPredictionTester:
     def test_skill_gap_analysis(self):
         """Test POST /api/ml/skill-gap-analysis endpoint"""
         try:
-            session_id, mock_session = self.create_mock_session_data()
+            # Use a real session ID from mock data
+            session_id = "test-session-001"
             
             # First check the endpoint signature - it expects session_id as query parameter
             response = self.session.post(
