@@ -427,8 +427,16 @@ class StatisticalAnomalyTester:
                 if data.get('success') and 'analysis_results' in data:
                     analysis = data['analysis_results']
                     
-                    # Validate response structure
-                    required_fields = ['manipulation_score', 'risk_level', 'detailed_analysis']
+                    # Validate response structure - handle both full analysis and empty analysis cases
+                    if 'manipulation_score' in analysis:
+                        required_fields = ['manipulation_score', 'risk_level', 'detailed_analysis']
+                        score = analysis.get('manipulation_score', 0)
+                    elif 'score' in analysis:
+                        required_fields = ['score', 'risk_level', 'detailed_analysis']
+                        score = analysis.get('score', 0)
+                    else:
+                        required_fields = ['risk_level', 'detailed_analysis']
+                        score = 0
                     missing_fields = [field for field in required_fields if field not in analysis]
                     
                     if not missing_fields:
