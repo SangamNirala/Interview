@@ -23,6 +23,21 @@ from scipy.stats import chi2_contingency, kstest, anderson
 import warnings
 warnings.filterwarnings('ignore')
 
+def ensure_json_serializable(obj):
+    """Ensure object is JSON serializable by converting numpy types"""
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {str(k): ensure_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [ensure_json_serializable(item) for item in obj]
+    else:
+        return obj
+
 class StatisticalAnomalyAnalyzer:
     """
     Advanced Statistical Analysis for detecting sophisticated cheating patterns
