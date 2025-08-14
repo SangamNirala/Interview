@@ -321,7 +321,7 @@ class HardwareAnalysisTester:
                         "available_memory": -1,  # Invalid negative value
                         "memory_type": 123  # Number instead of string
                     },
-                    "storage": "SSD 1TB"  # String instead of array
+                    "storage": "SSD 1TB"  # String instead of object
                 }
             }
         
