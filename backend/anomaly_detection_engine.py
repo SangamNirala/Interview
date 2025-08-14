@@ -578,7 +578,7 @@ class AnomalyDetectionEngine:
                 # Z-score based anomaly detection
                 if baseline['std'] > 0:
                     z_score = abs((value - baseline['mean']) / baseline['std'])
-                    is_anomalous = z_score > 2.0  # 2 standard deviations
+                    is_anomalous = bool(z_score > 2.0)  # 2 standard deviations
                     
                     if is_anomalous:
                         anomalous_features += 1
@@ -587,7 +587,7 @@ class AnomalyDetectionEngine:
                         'value': float(value),
                         'baseline_mean': baseline['mean'],
                         'z_score': float(z_score),
-                        'is_anomalous': bool(is_anomalous),
+                        'is_anomalous': is_anomalous,
                         'percentile': self._calculate_percentile(value, baseline)
                     }
         
