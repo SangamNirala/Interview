@@ -752,7 +752,7 @@ class AnomalyDetectionEngine:
             difficulty_groups = defaultdict(list)
             for response in responses:
                 difficulty = response.get('difficulty', 1)
-                is_correct = response.get('is_correct', False)
+                is_correct = bool(response.get('is_correct', False))
                 difficulty_groups[str(difficulty)].append(is_correct)
             
             # Calculate accuracy for each difficulty level
