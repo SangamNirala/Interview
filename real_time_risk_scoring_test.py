@@ -254,6 +254,7 @@ class RealTimeRiskScoringTester:
             test_data = {
                 "session_id": self.test_session_id,
                 "current_risk_assessment": {
+                    "success": True,
                     "composite_risk_score": 0.75,  # HIGH risk level
                     "risk_level": "HIGH",
                     "risk_breakdown": {
