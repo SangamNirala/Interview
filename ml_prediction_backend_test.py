@@ -212,7 +212,8 @@ class MLPredictionTester:
     def test_performance_prediction(self):
         """Test GET /api/ml/performance-prediction/{session_id} endpoint"""
         try:
-            session_id, mock_session = self.create_mock_session_data()
+            # Use a real session ID from mock data
+            session_id = "test-session-001"
             
             response = self.session.get(
                 f"{BACKEND_URL}/ml/performance-prediction/{session_id}",
