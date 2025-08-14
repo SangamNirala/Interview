@@ -296,20 +296,18 @@ class HardwareAnalysisTester:
                         "cas_latency": 22,
                         "manufacturer": "SK Hynix"
                     },
-                    "storage": [
-                        {
-                            "type": "SSD",
-                            "interface": "SATA",
-                            "total_storage": 549755813888,  # 512GB
-                            "available_storage": 274877906944,  # 256GB available
-                            "filesystem": "NTFS",
-                            "model": "Kingston NV2",
-                            "read_speed": 2100,
-                            "write_speed": 1700,
-                            "form_factor": "M.2 2280",
-                            "health_status": "Good"
-                        }
-                    ]
+                    "storage": {
+                        "type": "SSD",
+                        "interface": "SATA",
+                        "total_storage": 549755813888,  # 512GB
+                        "available_storage": 274877906944,  # 256GB available
+                        "filesystem": "NTFS",
+                        "model": "Kingston NV2",
+                        "read_speed": 2100,
+                        "write_speed": 1700,
+                        "form_factor": "M.2 2280",
+                        "health_status": "Good"
+                    }
                 }
             }
         
