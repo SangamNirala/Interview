@@ -1466,51 +1466,326 @@ class StatisticalAnomalyAnalyzer:
             self.logger.warning(f"Error calculating collaboration score: {str(e)}")
             return 0.3
     
-    # Recommendation and significance methods (placeholders)
-    def _generate_pattern_recommendations(self, score, analysis_results):
-        """Generate recommendations for pattern irregularities"""
-        return ["Review answer patterns for suspicious sequences", "Monitor for potential pattern-based cheating"]
+    # ===== UTILITY HELPER METHODS =====
     
-    def _generate_difficulty_recommendations(self, score, analysis_results):
-        """Generate recommendations for difficulty anomalies"""
-        return ["Investigate unusual performance on difficult questions", "Consider adaptive difficulty adjustment"]
+    def _get_expected_active_hours(self, timezone: str) -> set:
+        """Get expected active hours for a timezone"""
+        # Simplified implementation - assumes 8 AM to 10 PM are active hours
+        # In a real implementation, this would consider timezone offsets
+        active_hours = set(range(8, 23))  # 8 AM to 10 PM
+        return active_hours
     
-    def _generate_timezone_recommendations(self, score, analysis_results):
-        """Generate recommendations for timezone manipulation"""
-        return ["Verify candidate location and timezone", "Monitor testing hours for consistency"]
+    def _calculate_expected_response_time(self, session_data: Dict) -> float:
+        """Calculate expected response time based on question difficulty"""
+        responses = session_data.get('responses', [])
+        if not responses:
+            return 2.0  # Default 2 minutes per question
+        
+        # Simple calculation based on difficulty
+        total_expected_time = 0
+        for response in responses:
+            difficulty = response.get('difficulty', 0.5)
+            # Base time: 1-3 minutes based on difficulty
+            expected_time = 1.0 + (difficulty * 2.0)
+            total_expected_time += expected_time
+        
+        return total_expected_time / len(responses) if responses else 2.0
     
-    def _generate_collaboration_recommendations(self, score, analysis_results):
-        """Generate recommendations for collaborative cheating"""
-        return ["Investigate potential collaboration between test-takers", "Implement enhanced monitoring protocols"]
+    def _calculate_session_similarity(self, responses1: List[Dict], responses2: List[Dict]) -> Dict[str, Any]:
+        """Calculate similarity between two sessions"""
+        try:
+            if not responses1 or not responses2:
+                return {'overall_similarity': 0.0, 'similar_aspects': []}
+            
+            similar_aspects = []
+            similarity_scores = []
+            
+            # 1. Answer choice similarity
+            answers1 = [r.get('response', '') for r in responses1]
+            answers2 = [r.get('response', '') for r in responses2]
+            
+            # Find common questions (by question_id)
+            common_questions = []
+            for r1 in responses1:
+                for r2 in responses2:
+                    if r1.get('question_id') == r2.get('question_id'):
+                        common_questions.append((r1, r2))
+            
+            if common_questions:
+                matching_answers = sum(1 for r1, r2 in common_questions if r1.get('response') == r2.get('response'))
+                answer_similarity = matching_answers / len(common_questions)
+                similarity_scores.append(answer_similarity)
+                
+                if answer_similarity > 0.8:
+                    similar_aspects.append("High answer choice similarity")
+            
+            # 2. Performance pattern similarity
+            accuracy1 = sum(1 for r in responses1 if r.get('is_correct', False)) / len(responses1)
+            accuracy2 = sum(1 for r in responses2 if r.get('is_correct', False)) / len(responses2)
+            accuracy_similarity = 1 - abs(accuracy1 - accuracy2)
+            similarity_scores.append(accuracy_similarity)
+            
+            if accuracy_similarity > 0.9:
+                similar_aspects.append("Very similar performance levels")
+            
+            # 3. Timing pattern similarity
+            times1 = [r.get('response_time', 0) for r in responses1 if r.get('response_time', 0) > 0]
+            times2 = [r.get('response_time', 0) for r in responses2 if r.get('response_time', 0) > 0]
+            
+            if times1 and times2:
+                avg_time1 = statistics.mean(times1)
+                avg_time2 = statistics.mean(times2)
+                timing_similarity = 1 - abs(avg_time1 - avg_time2) / max(avg_time1, avg_time2)
+                similarity_scores.append(timing_similarity)
+                
+                if timing_similarity > 0.85:
+                    similar_aspects.append("Similar response timing patterns")
+            
+            overall_similarity = statistics.mean(similarity_scores) if similarity_scores else 0.0
+            
+            return {
+                'overall_similarity': float(overall_similarity),
+                'similar_aspects': similar_aspects,
+                'answer_similarity': similarity_scores[0] if len(similarity_scores) > 0 else 0.0,
+                'performance_similarity': similarity_scores[1] if len(similarity_scores) > 1 else 0.0,
+                'timing_similarity': similarity_scores[2] if len(similarity_scores) > 2 else 0.0
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating session similarity: {str(e)}")
+            return {'overall_similarity': 0.0, 'similar_aspects': []}
     
-    def _calculate_pattern_significance(self, analysis_results):
-        """Calculate statistical significance for pattern analysis"""
-        return {'significant': False, 'p_value': 0.15, 'confidence_level': 0.95}
+    def _calculate_timing_coordination(self, timing1: Dict, timing2: Dict) -> Dict[str, Any]:
+        """Calculate timing coordination between sessions"""
+        try:
+            timestamps1 = timing1.get('timestamps', [])
+            timestamps2 = timing2.get('timestamps', [])
+            
+            if not timestamps1 or not timestamps2:
+                return {'coordination_score': 0.0, 'coordination_type': 'none'}
+            
+            # Check for simultaneous activity (within 5-minute windows)
+            coordination_score = 0.0
+            coordination_type = 'none'
+            
+            simultaneous_count = 0
+            for ts1 in timestamps1:
+                for ts2 in timestamps2:
+                    time_diff = abs((ts1 - ts2).total_seconds())
+                    if time_diff < 300:  # Within 5 minutes
+                        simultaneous_count += 1
+            
+            if simultaneous_count > 0:
+                coordination_score = min(simultaneous_count / min(len(timestamps1), len(timestamps2)), 1.0)
+                
+                if coordination_score > 0.7:
+                    coordination_type = 'highly_coordinated'
+                elif coordination_score > 0.4:
+                    coordination_type = 'moderately_coordinated'
+                else:
+                    coordination_type = 'loosely_coordinated'
+            
+            return {
+                'coordination_score': float(coordination_score),
+                'coordination_type': coordination_type,
+                'simultaneous_activities': simultaneous_count
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating timing coordination: {str(e)}")
+            return {'coordination_score': 0.0, 'coordination_type': 'none'}
     
-    def _calculate_difficulty_significance(self, analysis_results):
-        """Calculate statistical significance for difficulty analysis"""
-        return {'significant': False, 'p_value': 0.12, 'confidence_level': 0.95}
+    def _extract_answer_patterns(self, responses: List[Dict]) -> Dict[str, Any]:
+        """Extract answer patterns from responses"""
+        try:
+            if not responses:
+                return {}
+            
+            answers = [r.get('response', '') for r in responses]
+            
+            patterns = {
+                'sequence': ''.join(answers),
+                'distribution': dict(Counter(answers)),
+                'length': len(answers),
+                'unique_answers': len(set(answers)),
+                'most_common': Counter(answers).most_common(3),
+                'alternating_detected': self._detect_alternating_patterns(answers)
+            }
+            
+            return patterns
+            
+        except Exception as e:
+            self.logger.warning(f"Error extracting answer patterns: {str(e)}")
+            return {}
     
-    def _calculate_timezone_significance(self, analysis_results):
-        """Calculate statistical significance for timezone analysis"""
-        return {'significant': False, 'p_value': 0.18, 'confidence_level': 0.95}
+    def _calculate_pattern_similarity(self, patterns1: Dict, patterns2: Dict) -> float:
+        """Calculate similarity between answer patterns"""
+        try:
+            if not patterns1 or not patterns2:
+                return 0.0
+            
+            similarity_scores = []
+            
+            # Sequence similarity (if same length)
+            seq1 = patterns1.get('sequence', '')
+            seq2 = patterns2.get('sequence', '')
+            
+            if len(seq1) == len(seq2) and seq1 and seq2:
+                matching_chars = sum(1 for c1, c2 in zip(seq1, seq2) if c1 == c2)
+                sequence_similarity = matching_chars / len(seq1)
+                similarity_scores.append(sequence_similarity)
+            
+            # Distribution similarity
+            dist1 = patterns1.get('distribution', {})
+            dist2 = patterns2.get('distribution', {})
+            
+            if dist1 and dist2:
+                all_choices = set(dist1.keys()) | set(dist2.keys())
+                if all_choices:
+                    # Calculate cosine similarity of distributions
+                    vec1 = [dist1.get(choice, 0) for choice in all_choices]
+                    vec2 = [dist2.get(choice, 0) for choice in all_choices]
+                    
+                    dot_product = sum(v1 * v2 for v1, v2 in zip(vec1, vec2))
+                    magnitude1 = math.sqrt(sum(v1 * v1 for v1 in vec1))
+                    magnitude2 = math.sqrt(sum(v2 * v2 for v2 in vec2))
+                    
+                    if magnitude1 > 0 and magnitude2 > 0:
+                        cosine_similarity = dot_product / (magnitude1 * magnitude2)
+                        similarity_scores.append(cosine_similarity)
+            
+            return statistics.mean(similarity_scores) if similarity_scores else 0.0
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating pattern similarity: {str(e)}")
+            return 0.0
     
-    def _calculate_collaboration_significance(self, analysis_results):
-        """Calculate statistical significance for collaboration analysis"""
-        return {'significant': False, 'p_value': 0.20, 'confidence_level': 0.95}
+    def _identify_similar_patterns(self, patterns1: Dict, patterns2: Dict) -> List[str]:
+        """Identify specific similar patterns between sessions"""
+        similar_patterns = []
+        
+        try:
+            # Check sequence similarity
+            seq1 = patterns1.get('sequence', '')
+            seq2 = patterns2.get('sequence', '')
+            
+            if seq1 == seq2:
+                similar_patterns.append("Identical answer sequences")
+            elif len(seq1) == len(seq2) and seq1 and seq2:
+                matching_ratio = sum(1 for c1, c2 in zip(seq1, seq2) if c1 == c2) / len(seq1)
+                if matching_ratio > 0.8:
+                    similar_patterns.append(f"Very similar answer sequences ({matching_ratio:.1%} match)")
+            
+            # Check distribution similarity
+            dist1 = patterns1.get('distribution', {})
+            dist2 = patterns2.get('distribution', {})
+            
+            if dist1 and dist2:
+                # Check if most common answers are the same
+                most_common1 = patterns1.get('most_common', [])
+                most_common2 = patterns2.get('most_common', [])
+                
+                if most_common1 and most_common2:
+                    if most_common1[0][0] == most_common2[0][0]:
+                        similar_patterns.append("Same most frequent answer choice")
+            
+        except Exception as e:
+            self.logger.warning(f"Error identifying similar patterns: {str(e)}")
+        
+        return similar_patterns
     
-    # Additional helper methods for remaining implementations
-    def _analyze_difficulty_progression_patterns(self, difficulty_data):
-        """Analyze difficulty progression patterns"""
-        return {'progression_anomaly': False, 'pattern_strength': 0.2}
+    def _extract_session_features(self, session_data: Dict) -> Optional[List[float]]:
+        """Extract numerical features from session for clustering"""
+        try:
+            responses = session_data.get('responses', [])
+            if not responses:
+                return None
+            
+            features = []
+            
+            # Accuracy
+            accuracy = sum(1 for r in responses if r.get('is_correct', False)) / len(responses)
+            features.append(accuracy)
+            
+            # Average response time
+            times = [r.get('response_time', 0) for r in responses if r.get('response_time', 0) > 0]
+            avg_time = statistics.mean(times) if times else 0
+            features.append(avg_time)
+            
+            # Response time variability
+            time_std = statistics.stdev(times) if len(times) > 1 else 0
+            features.append(time_std)
+            
+            # Answer distribution entropy
+            answers = [r.get('response', '') for r in responses]
+            answer_counts = Counter(answers)
+            total = len(answers)
+            entropy = -sum((count/total) * math.log2(count/total) for count in answer_counts.values() if count > 0)
+            features.append(entropy)
+            
+            # Average difficulty
+            difficulties = [r.get('difficulty', 0.5) for r in responses]
+            avg_difficulty = statistics.mean(difficulties)
+            features.append(avg_difficulty)
+            
+            return features
+            
+        except Exception as e:
+            self.logger.warning(f"Error extracting session features: {str(e)}")
+            return None
     
-    def _detect_difficulty_outliers(self, difficulty_data):
-        """Detect statistical outliers in difficulty performance"""
-        return {'outliers_detected': 0, 'outlier_details': []}
-    
-    def _analyze_topic_difficulty_patterns(self, difficulty_data):
-        """Analyze topic-specific difficulty patterns"""
-        return {'topic_anomalies': {}, 'suspicious_topics': []}
+    def _perform_clustering_analysis(self, feature_vectors: List[List[float]], session_ids: List[str]) -> Dict[str, Any]:
+        """Perform clustering analysis on feature vectors"""
+        try:
+            if len(feature_vectors) < 3:
+                return {'clustering_detected': False, 'cluster_strength': 0.0, 'cluster_assignments': {}, 'suspicious_clusters': []}
+            
+            # Simple distance-based clustering
+            # Calculate pairwise distances
+            distances = []
+            pairs = []
+            
+            for i in range(len(feature_vectors)):
+                for j in range(i + 1, len(feature_vectors)):
+                    # Euclidean distance
+                    distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(feature_vectors[i], feature_vectors[j])))
+                    distances.append(distance)
+                    pairs.append((i, j))
+            
+            if not distances:
+                return {'clustering_detected': False, 'cluster_strength': 0.0, 'cluster_assignments': {}, 'suspicious_clusters': []}
+            
+            # Find close pairs (distance < threshold)
+            avg_distance = statistics.mean(distances)
+            threshold = avg_distance * 0.5  # Pairs closer than half the average distance
+            
+            close_pairs = []
+            for distance, (i, j) in zip(distances, pairs):
+                if distance < threshold:
+                    close_pairs.append({
+                        'session1': session_ids[i],
+                        'session2': session_ids[j],
+                        'distance': distance
+                    })
+            
+            clustering_detected = len(close_pairs) > 0
+            cluster_strength = min(len(close_pairs) / len(pairs), 1.0) if pairs else 0.0
+            
+            # Identify suspicious clusters (multiple sessions very close to each other)
+            suspicious_clusters = []
+            if len(close_pairs) >= 2:
+                suspicious_clusters = close_pairs  # For simplicity, all close pairs are suspicious
+            
+            return {
+                'clustering_detected': clustering_detected,
+                'cluster_strength': float(cluster_strength),
+                'cluster_assignments': {sid: i for i, sid in enumerate(session_ids)},
+                'suspicious_clusters': suspicious_clusters
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error in clustering analysis: {str(e)}")
+            return {'clustering_detected': False, 'cluster_strength': 0.0, 'cluster_assignments': {}, 'suspicious_clusters': []}
 
 
 # Initialize global instance
