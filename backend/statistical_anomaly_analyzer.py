@@ -840,9 +840,70 @@ class StatisticalAnomalyAnalyzer:
     # ===== PLACEHOLDER METHODS (TO BE IMPLEMENTED) =====
     
     def _detect_alternating_patterns(self, answer_choices: List[str]) -> Dict[str, Any]:
-        """Detect alternating answer patterns (placeholder implementation)"""
-        # Simplified implementation for now
-        return {'detected': False, 'patterns': [], 'strength': 0.0}
+        """Detect alternating answer patterns (ABAB, ABCABC, etc.)"""
+        try:
+            if len(answer_choices) < 4:
+                return {'detected': False, 'patterns': [], 'strength': 0.0}
+            
+            patterns_found = []
+            max_strength = 0.0
+            
+            # Check for 2-choice alternating patterns (ABAB...)
+            for pattern_length in range(2, min(6, len(answer_choices) // 2)):
+                for start_idx in range(len(answer_choices) - pattern_length * 2 + 1):
+                    pattern = answer_choices[start_idx:start_idx + pattern_length]
+                    
+                    # Count how many times this pattern repeats consecutively
+                    consecutive_repeats = 1
+                    check_idx = start_idx + pattern_length
+                    
+                    while check_idx + pattern_length <= len(answer_choices):
+                        next_segment = answer_choices[check_idx:check_idx + pattern_length]
+                        if next_segment == pattern:
+                            consecutive_repeats += 1
+                            check_idx += pattern_length
+                        else:
+                            break
+                    
+                    # If pattern repeats at least 2 times (so 3+ total occurrences)
+                    if consecutive_repeats >= 2:
+                        total_length = pattern_length * (consecutive_repeats + 1)
+                        strength = min(total_length / len(answer_choices), 1.0)
+                        
+                        pattern_info = {
+                            'pattern': ''.join(pattern),
+                            'length': pattern_length,
+                            'repeats': consecutive_repeats + 1,
+                            'start_position': start_idx,
+                            'total_coverage': total_length,
+                            'strength': float(strength)
+                        }
+                        
+                        patterns_found.append(pattern_info)
+                        max_strength = max(max_strength, strength)
+            
+            # Remove overlapping patterns, keep strongest
+            unique_patterns = []
+            for pattern in sorted(patterns_found, key=lambda x: x['strength'], reverse=True):
+                overlaps = False
+                for existing in unique_patterns:
+                    if (pattern['start_position'] < existing['start_position'] + existing['total_coverage'] and
+                        pattern['start_position'] + pattern['total_coverage'] > existing['start_position']):
+                        overlaps = True
+                        break
+                if not overlaps:
+                    unique_patterns.append(pattern)
+            
+            return {
+                'detected': len(unique_patterns) > 0,
+                'patterns': unique_patterns[:3],  # Return top 3 patterns
+                'strength': float(max_strength),
+                'total_patterns_found': len(unique_patterns)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Error detecting alternating patterns: {str(e)}")
+            return {'detected': False, 'patterns': [], 'strength': 0.0}
     
     def _find_temporal_answer_clusters(self, answer_choices: List[str], response_times: List[float]) -> Dict[str, Any]:
         """Find temporal clustering in answers (placeholder implementation)"""
