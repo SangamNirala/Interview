@@ -97,7 +97,7 @@ class EnhancedCATTester:
             
             if stats_response.status_code == 200:
                 stats_data = stats_response.json()
-                current_total = stats_data.get("total_questions", 0)
+                current_total = stats_data.get("total", 0)  # Changed from "total_questions" to "total"
                 
                 # If we have questions, skip seeding
                 if current_total >= 100:
