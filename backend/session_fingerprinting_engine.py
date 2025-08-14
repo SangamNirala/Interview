@@ -2999,6 +2999,940 @@ class DeviceFingerprintingEngine:
             self.logger.error(f"Error assessing device risk level: {str(e)}")
             return 'MEDIUM'
     
+    # ===== SUPPORTING HELPER METHODS FOR DEVICE TRACKING =====
+    
+    def _compare_signatures(self, old_signature: Dict[str, Any], new_signature: Dict[str, Any]) -> Dict[str, Any]:
+        """Compare two device signatures to detect changes"""
+        try:
+            changed_fields = []
+            
+            # Deep comparison of signature fields
+            for key in ['hardware', 'os', 'browser', 'network', 'screen']:
+                if key in old_signature and key in new_signature:
+                    changes = self._deep_compare_dict(old_signature[key], new_signature[key], key)
+                    changed_fields.extend(changes)
+            
+            # Calculate change severity
+            severity_score = min(1.0, len(changed_fields) / 10)  # Normalize to 0-1
+            if severity_score > 0.7:
+                severity = 'high'
+            elif severity_score > 0.4:
+                severity = 'medium'
+            elif severity_score > 0.1:
+                severity = 'low'
+            else:
+                severity = 'minimal'
+            
+            return {
+                'changed_fields': changed_fields,
+                'severity': severity,
+                'severity_score': severity_score,
+                'change_count': len(changed_fields)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error comparing signatures: {str(e)}")
+            return {'changed_fields': [], 'severity': 'error', 'severity_score': 0.0}
+    
+    def _deep_compare_dict(self, old_dict: Dict, new_dict: Dict, prefix: str) -> List[str]:
+        """Deep compare two dictionaries and return changed field paths"""
+        changes = []
+        
+        # Check for changed values
+        for key in set(old_dict.keys()) | set(new_dict.keys()):
+            field_path = f"{prefix}.{key}"
+            
+            if key not in old_dict:
+                changes.append(f"{field_path} (added)")
+            elif key not in new_dict:
+                changes.append(f"{field_path} (removed)")
+            elif old_dict[key] != new_dict[key]:
+                if isinstance(old_dict[key], dict) and isinstance(new_dict[key], dict):
+                    changes.extend(self._deep_compare_dict(old_dict[key], new_dict[key], field_path))
+                else:
+                    changes.append(f"{field_path} (changed)")
+        
+        return changes
+    
+    def _calculate_signature_stability(self, signatures: List[Dict[str, Any]]) -> float:
+        """Calculate stability score based on signature history"""
+        if len(signatures) < 2:
+            return 1.0
+        
+        change_counts = []
+        for i in range(1, len(signatures)):
+            comparison = self._compare_signatures(signatures[i-1], signatures[i])
+            change_counts.append(comparison['change_count'])
+        
+        avg_changes = statistics.mean(change_counts) if change_counts else 0
+        # Stability decreases with more changes (inverse relationship)
+        stability = max(0.0, 1.0 - (avg_changes / 20))  # Normalize assuming max 20 changes per comparison
+        return stability
+    
+    def _determine_evolution_trend(self, signatures: List[Dict[str, Any]]) -> str:
+        """Determine the evolution trend of device signatures"""
+        if len(signatures) < 3:
+            return 'insufficient_data'
+        
+        change_counts = []
+        for i in range(1, len(signatures)):
+            comparison = self._compare_signatures(signatures[i-1], signatures[i])
+            change_counts.append(comparison['change_count'])
+        
+        if len(change_counts) < 2:
+            return 'stable'
+        
+        # Calculate trend slope
+        recent_changes = statistics.mean(change_counts[-5:]) if len(change_counts) >= 5 else statistics.mean(change_counts)
+        earlier_changes = statistics.mean(change_counts[:5]) if len(change_counts) >= 5 else statistics.mean(change_counts[:-1])
+        
+        trend_slope = recent_changes - earlier_changes
+        
+        if trend_slope > 2:
+            return 'increasing_instability'
+        elif trend_slope > 0.5:
+            return 'slight_increase'
+        elif trend_slope < -2:
+            return 'stabilizing'
+        elif trend_slope < -0.5:
+            return 'slight_decrease'
+        else:
+            return 'stable'
+    
+    def _calculate_change_velocity(self, signatures: List[Dict[str, Any]]) -> float:
+        """Calculate the velocity of signature changes"""
+        if len(signatures) < 2:
+            return 0.0
+        
+        change_counts = []
+        for i in range(1, len(signatures)):
+            comparison = self._compare_signatures(signatures[i-1], signatures[i])
+            change_counts.append(comparison['change_count'])
+        
+        # Calculate changes per time unit (assuming each signature is 1 time unit apart)
+        velocity = statistics.mean(change_counts) if change_counts else 0.0
+        return velocity
+    
+    def _calculate_signature_entropy(self, signature: Dict[str, Any]) -> float:
+        """Calculate entropy of signature (complexity measure)"""
+        # Convert signature to string and calculate character frequency
+        signature_str = json.dumps(signature, sort_keys=True)
+        char_counts = {}
+        
+        for char in signature_str:
+            char_counts[char] = char_counts.get(char, 0) + 1
+        
+        total_chars = len(signature_str)
+        if total_chars == 0:
+            return 0.0
+        
+        # Calculate Shannon entropy
+        entropy = 0.0
+        for count in char_counts.values():
+            probability = count / total_chars
+            if probability > 0:
+                entropy -= probability * math.log2(probability)
+        
+        return entropy
+    
+    def _calculate_signature_drift(self, signatures: List[Dict[str, Any]]) -> float:
+        """Calculate signature drift over time"""
+        if len(signatures) < 2:
+            return 0.0
+        
+        # Compare first and last signatures
+        first_signature = signatures[0]
+        last_signature = signatures[-1]
+        
+        comparison = self._compare_signatures(first_signature, last_signature)
+        drift_score = min(1.0, comparison['change_count'] / 50)  # Normalize to 0-1
+        
+        return drift_score
+    
+    def _analyze_consistency_over_time(self, signatures: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze how consistency changes over time"""
+        if len(signatures) < 3:
+            return {'trend': 'insufficient_data', 'consistency_periods': []}
+        
+        # Calculate consistency scores over sliding windows
+        window_size = min(5, len(signatures) // 2)
+        consistency_scores = []
+        
+        for i in range(window_size, len(signatures)):
+            window_signatures = signatures[i-window_size:i]
+            stability = self._calculate_signature_stability(window_signatures)
+            consistency_scores.append(stability)
+        
+        if not consistency_scores:
+            return {'trend': 'insufficient_data', 'consistency_periods': []}
+        
+        # Analyze trend
+        if len(consistency_scores) > 1:
+            recent_avg = statistics.mean(consistency_scores[-3:]) if len(consistency_scores) >= 3 else consistency_scores[-1]
+            earlier_avg = statistics.mean(consistency_scores[:3]) if len(consistency_scores) >= 3 else consistency_scores[0]
+            
+            if recent_avg > earlier_avg + 0.1:
+                trend = 'improving'
+            elif recent_avg < earlier_avg - 0.1:
+                trend = 'degrading'
+            else:
+                trend = 'stable'
+        else:
+            trend = 'stable'
+        
+        return {
+            'trend': trend,
+            'consistency_scores': consistency_scores,
+            'current_consistency': consistency_scores[-1] if consistency_scores else 0.5,
+            'avg_consistency': statistics.mean(consistency_scores) if consistency_scores else 0.5
+        }
+    
+    def _compare_cpu_configurations(self, old_cpu: Dict[str, Any], new_cpu: Dict[str, Any]) -> Dict[str, Any]:
+        """Compare CPU configurations between signatures"""
+        changes = []
+        critical_fields = ['cores', 'vendor', 'model', 'frequency']
+        
+        for field in critical_fields:
+            if old_cpu.get(field) != new_cpu.get(field):
+                changes.append(f"{field}: {old_cpu.get(field)} -> {new_cpu.get(field)}")
+        
+        changed = len(changes) > 0
+        severity_score = len(changes) / len(critical_fields)  # 0.0 to 1.0
+        
+        if severity_score > 0.5:
+            severity = 'high'
+            risk_level = 'high'
+        elif severity_score > 0.25:
+            severity = 'medium'
+            risk_level = 'medium'
+        elif severity_score > 0:
+            severity = 'low'
+            risk_level = 'low'
+        else:
+            severity = 'none'
+            risk_level = 'none'
+        
+        return {
+            'changed': changed,
+            'changes': changes,
+            'severity': severity,
+            'severity_score': severity_score,
+            'risk_level': risk_level
+        }
+    
+    def _compare_memory_configurations(self, old_memory: Dict[str, Any], new_memory: Dict[str, Any]) -> Dict[str, Any]:
+        """Compare memory configurations between signatures"""
+        changes = []
+        critical_fields = ['total_memory', 'memory_type', 'speed']
+        
+        for field in critical_fields:
+            old_val = old_memory.get(field)
+            new_val = new_memory.get(field)
+            
+            if field == 'total_memory':
+                # Allow for small variations in memory reporting
+                if old_val and new_val and abs(old_val - new_val) > old_val * 0.05:  # 5% tolerance
+                    changes.append(f"{field}: {old_val} -> {new_val}")
+            elif old_val != new_val:
+                changes.append(f"{field}: {old_val} -> {new_val}")
+        
+        changed = len(changes) > 0
+        severity_score = len(changes) / len(critical_fields)
+        
+        if severity_score > 0.6:
+            severity = 'high'
+            risk_level = 'high'
+        elif severity_score > 0.3:
+            severity = 'medium' 
+            risk_level = 'medium'
+        elif changed:
+            severity = 'low'
+            risk_level = 'low'
+        else:
+            severity = 'none'
+            risk_level = 'none'
+        
+        return {
+            'changed': changed,
+            'changes': changes,
+            'severity': severity,
+            'severity_score': severity_score,
+            'risk_level': risk_level
+        }
+    
+    def _compare_gpu_configurations(self, old_gpu: Dict[str, Any], new_gpu: Dict[str, Any]) -> Dict[str, Any]:
+        """Compare GPU configurations between signatures"""
+        changes = []
+        critical_fields = ['vendor', 'renderer', 'memory']
+        
+        for field in critical_fields:
+            if old_gpu.get(field) != new_gpu.get(field):
+                changes.append(f"{field}: {old_gpu.get(field)} -> {new_gpu.get(field)}")
+        
+        changed = len(changes) > 0
+        severity_score = len(changes) / len(critical_fields)
+        
+        if severity_score > 0.6:
+            severity = 'high'
+            risk_level = 'high'
+        elif severity_score > 0.3:
+            severity = 'medium'
+            risk_level = 'medium'
+        elif changed:
+            severity = 'low'
+            risk_level = 'low'
+        else:
+            severity = 'none'
+            risk_level = 'none'
+        
+        return {
+            'changed': changed,
+            'changes': changes,
+            'severity': severity,
+            'severity_score': severity_score,
+            'risk_level': risk_level
+        }
+    
+    def _compare_storage_configurations(self, old_storage: Dict[str, Any], new_storage: Dict[str, Any]) -> Dict[str, Any]:
+        """Compare storage configurations between signatures"""
+        changes = []
+        critical_fields = ['total_storage', 'type', 'filesystem']
+        
+        for field in critical_fields:
+            old_val = old_storage.get(field)
+            new_val = new_storage.get(field)
+            
+            if field == 'total_storage':
+                # Allow for small variations in storage reporting
+                if old_val and new_val and abs(old_val - new_val) > old_val * 0.02:  # 2% tolerance
+                    changes.append(f"{field}: {old_val} -> {new_val}")
+            elif old_val != new_val:
+                changes.append(f"{field}: {old_val} -> {new_val}")
+        
+        changed = len(changes) > 0
+        severity_score = len(changes) / len(critical_fields)
+        
+        if severity_score > 0.6:
+            severity = 'high'
+            risk_level = 'high'
+        elif changed:
+            severity = 'low'
+            risk_level = 'low'
+        else:
+            severity = 'none'
+            risk_level = 'none'
+        
+        return {
+            'changed': changed,
+            'changes': changes,
+            'severity': severity,
+            'severity_score': severity_score,
+            'risk_level': risk_level
+        }
+    
+    def _check_vm_transition_indicators(self, old_hardware: Dict[str, Any], new_hardware: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for indicators of VM transitions"""
+        vm_indicators = []
+        
+        # Check for VM-specific hardware changes
+        old_cpu_vendor = old_hardware.get('cpu', {}).get('vendor', '').lower()
+        new_cpu_vendor = new_hardware.get('cpu', {}).get('vendor', '').lower()
+        
+        vm_vendors = ['virtual', 'qemu', 'kvm', 'xen', 'vmware']
+        old_is_vm = any(vendor in old_cpu_vendor for vendor in vm_vendors)
+        new_is_vm = any(vendor in new_cpu_vendor for vendor in vm_vendors)
+        
+        if not old_is_vm and new_is_vm:
+            vm_indicators.append('Transition from physical to virtual hardware detected')
+        elif old_is_vm and not new_is_vm:
+            vm_indicators.append('Transition from virtual to physical hardware detected')
+        
+        # Check for suspicious memory changes (VM memory patterns)
+        old_memory = old_hardware.get('memory', {}).get('total_memory', 0) / (1024**3)
+        new_memory = new_hardware.get('memory', {}).get('total_memory', 0) / (1024**3)
+        
+        vm_memory_sizes = [1, 2, 4, 8, 16, 32, 64]
+        old_vm_memory = any(abs(old_memory - size) < 0.1 for size in vm_memory_sizes)
+        new_vm_memory = any(abs(new_memory - size) < 0.1 for size in vm_memory_sizes)
+        
+        if not old_vm_memory and new_vm_memory:
+            vm_indicators.append('Memory configuration changed to VM-typical size')
+        
+        return {
+            'detected': len(vm_indicators) > 0,
+            'indicators': vm_indicators,
+            'confidence': min(1.0, len(vm_indicators) * 0.5)
+        }
+    
+    def _check_hardware_spoofing_indicators(self, hardware_changes: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for hardware spoofing indicators"""
+        spoofing_indicators = []
+        
+        # Check for multiple simultaneous hardware changes (suspicious)
+        changed_components = []
+        for component, changes in hardware_changes.items():
+            if changes.get('changed', False):
+                changed_components.append(component.replace('_changes', ''))
+        
+        if len(changed_components) >= 3:
+            spoofing_indicators.append(f'Multiple hardware components changed simultaneously: {", ".join(changed_components)}')
+        
+        # Check for high-severity changes across multiple components
+        high_severity_count = sum(
+            1 for changes in hardware_changes.values()
+            if changes.get('severity') in ['high', 'critical']
+        )
+        
+        if high_severity_count >= 2:
+            spoofing_indicators.append('Multiple high-severity hardware changes detected')
+        
+        return {
+            'detected': len(spoofing_indicators) > 0,
+            'indicators': spoofing_indicators,
+            'confidence': min(1.0, len(spoofing_indicators) * 0.6)
+        }
+    
+    def _calculate_switching_intervals(self, device_sessions: List[Dict[str, Any]]) -> List[float]:
+        """Calculate time intervals between device switches"""
+        if len(device_sessions) < 2:
+            return []
+        
+        intervals = []
+        for i in range(1, len(device_sessions)):
+            interval = (device_sessions[i]['timestamp'] - device_sessions[i-1]['timestamp']).total_seconds() / 3600  # hours
+            intervals.append(interval)
+        
+        return intervals
+    
+    def _detect_regular_intervals(self, intervals: List[float]) -> bool:
+        """Detect if switching intervals are suspiciously regular"""
+        if len(intervals) < 3:
+            return False
+        
+        # Calculate coefficient of variation
+        if len(intervals) == 0:
+            return False
+        
+        mean_interval = statistics.mean(intervals)
+        if mean_interval == 0:
+            return False
+        
+        std_dev = statistics.stdev(intervals) if len(intervals) > 1 else 0
+        coefficient_of_variation = std_dev / mean_interval
+        
+        # Regular intervals have low coefficient of variation
+        return coefficient_of_variation < 0.2
+    
+    def _count_night_switches(self, device_sessions: List[Dict[str, Any]]) -> int:
+        """Count switches that occur during night hours (10 PM - 6 AM)"""
+        night_switches = 0
+        
+        for session in device_sessions:
+            hour = session['timestamp'].hour
+            if hour >= 22 or hour <= 6:  # 10 PM to 6 AM
+                night_switches += 1
+        
+        return night_switches
+    
+    def _count_weekend_switches(self, device_sessions: List[Dict[str, Any]]) -> int:
+        """Count switches that occur during weekends"""
+        weekend_switches = 0
+        
+        for session in device_sessions:
+            if session['timestamp'].weekday() >= 5:  # Saturday=5, Sunday=6
+                weekend_switches += 1
+        
+        return weekend_switches
+    
+    def _detect_geographical_inconsistencies(self, device_sessions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Detect geographical inconsistencies in device sessions"""
+        if len(device_sessions) < 2:
+            return {'detected': False, 'description': 'Insufficient data', 'confidence': 0.0}
+        
+        # Extract location data from sessions (if available)
+        locations = []
+        for session in device_sessions:
+            signature = session.get('signature', {})
+            network = signature.get('network', {})
+            if 'country' in network and 'city' in network:
+                locations.append({
+                    'country': network['country'],
+                    'city': network['city'],
+                    'timestamp': session['timestamp']
+                })
+        
+        if len(locations) < 2:
+            return {'detected': False, 'description': 'No location data available', 'confidence': 0.0}
+        
+        # Check for rapid location changes
+        geographical_issues = []
+        for i in range(1, len(locations)):
+            prev_location = locations[i-1]
+            curr_location = locations[i]
+            time_diff = (curr_location['timestamp'] - prev_location['timestamp']).total_seconds() / 3600  # hours
+            
+            # Different countries within short time frame
+            if prev_location['country'] != curr_location['country'] and time_diff < 24:
+                geographical_issues.append(
+                    f"Location change from {prev_location['country']} to {curr_location['country']} "
+                    f"within {time_diff:.1f} hours"
+                )
+        
+        return {
+            'detected': len(geographical_issues) > 0,
+            'description': '; '.join(geographical_issues) if geographical_issues else 'No geographical inconsistencies detected',
+            'confidence': min(1.0, len(geographical_issues) * 0.7),
+            'inconsistency_count': len(geographical_issues)
+        }
+    
+    def _calculate_device_age_factor(self, device_id: str) -> float:
+        """Calculate device age factor for reputation scoring"""
+        device_sessions = self.device_sessions.get(device_id, [])
+        
+        if not device_sessions:
+            return 0.5  # Neutral for new devices
+        
+        # Calculate device age in days
+        first_seen = device_sessions[0]['timestamp']
+        device_age_days = (datetime.utcnow() - first_seen).days
+        
+        # Age factor: newer devices have lower trust, older devices with consistent behavior have higher trust
+        if device_age_days < 1:
+            return 0.3  # New device, lower trust
+        elif device_age_days < 7:
+            return 0.5  # Week old device
+        elif device_age_days < 30:
+            return 0.7  # Month old device
+        elif device_age_days < 90:
+            return 0.8  # 3 months old
+        else:
+            return 0.9  # Older device, higher trust
+    
+    def _calculate_anomaly_factor(self, consistency_analysis: Dict[str, Any]) -> float:
+        """Calculate anomaly factor based on detected anomalies"""
+        session_correlation = consistency_analysis.get('session_correlation', {})
+        anomaly_patterns = session_correlation.get('anomaly_patterns', [])
+        
+        switching_patterns = consistency_analysis.get('switching_patterns', {})
+        suspicious_patterns = switching_patterns.get('suspicious_patterns', [])
+        
+        total_anomalies = len(anomaly_patterns) + len(suspicious_patterns)
+        
+        # Anomaly factor decreases with more anomalies
+        if total_anomalies == 0:
+            return 1.0  # No anomalies
+        elif total_anomalies <= 2:
+            return 0.8  # Few anomalies
+        elif total_anomalies <= 5:
+            return 0.6  # Some anomalies
+        elif total_anomalies <= 10:
+            return 0.4  # Many anomalies
+        else:
+            return 0.2  # Too many anomalies
+    
+    def _apply_reputation_modifiers(self, device_id: str, base_score: float, consistency_analysis: Dict[str, Any]) -> float:
+        """Apply reputation modifiers to base score"""
+        modified_score = base_score
+        
+        # VM detection modifier
+        hardware_changes = consistency_analysis.get('hardware_changes', {})
+        vm_indicators = hardware_changes.get('vm_indicators', {})
+        if vm_indicators.get('detected', False):
+            modified_score *= 0.7  # Reduce score for VM indicators
+        
+        # Spoofing modifier
+        spoofing_indicators = hardware_changes.get('spoofing_indicators', {})
+        if spoofing_indicators.get('detected', False):
+            modified_score *= 0.5  # Significant reduction for spoofing
+        
+        # Suspicious pattern modifier
+        switching_patterns = consistency_analysis.get('switching_patterns', {})
+        suspicious_count = len(switching_patterns.get('suspicious_patterns', []))
+        if suspicious_count > 3:
+            modified_score *= 0.6  # Major reduction for multiple suspicious patterns
+        elif suspicious_count > 1:
+            modified_score *= 0.8  # Moderate reduction
+        
+        return modified_score
+    
+    def _calculate_session_correlation(self, session1: Dict[str, Any], session2: Dict[str, Any]) -> float:
+        """Calculate correlation between two sessions"""
+        sig1 = session1.get('signature', {})
+        sig2 = session2.get('signature', {})
+        
+        # Calculate similarity across different signature components
+        correlations = []
+        
+        # Hardware correlation
+        hw1 = sig1.get('hardware', {})
+        hw2 = sig2.get('hardware', {})
+        hw_correlation = self._calculate_hardware_correlation(hw1, hw2)
+        correlations.append(hw_correlation)
+        
+        # Browser correlation
+        br1 = sig1.get('browser', {})
+        br2 = sig2.get('browser', {})
+        br_correlation = self._calculate_browser_correlation(br1, br2)
+        correlations.append(br_correlation)
+        
+        # Screen correlation
+        sc1 = sig1.get('screen', {})
+        sc2 = sig2.get('screen', {})
+        sc_correlation = self._calculate_screen_correlation(sc1, sc2)
+        correlations.append(sc_correlation)
+        
+        return statistics.mean(correlations) if correlations else 0.5
+    
+    def _calculate_hardware_correlation(self, hw1: Dict[str, Any], hw2: Dict[str, Any]) -> float:
+        """Calculate hardware correlation between two signatures"""
+        matches = 0
+        total_fields = 0
+        
+        for component in ['cpu', 'memory', 'gpu']:
+            comp1 = hw1.get(component, {})
+            comp2 = hw2.get(component, {})
+            
+            if comp1 and comp2:
+                # Count matching fields
+                for field in comp1.keys() | comp2.keys():
+                    total_fields += 1
+                    if comp1.get(field) == comp2.get(field):
+                        matches += 1
+        
+        return matches / total_fields if total_fields > 0 else 1.0
+    
+    def _calculate_browser_correlation(self, br1: Dict[str, Any], br2: Dict[str, Any]) -> float:
+        """Calculate browser correlation between two signatures"""
+        key_fields = ['user_agent', 'browser_name', 'browser_version']
+        matches = 0
+        
+        for field in key_fields:
+            if br1.get(field) == br2.get(field):
+                matches += 1
+        
+        return matches / len(key_fields) if key_fields else 1.0
+    
+    def _calculate_screen_correlation(self, sc1: Dict[str, Any], sc2: Dict[str, Any]) -> float:
+        """Calculate screen correlation between two signatures"""
+        key_fields = ['width', 'height', 'color_depth']
+        matches = 0
+        
+        for field in key_fields:
+            if sc1.get(field) == sc2.get(field):
+                matches += 1
+        
+        return matches / len(key_fields) if key_fields else 1.0
+    
+    def _extract_behavior_patterns(self, device_sessions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Extract behavioral patterns from device sessions"""
+        if not device_sessions:
+            return {}
+        
+        patterns = {
+            'session_frequency': self._calculate_session_frequency(device_sessions),
+            'usage_times': [session['timestamp'].hour for session in device_sessions],
+            'session_durations': [],  # Would need session end times
+            'location_patterns': self._extract_location_patterns(device_sessions)
+        }
+        
+        return patterns
+    
+    def _calculate_behavior_consistency(self, behavior_patterns: Dict[str, Any]) -> float:
+        """Calculate consistency of behavioral patterns"""
+        if not behavior_patterns:
+            return 0.5
+        
+        consistency_scores = []
+        
+        # Time consistency
+        usage_times = behavior_patterns.get('usage_times', [])
+        if usage_times:
+            time_std = statistics.stdev(usage_times) if len(usage_times) > 1 else 0
+            time_consistency = max(0.0, 1.0 - (time_std / 12))  # Normalize by 12 hours
+            consistency_scores.append(time_consistency)
+        
+        # Frequency consistency (placeholder)
+        consistency_scores.append(0.8)
+        
+        return statistics.mean(consistency_scores) if consistency_scores else 0.5
+    
+    def _detect_timing_anomalies(self, device_sessions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Detect timing anomalies in device sessions"""
+        if len(device_sessions) < 3:
+            return []
+        
+        anomalies = []
+        
+        # Calculate session intervals
+        intervals = []
+        for i in range(1, len(device_sessions)):
+            interval = (device_sessions[i]['timestamp'] - device_sessions[i-1]['timestamp']).total_seconds()
+            intervals.append(interval)
+        
+        if len(intervals) < 2:
+            return []
+        
+        # Detect unusually short intervals (< 1 minute)
+        short_intervals = [i for i in intervals if i < 60]
+        if len(short_intervals) > len(intervals) * 0.2:  # More than 20% are very short
+            anomalies.append({
+                'type': 'rapid_succession',
+                'description': f'{len(short_intervals)} sessions within 1 minute intervals',
+                'severity': 'medium'
+            })
+        
+        # Detect regular patterns (potential automation)
+        if len(intervals) >= 5:
+            mean_interval = statistics.mean(intervals)
+            std_interval = statistics.stdev(intervals)
+            if std_interval / mean_interval < 0.1:  # Very consistent intervals
+                anomalies.append({
+                    'type': 'regular_timing',
+                    'description': f'Sessions occur at regular {mean_interval/60:.1f} minute intervals',
+                    'severity': 'medium'
+                })
+        
+        return anomalies
+    
+    def _detect_signature_anomalies(self, device_sessions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Detect signature anomalies across sessions"""
+        if len(device_sessions) < 2:
+            return []
+        
+        anomalies = []
+        
+        # Check for signature instability
+        signature_changes = []
+        for i in range(1, len(device_sessions)):
+            prev_sig = device_sessions[i-1].get('signature', {})
+            curr_sig = device_sessions[i].get('signature', {})
+            comparison = self._compare_signatures(prev_sig, curr_sig)
+            signature_changes.append(comparison['change_count'])
+        
+        if signature_changes:
+            avg_changes = statistics.mean(signature_changes)
+            if avg_changes > 10:  # Many changes per session
+                anomalies.append({
+                    'type': 'signature_instability',
+                    'description': f'Average of {avg_changes:.1f} signature changes per session',
+                    'severity': 'high'
+                })
+        
+        return anomalies
+    
+    def _detect_behavioral_anomalies(self, behavior_patterns: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Detect behavioral anomalies"""
+        anomalies = []
+        
+        # Check usage time patterns
+        usage_times = behavior_patterns.get('usage_times', [])
+        if usage_times:
+            night_usage = sum(1 for hour in usage_times if hour >= 22 or hour <= 6)
+            if night_usage > len(usage_times) * 0.5:  # More than 50% night usage
+                anomalies.append({
+                    'type': 'unusual_hours',
+                    'description': f'{night_usage} of {len(usage_times)} sessions during night hours',
+                    'severity': 'low'
+                })
+        
+        return anomalies
+    
+    def _calculate_feature_correlations(self, device_sessions: List[Dict[str, Any]]) -> Dict[str, float]:
+        """Calculate correlations between different features across sessions"""
+        if len(device_sessions) < 2:
+            return {}
+        
+        correlations = {}
+        
+        # Extract features across sessions
+        features = {
+            'screen_width': [s.get('signature', {}).get('screen', {}).get('width', 0) for s in device_sessions],
+            'memory_total': [s.get('signature', {}).get('hardware', {}).get('memory', {}).get('total_memory', 0) for s in device_sessions],
+            'cpu_cores': [s.get('signature', {}).get('hardware', {}).get('cpu', {}).get('cores', 0) for s in device_sessions]
+        }
+        
+        # Calculate stability for each feature
+        for feature_name, values in features.items():
+            if values and len(set(values)) > 1:  # Feature varies
+                correlations[f'{feature_name}_stability'] = len(set(values)) / len(values)
+            else:
+                correlations[f'{feature_name}_stability'] = 1.0  # Perfectly stable
+        
+        return correlations
+    
+    def _perform_session_clustering(self, device_sessions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Perform simple clustering analysis on sessions"""
+        if len(device_sessions) < 3:
+            return {'clusters': 1, 'cluster_quality': 'insufficient_data'}
+        
+        # Simple clustering based on signature similarity
+        clusters = []
+        for session in device_sessions:
+            signature = session.get('signature', {})
+            
+            # Find most similar existing cluster
+            best_cluster = None
+            best_similarity = 0.0
+            
+            for cluster in clusters:
+                cluster_signature = cluster['representative_signature']
+                similarity = self._calculate_session_correlation(
+                    {'signature': signature}, 
+                    {'signature': cluster_signature}
+                )
+                if similarity > best_similarity and similarity > 0.8:  # Similarity threshold
+                    best_similarity = similarity
+                    best_cluster = cluster
+            
+            if best_cluster:
+                best_cluster['sessions'].append(session)
+            else:
+                # Create new cluster
+                clusters.append({
+                    'representative_signature': signature,
+                    'sessions': [session]
+                })
+        
+        cluster_sizes = [len(cluster['sessions']) for cluster in clusters]
+        cluster_quality = 'good' if len(clusters) <= 3 else 'fragmented'
+        
+        return {
+            'clusters': len(clusters),
+            'cluster_sizes': cluster_sizes,
+            'cluster_quality': cluster_quality
+        }
+    
+    def _calculate_session_frequency(self, device_sessions: List[Dict[str, Any]]) -> float:
+        """Calculate session frequency (sessions per day)"""
+        if len(device_sessions) < 2:
+            return 0.0
+        
+        time_span = device_sessions[-1]['timestamp'] - device_sessions[0]['timestamp']
+        time_span_days = time_span.total_seconds() / (24 * 3600)
+        
+        return len(device_sessions) / max(time_span_days, 1)
+    
+    def _analyze_usage_patterns(self, device_sessions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze usage patterns from sessions"""
+        if not device_sessions:
+            return {}
+        
+        usage_hours = [session['timestamp'].hour for session in device_sessions]
+        usage_days = [session['timestamp'].weekday() for session in device_sessions]
+        
+        # Calculate usage distribution
+        hour_distribution = {}
+        for hour in range(24):
+            hour_distribution[hour] = usage_hours.count(hour)
+        
+        day_distribution = {}
+        for day in range(7):
+            day_distribution[day] = usage_days.count(day)
+        
+        return {
+            'peak_hours': [h for h, c in hour_distribution.items() if c == max(hour_distribution.values())],
+            'peak_days': [d for d, c in day_distribution.items() if c == max(day_distribution.values())],
+            'hour_distribution': hour_distribution,
+            'day_distribution': day_distribution
+        }
+    
+    def _calculate_session_duration_stats(self, device_sessions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate session duration statistics"""
+        # This would require session end times, which we don't have in current structure
+        # Return placeholder for now
+        return {
+            'avg_duration': 'unknown',
+            'duration_variance': 'unknown',
+            'note': 'Session end times not available'
+        }
+    
+    def _extract_location_patterns(self, device_sessions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Extract location patterns from sessions"""
+        locations = []
+        
+        for session in device_sessions:
+            signature = session.get('signature', {})
+            network = signature.get('network', {})
+            if 'country' in network:
+                locations.append(network['country'])
+        
+        if not locations:
+            return {'countries': [], 'location_stability': 'unknown'}
+        
+        unique_locations = set(locations)
+        location_stability = 'stable' if len(unique_locations) == 1 else 'variable'
+        
+        return {
+            'countries': list(unique_locations),
+            'location_stability': location_stability,
+            'location_changes': len(unique_locations) - 1
+        }
+    
+    def _calculate_consistency_trend(self, device_id: str) -> str:
+        """Calculate consistency trend for device"""
+        device_sessions = self.device_sessions.get(device_id, [])
+        
+        if len(device_sessions) < 5:
+            return 'insufficient_data'
+        
+        # Calculate consistency scores for recent sessions
+        recent_scores = []
+        for i in range(max(0, len(device_sessions) - 10), len(device_sessions)):
+            session = device_sessions[i]
+            score = session.get('consistency_score', 0.5)
+            recent_scores.append(score)
+        
+        if len(recent_scores) < 3:
+            return 'stable'
+        
+        # Analyze trend
+        early_avg = statistics.mean(recent_scores[:len(recent_scores)//2])
+        late_avg = statistics.mean(recent_scores[len(recent_scores)//2:])
+        
+        if late_avg > early_avg + 0.1:
+            return 'improving'
+        elif late_avg < early_avg - 0.1:
+            return 'degrading'
+        else:
+            return 'stable'
+    
+    def _get_risk_level_history(self, device_id: str) -> List[str]:
+        """Get risk level history for device"""
+        # This would ideally come from stored data
+        # For now, return a placeholder based on current session count
+        device_sessions = self.device_sessions.get(device_id, [])
+        
+        if len(device_sessions) < 5:
+            return ['MEDIUM', 'LOW', 'MINIMAL']
+        else:
+            return ['HIGH', 'MEDIUM', 'LOW', 'MINIMAL', 'LOW']
+    
+    def _calculate_data_quality_modifier(self, consistency_analysis: Dict[str, Any]) -> float:
+        """Calculate data quality modifier for consistency score"""
+        quality_factors = []
+        
+        # Check if we have sufficient data for analysis
+        evolution_tracking = consistency_analysis.get('evolution_tracking', {})
+        signature_age = evolution_tracking.get('signature_age_hours', 0)
+        
+        if signature_age > 24:  # More than 24 data points
+            quality_factors.append(1.0)
+        elif signature_age > 10:
+            quality_factors.append(0.9)
+        elif signature_age > 5:
+            quality_factors.append(0.8)
+        else:
+            quality_factors.append(0.6)
+        
+        # Check session correlation confidence
+        session_correlation = consistency_analysis.get('session_correlation', {})
+        correlation_confidence = session_correlation.get('correlation_confidence', 'low')
+        
+        confidence_scores = {'high': 1.0, 'medium': 0.9, 'low': 0.7}
+        quality_factors.append(confidence_scores.get(correlation_confidence, 0.7))
+        
+        return statistics.mean(quality_factors) if quality_factors else 0.8
+    
     # ===== CLASSIFICATION HELPER METHODS =====
     
     def _classify_cpu_performance(self, cpu_data: Dict[str, Any]) -> str:
