@@ -615,12 +615,12 @@ class StatisticalAnomalyAnalyzer:
                 'chi_square': {
                     'statistic': float(chi2_stat),
                     'p_value': float(p_value),
-                    'is_uniform': p_value > 0.05
+                    'is_uniform': bool(p_value > 0.05)
                 },
                 'kolmogorov_smirnov': {
                     'statistic': float(ks_stat),
                     'p_value': float(ks_p_value),
-                    'is_uniform': ks_p_value > 0.05
+                    'is_uniform': bool(ks_p_value > 0.05)
                 },
                 'overall_uniformity_score': float((p_value + ks_p_value) / 2)
             }
