@@ -19126,6 +19126,20 @@ class PerformanceAnalysisRequest(BaseModel):
 class ProbabilityCalculationRequest(BaseModel):
     session_data: Dict[str, Any]
 
+# Statistical Anomaly Analyzer Request Models (Step 2.2)
+class AnswerPatternAnalysisRequest(BaseModel):
+    session_data: Dict[str, Any]
+
+class DifficultyProgressionAnalysisRequest(BaseModel):
+    session_data: Dict[str, Any] 
+
+class TimezoneManipulationAnalysisRequest(BaseModel):
+    session_data: Dict[str, Any]
+
+class CollaborativeCheatingAnalysisRequest(BaseModel):
+    session_data: Dict[str, Any]
+    comparison_sessions: Optional[List[Dict]] = None
+
 @api_router.post("/anomaly-detection/train-baseline-models")
 async def train_baseline_models(request: BaselineTrainingRequest):
     """
