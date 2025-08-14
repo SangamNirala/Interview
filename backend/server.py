@@ -18902,15 +18902,26 @@ async def get_biometric_analysis(session_id: str):
             "session_id": session_id
         })
         
+        # Convert MongoDB ObjectIds to strings for JSON serialization
+        if analysis_data and "_id" in analysis_data:
+            analysis_data["_id"] = str(analysis_data["_id"])
+        
+        for intervention in interventions:
+            if "_id" in intervention:
+                intervention["_id"] = str(intervention["_id"])
+        
+        if config and "_id" in config:
+            config["_id"] = str(config["_id"])
+        
         return {
             "success": True,
             "session_id": session_id,
-            "analysis_results": analysis_data["analysis_results"],
+            "analysis_results": analysis_data.get("analysis_results", {}),
             "anomaly_score": analysis_data.get("anomaly_score", 0.0),
             "intervention_level": analysis_data.get("intervention_level", "none"),
             "security_interventions": interventions,
             "biometric_configuration": config,
-            "analysis_timestamp": analysis_data["created_at"]
+            "analysis_timestamp": analysis_data.get("created_at", datetime.utcnow()).isoformat() if isinstance(analysis_data.get("created_at"), datetime) else str(analysis_data.get("created_at", ""))
         }
         
     except Exception as e:
