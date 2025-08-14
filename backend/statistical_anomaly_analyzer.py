@@ -435,6 +435,11 @@ class StatisticalAnomalyAnalyzer:
             else:
                 chi2_stat, p_value, is_uniform = 0, 1, True
             
+            # Ensure all values are JSON serializable
+            chi2_stat = float(chi2_stat) if hasattr(chi2_stat, 'item') else float(chi2_stat)
+            p_value = float(p_value) if hasattr(p_value, 'item') else float(p_value)
+            is_uniform = bool(is_uniform)
+            
             # Calculate distribution bias
             distribution_bias = max(answer_counts.values()) / total_answers if total_answers > 0 else 0
             
