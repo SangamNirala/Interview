@@ -204,15 +204,16 @@ class EnhancedCATTester:
     def create_test_token(self, config_id: str) -> str:
         """Create a test token and return token"""
         try:
-            token_data = {
+            token_request = {
                 "config_id": config_id,
-                "expires_in_hours": 24,
-                "max_attempts": 1
+                "expires_in_minutes": 120,
+                "max_attempts": 1,
+                "candidate_restrictions": {}
             }
             
             response = self.session.post(
-                f"{self.base_url}/admin/aptitude-test/create-token",
-                json=token_data
+                f"{self.base_url}/placement-preparation/generate-aptitude-token",
+                json=token_request
             )
             
             if response.status_code == 200:
