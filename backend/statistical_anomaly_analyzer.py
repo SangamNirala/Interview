@@ -431,7 +431,7 @@ class StatisticalAnomalyAnalyzer:
             
             if unique_choices > 1 and total_answers > 5:
                 chi2_stat, p_value = stats.chisquare(observed_frequencies, expected_frequencies)
-                is_uniform = p_value > self.expected_patterns['uniform_distribution_threshold']
+                is_uniform = bool(p_value > self.expected_patterns['uniform_distribution_threshold'])
             else:
                 chi2_stat, p_value, is_uniform = 0, 1, True
             
