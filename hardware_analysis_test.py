@@ -107,31 +107,18 @@ class HardwareAnalysisTester:
                         "cas_latency": 16,
                         "manufacturer": "Corsair"
                     },
-                    "storage": [
-                        {
-                            "type": "SSD",
-                            "interface": "NVMe",
-                            "total_storage": 1099511627776,  # 1TB
-                            "available_storage": 549755813888,  # 512GB available
-                            "filesystem": "NTFS",
-                            "model": "Samsung 980 PRO",
-                            "read_speed": 7000,
-                            "write_speed": 5000,
-                            "form_factor": "M.2 2280",
-                            "health_status": "Good"
-                        },
-                        {
-                            "type": "HDD",
-                            "interface": "SATA",
-                            "total_storage": 2199023255552,  # 2TB
-                            "available_storage": 1649267441664,  # 1.5TB available
-                            "filesystem": "NTFS",
-                            "model": "Seagate Barracuda",
-                            "rpm": 7200,
-                            "cache": 256,
-                            "health_status": "Good"
-                        }
-                    ],
+                    "storage": {
+                        "type": "SSD",
+                        "interface": "NVMe",
+                        "total_storage": 1099511627776,  # 1TB
+                        "available_storage": 549755813888,  # 512GB available
+                        "filesystem": "NTFS",
+                        "model": "Samsung 980 PRO",
+                        "read_speed": 7000,
+                        "write_speed": 5000,
+                        "form_factor": "M.2 2280",
+                        "health_status": "Good"
+                    },
                     "motherboard": {
                         "manufacturer": "ASUS",
                         "model": "ROG STRIX Z490-E",
