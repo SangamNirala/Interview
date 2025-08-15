@@ -195,7 +195,7 @@ class Phase11APIParameterFixesTester:
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/device-fingerprinting/analyze-hardware",
+                f"{BACKEND_URL}/session-fingerprinting/analyze-hardware",
                 json=payload
             )
             
@@ -232,7 +232,7 @@ class Phase11APIParameterFixesTester:
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/device-fingerprinting/analyze-hardware",
+                f"{BACKEND_URL}/session-fingerprinting/analyze-hardware",
                 json=payload
             )
             
@@ -286,7 +286,7 @@ class Phase11APIParameterFixesTester:
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/device-fingerprinting/track-device-consistency",
+                f"{BACKEND_URL}/session-fingerprinting/track-device-consistency",
                 json=payload
             )
             
@@ -325,7 +325,7 @@ class Phase11APIParameterFixesTester:
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/device-fingerprinting/track-device-consistency",
+                f"{BACKEND_URL}/session-fingerprinting/track-device-consistency",
                 json=payload
             )
             
@@ -380,7 +380,7 @@ class Phase11APIParameterFixesTester:
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/device-fingerprinting/detect-virtual-machines",
+                f"{BACKEND_URL}/session-fingerprinting/detect-virtual-machines",
                 json=payload
             )
             
@@ -422,7 +422,7 @@ class Phase11APIParameterFixesTester:
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/device-fingerprinting/detect-virtual-machines",
+                f"{BACKEND_URL}/session-fingerprinting/detect-virtual-machines",
                 json=payload
             )
             
@@ -454,7 +454,7 @@ class Phase11APIParameterFixesTester:
             }
             
             response = unauth_session.post(
-                f"{BACKEND_URL}/device-fingerprinting/generate-device-signature",
+                f"{BACKEND_URL}/session-fingerprinting/generate-device-signature",
                 json=payload
             )
             
