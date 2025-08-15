@@ -2284,39 +2284,35 @@ class SessionFingerprintCollector {
      */
     async estimateGPUMemory() {
         try {
-            const estimates = {
-                // Method 1: WebGL texture allocation
-                texture_allocation_estimate: await this.estimateGPUMemoryViaTextures(),
+            const memoryEstimation = {
+                // WebGL Memory Analysis
+                webgl_memory: await this.estimateWebGLMemory(),
                 
-                // Method 2: Performance-based estimation
-                performance_based_estimate: await this.estimateGPUMemoryViaPerformance(),
+                // Texture Memory Testing
+                texture_memory: await this.testTextureMemoryLimits(),
                 
-                // Method 3: Capability-based estimation
-                capability_based_estimate: this.estimateGPUMemoryViaCapabilities(),
+                // Buffer Memory Testing
+                buffer_memory: await this.testBufferMemoryLimits(),
                 
-                // Method 4: Renderer-based estimation
-                renderer_based_estimate: this.estimateGPUMemoryViaRenderer(),
+                // Memory Stress Testing
+                memory_stress_test: await this.performGPUMemoryStressTest(),
                 
-                // Combined estimate
-                combined_estimate: 0,
-                confidence_level: 'unknown'
+                // Memory Bandwidth Estimation
+                memory_bandwidth: await this.estimateGPUMemoryBandwidth(),
+                
+                // Cache Analysis
+                cache_analysis: await this.analyzeGPUCache()
             };
             
-            // Calculate combined estimate
-            const validEstimates = Object.values(estimates)
-                .filter(val => typeof val === 'number' && val > 0);
+            // Calculate overall memory estimate
+            memoryEstimation.estimated_total_memory = this.calculateGPUMemoryEstimate(memoryEstimation);
+            memoryEstimation.confidence_level = this.calculateMemoryEstimationConfidence(memoryEstimation);
             
-            if (validEstimates.length > 0) {
-                estimates.combined_estimate = Math.round(
-                    validEstimates.reduce((a, b) => a + b) / validEstimates.length
-                );
-                estimates.confidence_level = validEstimates.length > 2 ? 'high' : 'medium';
-            }
-            
-            return estimates;
+            return memoryEstimation;
             
         } catch (error) {
-            return { error: error.message, combined_estimate: 0 };
+            this.logger.error("Error estimating GPU memory:", error);
+            return { error: error.message, estimated_memory: "unknown" };
         }
     }
     
