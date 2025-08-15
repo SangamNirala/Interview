@@ -2441,32 +2441,33 @@ class SessionFingerprintCollector {
      */
     detectMultiMonitorConfiguration() {
         try {
-            const multiMonitorInfo = {
-                // Screen spanning detection
-                screen_spanning_detected: this.detectScreenSpanning(),
+            const multiMonitor = {
+                // Screen Count Detection
+                screen_count: this.detectScreenCount(),
                 
-                // Virtual desktop detection
-                virtual_desktop_detected: this.detectVirtualDesktop(),
+                // Screen Arrangement Analysis
+                screen_arrangement: this.analyzeScreenArrangement(),
                 
-                // Extended display detection
-                extended_display_detected: this.detectExtendedDisplay(),
+                // Primary Display Detection
+                primary_display: this.detectPrimaryDisplay(),
                 
-                // Monitor count estimation
-                estimated_monitor_count: this.estimateMonitorCount(),
+                // Resolution Differences
+                resolution_analysis: this.analyzeMultiScreenResolutions(),
                 
-                // Primary monitor detection
-                primary_monitor_analysis: this.analyzePrimaryMonitor(),
+                // Color Profile Differences
+                color_profile_differences: this.analyzeMultiScreenColorProfiles(),
                 
-                // Multi-monitor indicators
-                multi_monitor_indicators: this.getMultiMonitorIndicators(),
+                // Extended vs Mirrored Detection
+                display_mode: this.detectDisplayMode(),
                 
-                // Display arrangement hints
-                display_arrangement_hints: this.getDisplayArrangementHints()
+                // Virtual Screen Boundaries
+                virtual_boundaries: this.calculateVirtualScreenBoundaries()
             };
             
-            return multiMonitorInfo;
+            return multiMonitor;
             
         } catch (error) {
+            this.logger.error("Error detecting multi-monitor setup:", error);
             return { error: error.message, single_monitor: true };
         }
     }
