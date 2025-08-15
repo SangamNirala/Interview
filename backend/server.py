@@ -19827,6 +19827,316 @@ async def get_security_interventions(session_id: str):
 
 # ===== MODULE 2: STATISTICAL ANOMALY DETECTION API ENDPOINTS =====
 
+# ===== TASK 4.2: ADVANCED BEHAVIORAL BIOMETRICS API ENDPOINTS =====
+
+@api_router.post("/security/advanced-biometrics/analyze-keystrokes")
+async def analyze_advanced_keystrokes(request: AdvancedKeystrokeAnalysisRequest):
+    """
+    Advanced keystroke dynamics analysis with ML-powered pattern recognition
+    
+    Enhanced analysis including:
+    - Enhanced keystroke pattern extraction
+    - ML-powered anomaly detection  
+    - Behavioral signature generation
+    - Advanced timing analysis
+    - Automation detection
+    """
+    try:
+        logging.info(f"Analyzing advanced keystroke dynamics for session {request.session_id}")
+        
+        # Perform advanced keystroke analysis
+        analysis_result = await advanced_biometrics_engine.analyze_keystroke_dynamics(
+            request.keystroke_data, 
+            request.session_id
+        )
+        
+        # Store analysis results in database
+        analysis_record = {
+            "session_id": request.session_id,
+            "analysis_type": "advanced_keystroke_dynamics",
+            "analysis_result": analysis_result,
+            "analysis_timestamp": datetime.utcnow(),
+            "data_size": len(request.keystroke_data)
+        }
+        
+        await db.advanced_biometric_analyses.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "analysis_result": analysis_result,
+            "analysis_metadata": {
+                "analysis_timestamp": datetime.utcnow().isoformat(),
+                "data_points_analyzed": len(request.keystroke_data),
+                "engine_version": "4.2.0"
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in advanced keystroke analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Advanced keystroke analysis failed: {str(e)}")
+
+@api_router.post("/security/advanced-biometrics/profile-mouse-behavior")
+async def profile_advanced_mouse_behavior(request: AdvancedMouseBehaviorRequest):
+    """
+    Comprehensive mouse movement profiling with advanced trajectory analysis
+    
+    Enhanced analysis including:
+    - Advanced mouse behavior profiling
+    - Trajectory analysis and smoothness calculation
+    - Click behavior analysis
+    - Movement pattern recognition
+    - Mouse automation detection
+    """
+    try:
+        logging.info(f"Profiling advanced mouse behavior for session {request.session_id}")
+        
+        # Perform advanced mouse behavior analysis
+        analysis_result = await advanced_biometrics_engine.profile_mouse_behavior(
+            request.mouse_data,
+            request.session_id
+        )
+        
+        # Store analysis results in database
+        analysis_record = {
+            "session_id": request.session_id,
+            "analysis_type": "advanced_mouse_behavior",
+            "analysis_result": analysis_result,
+            "analysis_timestamp": datetime.utcnow(),
+            "data_size": len(request.mouse_data)
+        }
+        
+        await db.advanced_biometric_analyses.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "analysis_result": analysis_result,
+            "analysis_metadata": {
+                "analysis_timestamp": datetime.utcnow().isoformat(),
+                "data_points_analyzed": len(request.mouse_data),
+                "engine_version": "4.2.0"
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in advanced mouse behavior analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Advanced mouse behavior analysis failed: {str(e)}")
+
+@api_router.post("/security/advanced-biometrics/analyze-touch-patterns")
+async def analyze_touch_patterns(request: TouchPatternAnalysisRequest):
+    """
+    Mobile touch behavior analysis with gesture recognition
+    
+    Enhanced analysis including:
+    - Touch behavior signature extraction
+    - Gesture analysis and recognition
+    - Pressure and contact area analysis
+    - Multi-touch coordination analysis
+    - Touch automation detection
+    """
+    try:
+        logging.info(f"Analyzing touch patterns for session {request.session_id}")
+        
+        # Perform touch pattern analysis
+        analysis_result = await advanced_biometrics_engine.analyze_touch_patterns(
+            request.touch_data,
+            request.session_id
+        )
+        
+        # Store analysis results in database
+        analysis_record = {
+            "session_id": request.session_id,
+            "analysis_type": "touch_pattern_analysis",
+            "analysis_result": analysis_result,
+            "analysis_timestamp": datetime.utcnow(),
+            "data_size": len(request.touch_data)
+        }
+        
+        await db.advanced_biometric_analyses.insert_one(analysis_record)
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "analysis_result": analysis_result,
+            "analysis_metadata": {
+                "analysis_timestamp": datetime.utcnow().isoformat(),
+                "data_points_analyzed": len(request.touch_data),
+                "engine_version": "4.2.0"
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in touch pattern analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Touch pattern analysis failed: {str(e)}")
+
+@api_router.post("/security/advanced-biometrics/detect-automation")
+async def detect_automation_via_behavior(request: AdvancedAutomationDetectionRequest):
+    """
+    Detect automation through comprehensive behavioral analysis
+    
+    Multi-modal automation detection including:
+    - Keystroke automation indicators
+    - Mouse automation patterns  
+    - Touch automation signatures
+    - Scrolling automation detection
+    - Interaction timing automation
+    - Cross-modal automation correlation
+    """
+    try:
+        logging.info(f"Detecting automation via behavior for session {request.session_id}")
+        
+        # Perform comprehensive automation detection
+        analysis_result = await advanced_biometrics_engine.detect_automation_via_behavior(
+            request.interaction_data,
+            request.session_id
+        )
+        
+        # Store analysis results in database
+        analysis_record = {
+            "session_id": request.session_id,
+            "analysis_type": "automation_detection",
+            "analysis_result": analysis_result,
+            "detection_sensitivity": request.detection_sensitivity,
+            "analysis_timestamp": datetime.utcnow(),
+            "data_components": list(request.interaction_data.keys())
+        }
+        
+        await db.advanced_biometric_analyses.insert_one(analysis_record)
+        
+        # Store automation detection results separately for monitoring
+        if analysis_result.get("behavioral_automation_analysis", {}).get("automation_detected", False):
+            automation_alert = {
+                "session_id": request.session_id,
+                "alert_type": "automation_detected",
+                "automation_probability": analysis_result["behavioral_automation_analysis"]["overall_automation_probability"],
+                "automation_indicators": analysis_result["behavioral_automation_analysis"]["automation_indicators"],
+                "confidence_level": analysis_result["behavioral_automation_analysis"]["confidence_level"],
+                "detection_timestamp": datetime.utcnow(),
+                "requires_intervention": analysis_result["behavioral_automation_analysis"]["overall_automation_probability"] > 0.7
+            }
+            
+            await db.automation_alerts.insert_one(automation_alert)
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "analysis_result": analysis_result,
+            "analysis_metadata": {
+                "analysis_timestamp": datetime.utcnow().isoformat(),
+                "components_analyzed": list(request.interaction_data.keys()),
+                "detection_sensitivity": request.detection_sensitivity,
+                "engine_version": "4.2.0"
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in automation detection: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Automation detection failed: {str(e)}")
+
+@api_router.get("/security/advanced-biometrics/session-analysis/{session_id}")
+async def get_advanced_biometric_session_analysis(session_id: str):
+    """
+    Get comprehensive advanced biometric analysis summary for a session
+    
+    Returns complete analysis including:
+    - All advanced biometric analyses performed
+    - Session fingerprint if available  
+    - Automation detection results
+    - Analysis timeline and patterns
+    """
+    try:
+        logging.info(f"Retrieving advanced biometric analysis for session {session_id}")
+        
+        # Get session analysis summary from engine
+        session_summary = advanced_biometrics_engine.get_session_analysis_summary(session_id)
+        
+        # Get all analysis records from database
+        analysis_records = await db.advanced_biometric_analyses.find({
+            "session_id": session_id
+        }).sort("analysis_timestamp", 1).to_list(None)
+        
+        # Get automation alerts if any
+        automation_alerts = await db.automation_alerts.find({
+            "session_id": session_id
+        }).sort("detection_timestamp", 1).to_list(None)
+        
+        # Calculate summary statistics
+        analysis_summary = {
+            "total_analyses": len(analysis_records),
+            "analysis_types": list(set([record.get("analysis_type") for record in analysis_records])),
+            "automation_alerts_count": len(automation_alerts),
+            "latest_analysis": analysis_records[-1]["analysis_timestamp"] if analysis_records else None,
+            "session_risk_level": "high" if automation_alerts else "medium" if analysis_records else "low"
+        }
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "session_summary": session_summary,
+            "analysis_summary": analysis_summary,
+            "analysis_records": analysis_records,
+            "automation_alerts": automation_alerts,
+            "retrieval_timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error retrieving session analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Session analysis retrieval failed: {str(e)}")
+
+@api_router.get("/security/advanced-biometrics/system-status")
+async def get_advanced_biometrics_system_status():
+    """
+    Get advanced behavioral biometrics system status and statistics
+    
+    Returns system health information including:
+    - Engine status and version
+    - Analysis statistics
+    - Recent activity summary
+    - System performance metrics
+    """
+    try:
+        # Get recent analysis statistics
+        recent_cutoff = datetime.utcnow() - timedelta(hours=24)
+        
+        recent_analyses = await db.advanced_biometric_analyses.count_documents({
+            "analysis_timestamp": {"$gte": recent_cutoff}
+        })
+        
+        recent_automation_detections = await db.automation_alerts.count_documents({
+            "detection_timestamp": {"$gte": recent_cutoff}
+        })
+        
+        # Get total statistics
+        total_analyses = await db.advanced_biometric_analyses.count_documents({})
+        total_sessions = await db.advanced_biometric_analyses.distinct("session_id")
+        
+        system_status = {
+            "system_info": {
+                "engine_version": "4.2.0",
+                "status": "operational",
+                "components": list(advanced_biometrics_engine.biometric_analyzers.keys()),
+                "analysis_history_size": len(advanced_biometrics_engine.analysis_history),
+                "session_fingerprints_stored": len(advanced_biometrics_engine.session_fingerprints)
+            },
+            "statistics": {
+                "total_analyses": total_analyses,
+                "total_unique_sessions": len(total_sessions),
+                "recent_24h_analyses": recent_analyses,
+                "recent_24h_automation_detections": recent_automation_detections
+            },
+            "status_timestamp": datetime.utcnow().isoformat()
+        }
+        
+        return {
+            "success": True,
+            "system_status": system_status
+        }
+        
+    except Exception as e:
+        logging.error(f"Error retrieving system status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"System status retrieval failed: {str(e)}")
+
 from pydantic import BaseModel
 from typing import Optional
 
