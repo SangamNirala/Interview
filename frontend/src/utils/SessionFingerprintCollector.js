@@ -9216,6 +9216,217 @@ class SessionFingerprintCollector {
             return { error: error.message };
         }
     }
+    
+    /**
+     * Rendering Engine Analysis Methods
+     */
+    async fingerprintLayoutEngine() {
+        try {
+            const layoutFingerprint = {
+                engine_type: 'unknown',
+                version_indicators: {},
+                layout_characteristics: {},
+                css_engine_quirks: {},
+                rendering_performance: {}
+            };
+            
+            // Engine detection based on CSS support and behavior
+            layoutFingerprint.engine_type = this.detectLayoutEngine();
+            
+            // Version indicators through CSS feature support
+            layoutFingerprint.version_indicators = {
+                css_grid_support: CSS.supports('display', 'grid'),
+                css_flexbox_support: CSS.supports('display', 'flex'),
+                css_custom_properties: CSS.supports('color', 'var(--test)'),
+                css_subgrid: CSS.supports('grid-template-rows', 'subgrid'),
+                css_container_queries: CSS.supports('container-type', 'inline-size'),
+                css_cascade_layers: CSS.supports('layer', 'base'),
+                css_color_functions: CSS.supports('color', 'color(display-p3 1 0 0)'),
+                css_logical_properties: CSS.supports('margin-inline-start', '1px')
+            };
+            
+            // Layout characteristics
+            layoutFingerprint.layout_characteristics = await this.analyzeLayoutCharacteristics();
+            
+            // CSS engine quirks
+            layoutFingerprint.css_engine_quirks = await this.detectCSSEngineQuirks();
+            
+            // Rendering performance
+            layoutFingerprint.rendering_performance = await this.measureRenderingPerformance();
+            
+            return layoutFingerprint;
+            
+        } catch (error) {
+            return { error: error.message, engine_type: 'detection_failed' };
+        }
+    }
+    
+    async buildCSSFeatureMatrix() {
+        try {
+            const featureMatrix = {
+                layout_features: {},
+                visual_features: {},
+                animation_features: {},
+                interaction_features: {},
+                experimental_features: {}
+            };
+            
+            // Layout features
+            featureMatrix.layout_features = {
+                grid: CSS.supports('display', 'grid'),
+                subgrid: CSS.supports('grid-template-rows', 'subgrid'),
+                flexbox: CSS.supports('display', 'flex'),
+                multi_column: CSS.supports('column-count', '2'),
+                css_regions: CSS.supports('flow-into', 'region'),
+                css_exclusions: CSS.supports('wrap-flow', 'both'),
+                css_shapes: CSS.supports('shape-outside', 'circle()'),
+                css_writing_modes: CSS.supports('writing-mode', 'vertical-rl'),
+                css_logical_properties: CSS.supports('margin-inline-start', '1px'),
+                container_queries: CSS.supports('container-type', 'inline-size'),
+                content_visibility: CSS.supports('content-visibility', 'auto')
+            };
+            
+            // Visual features
+            featureMatrix.visual_features = {
+                css_filters: CSS.supports('filter', 'blur(5px)'),
+                css_backdrop_filter: CSS.supports('backdrop-filter', 'blur(5px)'),
+                css_clip_path: CSS.supports('clip-path', 'circle()'),
+                css_masks: CSS.supports('mask-image', 'url(test.png)'),
+                css_blend_modes: CSS.supports('mix-blend-mode', 'multiply'),
+                css_gradients: CSS.supports('background-image', 'linear-gradient(red, blue)'),
+                css_transforms_3d: CSS.supports('transform', 'rotateX(45deg)'),
+                css_perspective: CSS.supports('perspective', '1000px'),
+                css_custom_properties: CSS.supports('color', 'var(--test)'),
+                css_color_functions: CSS.supports('color', 'color(display-p3 1 0 0)'),
+                css_color_schemes: CSS.supports('color-scheme', 'dark light')
+            };
+            
+            // Animation features
+            featureMatrix.animation_features = {
+                css_animations: CSS.supports('animation-duration', '1s'),
+                css_transitions: CSS.supports('transition-duration', '1s'),
+                css_transforms: CSS.supports('transform', 'scale(2)'),
+                web_animations_api: 'Animation' in window,
+                css_motion_path: CSS.supports('offset-path', 'path("M 0 0 L 100 100")'),
+                css_scroll_snap: CSS.supports('scroll-snap-type', 'x mandatory'),
+                css_scroll_behavior: CSS.supports('scroll-behavior', 'smooth'),
+                intersection_observer: 'IntersectionObserver' in window,
+                resize_observer: 'ResizeObserver' in window
+            };
+            
+            // Interaction features
+            featureMatrix.interaction_features = {
+                css_pointer_events: CSS.supports('pointer-events', 'none'),
+                css_user_select: CSS.supports('user-select', 'none'),
+                css_touch_action: CSS.supports('touch-action', 'pan-y'),
+                css_scroll_snap: CSS.supports('scroll-snap-type', 'x mandatory'),
+                css_overscroll_behavior: CSS.supports('overscroll-behavior', 'contain'),
+                pointer_events_api: 'PointerEvent' in window,
+                touch_events_api: 'TouchEvent' in window,
+                gesture_events_api: 'GestureEvent' in window
+            };
+            
+            // Experimental features
+            featureMatrix.experimental_features = {
+                css_houdini_paint: 'CSS' in window && 'paintWorklet' in CSS,
+                css_houdini_layout: 'CSS' in window && 'layoutWorklet' in CSS,
+                css_houdini_animation: 'CSS' in window && 'animationWorklet' in CSS,
+                css_anchor_positioning: CSS.supports('anchor-name', '--test'),
+                css_cascade_layers: CSS.supports('layer', 'base'),
+                css_nesting: CSS.supports('selector(:is(a b))'),
+                css_at_property: CSS.supports('syntax', '"<color>"'),
+                view_transitions: 'startViewTransition' in document
+            };
+            
+            return featureMatrix;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async detectRenderingQuirks() {
+        try {
+            const quirks = {
+                layout_quirks: [],
+                painting_quirks: [],
+                font_quirks: [],
+                color_quirks: [],
+                animation_quirks: []
+            };
+            
+            // Layout quirks detection
+            quirks.layout_quirks = await this.detectLayoutQuirks();
+            
+            // Painting quirks detection
+            quirks.painting_quirks = await this.detectPaintingQuirks();
+            
+            // Font rendering quirks
+            quirks.font_quirks = await this.detectFontRenderingQuirks();
+            
+            // Color handling quirks
+            quirks.color_quirks = await this.detectColorHandlingQuirks();
+            
+            // Animation quirks
+            quirks.animation_quirks = await this.detectAnimationQuirks();
+            
+            return quirks;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async analyzeGraphicsAcceleration() {
+        try {
+            const acceleration = {
+                hardware_acceleration: false,
+                gpu_info: {},
+                acceleration_apis: {},
+                performance_indicators: {},
+                capability_tests: {}
+            };
+            
+            // Hardware acceleration detection
+            acceleration.hardware_acceleration = await this.detectHardwareAcceleration();
+            
+            // GPU information
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                acceleration.gpu_info = {
+                    vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+                    renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+                    webgl_version: gl.getParameter(gl.VERSION),
+                    shading_language: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+                    is_software_renderer: this.isSoftwareRenderer(gl)
+                };
+            }
+            
+            // Acceleration APIs
+            acceleration.acceleration_apis = {
+                webgl_support: !!gl,
+                webgl2_support: !!(canvas.getContext('webgl2')),
+                canvas_2d_acceleration: await this.testCanvas2DAcceleration(),
+                css_transforms_acceleration: await this.testCSSTransformAcceleration(),
+                video_acceleration: await this.testVideoAcceleration(),
+                webgpu_support: 'gpu' in navigator
+            };
+            
+            // Performance indicators
+            acceleration.performance_indicators = await this.measureAccelerationPerformance();
+            
+            // Capability tests
+            acceleration.capability_tests = await this.runAccelerationCapabilityTests();
+            
+            canvas.remove();
+            return acceleration;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
 }
 
 // Export the class
