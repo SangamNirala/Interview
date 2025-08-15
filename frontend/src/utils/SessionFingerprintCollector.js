@@ -9054,105 +9054,171 @@ class SessionFingerprintCollector {
      */
     parseDetailedUserAgent() {
         try {
-            const ua = navigator.userAgent;
-            const analysis = {
-                raw_user_agent: ua,
-                user_agent_length: ua.length,
-                parsed_components: {},
-                browser_detection: {},
-                os_detection: {},
-                device_detection: {},
-                suspicious_patterns: []
+            const userAgent = navigator.userAgent;
+            const detailedAnalysis = {
+                // Browser Engine Detection
+                engine: this.detectBrowserEngine(userAgent),
+                
+                // Detailed Browser Family Analysis
+                browser_family: this.analyzeBrowserFamily(userAgent),
+                
+                // Version Analysis with Build Numbers
+                version_analysis: this.analyzeDetailedVersion(userAgent),
+                
+                // Platform and OS Analysis
+                platform_analysis: this.analyzePlatformDetails(userAgent),
+                
+                // User Agent String Entropy Analysis
+                ua_entropy: this.calculateUserAgentEntropy(userAgent),
+                
+                // User Agent Anomaly Detection
+                anomaly_detection: this.detectUserAgentAnomalies(userAgent),
+                
+                // User Agent Modification Detection
+                modification_detection: this.detectUserAgentModification(userAgent),
+                
+                // User Agent Consistency Analysis
+                consistency_analysis: this.analyzeUserAgentConsistency(userAgent)
             };
             
-            // Parse major browser patterns
-            const browserPatterns = [
-                { name: 'Chrome', pattern: /Chrome\/([0-9.]+)/, engine: 'Blink' },
-                { name: 'Firefox', pattern: /Firefox\/([0-9.]+)/, engine: 'Gecko' },
-                { name: 'Safari', pattern: /Version\/([0-9.]+).*Safari/, engine: 'WebKit' },
-                { name: 'Edge', pattern: /Edg\/([0-9.]+)/, engine: 'Blink' },
-                { name: 'Opera', pattern: /OPR\/([0-9.]+)/, engine: 'Blink' },
-                { name: 'Internet Explorer', pattern: /MSIE ([0-9.]+)|Trident.*rv:([0-9.]+)/, engine: 'Trident' }
-            ];
-            
-            for (const browser of browserPatterns) {
-                const match = ua.match(browser.pattern);
-                if (match) {
-                    analysis.browser_detection = {
-                        name: browser.name,
-                        version: match[1] || match[2] || 'unknown',
-                        engine: browser.engine,
-                        match_pattern: browser.pattern.toString()
-                    };
-                    break;
-                }
-            }
-            
-            // Parse OS patterns
-            const osPatterns = [
-                { name: 'Windows', pattern: /Windows NT ([0-9.]+)/ },
-                { name: 'macOS', pattern: /Mac OS X ([0-9_.]+)/ },
-                { name: 'Linux', pattern: /Linux/ },
-                { name: 'Android', pattern: /Android ([0-9.]+)/ },
-                { name: 'iOS', pattern: /OS ([0-9_]+) like Mac OS X/ }
-            ];
-            
-            for (const os of osPatterns) {
-                const match = ua.match(os.pattern);
-                if (match) {
-                    analysis.os_detection = {
-                        name: os.name,
-                        version: match[1] ? match[1].replace(/_/g, '.') : 'unknown',
-                        match_pattern: os.pattern.toString()
-                    };
-                    break;
-                }
-            }
-            
-            // Device detection
-            if (ua.includes('Mobile')) analysis.device_detection.mobile = true;
-            if (ua.includes('Tablet')) analysis.device_detection.tablet = true;
-            if (ua.match(/iPhone|iPad|iPod/)) analysis.device_detection.apple_device = true;
-            
-            // Detect suspicious patterns
-            const suspiciousPatterns = [
-                { name: 'headless_chrome', pattern: /HeadlessChrome/ },
-                { name: 'phantom_js', pattern: /PhantomJS/ },
-                { name: 'selenium', pattern: /selenium/i },
-                { name: 'webdriver', pattern: /webdriver/i },
-                { name: 'bot_pattern', pattern: /bot|crawler|spider/i },
-                { name: 'unusual_length', test: () => ua.length > 500 || ua.length < 50 },
-                { name: 'missing_version', test: () => !ua.match(/[0-9]+\.[0-9]+/) }
-            ];
-            
-            for (const suspicious of suspiciousPatterns) {
-                if (suspicious.pattern && ua.match(suspicious.pattern)) {
-                    analysis.suspicious_patterns.push(suspicious.name);
-                } else if (suspicious.test && suspicious.test()) {
-                    analysis.suspicious_patterns.push(suspicious.name);
-                }
-            }
-            
-            // Parse detailed components
-            const componentPatterns = [
-                { name: 'webkit_version', pattern: /WebKit\/([0-9.]+)/ },
-                { name: 'gecko_version', pattern: /Gecko\/([0-9]+)/ },
-                { name: 'chrome_version', pattern: /Chrome\/([0-9.]+)/ },
-                { name: 'safari_version', pattern: /Safari\/([0-9.]+)/ }
-            ];
-            
-            for (const component of componentPatterns) {
-                const match = ua.match(component.pattern);
-                if (match) {
-                    analysis.parsed_components[component.name] = match[1];
-                }
-            }
-            
-            return analysis;
+            return detailedAnalysis;
             
         } catch (error) {
-            return { error: error.message, raw_user_agent: navigator.userAgent };
+            this.logger.error("Error parsing detailed user agent:", error);
+            return { error: error.message, basic_ua: navigator.userAgent };
         }
+    }
+    
+    // Enhanced Browser Engine Detection
+    detectBrowserEngine(userAgent) {
+        const engines = {
+            blink: { patterns: [/Blink/, /Chrome/], indicators: ['chrome', 'webkitURL'] },
+            gecko: { patterns: [/Gecko/, /Firefox/], indicators: ['mozInnerScreenX', 'mozRTCPeerConnection'] },
+            webkit: { patterns: [/WebKit/], indicators: ['webkitIndexedDB', 'webkitStorageInfo'] },
+            trident: { patterns: [/Trident/, /MSIE/], indicators: ['msCrypto', 'msDoNotTrack'] }
+        };
+        
+        for (const [name, engine] of Object.entries(engines)) {
+            if (engine.patterns.some(pattern => pattern.test(userAgent))) {
+                return {
+                    name: name,
+                    version: this.extractEngineVersion(userAgent, name),
+                    confidence: engine.indicators.filter(indicator => indicator in window).length / engine.indicators.length,
+                    features: this.detectEngineFeatures(name)
+                };
+            }
+        }
+        
+        return { name: 'unknown', version: null, confidence: 0, features: {} };
+    }
+    
+    // Detailed Browser Family Analysis  
+    analyzeBrowserFamily(userAgent) {
+        const families = {
+            chromium: { patterns: [/Chrome/, /Chromium/, /Edge/, /Opera/] },
+            mozilla: { patterns: [/Firefox/, /Gecko/] },
+            webkit: { patterns: [/Safari/, /WebKit/] },
+            internet_explorer: { patterns: [/MSIE/, /Trident/] }
+        };
+        
+        const analysis = {};
+        for (const [family, data] of Object.entries(families)) {
+            if (data.patterns.some(pattern => pattern.test(userAgent))) {
+                analysis.primary_family = family;
+                analysis.family_specific = this.getFrameworkSpecificDetails(family, userAgent);
+                break;
+            }
+        }
+        
+        return analysis;
+    }
+    
+    // Detailed Version Analysis
+    analyzeDetailedVersion(userAgent) {
+        return {
+            major_version: this.extractMajorVersion(userAgent),
+            minor_version: this.extractMinorVersion(userAgent),
+            patch_version: this.extractPatchVersion(userAgent),
+            build_number: this.extractBuildNumber(userAgent),
+            version_entropy: this.calculateVersionEntropy(userAgent),
+            version_authenticity: this.validateVersionAuthenticity(userAgent)
+        };
+    }
+    
+    // Platform Details Analysis
+    analyzePlatformDetails(userAgent) {
+        return {
+            operating_system: this.detectDetailedOS(userAgent),
+            architecture: this.detectArchitecture(userAgent),
+            device_type: this.classifyDeviceType(userAgent),
+            form_factor: this.determineFormFactor(userAgent),
+            platform_consistency: this.validatePlatformConsistency(userAgent)
+        };
+    }
+    
+    // User Agent Entropy Calculation
+    calculateUserAgentEntropy(userAgent) {
+        const chars = userAgent.split('');
+        const frequency = {};
+        chars.forEach(char => frequency[char] = (frequency[char] || 0) + 1);
+        
+        let entropy = 0;
+        const length = userAgent.length;
+        Object.values(frequency).forEach(count => {
+            const probability = count / length;
+            entropy -= probability * Math.log2(probability);
+        });
+        
+        return {
+            shannon_entropy: entropy,
+            uniqueness_score: this.calculateUniquenessScore(userAgent),
+            complexity_rating: this.rateComplexity(entropy)
+        };
+    }
+    
+    // User Agent Anomaly Detection
+    detectUserAgentAnomalies(userAgent) {
+        const anomalies = [];
+        
+        // Length anomalies
+        if (userAgent.length > 500) anomalies.push('excessive_length');
+        if (userAgent.length < 50) anomalies.push('suspiciously_short');
+        
+        // Pattern anomalies  
+        if (!/\d+\.\d+/.test(userAgent)) anomalies.push('missing_version');
+        if (/HeadlessChrome|PhantomJS/.test(userAgent)) anomalies.push('headless_indicators');
+        if (/bot|crawler|spider/i.test(userAgent)) anomalies.push('bot_indicators');
+        
+        // Format anomalies
+        const segments = userAgent.split(' ');
+        if (segments.some(s => s.length > 100)) anomalies.push('oversized_segments');
+        
+        return {
+            detected_anomalies: anomalies,
+            anomaly_count: anomalies.length,
+            risk_level: this.calculateAnomalyRisk(anomalies)
+        };
+    }
+    
+    // User Agent Modification Detection
+    detectUserAgentModification(userAgent) {
+        return {
+            spoofing_indicators: this.detectSpoofingIndicators(userAgent),
+            consistency_checks: this.performConsistencyChecks(userAgent),
+            modification_confidence: this.calculateModificationConfidence(userAgent),
+            authenticity_score: this.scoreAuthenticity(userAgent)
+        };
+    }
+    
+    // User Agent Consistency Analysis
+    analyzeUserAgentConsistency(userAgent) {
+        return {
+            internal_consistency: this.checkInternalConsistency(userAgent),
+            capability_alignment: this.validateCapabilityAlignment(userAgent),
+            platform_alignment: this.validatePlatformAlignment(userAgent),
+            version_alignment: this.validateVersionAlignment(userAgent),
+            overall_consistency_score: this.calculateOverallConsistency(userAgent)
+        };
     }
     
     async detectBrowserBuild() {
