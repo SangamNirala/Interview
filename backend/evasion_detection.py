@@ -434,7 +434,9 @@ class EvasionDetectionEngine:
             
             countermeasure_results.update({
                 'active_countermeasures': [self._countermeasure_to_dict(measure) for measure in implemented_measures],
-                'effectiveness_score': round(overall_effectiveness, 3),
+                'effectiveness_scores': {measure.measure_id: measure.effectiveness_score for measure in implemented_measures},
+                'deployment_status': 'active' if implemented_measures else 'inactive',
+                'effectiveness_score': round(float(overall_effectiveness), 3),
                 'countermeasure_breakdown': {
                     'detection_measures': len([m for m in implemented_measures if m.measure_type == 'detection']),
                     'obfuscation_measures': len([m for m in implemented_measures if m.measure_type == 'obfuscation']),
