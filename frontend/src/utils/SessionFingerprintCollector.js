@@ -2550,24 +2550,47 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Run CPU performance benchmarks
+     * PHASE 1.1.3: Comprehensive CPU performance benchmarking
      */
     async runCPUPerformanceBenchmarks() {
         try {
-            this.logger.info("🏃 Running CPU performance benchmarks...");
+            const performanceBenchmarks = {
+                // Integer Performance
+                integer_performance: await this.benchmarkIntegerPerformance(),
+                
+                // Floating Point Performance
+                float_performance: await this.benchmarkFloatingPointPerformance(),
+                
+                // Vector Operations Performance
+                vector_performance: await this.benchmarkVectorPerformance(),
+                
+                // Branch Prediction Analysis
+                branch_prediction: await this.benchmarkBranchPrediction(),
+                
+                // Cache Performance Analysis
+                cache_performance: await this.benchmarkCachePerformance(),
+                
+                // Memory Latency Analysis
+                memory_latency: await this.benchmarkMemoryLatency(),
+                
+                // CPU Scalability Testing
+                scalability_test: await this.benchmarkCPUScalability(),
+                
+                // Power Efficiency Analysis
+                power_efficiency: await this.analyzePowerEfficiency()
+            };
             
-            const benchmarks = {
-                // Integer arithmetic benchmark
-                integer_arithmetic: await this.benchmarkIntegerArithmetic(),
-                
-                // Floating point benchmark
-                floating_point: await this.benchmarkFloatingPoint(),
-                
-                // Memory access benchmark
-                memory_access: await this.benchmarkMemoryAccess(),
-                
-                // String processing benchmark
-                string_processing: await this.benchmarkStringProcessing(),
+            // Calculate overall CPU performance score
+            performanceBenchmarks.overall_cpu_score = this.calculateCPUPerformanceScore(performanceBenchmarks);
+            performanceBenchmarks.cpu_category = this.categorizeCPUPerformance(performanceBenchmarks.overall_cpu_score);
+            
+            return performanceBenchmarks;
+            
+        } catch (error) {
+            this.logger.error("Error running CPU benchmarks:", error);
+            return { error: error.message, performance_level: "unknown" };
+        }
+    }
                 
                 // Array operations benchmark
                 array_operations: await this.benchmarkArrayOperations(),
