@@ -2931,49 +2931,38 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Enumerate connectivity sensors
+     * PHASE 1.1.5: Connectivity sensor enumeration
      */
     async enumerateConnectivitySensors() {
         try {
             const connectivitySensors = {
-                // Network Information API
-                network_info_support: 'connection' in navigator,
-                network_capabilities: await this.analyzeNetworkCapabilities(),
+                // GPS/Location Services
+                gps: await this.analyzeGPSCapabilities(),
                 
-                // Bluetooth API
-                bluetooth_support: 'bluetooth' in navigator,
-                bluetooth_capabilities: await this.analyzeBluetoothCapabilities(),
+                // Network Interface Detection
+                network_interfaces: await this.analyzeNetworkInterfaces(),
                 
-                // USB API
-                usb_support: 'usb' in navigator,
+                // Bluetooth Capabilities
+                bluetooth: await this.analyzeBluetoothCapabilities(),
                 
-                // Serial API
-                serial_support: 'serial' in navigator,
+                // NFC Detection
+                nfc: await this.analyzeNFCCapabilities(),
                 
-                // HID API
-                hid_support: 'hid' in navigator,
+                // WiFi Analysis
+                wifi: await this.analyzeWiFiCapabilities(),
                 
-                // NFC API
-                nfc_support: 'nfc' in navigator,
+                // Cellular Analysis
+                cellular: await this.analyzeCellularCapabilities(),
                 
-                // Geolocation API
-                geolocation_support: 'geolocation' in navigator,
-                geolocation_capabilities: await this.analyzeGeolocationCapabilities(),
-                
-                // Presentation API
-                presentation_support: 'presentation' in navigator,
-                
-                // Wake Lock API
-                wake_lock_support: 'wakeLock' in navigator,
-                
-                // Connectivity analysis
-                connectivity_analysis: await this.analyzeConnectivityPatterns()
+                // USB Analysis
+                usb: await this.analyzeUSBCapabilities()
             };
             
             return connectivitySensors;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error enumerating connectivity sensors:", error);
+            return { error: error.message, connectivity_sensors: "unknown" };
         }
     }
     
