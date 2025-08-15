@@ -9,7 +9,7 @@ import json
 import io
 import base64
 
-BASE_URL = "https://session-guardian-2.preview.emergentagent.com/api"
+BASE_URL = "https://netdata-collector.preview.emergentagent.com/api"
 
 def test_core_endpoints():
     """Test all core API endpoints"""

@@ -26,7 +26,7 @@ import tempfile
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://session-guardian-2.preview.emergentagent.com/api"
+BASE_URL = "https://netdata-collector.preview.emergentagent.com/api"
 
 class PlacementPreparationTester:
     def __init__(self):

@@ -14,7 +14,7 @@ import PyPDF2
 import io
 
 # Configuration
-BACKEND_URL = "https://session-guardian-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://netdata-collector.preview.emergentagent.com/api"
 
 class ATSScoreTestSuite:
     def __init__(self):

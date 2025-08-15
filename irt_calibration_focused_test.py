@@ -15,7 +15,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BACKEND_URL = "https://session-guardian-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://netdata-collector.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class FocusedIRTCalibrationTester:

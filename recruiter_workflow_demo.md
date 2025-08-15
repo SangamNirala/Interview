@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://session-guardian-2.preview.emergentagent.com
+URL: https://netdata-collector.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
