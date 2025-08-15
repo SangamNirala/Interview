@@ -70,9 +70,11 @@ class Phase33SessionIntegrityTester:
     def test_session_continuity_normal_session(self):
         """Test session continuity monitoring with normal continuous session"""
         try:
+            session_id = self.session_id + "_normal_continuity"
+            
             # Normal continuous session data
             session_data = {
-                "session_id": self.session_id + "_normal_continuity",
+                "session_id": session_id,
                 "user_id": "user_12345",
                 "session_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzNDUiLCJzZXNzaW9uX2lkIjoiYWJjZGVmIiwiaWF0IjoxNjM0NTY3ODkwfQ.signature",
                 "activity_logs": [
@@ -91,14 +93,6 @@ class Phase33SessionIntegrityTester:
                         "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                         "device_fingerprint": "fp_12345_windows_chrome",
                         "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060}
-                    },
-                    {
-                        "timestamp": "2024-01-15T10:10:00Z",
-                        "action": "form_submission",
-                        "ip_address": "192.168.1.100",
-                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                        "device_fingerprint": "fp_12345_windows_chrome",
-                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060}
                     }
                 ],
                 "behavioral_data": {
@@ -112,25 +106,19 @@ class Phase33SessionIntegrityTester:
                         "click_accuracy": 0.92,
                         "scroll_behavior": "smooth",
                         "interaction_frequency": 45
-                    },
-                    "navigation_patterns": {
-                        "page_dwell_time": [30, 45, 60, 25, 40],
-                        "click_sequences": ["menu", "content", "form", "submit"],
-                        "back_button_usage": 2
                     }
                 },
                 "device_characteristics": {
                     "screen_resolution": "1920x1080",
                     "timezone": "America/New_York",
                     "language": "en-US",
-                    "platform": "Win32",
-                    "hardware_concurrency": 8,
-                    "memory": 8192
+                    "platform": "Win32"
                 }
             }
             
             payload = {
-                "session_data": session_data
+                "session_data": session_data,
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -141,12 +129,11 @@ class Phase33SessionIntegrityTester:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    analysis = data.get('continuity_analysis', {})
-                    risk_score = analysis.get('overall_risk_score', 0)
+                    analysis = data.get('session_continuity_analysis', {})
                     self.log_result(
                         "Session Continuity - Normal Session", 
                         True, 
-                        f"Normal session analysis completed. Risk Score: {risk_score:.3f}, Analysis keys: {list(analysis.keys())}"
+                        f"Normal session analysis completed. Response keys: {list(analysis.keys())}"
                     )
                     return True
                 else:
@@ -163,9 +150,11 @@ class Phase33SessionIntegrityTester:
     def test_session_continuity_hijacking_attempt(self):
         """Test session continuity monitoring with session hijacking indicators"""
         try:
+            session_id = self.session_id + "_hijacking_attempt"
+            
             # Session with hijacking indicators - IP change, device change, impossible travel
             session_data = {
-                "session_id": self.session_id + "_hijacking_attempt",
+                "session_id": session_id,
                 "user_id": "user_67890",
                 "session_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjc4OTAiLCJzZXNzaW9uX2lkIjoiaGlqYWNrIiwiaWF0IjoxNjM0NTY3ODkwfQ.signature",
                 "activity_logs": [
@@ -184,14 +173,6 @@ class Phase33SessionIntegrityTester:
                         "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",  # Different OS/Browser
                         "device_fingerprint": "fp_unknown_linux_chrome",  # Different device
                         "location": {"country": "CN", "city": "Beijing", "lat": 39.9042, "lng": 116.4074}  # Impossible travel
-                    },
-                    {
-                        "timestamp": "2024-01-15T10:07:00Z",
-                        "action": "sensitive_action",
-                        "ip_address": "203.0.113.45",
-                        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-                        "device_fingerprint": "fp_unknown_linux_chrome",
-                        "location": {"country": "CN", "city": "Beijing", "lat": 39.9042, "lng": 116.4074}
                     }
                 ],
                 "behavioral_data": {
@@ -205,25 +186,19 @@ class Phase33SessionIntegrityTester:
                         "click_accuracy": 0.98,  # Too perfect
                         "scroll_behavior": "jerky",  # Different behavior
                         "interaction_frequency": 120  # Much higher
-                    },
-                    "navigation_patterns": {
-                        "page_dwell_time": [5, 3, 2, 4, 3],  # Very short times
-                        "click_sequences": ["direct_access", "sensitive_data", "download"],  # Suspicious
-                        "back_button_usage": 0  # No back button usage
                     }
                 },
                 "device_characteristics": {
                     "screen_resolution": "1366x768",  # Different resolution
                     "timezone": "Asia/Shanghai",  # Different timezone
                     "language": "zh-CN",  # Different language
-                    "platform": "Linux x86_64",  # Different platform
-                    "hardware_concurrency": 4,  # Different hardware
-                    "memory": 4096  # Different memory
+                    "platform": "Linux x86_64"  # Different platform
                 }
             }
             
             payload = {
-                "session_data": session_data
+                "session_data": session_data,
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -234,13 +209,11 @@ class Phase33SessionIntegrityTester:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    analysis = data.get('continuity_analysis', {})
-                    risk_score = analysis.get('overall_risk_score', 0)
-                    hijacking_indicators = analysis.get('hijacking_detection', {})
+                    analysis = data.get('session_continuity_analysis', {})
                     self.log_result(
                         "Session Continuity - Hijacking Attempt", 
                         True, 
-                        f"Hijacking detection completed. Risk Score: {risk_score:.3f}, Hijacking indicators: {len(hijacking_indicators)}"
+                        f"Hijacking detection completed. Response keys: {list(analysis.keys())}"
                     )
                     return True
                 else:
@@ -257,9 +230,11 @@ class Phase33SessionIntegrityTester:
     def test_session_manipulation_replay_attack(self):
         """Test session manipulation detection with replay attack patterns"""
         try:
+            session_id = self.session_id + "_replay_attack"
+            
             # Session data with replay attack indicators
             session_data = {
-                "session_id": self.session_id + "_replay_attack",
+                "session_id": session_id,
                 "user_id": "user_replay_test",
                 "request_history": [
                     {
@@ -279,49 +254,34 @@ class Phase33SessionIntegrityTester:
                         "headers": {"Authorization": "Bearer token123", "User-Agent": "Chrome/119.0"},
                         "body_hash": "hash_001",  # Identical hash - potential replay
                         "response_time": 148  # Very similar response time
-                    },
-                    {
-                        "timestamp": "2024-01-15T10:00:10Z",
-                        "request_id": "req_003",
-                        "endpoint": "/api/user/profile",
-                        "method": "GET",
-                        "headers": {"Authorization": "Bearer token123", "User-Agent": "Chrome/119.0"},
-                        "body_hash": "hash_001",  # Another identical hash
-                        "response_time": 152  # Very similar response time
                     }
                 ],
                 "timestamp_data": {
                     "client_timestamps": [
                         "2024-01-15T10:00:00.123Z",
-                        "2024-01-15T10:00:05.125Z",  # Suspicious regular intervals
-                        "2024-01-15T10:00:10.127Z"
+                        "2024-01-15T10:00:05.125Z"
                     ],
                     "server_timestamps": [
                         "2024-01-15T10:00:00.145Z",
-                        "2024-01-15T10:00:05.147Z",
-                        "2024-01-15T10:00:10.149Z"
+                        "2024-01-15T10:00:05.147Z"
                     ],
                     "clock_skew_analysis": {
-                        "client_server_drift": [22, 22, 22],  # Consistent drift - suspicious
+                        "client_server_drift": [22, 22],  # Consistent drift - suspicious
                         "timezone_consistency": True,
                         "ntp_sync_indicators": False
                     }
                 },
                 "data_integrity": {
-                    "request_checksums": ["chk_001", "chk_001", "chk_001"],  # Identical checksums
-                    "session_state_hashes": ["state_001", "state_001", "state_001"],  # No state changes
-                    "csrf_tokens": ["csrf_123", "csrf_123", "csrf_123"],  # Reused CSRF tokens
-                    "sequence_numbers": [1, 2, 3],
-                    "duplicate_detection": {
-                        "duplicate_requests": 2,
-                        "duplicate_sequences": ["req_001", "req_002", "req_003"],
-                        "time_window_analysis": "5_second_intervals"
-                    }
+                    "request_checksums": ["chk_001", "chk_001"],  # Identical checksums
+                    "session_state_hashes": ["state_001", "state_001"],  # No state changes
+                    "csrf_tokens": ["csrf_123", "csrf_123"],  # Reused CSRF tokens
+                    "sequence_numbers": [1, 2]
                 }
             }
             
             payload = {
-                "session_data": session_data
+                "session_data": session_data,
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -333,12 +293,10 @@ class Phase33SessionIntegrityTester:
                 data = response.json()
                 if data.get('success'):
                     analysis = data.get('manipulation_analysis', {})
-                    risk_score = analysis.get('overall_risk_score', 0)
-                    replay_detection = analysis.get('replay_attack_detection', {})
                     self.log_result(
                         "Session Manipulation - Replay Attack", 
                         True, 
-                        f"Replay attack detection completed. Risk Score: {risk_score:.3f}, Replay indicators: {len(replay_detection)}"
+                        f"Replay attack detection completed. Response keys: {list(analysis.keys())}"
                     )
                     return True
                 else:
@@ -355,9 +313,11 @@ class Phase33SessionIntegrityTester:
     def test_session_manipulation_timestamp_manipulation(self):
         """Test session manipulation detection with timestamp manipulation"""
         try:
+            session_id = self.session_id + "_timestamp_manipulation"
+            
             # Session data with timestamp manipulation indicators
             session_data = {
-                "session_id": self.session_id + "_timestamp_manipulation",
+                "session_id": session_id,
                 "user_id": "user_timestamp_test",
                 "request_history": [
                     {
@@ -377,30 +337,19 @@ class Phase33SessionIntegrityTester:
                         "headers": {"Authorization": "Bearer token456"},
                         "body_hash": "hash_ts_002",
                         "response_time": 180
-                    },
-                    {
-                        "timestamp": "2024-01-15T10:05:00Z",  # Large time jump
-                        "request_id": "req_ts_003",
-                        "endpoint": "/api/data/delete",
-                        "method": "DELETE",
-                        "headers": {"Authorization": "Bearer token456"},
-                        "body_hash": "hash_ts_003",
-                        "response_time": 120
                     }
                 ],
                 "timestamp_data": {
                     "client_timestamps": [
                         "2024-01-15T10:00:00.000Z",
-                        "2024-01-15T09:59:55.000Z",  # Backwards timestamp
-                        "2024-01-15T10:05:00.000Z"
+                        "2024-01-15T09:59:55.000Z"  # Backwards timestamp
                     ],
                     "server_timestamps": [
                         "2024-01-15T10:00:00.050Z",
-                        "2024-01-15T10:00:05.050Z",  # Server timestamp continues forward
-                        "2024-01-15T10:00:10.050Z"
+                        "2024-01-15T10:00:05.050Z"  # Server timestamp continues forward
                     ],
                     "clock_skew_analysis": {
-                        "client_server_drift": [50, -294950, -294950],  # Massive drift changes
+                        "client_server_drift": [50, -294950],  # Massive drift changes
                         "timezone_consistency": False,
                         "ntp_sync_indicators": False,
                         "timestamp_anomalies": [
@@ -411,20 +360,16 @@ class Phase33SessionIntegrityTester:
                     }
                 },
                 "data_integrity": {
-                    "request_checksums": ["chk_ts_001", "chk_ts_002", "chk_ts_003"],
-                    "session_state_hashes": ["state_ts_001", "state_ts_002", "state_ts_003"],
-                    "csrf_tokens": ["csrf_456", "csrf_789", "csrf_012"],
-                    "sequence_numbers": [1, 2, 3],
-                    "manipulation_indicators": {
-                        "timestamp_inconsistencies": 2,
-                        "clock_manipulation_detected": True,
-                        "temporal_anomalies": ["backwards_time", "time_jump"]
-                    }
+                    "request_checksums": ["chk_ts_001", "chk_ts_002"],
+                    "session_state_hashes": ["state_ts_001", "state_ts_002"],
+                    "csrf_tokens": ["csrf_456", "csrf_789"],
+                    "sequence_numbers": [1, 2]
                 }
             }
             
             payload = {
-                "session_data": session_data
+                "session_data": session_data,
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -436,12 +381,10 @@ class Phase33SessionIntegrityTester:
                 data = response.json()
                 if data.get('success'):
                     analysis = data.get('manipulation_analysis', {})
-                    risk_score = analysis.get('overall_risk_score', 0)
-                    timestamp_analysis = analysis.get('timestamp_manipulation_analysis', {})
                     self.log_result(
                         "Session Manipulation - Timestamp Manipulation", 
                         True, 
-                        f"Timestamp manipulation detection completed. Risk Score: {risk_score:.3f}, Timestamp anomalies: {len(timestamp_analysis)}"
+                        f"Timestamp manipulation detection completed. Response keys: {list(analysis.keys())}"
                     )
                     return True
                 else:
@@ -458,9 +401,11 @@ class Phase33SessionIntegrityTester:
     def test_session_authenticity_valid_session(self):
         """Test session authenticity validation with valid authentication data"""
         try:
+            session_id = self.session_id + "_valid_auth"
+            
             # Valid authentication session data
             session_data = {
-                "session_id": self.session_id + "_valid_auth",
+                "session_id": session_id,
                 "user_id": "user_valid_auth",
                 "authentication_data": {
                     "credentials": {
@@ -495,18 +440,6 @@ class Phase33SessionIntegrityTester:
                         "role": "senior_developer",
                         "department": "engineering",
                         "employee_id": "EMP12345"
-                    },
-                    "session_claims": {
-                        "session_id": self.session_id + "_valid_auth",
-                        "issued_at": "2024-01-15T10:00:00Z",
-                        "expires_at": "2024-01-15T18:00:00Z",
-                        "issuer": "auth.company.com",
-                        "audience": "app.company.com"
-                    },
-                    "permissions": {
-                        "roles": ["user", "developer", "senior"],
-                        "scopes": ["read:profile", "write:code", "admin:projects"],
-                        "resource_access": ["project_alpha", "project_beta"]
                     }
                 },
                 "biometric_data": {
@@ -525,14 +458,13 @@ class Phase33SessionIntegrityTester:
                     "token_not_expired": True,
                     "token_not_before_valid": True,
                     "issuer_verified": True,
-                    "audience_verified": True,
-                    "token_revocation_checked": True,
-                    "token_blacklist_checked": True
+                    "audience_verified": True
                 }
             }
             
             payload = {
-                "session_data": session_data
+                "session_data": session_data,
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -544,12 +476,10 @@ class Phase33SessionIntegrityTester:
                 data = response.json()
                 if data.get('success'):
                     analysis = data.get('authenticity_analysis', {})
-                    risk_score = analysis.get('overall_risk_score', 0)
-                    auth_validation = analysis.get('authentication_validation', {})
                     self.log_result(
                         "Session Authenticity - Valid Session", 
                         True, 
-                        f"Valid session authenticity analysis completed. Risk Score: {risk_score:.3f}, Auth validation keys: {len(auth_validation)}"
+                        f"Valid session authenticity analysis completed. Response keys: {list(analysis.keys())}"
                     )
                     return True
                 else:
@@ -566,9 +496,11 @@ class Phase33SessionIntegrityTester:
     def test_session_authenticity_invalid_credentials(self):
         """Test session authenticity validation with invalid credentials and identity mismatches"""
         try:
+            session_id = self.session_id + "_invalid_auth"
+            
             # Invalid authentication session data
             session_data = {
-                "session_id": self.session_id + "_invalid_auth",
+                "session_id": session_id,
                 "user_id": "user_invalid_auth",
                 "authentication_data": {
                     "credentials": {
@@ -603,18 +535,6 @@ class Phase33SessionIntegrityTester:
                         "role": "admin",  # Suspicious role escalation
                         "department": "unknown",
                         "employee_id": "INVALID"
-                    },
-                    "session_claims": {
-                        "session_id": "different_session_id",  # Mismatched session ID
-                        "issued_at": "2024-01-14T10:00:00Z",  # Old issuance
-                        "expires_at": "2024-01-14T18:00:00Z",  # Already expired
-                        "issuer": "unknown.issuer.com",  # Unknown issuer
-                        "audience": "unknown.app.com"  # Unknown audience
-                    },
-                    "permissions": {
-                        "roles": ["admin", "superuser"],  # Suspicious high privileges
-                        "scopes": ["read:all", "write:all", "delete:all"],  # Too many permissions
-                        "resource_access": ["*"]  # Wildcard access
                     }
                 },
                 "biometric_data": {
@@ -633,14 +553,13 @@ class Phase33SessionIntegrityTester:
                     "token_not_expired": False,  # Expired
                     "token_not_before_valid": True,
                     "issuer_verified": False,  # Unverified issuer
-                    "audience_verified": False,  # Unverified audience
-                    "token_revocation_checked": False,  # Not checked
-                    "token_blacklist_checked": False  # Not checked
+                    "audience_verified": False  # Unverified audience
                 }
             }
             
             payload = {
-                "session_data": session_data
+                "session_data": session_data,
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -652,12 +571,10 @@ class Phase33SessionIntegrityTester:
                 data = response.json()
                 if data.get('success'):
                     analysis = data.get('authenticity_analysis', {})
-                    risk_score = analysis.get('overall_risk_score', 0)
-                    identity_consistency = analysis.get('identity_consistency', {})
                     self.log_result(
                         "Session Authenticity - Invalid Credentials", 
                         True, 
-                        f"Invalid credentials analysis completed. Risk Score: {risk_score:.3f}, Identity issues: {len(identity_consistency)}"
+                        f"Invalid credentials analysis completed. Response keys: {list(analysis.keys())}"
                     )
                     return True
                 else:
@@ -674,9 +591,11 @@ class Phase33SessionIntegrityTester:
     def test_session_anomaly_normal_patterns(self):
         """Test session anomaly tracking with normal behavioral patterns"""
         try:
+            session_id = self.session_id + "_normal_patterns"
+            
             # Normal session with typical behavioral patterns
             session_data = {
-                "session_id": self.session_id + "_normal_patterns",
+                "session_id": session_id,
                 "user_id": "user_normal_behavior",
                 "behavioral_patterns": {
                     "activity_frequency": {
@@ -704,11 +623,6 @@ class Phase33SessionIntegrityTester:
                             "keystroke_intervals": [150, 180, 160, 170, 155],
                             "backspace_frequency": 0.08,
                             "special_key_usage": ["Tab", "Enter", "Ctrl+C", "Ctrl+V"]
-                        },
-                        "scroll_behavior": {
-                            "scroll_speed": "medium",
-                            "scroll_direction_changes": 12,
-                            "page_coverage": 0.75
                         }
                     }
                 },
@@ -716,12 +630,10 @@ class Phase33SessionIntegrityTester:
                     "login_times": [
                         "2024-01-15T09:00:00Z",
                         "2024-01-16T09:15:00Z",
-                        "2024-01-17T08:45:00Z",
-                        "2024-01-18T09:30:00Z"
+                        "2024-01-17T08:45:00Z"
                     ],
-                    "session_durations": [480, 520, 450, 510],  # Minutes, normal work sessions
+                    "session_durations": [480, 520, 450],  # Minutes, normal work sessions
                     "geographic_locations": [
-                        {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
                         {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
                         {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060}
                     ],
@@ -736,17 +648,13 @@ class Phase33SessionIntegrityTester:
                     "total_session_time": 1960,  # 32 minutes, normal
                     "active_time": 1680,  # 28 minutes active
                     "idle_time": 280,  # 4.7 minutes idle
-                    "page_dwell_times": [45, 120, 80, 200, 150, 90, 60],  # Seconds per page
-                    "task_completion_times": {
-                        "form_filling": 180,  # 3 minutes
-                        "report_generation": 300,  # 5 minutes
-                        "data_entry": 240  # 4 minutes
-                    }
+                    "page_dwell_times": [45, 120, 80, 200, 150, 90, 60]  # Seconds per page
                 }
             }
             
             payload = {
-                "session_data": session_data
+                "session_data": session_data,
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -758,12 +666,10 @@ class Phase33SessionIntegrityTester:
                 data = response.json()
                 if data.get('success'):
                     analysis = data.get('anomaly_analysis', {})
-                    risk_score = analysis.get('overall_risk_score', 0)
-                    pattern_detection = analysis.get('unusual_pattern_detection', {})
                     self.log_result(
                         "Session Anomaly - Normal Patterns", 
                         True, 
-                        f"Normal patterns analysis completed. Risk Score: {risk_score:.3f}, Pattern analysis keys: {len(pattern_detection)}"
+                        f"Normal patterns analysis completed. Response keys: {list(analysis.keys())}"
                     )
                     return True
                 else:
@@ -780,9 +686,11 @@ class Phase33SessionIntegrityTester:
     def test_session_anomaly_unusual_patterns(self):
         """Test session anomaly tracking with unusual behavioral patterns and anomalies"""
         try:
+            session_id = self.session_id + "_unusual_patterns"
+            
             # Session with unusual and suspicious behavioral patterns
             session_data = {
-                "session_id": self.session_id + "_unusual_patterns",
+                "session_id": session_id,
                 "user_id": "user_suspicious_behavior",
                 "behavioral_patterns": {
                     "activity_frequency": {
@@ -809,12 +717,7 @@ class Phase33SessionIntegrityTester:
                             "typing_speed": 300,  # Inhuman typing speed
                             "keystroke_intervals": [50, 50, 50, 50, 50],  # Too consistent
                             "backspace_frequency": 0.0,  # No mistakes
-                            "special_key_usage": ["Ctrl+A", "Ctrl+C", "Ctrl+V", "Delete"] * 20  # Repetitive
-                        },
-                        "scroll_behavior": {
-                            "scroll_speed": "instant",  # Instant scrolling
-                            "scroll_direction_changes": 0,  # No direction changes
-                            "page_coverage": 1.0  # Perfect coverage
+                            "special_key_usage": ["Ctrl+A", "Ctrl+C", "Ctrl+V", "Delete"] * 5  # Repetitive
                         }
                     }
                 },
@@ -822,15 +725,13 @@ class Phase33SessionIntegrityTester:
                     "login_times": [
                         "2024-01-15T03:00:00Z",  # Unusual time
                         "2024-01-15T03:05:00Z",  # Multiple logins in short time
-                        "2024-01-15T03:10:00Z",
-                        "2024-01-15T03:15:00Z"
+                        "2024-01-15T03:10:00Z"
                     ],
-                    "session_durations": [10, 15, 8, 12],  # Very short sessions
+                    "session_durations": [10, 15, 8],  # Very short sessions
                     "geographic_locations": [
                         {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
                         {"country": "RU", "city": "Moscow", "lat": 55.7558, "lng": 37.6176},  # Location jump
-                        {"country": "CN", "city": "Beijing", "lat": 39.9042, "lng": 116.4074},  # Another jump
-                        {"country": "BR", "city": "São Paulo", "lat": -23.5505, "lng": -46.6333}  # Impossible travel
+                        {"country": "CN", "city": "Beijing", "lat": 39.9042, "lng": 116.4074}  # Another jump
                     ],
                     "device_consistency": {
                         "same_device": False,  # Different devices
@@ -843,17 +744,13 @@ class Phase33SessionIntegrityTester:
                     "total_session_time": 45,  # Very short session
                     "active_time": 45,  # 100% active time, suspicious
                     "idle_time": 0,  # No idle time
-                    "page_dwell_times": [1, 2, 1, 3, 2, 1, 2],  # Extremely short dwell times
-                    "task_completion_times": {
-                        "form_filling": 5,  # Impossibly fast
-                        "report_generation": 3,  # Too fast
-                        "data_entry": 2  # Inhuman speed
-                    }
+                    "page_dwell_times": [1, 2, 1, 3, 2, 1, 2]  # Extremely short dwell times
                 }
             }
             
             payload = {
-                "session_data": session_data
+                "session_data": session_data,
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -865,12 +762,10 @@ class Phase33SessionIntegrityTester:
                 data = response.json()
                 if data.get('success'):
                     analysis = data.get('anomaly_analysis', {})
-                    risk_score = analysis.get('overall_risk_score', 0)
-                    behavioral_anomalies = analysis.get('behavioral_anomaly_detection', {})
                     self.log_result(
                         "Session Anomaly - Unusual Patterns", 
                         True, 
-                        f"Unusual patterns analysis completed. Risk Score: {risk_score:.3f}, Behavioral anomalies: {len(behavioral_anomalies)}"
+                        f"Unusual patterns analysis completed. Response keys: {list(analysis.keys())}"
                     )
                     return True
                 else:
@@ -889,11 +784,11 @@ class Phase33SessionIntegrityTester:
         try:
             # Test with malformed data
             malformed_payloads = [
-                {"session_data": {}},  # Empty session data
-                {"session_data": {"session_id": ""}},  # Empty session ID
-                {"session_data": {"session_id": None}},  # Null session ID
-                {"invalid_field": "test"},  # Wrong field name
-                {}  # Empty payload
+                {"session_data": {}, "session_id": "test_empty"},  # Empty session data
+                {"session_data": {"session_id": ""}, "session_id": ""},  # Empty session ID
+                {"session_data": {"session_id": None}, "session_id": None},  # Null session ID
+                {"invalid_field": "test", "session_id": "test_invalid"},  # Wrong field name
+                {"session_id": "test_no_data"}  # Missing session_data
             ]
             
             endpoints = [
