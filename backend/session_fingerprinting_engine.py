@@ -8975,6 +8975,1063 @@ class SessionIntegrityMonitor:
             
         except Exception as e:
             self.logger.error(f"Error updating anomaly tracking: {str(e)}")
+    
+    def track_multi_device_usage(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        🔗 TRACK MULTI-DEVICE USAGE
+        Comprehensive multi-device usage tracking including concurrent session detection,
+        device switching pattern analysis, session migration validation, multi-device collaboration indicators,
+        and device usage timeline correlation
+        
+        Args:
+            session_data: Dictionary containing multi-device session information and device data
+            
+        Returns:
+            Dict containing comprehensive multi-device usage analysis
+        """
+        try:
+            self.logger.info("Starting comprehensive multi-device usage tracking")
+            
+            analysis_result = {
+                'multi_device_summary': {},
+                'concurrent_sessions': {},
+                'device_switching_patterns': {},
+                'session_migration_validation': {},
+                'collaboration_indicators': {},
+                'device_timeline_correlation': {},
+                'multi_device_risk_score': 0.0,
+                'device_usage_analysis': {},
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            user_id = session_data.get('user_id', '')
+            current_session_id = session_data.get('session_id', '')
+            
+            # 1. Concurrent Session Detection Across Devices
+            concurrent_detection = self._detect_concurrent_device_sessions(session_data)
+            analysis_result['concurrent_sessions'] = concurrent_detection
+            
+            # 2. Device Switching Pattern Analysis
+            switching_analysis = self._analyze_device_switching_patterns(session_data)
+            analysis_result['device_switching_patterns'] = switching_analysis
+            
+            # 3. Session Migration Validation
+            migration_validation = self._validate_session_migration(session_data)
+            analysis_result['session_migration_validation'] = migration_validation
+            
+            # 4. Multi-Device Collaboration Indicators
+            collaboration_indicators = self._detect_multi_device_collaboration(session_data)
+            analysis_result['collaboration_indicators'] = collaboration_indicators
+            
+            # 5. Device Usage Timeline Correlation
+            timeline_correlation = self._correlate_device_usage_timeline(session_data)
+            analysis_result['device_timeline_correlation'] = timeline_correlation
+            
+            # 6. Calculate Multi-Device Risk Score
+            risk_factors = [
+                concurrent_detection.get('risk_score', 0.0),
+                switching_analysis.get('risk_score', 0.0),
+                migration_validation.get('risk_score', 0.0),
+                collaboration_indicators.get('risk_score', 0.0),
+                timeline_correlation.get('risk_score', 0.0)
+            ]
+            analysis_result['multi_device_risk_score'] = statistics.mean(risk_factors)
+            
+            # 7. Device Usage Analysis Summary
+            device_usage_summary = self._analyze_device_usage_patterns(session_data, analysis_result)
+            analysis_result['device_usage_analysis'] = device_usage_summary
+            
+            # Multi-Device Summary
+            legitimate_usage = analysis_result['multi_device_risk_score'] < 0.5
+            analysis_result['multi_device_summary'] = {
+                'legitimate_multi_device_usage': legitimate_usage,
+                'concurrent_device_count': concurrent_detection.get('concurrent_device_count', 0),
+                'device_switching_frequency': switching_analysis.get('switching_frequency', 0),
+                'suspicious_migration_detected': migration_validation.get('suspicious_migration', False),
+                'collaboration_likelihood': collaboration_indicators.get('collaboration_probability', 0.0),
+                'timeline_consistency': timeline_correlation.get('timeline_consistency_score', 0.0),
+                'multi_device_risk_level': self._classify_multi_device_risk(analysis_result['multi_device_risk_score']),
+                'recommended_action': self._recommend_multi_device_action(analysis_result)
+            }
+            
+            # Update multi-device tracking
+            self._update_multi_device_tracking(user_id, current_session_id, analysis_result)
+            
+            self.logger.info(f"Multi-device usage tracking completed - User: {user_id}, Risk: {analysis_result['multi_device_risk_score']:.3f}")
+            
+            return {
+                'success': True,
+                'multi_device_analysis': analysis_result,
+                'analysis_summary': {
+                    'user_id': user_id,
+                    'session_id': current_session_id,
+                    'legitimate_usage': legitimate_usage,
+                    'concurrent_devices': concurrent_detection.get('concurrent_device_count', 0),
+                    'risk_score': analysis_result['multi_device_risk_score'],
+                    'risk_level': analysis_result['multi_device_summary']['multi_device_risk_level']
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error tracking multi-device usage: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    # ===== MULTI-DEVICE USAGE TRACKING HELPER METHODS =====
+    
+    def _detect_concurrent_device_sessions(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect concurrent sessions across different devices"""
+        try:
+            user_id = session_data.get('user_id', '')
+            current_device_data = session_data.get('device_data', {})
+            active_sessions = session_data.get('active_sessions', [])
+            
+            analysis = {
+                'concurrent_sessions_detected': False,
+                'concurrent_device_count': 0,
+                'concurrent_devices': [],
+                'concurrent_session_details': [],
+                'device_diversity_score': 0.0,
+                'geographic_diversity': {},
+                'suspicious_concurrency': False,
+                'risk_score': 0.0
+            }
+            
+            if not active_sessions:
+                return analysis
+            
+            current_time = datetime.utcnow()
+            concurrent_sessions = []
+            unique_devices = set()
+            unique_locations = set()
+            
+            for session in active_sessions:
+                session_start = session.get('start_time')
+                session_device = session.get('device_fingerprint', '')
+                session_location = session.get('location', {})
+                session_ip = session.get('ip_address', '')
+                
+                # Check if session is currently active (within last 10 minutes)
+                if session_start:
+                    try:
+                        start_dt = datetime.fromisoformat(session_start.replace('Z', '+00:00'))
+                        time_diff = (current_time - start_dt).total_seconds()
+                        if time_diff < 600:  # Active within last 10 minutes
+                            concurrent_sessions.append(session)
+                            unique_devices.add(session_device)
+                            if session_location:
+                                location_key = f"{session_location.get('country', '')}-{session_location.get('city', '')}"
+                                unique_locations.add(location_key)
+                    except Exception:
+                        # Handle datetime parsing errors
+                        concurrent_sessions.append(session)
+                        unique_devices.add(session_device)
+            
+            analysis['concurrent_sessions_detected'] = len(concurrent_sessions) > 1
+            analysis['concurrent_device_count'] = len(unique_devices)
+            analysis['concurrent_devices'] = list(unique_devices)
+            analysis['concurrent_session_details'] = concurrent_sessions
+            
+            # Calculate device diversity score
+            if len(concurrent_sessions) > 0:
+                analysis['device_diversity_score'] = len(unique_devices) / len(concurrent_sessions)
+            
+            # Geographic diversity analysis
+            analysis['geographic_diversity'] = {
+                'unique_locations': list(unique_locations),
+                'location_count': len(unique_locations),
+                'impossible_travel_detected': self._detect_impossible_travel(concurrent_sessions)
+            }
+            
+            # Determine suspicious concurrency
+            analysis['suspicious_concurrency'] = (
+                len(concurrent_sessions) > 5 or  # Too many concurrent sessions
+                analysis['geographic_diversity']['impossible_travel_detected'] or
+                analysis['device_diversity_score'] > 0.8  # Too diverse device usage
+            )
+            
+            # Calculate risk score
+            risk_factors = 0.0
+            if len(concurrent_sessions) > 3:
+                risk_factors += min(len(concurrent_sessions) * 0.1, 0.4)
+            if analysis['geographic_diversity']['impossible_travel_detected']:
+                risk_factors += 0.6
+            if analysis['device_diversity_score'] > 0.7:
+                risk_factors += 0.3
+            
+            analysis['risk_score'] = min(risk_factors, 1.0)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting concurrent device sessions: {str(e)}")
+            return {'risk_score': 0.5, 'error': str(e)}
+    
+    def _analyze_device_switching_patterns(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze device switching patterns for suspicious behavior"""
+        try:
+            user_id = session_data.get('user_id', '')
+            session_history = session_data.get('session_history', [])
+            device_usage_history = session_data.get('device_usage_history', [])
+            
+            analysis = {
+                'switching_detected': False,
+                'switching_frequency': 0,
+                'switching_patterns': [],
+                'device_transition_matrix': {},
+                'unusual_switching_detected': False,
+                'switching_velocity_analysis': {},
+                'device_preference_analysis': {},
+                'risk_score': 0.0
+            }
+            
+            if len(session_history) < 2:
+                return analysis
+            
+            # Analyze device switching frequency
+            device_switches = []
+            previous_device = None
+            
+            for session in sorted(session_history, key=lambda x: x.get('timestamp', '')):
+                current_device = session.get('device_fingerprint', '')
+                if previous_device and current_device != previous_device:
+                    switch_data = {
+                        'from_device': previous_device,
+                        'to_device': current_device,
+                        'timestamp': session.get('timestamp', ''),
+                        'session_duration': session.get('duration', 0),
+                        'location_change': self._detect_location_change(session, session_history)
+                    }
+                    device_switches.append(switch_data)
+                previous_device = current_device
+            
+            analysis['switching_detected'] = len(device_switches) > 0
+            analysis['switching_frequency'] = len(device_switches)
+            analysis['switching_patterns'] = device_switches
+            
+            # Build device transition matrix
+            transition_matrix = {}
+            for switch in device_switches:
+                from_device = switch['from_device']
+                to_device = switch['to_device']
+                
+                if from_device not in transition_matrix:
+                    transition_matrix[from_device] = {}
+                if to_device not in transition_matrix[from_device]:
+                    transition_matrix[from_device][to_device] = 0
+                
+                transition_matrix[from_device][to_device] += 1
+            
+            analysis['device_transition_matrix'] = transition_matrix
+            
+            # Analyze switching velocity (switches per time period)
+            if len(session_history) > 1:
+                time_span_hours = self._calculate_session_time_span(session_history)
+                if time_span_hours > 0:
+                    switching_velocity = len(device_switches) / time_span_hours
+                    analysis['switching_velocity_analysis'] = {
+                        'switches_per_hour': switching_velocity,
+                        'excessive_switching': switching_velocity > 2.0,  # More than 2 switches per hour
+                        'time_span_hours': time_span_hours
+                    }
+            
+            # Device preference analysis
+            device_usage_counts = {}
+            for session in session_history:
+                device = session.get('device_fingerprint', '')
+                device_usage_counts[device] = device_usage_counts.get(device, 0) + 1
+            
+            if device_usage_counts:
+                most_used_device = max(device_usage_counts.items(), key=lambda x: x[1])
+                analysis['device_preference_analysis'] = {
+                    'most_used_device': most_used_device[0],
+                    'usage_distribution': device_usage_counts,
+                    'device_diversity': len(device_usage_counts),
+                    'primary_device_dominance': most_used_device[1] / len(session_history)
+                }
+            
+            # Detect unusual switching patterns
+            unusual_patterns = []
+            
+            # Rapid device switching (multiple switches in short time)
+            rapid_switches = [s for s in device_switches if s.get('session_duration', 3600) < 300]  # Less than 5 minutes
+            if len(rapid_switches) > 2:
+                unusual_patterns.append('rapid_device_switching')
+            
+            # Geographic inconsistency with device switches
+            location_inconsistent_switches = [s for s in device_switches if s.get('location_change', False)]
+            if len(location_inconsistent_switches) > len(device_switches) * 0.7:
+                unusual_patterns.append('geographic_inconsistent_switching')
+            
+            # Excessive device diversity
+            if analysis['device_preference_analysis'].get('device_diversity', 0) > 5:
+                unusual_patterns.append('excessive_device_diversity')
+            
+            analysis['unusual_switching_detected'] = len(unusual_patterns) > 0
+            
+            # Calculate risk score
+            risk_factors = 0.0
+            if analysis['switching_frequency'] > 10:
+                risk_factors += 0.3
+            if analysis.get('switching_velocity_analysis', {}).get('excessive_switching', False):
+                risk_factors += 0.4
+            if len(unusual_patterns) > 0:
+                risk_factors += len(unusual_patterns) * 0.2
+            
+            analysis['risk_score'] = min(risk_factors, 1.0)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing device switching patterns: {str(e)}")
+            return {'risk_score': 0.5, 'error': str(e)}
+    
+    def _validate_session_migration(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate session migration between devices"""
+        try:
+            migration_data = session_data.get('migration_data', {})
+            session_continuity_data = session_data.get('session_continuity', {})
+            
+            analysis = {
+                'migration_detected': False,
+                'migration_validation': {},
+                'migration_integrity': {},
+                'state_preservation': {},
+                'suspicious_migration': False,
+                'migration_timeline': [],
+                'data_consistency_validation': {},
+                'risk_score': 0.0
+            }
+            
+            if not migration_data:
+                return analysis
+            
+            # Detect migration events
+            migration_events = migration_data.get('migration_events', [])
+            analysis['migration_detected'] = len(migration_events) > 0
+            
+            # Validate each migration
+            valid_migrations = 0
+            total_migrations = len(migration_events)
+            
+            for migration in migration_events:
+                validation_result = self._validate_single_migration(migration, session_continuity_data)
+                
+                migration_validation = {
+                    'migration_id': migration.get('migration_id', ''),
+                    'source_device': migration.get('source_device', ''),
+                    'target_device': migration.get('target_device', ''),
+                    'migration_timestamp': migration.get('timestamp', ''),
+                    'validation_passed': validation_result.get('valid', False),
+                    'validation_score': validation_result.get('score', 0.0),
+                    'integrity_issues': validation_result.get('issues', [])
+                }
+                
+                if validation_result.get('valid', False):
+                    valid_migrations += 1
+                
+                analysis['migration_timeline'].append(migration_validation)
+            
+            # Migration integrity analysis
+            if total_migrations > 0:
+                analysis['migration_integrity'] = {
+                    'total_migrations': total_migrations,
+                    'valid_migrations': valid_migrations,
+                    'integrity_percentage': (valid_migrations / total_migrations) * 100,
+                    'failed_migrations': total_migrations - valid_migrations
+                }
+            
+            # State preservation analysis
+            state_data = migration_data.get('state_preservation', {})
+            analysis['state_preservation'] = {
+                'session_state_preserved': state_data.get('session_preserved', True),
+                'user_context_preserved': state_data.get('context_preserved', True),
+                'authentication_preserved': state_data.get('auth_preserved', True),
+                'data_integrity_maintained': state_data.get('data_integrity', True)
+            }
+            
+            # Data consistency validation
+            consistency_data = migration_data.get('data_consistency', {})
+            analysis['data_consistency_validation'] = {
+                'session_id_consistency': consistency_data.get('session_id_consistent', True),
+                'user_id_consistency': consistency_data.get('user_id_consistent', True),
+                'timestamp_consistency': consistency_data.get('timestamp_consistent', True),
+                'data_checksum_validation': consistency_data.get('checksum_valid', True)
+            }
+            
+            # Detect suspicious migration patterns
+            suspicious_indicators = []
+            
+            # Too many migrations in short time
+            if total_migrations > 5:
+                suspicious_indicators.append('excessive_migrations')
+            
+            # Low integrity percentage
+            if analysis.get('migration_integrity', {}).get('integrity_percentage', 100) < 70:
+                suspicious_indicators.append('low_integrity_migrations')
+            
+            # State preservation failures
+            state_issues = sum([not v for v in analysis['state_preservation'].values()])
+            if state_issues > 1:
+                suspicious_indicators.append('state_preservation_failures')
+            
+            # Data consistency failures
+            consistency_issues = sum([not v for v in analysis['data_consistency_validation'].values()])
+            if consistency_issues > 0:
+                suspicious_indicators.append('data_consistency_failures')
+            
+            analysis['suspicious_migration'] = len(suspicious_indicators) > 0
+            
+            # Calculate risk score
+            risk_factors = 0.0
+            if total_migrations > 3:
+                risk_factors += min(total_migrations * 0.1, 0.4)
+            if analysis.get('migration_integrity', {}).get('integrity_percentage', 100) < 80:
+                risk_factors += 0.3
+            if len(suspicious_indicators) > 0:
+                risk_factors += len(suspicious_indicators) * 0.2
+            
+            analysis['risk_score'] = min(risk_factors, 1.0)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error validating session migration: {str(e)}")
+            return {'risk_score': 0.5, 'error': str(e)}
+    
+    def _detect_multi_device_collaboration(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect indicators of multi-device collaboration"""
+        try:
+            collaboration_data = session_data.get('collaboration_indicators', {})
+            device_activity_data = session_data.get('device_activity', [])
+            
+            analysis = {
+                'collaboration_detected': False,
+                'collaboration_probability': 0.0,
+                'collaboration_patterns': [],
+                'synchronized_activities': [],
+                'complementary_actions': [],
+                'temporal_correlation': {},
+                'device_role_analysis': {},
+                'risk_score': 0.0
+            }
+            
+            if len(device_activity_data) < 2:
+                return analysis
+            
+            # Analyze synchronized activities across devices
+            synchronized_activities = self._detect_synchronized_activities(device_activity_data)
+            analysis['synchronized_activities'] = synchronized_activities
+            
+            # Detect complementary actions (different devices doing complementary tasks)
+            complementary_actions = self._detect_complementary_actions(device_activity_data)
+            analysis['complementary_actions'] = complementary_actions
+            
+            # Temporal correlation analysis
+            temporal_correlation = self._analyze_temporal_correlation(device_activity_data)
+            analysis['temporal_correlation'] = temporal_correlation
+            
+            # Device role analysis
+            device_roles = self._analyze_device_roles(device_activity_data)
+            analysis['device_role_analysis'] = device_roles
+            
+            # Collaboration patterns detection
+            collaboration_patterns = []
+            
+            # Pattern 1: Simultaneous but different activities
+            if len(synchronized_activities) > 0 and len(complementary_actions) > 0:
+                collaboration_patterns.append('simultaneous_complementary_work')
+            
+            # Pattern 2: Sequential handoffs between devices
+            handoffs = self._detect_device_handoffs(device_activity_data)
+            if len(handoffs) > 2:
+                collaboration_patterns.append('sequential_device_handoffs')
+            
+            # Pattern 3: Specialized device usage
+            if device_roles.get('role_specialization_detected', False):
+                collaboration_patterns.append('specialized_device_usage')
+            
+            # Pattern 4: Cross-device data sharing
+            data_sharing = collaboration_data.get('cross_device_data_sharing', [])
+            if len(data_sharing) > 0:
+                collaboration_patterns.append('cross_device_data_sharing')
+            
+            analysis['collaboration_patterns'] = collaboration_patterns
+            analysis['collaboration_detected'] = len(collaboration_patterns) > 0
+            
+            # Calculate collaboration probability
+            probability_factors = [
+                len(synchronized_activities) * 0.1,
+                len(complementary_actions) * 0.15,
+                temporal_correlation.get('correlation_strength', 0) * 0.3,
+                len(collaboration_patterns) * 0.2,
+                device_roles.get('specialization_score', 0) * 0.25
+            ]
+            
+            analysis['collaboration_probability'] = min(sum(probability_factors), 1.0)
+            
+            # Risk assessment (collaboration itself isn't necessarily risky, but unusual patterns might be)
+            risk_factors = 0.0
+            
+            # High collaboration probability with no clear legitimate use case
+            if analysis['collaboration_probability'] > 0.8:
+                legitimate_indicators = collaboration_data.get('legitimate_collaboration_indicators', 0)
+                if legitimate_indicators < 2:
+                    risk_factors += 0.3
+            
+            # Unusual temporal patterns
+            if temporal_correlation.get('unusual_patterns_detected', False):
+                risk_factors += 0.4
+            
+            # Suspicious data sharing patterns
+            suspicious_sharing = [s for s in data_sharing if s.get('suspicious', False)]
+            if len(suspicious_sharing) > 0:
+                risk_factors += len(suspicious_sharing) * 0.2
+            
+            analysis['risk_score'] = min(risk_factors, 1.0)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting multi-device collaboration: {str(e)}")
+            return {'risk_score': 0.5, 'error': str(e)}
+    
+    def _correlate_device_usage_timeline(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Correlate device usage timeline for consistency analysis"""
+        try:
+            timeline_data = session_data.get('device_timeline', [])
+            user_behavior_data = session_data.get('user_behavior_timeline', [])
+            
+            analysis = {
+                'timeline_consistency': 0.0,
+                'timeline_correlation_analysis': {},
+                'usage_pattern_consistency': {},
+                'temporal_anomalies': [],
+                'device_usage_flow': [],
+                'consistency_violations': [],
+                'risk_score': 0.0
+            }
+            
+            if len(timeline_data) < 2:
+                analysis['timeline_consistency'] = 1.0
+                return analysis
+            
+            # Sort timeline data by timestamp
+            sorted_timeline = sorted(timeline_data, key=lambda x: x.get('timestamp', ''))
+            
+            # Analyze timeline consistency
+            consistency_violations = []
+            usage_flow = []
+            
+            for i in range(len(sorted_timeline) - 1):
+                current_event = sorted_timeline[i]
+                next_event = sorted_timeline[i + 1]
+                
+                # Check for temporal consistency
+                temporal_check = self._check_temporal_consistency(current_event, next_event)
+                if not temporal_check['consistent']:
+                    consistency_violations.append(temporal_check)
+                
+                # Build usage flow
+                flow_segment = {
+                    'from_device': current_event.get('device_id', ''),
+                    'to_device': next_event.get('device_id', ''),
+                    'duration': self._calculate_event_duration(current_event, next_event),
+                    'activity_continuity': self._check_activity_continuity(current_event, next_event),
+                    'location_consistency': self._check_location_consistency(current_event, next_event)
+                }
+                usage_flow.append(flow_segment)
+            
+            analysis['device_usage_flow'] = usage_flow
+            analysis['consistency_violations'] = consistency_violations
+            
+            # Calculate timeline consistency score
+            total_transitions = len(sorted_timeline) - 1
+            if total_transitions > 0:
+                consistent_transitions = total_transitions - len(consistency_violations)
+                analysis['timeline_consistency'] = consistent_transitions / total_transitions
+            else:
+                analysis['timeline_consistency'] = 1.0
+            
+            # Usage pattern consistency analysis
+            pattern_analysis = self._analyze_usage_pattern_consistency(sorted_timeline, user_behavior_data)
+            analysis['usage_pattern_consistency'] = pattern_analysis
+            
+            # Temporal anomaly detection
+            temporal_anomalies = self._detect_timeline_temporal_anomalies(sorted_timeline)
+            analysis['temporal_anomalies'] = temporal_anomalies
+            
+            # Timeline correlation analysis
+            correlation_analysis = {
+                'user_behavior_correlation': self._correlate_with_user_behavior(sorted_timeline, user_behavior_data),
+                'device_capability_correlation': self._correlate_with_device_capabilities(sorted_timeline),
+                'geographic_correlation': self._correlate_with_geographic_data(sorted_timeline)
+            }
+            analysis['timeline_correlation_analysis'] = correlation_analysis
+            
+            # Risk assessment
+            risk_factors = 0.0
+            
+            # Low timeline consistency
+            if analysis['timeline_consistency'] < 0.7:
+                risk_factors += (1.0 - analysis['timeline_consistency']) * 0.5
+            
+            # Multiple temporal anomalies
+            if len(temporal_anomalies) > 2:
+                risk_factors += min(len(temporal_anomalies) * 0.1, 0.4)
+            
+            # Pattern consistency issues
+            pattern_score = pattern_analysis.get('consistency_score', 1.0)
+            if pattern_score < 0.6:
+                risk_factors += (1.0 - pattern_score) * 0.3
+            
+            analysis['risk_score'] = min(risk_factors, 1.0)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error correlating device usage timeline: {str(e)}")
+            return {'risk_score': 0.5, 'error': str(e)}
+    
+    # ===== MULTI-DEVICE HELPER METHODS =====
+    
+    def _detect_impossible_travel(self, concurrent_sessions: List[Dict[str, Any]]) -> bool:
+        """Detect impossible travel between concurrent session locations"""
+        try:
+            if len(concurrent_sessions) < 2:
+                return False
+            
+            locations = []
+            for session in concurrent_sessions:
+                location = session.get('location', {})
+                if location.get('lat') and location.get('lng'):
+                    locations.append({
+                        'lat': float(location['lat']),
+                        'lng': float(location['lng']),
+                        'timestamp': session.get('timestamp', '')
+                    })
+            
+            # Check distances between locations
+            for i in range(len(locations)):
+                for j in range(i + 1, len(locations)):
+                    loc1, loc2 = locations[i], locations[j]
+                    distance = self._calculate_distance(loc1['lat'], loc1['lng'], loc2['lat'], loc2['lng'])
+                    
+                    # If distance > 1000km for concurrent sessions, consider impossible
+                    if distance > 1000:  # kilometers
+                        return True
+            
+            return False
+            
+        except Exception:
+            return False
+    
+    def _calculate_distance(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+        """Calculate distance between two coordinates in kilometers"""
+        try:
+            # Haversine formula
+            R = 6371  # Earth's radius in kilometers
+            
+            lat1_rad = math.radians(lat1)
+            lat2_rad = math.radians(lat2)
+            delta_lat = math.radians(lat2 - lat1)
+            delta_lng = math.radians(lng2 - lng1)
+            
+            a = (math.sin(delta_lat/2) * math.sin(delta_lat/2) + 
+                 math.cos(lat1_rad) * math.cos(lat2_rad) * 
+                 math.sin(delta_lng/2) * math.sin(delta_lng/2))
+            
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+            distance = R * c
+            
+            return distance
+            
+        except Exception:
+            return 0.0
+    
+    def _detect_location_change(self, session: Dict[str, Any], session_history: List[Dict[str, Any]]) -> bool:
+        """Detect if location changed between sessions"""
+        try:
+            current_location = session.get('location', {})
+            if not current_location:
+                return False
+            
+            # Find previous session for comparison
+            session_timestamp = session.get('timestamp', '')
+            previous_session = None
+            
+            for hist_session in sorted(session_history, key=lambda x: x.get('timestamp', '')):
+                if hist_session.get('timestamp', '') < session_timestamp:
+                    previous_session = hist_session
+            
+            if not previous_session:
+                return False
+            
+            previous_location = previous_session.get('location', {})
+            if not previous_location:
+                return False
+            
+            # Compare locations
+            return (current_location.get('country') != previous_location.get('country') or
+                    current_location.get('city') != previous_location.get('city'))
+            
+        except Exception:
+            return False
+    
+    def _calculate_session_time_span(self, session_history: List[Dict[str, Any]]) -> float:
+        """Calculate time span of session history in hours"""
+        try:
+            if len(session_history) < 2:
+                return 0.0
+            
+            timestamps = [s.get('timestamp', '') for s in session_history if s.get('timestamp')]
+            if len(timestamps) < 2:
+                return 0.0
+            
+            # Sort timestamps
+            sorted_timestamps = sorted(timestamps)
+            earliest = datetime.fromisoformat(sorted_timestamps[0].replace('Z', '+00:00'))
+            latest = datetime.fromisoformat(sorted_timestamps[-1].replace('Z', '+00:00'))
+            
+            time_diff = latest - earliest
+            return time_diff.total_seconds() / 3600  # Convert to hours
+            
+        except Exception:
+            return 0.0
+    
+    def _validate_single_migration(self, migration: Dict[str, Any], continuity_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate a single session migration"""
+        try:
+            validation = {
+                'valid': True,
+                'score': 1.0,
+                'issues': []
+            }
+            
+            # Check required migration fields
+            required_fields = ['source_device', 'target_device', 'timestamp', 'migration_id']
+            for field in required_fields:
+                if not migration.get(field):
+                    validation['issues'].append(f'missing_{field}')
+                    validation['score'] -= 0.2
+            
+            # Check migration timing
+            migration_timestamp = migration.get('timestamp', '')
+            if migration_timestamp:
+                try:
+                    migration_time = datetime.fromisoformat(migration_timestamp.replace('Z', '+00:00'))
+                    current_time = datetime.utcnow()
+                    
+                    # Migration shouldn't be in the future
+                    if migration_time > current_time:
+                        validation['issues'].append('future_migration_timestamp')
+                        validation['score'] -= 0.4
+                        
+                except Exception:
+                    validation['issues'].append('invalid_timestamp_format')
+                    validation['score'] -= 0.3
+            
+            # Check device consistency
+            source_device = migration.get('source_device', '')
+            target_device = migration.get('target_device', '')
+            
+            if source_device == target_device:
+                validation['issues'].append('source_target_device_identical')
+                validation['score'] -= 0.5
+            
+            # Check continuity data consistency
+            if continuity_data:
+                session_devices = continuity_data.get('session_devices', [])
+                if source_device not in session_devices:
+                    validation['issues'].append('source_device_not_in_session_history')
+                    validation['score'] -= 0.3
+            
+            validation['valid'] = validation['score'] > 0.5
+            
+            return validation
+            
+        except Exception:
+            return {'valid': False, 'score': 0.0, 'issues': ['validation_error']}
+    
+    def _detect_synchronized_activities(self, device_activity_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Detect synchronized activities across devices"""
+        try:
+            synchronized_activities = []
+            
+            # Group activities by timestamp (within 30-second windows)
+            time_groups = {}
+            for activity in device_activity_data:
+                timestamp_str = activity.get('timestamp', '')
+                if timestamp_str:
+                    try:
+                        timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                        # Round to nearest 30-second interval
+                        rounded_timestamp = timestamp.replace(second=(timestamp.second // 30) * 30, microsecond=0)
+                        key = rounded_timestamp.isoformat()
+                        
+                        if key not in time_groups:
+                            time_groups[key] = []
+                        time_groups[key].append(activity)
+                    except Exception:
+                        continue
+            
+            # Find groups with multiple devices
+            for timestamp, activities in time_groups.items():
+                if len(activities) > 1:
+                    unique_devices = set(a.get('device_id', '') for a in activities)
+                    if len(unique_devices) > 1:
+                        synchronized_activities.append({
+                            'timestamp': timestamp,
+                            'device_count': len(unique_devices),
+                            'devices': list(unique_devices),
+                            'activities': activities,
+                            'synchronization_score': len(unique_devices) / len(activities)
+                        })
+            
+            return synchronized_activities
+            
+        except Exception:
+            return []
+    
+    def _detect_complementary_actions(self, device_activity_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Detect complementary actions across devices"""
+        try:
+            complementary_actions = []
+            
+            # Define complementary action pairs
+            complementary_pairs = [
+                ('data_input', 'data_analysis'),
+                ('document_creation', 'document_review'),
+                ('research', 'writing'),
+                ('coding', 'testing'),
+                ('design', 'development')
+            ]
+            
+            # Look for complementary actions in time windows
+            for i, activity1 in enumerate(device_activity_data):
+                for j, activity2 in enumerate(device_activity_data[i+1:], i+1):
+                    if activity1.get('device_id') == activity2.get('device_id'):
+                        continue  # Same device
+                    
+                    action1 = activity1.get('action_type', '')
+                    action2 = activity2.get('action_type', '')
+                    
+                    # Check if actions are complementary
+                    for pair in complementary_pairs:
+                        if (action1 in pair[0] and action2 in pair[1]) or (action1 in pair[1] and action2 in pair[0]):
+                            time_diff = self._calculate_activity_time_diff(activity1, activity2)
+                            if 0 < time_diff < 3600:  # Within 1 hour
+                                complementary_actions.append({
+                                    'activity1': activity1,
+                                    'activity2': activity2,
+                                    'complementary_pair': pair,
+                                    'time_difference_seconds': time_diff,
+                                    'complementarity_score': 1.0 - (time_diff / 3600)  # Closer in time = higher score
+                                })
+            
+            return complementary_actions
+            
+        except Exception:
+            return []
+    
+    def _analyze_temporal_correlation(self, device_activity_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze temporal correlation between device activities"""
+        try:
+            analysis = {
+                'correlation_strength': 0.0,
+                'temporal_patterns': [],
+                'unusual_patterns_detected': False,
+                'correlation_details': {}
+            }
+            
+            if len(device_activity_data) < 4:
+                return analysis
+            
+            # Group activities by device
+            device_activities = {}
+            for activity in device_activity_data:
+                device_id = activity.get('device_id', '')
+                if device_id not in device_activities:
+                    device_activities[device_id] = []
+                device_activities[device_id].append(activity)
+            
+            if len(device_activities) < 2:
+                return analysis
+            
+            # Calculate correlation between device activity timelines
+            device_pairs = [(d1, d2) for d1 in device_activities.keys() 
+                           for d2 in device_activities.keys() if d1 < d2]
+            
+            correlations = []
+            for device1, device2 in device_pairs:
+                correlation = self._calculate_device_activity_correlation(
+                    device_activities[device1], 
+                    device_activities[device2]
+                )
+                correlations.append(correlation)
+            
+            if correlations:
+                analysis['correlation_strength'] = statistics.mean(correlations)
+            
+            # Detect unusual temporal patterns
+            unusual_patterns = []
+            
+            # Perfect synchronization (too regular)
+            if analysis['correlation_strength'] > 0.9:
+                unusual_patterns.append('perfect_synchronization')
+            
+            # Alternating pattern (devices taking turns too regularly)
+            alternating_score = self._detect_alternating_pattern(device_activity_data)
+            if alternating_score > 0.8:
+                unusual_patterns.append('regular_alternating_pattern')
+            
+            analysis['unusual_patterns_detected'] = len(unusual_patterns) > 0
+            analysis['temporal_patterns'] = unusual_patterns
+            
+            return analysis
+            
+        except Exception:
+            return {'correlation_strength': 0.0}
+    
+    def _analyze_device_roles(self, device_activity_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze device roles and specialization"""
+        try:
+            analysis = {
+                'role_specialization_detected': False,
+                'device_roles': {},
+                'specialization_score': 0.0,
+                'role_distribution': {}
+            }
+            
+            # Analyze activity types by device
+            device_activities = {}
+            for activity in device_activity_data:
+                device_id = activity.get('device_id', '')
+                activity_type = activity.get('activity_type', '')
+                
+                if device_id not in device_activities:
+                    device_activities[device_id] = {}
+                if activity_type not in device_activities[device_id]:
+                    device_activities[device_id][activity_type] = 0
+                
+                device_activities[device_id][activity_type] += 1
+            
+            # Determine primary role for each device
+            for device_id, activities in device_activities.items():
+                if activities:
+                    primary_activity = max(activities.items(), key=lambda x: x[1])
+                    total_activities = sum(activities.values())
+                    
+                    role_info = {
+                        'primary_activity': primary_activity[0],
+                        'activity_distribution': activities,
+                        'specialization_percentage': (primary_activity[1] / total_activities) * 100,
+                        'activity_diversity': len(activities)
+                    }
+                    
+                    # Classify device role based on primary activity
+                    role_info['device_role'] = self._classify_device_role(primary_activity[0])
+                    
+                    analysis['device_roles'][device_id] = role_info
+            
+            # Calculate overall specialization score
+            specialization_scores = []
+            for device_info in analysis['device_roles'].values():
+                spec_score = device_info['specialization_percentage'] / 100
+                specialization_scores.append(spec_score)
+            
+            if specialization_scores:
+                analysis['specialization_score'] = statistics.mean(specialization_scores)
+                analysis['role_specialization_detected'] = analysis['specialization_score'] > 0.7
+            
+            return analysis
+            
+        except Exception:
+            return {'role_specialization_detected': False}
+    
+    def _classify_device_role(self, primary_activity: str) -> str:
+        """Classify device role based on primary activity"""
+        role_mappings = {
+            'data_input': 'input_device',
+            'document_creation': 'content_creation',
+            'research': 'research_device',
+            'communication': 'communication_hub',
+            'analysis': 'analysis_workstation',
+            'testing': 'testing_environment',
+            'monitoring': 'monitoring_console'
+        }
+        
+        for activity_pattern, role in role_mappings.items():
+            if activity_pattern in primary_activity.lower():
+                return role
+        
+        return 'general_purpose'
+    
+    # Additional helper methods continue...
+    
+    def _classify_multi_device_risk(self, risk_score: float) -> str:
+        """Classify multi-device risk level"""
+        if risk_score > 0.8:
+            return 'CRITICAL'
+        elif risk_score > 0.6:
+            return 'HIGH'
+        elif risk_score > 0.4:
+            return 'MEDIUM'
+        else:
+            return 'LOW'
+    
+    def _recommend_multi_device_action(self, analysis_result: Dict[str, Any]) -> str:
+        """Recommend action based on multi-device analysis"""
+        risk_score = analysis_result.get('multi_device_risk_score', 0.0)
+        suspicious_migration = analysis_result.get('session_migration_validation', {}).get('suspicious_migration', False)
+        concurrent_devices = analysis_result.get('concurrent_sessions', {}).get('concurrent_device_count', 0)
+        
+        if risk_score > 0.8 or suspicious_migration:
+            return 'IMMEDIATE_INTERVENTION_REQUIRED'
+        elif risk_score > 0.6 or concurrent_devices > 5:
+            return 'ENHANCED_MONITORING'
+        elif risk_score > 0.4:
+            return 'INCREASED_ALERTING'
+        else:
+            return 'CONTINUE_MONITORING'
+    
+    def _update_multi_device_tracking(self, user_id: str, session_id: str, analysis_result: Dict[str, Any]):
+        """Update multi-device tracking data structures"""
+        try:
+            # Update user sessions tracking
+            if user_id not in self.user_sessions:
+                self.user_sessions[user_id] = []
+            
+            if session_id not in self.user_sessions[user_id]:
+                self.user_sessions[user_id].append(session_id)
+            
+            # Keep only last 20 sessions per user
+            if len(self.user_sessions[user_id]) > 20:
+                self.user_sessions[user_id] = self.user_sessions[user_id][-20:]
+            
+            # Update session history with multi-device analysis
+            if session_id not in self.session_history:
+                self.session_history[session_id] = []
+            
+            multi_device_record = {
+                'timestamp': datetime.utcnow(),
+                'analysis_type': 'multi_device_usage',
+                'risk_score': analysis_result.get('multi_device_risk_score', 0.0),
+                'concurrent_devices': analysis_result.get('concurrent_sessions', {}).get('concurrent_device_count', 0),
+                'collaboration_detected': analysis_result.get('collaboration_indicators', {}).get('collaboration_detected', False)
+            }
+            
+            self.session_history[session_id].append(multi_device_record)
+            
+        except Exception as e:
+            self.logger.error(f"Error updating multi-device tracking: {str(e)}")
+
+
+        except Exception as e:
+            self.logger.error(f"Error updating anomaly tracking: {str(e)}")
 
 
 # Initialize global SessionIntegrityMonitor instance
