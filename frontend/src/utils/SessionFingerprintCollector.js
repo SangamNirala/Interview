@@ -2598,28 +2598,30 @@ class SessionFingerprintCollector {
     async analyzeInstructionSetSupport() {
         try {
             const instructionSets = {
-                // WebAssembly instruction sets
-                wasm_simd: await this.detectWasmSIMDSupport(),
-                wasm_threads: await this.detectWasmThreadsSupport(),
-                wasm_bulk_memory: await this.detectWasmBulkMemorySupport(),
+                // SIMD Instructions
+                simd_support: await this.detectSIMDInstructions(),
                 
-                // JavaScript engine optimizations
-                js_jit_compilation: this.detectJITCompilation(),
-                js_optimization_tier: this.detectJSOptimizationTier(),
+                // Advanced Vector Extensions
+                avx_support: await this.detectAVXSupport(),
                 
-                // Atomic operations
-                shared_array_buffer: 'SharedArrayBuffer' in window,
-                atomics_support: 'Atomics' in window,
+                // Cryptographic Instructions
+                crypto_instructions: await this.detectCryptographicInstructions(),
                 
-                // Advanced math operations
-                bigint_support: typeof BigInt !== 'undefined',
-                advanced_math_support: this.detectAdvancedMathSupport()
+                // 64-bit Support Analysis
+                x64_support: await this.detect64BitSupport(),
+                
+                // Specialized Instructions
+                specialized_instructions: await this.detectSpecializedInstructions(),
+                
+                // Performance Counter Access
+                performance_counters: await this.detectPerformanceCounters()
             };
             
             return instructionSets;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error analyzing instruction sets:", error);
+            return { error: error.message, basic_instruction_set: "unknown" };
         }
     }
     
