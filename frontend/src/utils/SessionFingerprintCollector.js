@@ -13742,35 +13742,38 @@ class SessionFingerprintCollector {
                 const sensor = new window.Gyroscope({ frequency: 60 });
                 
                 return await new Promise((resolve, reject) => {
-                let readings = [];
-                const timeout = setTimeout(() => reject(new Error('Gyroscope timeout')), 2000);
-                
-                sensor.addEventListener('reading', () => {
-                    readings.push({
-                        x: sensor.x,
-                        y: sensor.y,
-                        z: sensor.z,
-                        timestamp: sensor.timestamp
+                    let readings = [];
+                    const timeout = setTimeout(() => reject(new Error('Gyroscope timeout')), 2000);
+                    
+                    sensor.addEventListener('reading', () => {
+                        readings.push({
+                            x: sensor.x,
+                            y: sensor.y,
+                            z: sensor.z,
+                            timestamp: sensor.timestamp
+                        });
+                        
+                        if (readings.length >= 5) {
+                            clearTimeout(timeout);
+                            sensor.stop();
+                            resolve({
+                                available: true,
+                                readings: readings,
+                                frequency: sensor.frequency
+                            });
+                        }
                     });
                     
-                    if (readings.length >= 5) {
+                    sensor.addEventListener('error', (event) => {
                         clearTimeout(timeout);
-                        sensor.stop();
-                        resolve({
-                            available: true,
-                            readings: readings,
-                            frequency: sensor.frequency
-                        });
-                    }
+                        reject(event.error);
+                    });
+                    
+                    sensor.start();
                 });
-                
-                sensor.addEventListener('error', (event) => {
-                    clearTimeout(timeout);
-                    reject(event.error);
-                });
-                
-                sensor.start();
-            });
+            } else {
+                throw new Error('Gyroscope not available');
+            }
         } catch (error) {
             throw error;
         }
