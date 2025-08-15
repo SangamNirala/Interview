@@ -47,7 +47,7 @@ import time
 import asyncio
 
 # Configuration
-BACKEND_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
+BACKEND_URL = "https://fingerprint-cluster.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class DatabaseOptimizationTester:

@@ -22,7 +22,7 @@ import io
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
+BASE_URL = "https://fingerprint-cluster.preview.emergentagent.com/api"
 
 class EnhancedAdminReportingTester:
     def __init__(self):

@@ -7,7 +7,7 @@ import requests
 import json
 import uuid
 
-BACKEND_URL = "https://dbcollections-setup.preview.emergentagent.com"
+BACKEND_URL = "https://fingerprint-cluster.preview.emergentagent.com"
 BASE_URL = f"{BACKEND_URL}/api"
 
 def test_vm_detection():

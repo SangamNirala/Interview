@@ -27,7 +27,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Backend URL from environment
-BACKEND_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
+BACKEND_URL = "https://fingerprint-cluster.preview.emergentagent.com/api"
 
 class EnhancedBrowserFingerprintingTester:
     def __init__(self):

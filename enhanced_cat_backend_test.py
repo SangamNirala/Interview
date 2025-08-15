@@ -22,7 +22,7 @@ from typing import Dict, List, Any
 
 class EnhancedCATTester:
     def __init__(self):
-        self.base_url = "https://dbcollections-setup.preview.emergentagent.com/api"
+        self.base_url = "https://fingerprint-cluster.preview.emergentagent.com/api"
         self.admin_password = "Game@1234"
         self.session = requests.Session()
         self.test_results = []

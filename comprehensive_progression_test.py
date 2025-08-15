@@ -9,7 +9,7 @@ import json
 import io
 import time
 
-BASE_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
+BASE_URL = "https://fingerprint-cluster.preview.emergentagent.com/api"
 
 class ComprehensiveProgressionTest:
     def __init__(self):

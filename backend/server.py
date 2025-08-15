@@ -18388,7 +18388,7 @@ async def root():
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["https://dbcollections-setup.preview.emergentagent.com", "http://localhost:3000", "*"],
+    allow_origins=["https://fingerprint-cluster.preview.emergentagent.com", "http://localhost:3000", "*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
