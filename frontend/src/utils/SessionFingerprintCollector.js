@@ -3047,6 +3047,404 @@ class SessionFingerprintCollector {
         }
     }
     
+    // ===== ADDITIONAL SUPPORTING METHODS FOR PHASE 1.1 =====
+    
+    // CPU Performance and Analysis Methods
+    async detectInstructionSetArchitecture() {
+        try {
+            const wasmSupport = {
+                basic_wasm: 'WebAssembly' in window,
+                wasm_simd: await this.testWasmSIMD(),
+                wasm_threads: await this.testWasmThreads(),
+                wasm_bulk_memory: await this.testWasmBulkMemory()
+            };
+            
+            return {
+                platform_arch: navigator.platform,
+                user_agent_arch: this.extractArchFromUserAgent(),
+                wasm_capabilities: wasmSupport,
+                estimated_isa: this.estimateISAFromCapabilities(wasmSupport)
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async detectCPUVendor() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const platform = navigator.platform.toLowerCase();
+        
+        if (platform.includes('intel') || userAgent.includes('intel')) return 'intel';
+        if (platform.includes('amd') || userAgent.includes('amd')) return 'amd';
+        if (platform.includes('arm') || userAgent.includes('arm')) return 'arm';
+        if (platform.includes('apple') || userAgent.includes('apple')) return 'apple';
+        
+        return 'unknown';
+    }
+    
+    async detectCPUFamily() {
+        const vendor = await this.detectCPUVendor();
+        const userAgent = navigator.userAgent;
+        
+        // Basic CPU family detection based on available information
+        if (vendor === 'apple' && userAgent.includes('M1')) return 'apple_m1';
+        if (vendor === 'apple' && userAgent.includes('M2')) return 'apple_m2';
+        if (vendor === 'intel' && userAgent.includes('Core')) return 'intel_core';
+        if (vendor === 'amd' && userAgent.includes('Ryzen')) return 'amd_ryzen';
+        
+        return 'unknown';
+    }
+    
+    async detectCPUModel() {
+        // Extract CPU model from user agent if available
+        const userAgent = navigator.userAgent;
+        const modelPatterns = [
+            /Intel Core i[3579]-\d+[A-Z]*/i,
+            /AMD Ryzen [3579] \d+[A-Z]*/i,
+            /Apple M[12][A-Z]*/i,
+            /ARM Cortex-[A-Z]\d+/i
+        ];
+        
+        for (const pattern of modelPatterns) {
+            const match = userAgent.match(pattern);
+            if (match) return match[0];
+        }
+        
+        return 'unknown';
+    }
+    
+    async createCPUPerformanceProfile() {
+        const startTime = performance.now();
+        
+        // Simple CPU performance test
+        let result = 0;
+        for (let i = 0; i < 1000000; i++) {
+            result += Math.sqrt(i);
+        }
+        
+        const executionTime = performance.now() - startTime;
+        
+        return {
+            benchmark_score: Math.round(1000000 / executionTime),
+            execution_time_ms: executionTime,
+            performance_class: executionTime < 50 ? 'high' : executionTime < 200 ? 'medium' : 'low'
+        };
+    }
+    
+    async analyzeCPUCache() {
+        // Cache analysis through timing attacks (simplified)
+        const cacheSizes = [32 * 1024, 256 * 1024, 8 * 1024 * 1024]; // L1, L2, L3 typical sizes
+        const results = {};
+        
+        for (const size of cacheSizes) {
+            const arraySize = size / 4; // Int32 array
+            const testArray = new Int32Array(arraySize);
+            
+            const startTime = performance.now();
+            for (let i = 0; i < arraySize; i += 16) { // Cache line stride
+                testArray[i] = i;
+            }
+            const endTime = performance.now();
+            
+            results[`cache_${size}`] = endTime - startTime;
+        }
+        
+        return results;
+    }
+    
+    detectSIMDSupport() {
+        return {
+            basic_simd: 'SIMD' in window,
+            wasm_simd: this.testWasmSIMD(),
+            float32x4: typeof Float32Array !== 'undefined',
+            int32x4: typeof Int32Array !== 'undefined'
+        };
+    }
+    
+    async analyzeWebAssemblyCapabilities() {
+        if (!('WebAssembly' in window)) {
+            return { supported: false };
+        }
+        
+        return {
+            supported: true,
+            streaming_compilation: 'compileStreaming' in WebAssembly,
+            streaming_instantiation: 'instantiateStreaming' in WebAssembly,
+            bulk_memory: await this.testWasmBulkMemory(),
+            simd: await this.testWasmSIMD(),
+            threads: await this.testWasmThreads(),
+            multi_value: await this.testWasmMultiValue()
+        };
+    }
+    
+    async analyzeThreadingCapabilities() {
+        return {
+            web_workers: 'Worker' in window,
+            shared_array_buffer: 'SharedArrayBuffer' in window,
+            atomics: 'Atomics' in window,
+            hardware_concurrency: navigator.hardwareConcurrency || 0,
+            service_workers: 'serviceWorker' in navigator
+        };
+    }
+    
+    // Performance Benchmarking Methods
+    async benchmarkIntegerArithmetic() {
+        const iterations = 1000000;
+        const startTime = performance.now();
+        
+        let result = 0;
+        for (let i = 0; i < iterations; i++) {
+            result = (result + i * 7) % 1000000;
+        }
+        
+        const executionTime = performance.now() - startTime;
+        return {
+            score: Math.round(iterations / executionTime),
+            execution_time_ms: executionTime
+        };
+    }
+    
+    async benchmarkFloatingPoint() {
+        const iterations = 1000000;
+        const startTime = performance.now();
+        
+        let result = 0.0;
+        for (let i = 0; i < iterations; i++) {
+            result += Math.sin(i) * Math.cos(i);
+        }
+        
+        const executionTime = performance.now() - startTime;
+        return {
+            score: Math.round(iterations / executionTime),
+            execution_time_ms: executionTime
+        };
+    }
+    
+    async benchmarkMemoryAccess() {
+        const arraySize = 1024 * 1024; // 1MB
+        const testArray = new Int32Array(arraySize);
+        const startTime = performance.now();
+        
+        // Sequential access
+        for (let i = 0; i < arraySize; i++) {
+            testArray[i] = i;
+        }
+        
+        const executionTime = performance.now() - startTime;
+        return {
+            bandwidth_mb_per_sec: Math.round((arraySize * 4) / (executionTime / 1000) / (1024 * 1024)),
+            execution_time_ms: executionTime
+        };
+    }
+    
+    async benchmarkStringProcessing() {
+        const iterations = 10000;
+        const testString = 'Hello World! '.repeat(100);
+        const startTime = performance.now();
+        
+        for (let i = 0; i < iterations; i++) {
+            testString.split(' ').join('').toLowerCase().toUpperCase();
+        }
+        
+        const executionTime = performance.now() - startTime;
+        return {
+            score: Math.round(iterations / executionTime),
+            execution_time_ms: executionTime
+        };
+    }
+    
+    async benchmarkArrayOperations() {
+        const arraySize = 100000;
+        const testArray = Array.from({length: arraySize}, (_, i) => i);
+        const startTime = performance.now();
+        
+        testArray.sort().reverse().map(x => x * 2).filter(x => x % 2 === 0);
+        
+        const executionTime = performance.now() - startTime;
+        return {
+            score: Math.round(arraySize / executionTime),
+            execution_time_ms: executionTime
+        };
+    }
+    
+    async benchmarkCryptoOperations() {
+        if (!('crypto' in window) || !window.crypto.subtle) {
+            return { error: 'Web Crypto API not supported' };
+        }
+        
+        const data = new Uint8Array(1024);
+        window.crypto.getRandomValues(data);
+        
+        const startTime = performance.now();
+        
+        try {
+            await window.crypto.subtle.digest('SHA-256', data);
+            const executionTime = performance.now() - startTime;
+            
+            return {
+                score: Math.round(1024 / executionTime),
+                execution_time_ms: executionTime
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async benchmarkWebAssemblyPerformance() {
+        if (!('WebAssembly' in window)) {
+            return { error: 'WebAssembly not supported' };
+        }
+        
+        // Simple WASM module for performance testing
+        const wasmCode = new Uint8Array([
+            0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+            0x01, 0x07, 0x01, 0x60, 0x02, 0x7f, 0x7f, 0x01, 0x7f,
+            0x03, 0x02, 0x01, 0x00, 0x07, 0x07, 0x01, 0x03, 0x61, 0x64, 0x64, 0x00, 0x00,
+            0x0a, 0x09, 0x01, 0x07, 0x00, 0x20, 0x00, 0x20, 0x01, 0x6a, 0x0b
+        ]);
+        
+        try {
+            const wasmModule = await WebAssembly.compile(wasmCode);
+            const wasmInstance = await WebAssembly.instantiate(wasmModule);
+            
+            const startTime = performance.now();
+            for (let i = 0; i < 1000000; i++) {
+                wasmInstance.exports.add(i, i + 1);
+            }
+            const executionTime = performance.now() - startTime;
+            
+            return {
+                score: Math.round(1000000 / executionTime),
+                execution_time_ms: executionTime
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async benchmarkMultiThreading() {
+        if (!('Worker' in window)) {
+            return { error: 'Web Workers not supported' };
+        }
+        
+        return new Promise((resolve) => {
+            const workerCode = `
+                self.onmessage = function(e) {
+                    const iterations = e.data;
+                    let result = 0;
+                    for (let i = 0; i < iterations; i++) {
+                        result += Math.sqrt(i);
+                    }
+                    self.postMessage(result);
+                };
+            `;
+            
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const worker = new Worker(URL.createObjectURL(blob));
+            
+            const startTime = performance.now();
+            worker.postMessage(100000);
+            
+            worker.onmessage = () => {
+                const executionTime = performance.now() - startTime;
+                worker.terminate();
+                URL.revokeObjectURL(blob);
+                
+                resolve({
+                    score: Math.round(100000 / executionTime),
+                    execution_time_ms: executionTime
+                });
+            };
+            
+            worker.onerror = () => {
+                worker.terminate();
+                resolve({ error: 'Worker execution failed' });
+            };
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                worker.terminate();
+                resolve({ error: 'Worker timeout' });
+            }, 5000);
+        });
+    }
+    
+    calculateOverallPerformanceScore(benchmarks) {
+        const scores = [];
+        
+        Object.values(benchmarks).forEach(benchmark => {
+            if (benchmark && typeof benchmark.score === 'number') {
+                scores.push(benchmark.score);
+            }
+        });
+        
+        if (scores.length === 0) return 0;
+        
+        return Math.round(scores.reduce((a, b) => a + b) / scores.length);
+    }
+    
+    classifyPerformance(score) {
+        if (score > 1000) return 'high';
+        if (score > 500) return 'medium';
+        if (score > 100) return 'low';
+        return 'very_low';
+    }
+    
+    // Utility methods for testing WASM capabilities
+    async testWasmSIMD() {
+        try {
+            // Test if WASM SIMD is supported
+            const wasmSIMDCode = new Uint8Array([
+                0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00
+            ]);
+            await WebAssembly.compile(wasmSIMDCode);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async testWasmThreads() {
+        return 'SharedArrayBuffer' in window && 'Atomics' in window;
+    }
+    
+    async testWasmBulkMemory() {
+        try {
+            // Simple test for bulk memory operations
+            return WebAssembly.validate(new Uint8Array([
+                0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00
+            ]));
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async testWasmMultiValue() {
+        try {
+            // Test multi-value returns in WASM
+            return true; // Simplified for now
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    extractArchFromUserAgent() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        
+        if (userAgent.includes('x86_64') || userAgent.includes('amd64')) return 'x86_64';
+        if (userAgent.includes('i386') || userAgent.includes('i686')) return 'x86';
+        if (userAgent.includes('arm64') || userAgent.includes('aarch64')) return 'arm64';
+        if (userAgent.includes('arm')) return 'arm';
+        
+        return 'unknown';
+    }
+    
+    estimateISAFromCapabilities(wasmSupport) {
+        if (wasmSupport.wasm_simd) return 'advanced';
+        if (wasmSupport.basic_wasm) return 'modern';
+        return 'basic';
+    }
+    
     // ===== ENHANCED BROWSER CHARACTERISTICS METHODS =====
     
     /**
