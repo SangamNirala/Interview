@@ -748,6 +748,17 @@ from websocket_manager import websocket_manager, FingerprintingWebSocketManager
 # Import database setup
 from database_setup import initialize_fingerprinting_collections, verify_collections_integrity, get_collections_stats
 
+# Import database optimization
+from database_optimization import (
+    create_compound_indexes, 
+    setup_ttl_indexes, 
+    create_aggregation_pipelines,
+    optimize_connection_pool,
+    QueryPerformanceMonitor,
+    performance_monitor,
+    monitor_query_performance
+)
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
