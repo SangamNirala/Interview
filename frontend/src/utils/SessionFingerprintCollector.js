@@ -2754,32 +2754,33 @@ class SessionFingerprintCollector {
     async analyzeCacheHierarchy() {
         try {
             const cacheAnalysis = {
-                // L1 cache analysis
-                l1_cache_analysis: await this.analyzeL1Cache(),
+                // L1 Cache Analysis
+                l1_cache: await this.analyzeL1Cache(),
                 
-                // L2 cache analysis
-                l2_cache_analysis: await this.analyzeL2Cache(),
+                // L2 Cache Analysis
+                l2_cache: await this.analyzeL2Cache(),
                 
-                // L3 cache analysis
-                l3_cache_analysis: await this.analyzeL3Cache(),
+                // L3 Cache Analysis
+                l3_cache: await this.analyzeL3Cache(),
                 
-                // Cache line size detection
+                // Cache Line Size Detection
                 cache_line_size: await this.detectCacheLineSize(),
                 
-                // Cache associativity analysis
-                cache_associativity: await this.analyzeCacheAssociativity(),
+                // Cache Associativity Analysis
+                associativity_analysis: await this.analyzeCacheAssociativity(),
                 
-                // Cache coherency characteristics
-                cache_coherency: await this.analyzeCacheCoherency(),
+                // Cache Coherency Testing
+                coherency_testing: await this.testCacheCoherency(),
                 
-                // Memory hierarchy performance
-                memory_hierarchy_performance: await this.benchmarkMemoryHierarchy()
+                // Prefetch Behavior Analysis
+                prefetch_analysis: await this.analyzePrefetchBehavior()
             };
             
             return cacheAnalysis;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error analyzing cache hierarchy:", error);
+            return { error: error.message, cache_info: "unknown" };
         }
     }
     
