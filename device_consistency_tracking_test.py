@@ -17,7 +17,7 @@ import uuid
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://tracking-backend.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://session-monitor.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class DeviceConsistencyTrackingTester:

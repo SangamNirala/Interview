@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Backend URL configuration
-BACKEND_URL = "https://tracking-backend.preview.emergentagent.com/api"
+BACKEND_URL = "https://session-monitor.preview.emergentagent.com/api"
 
 class MLPredictionTester:
     def __init__(self):

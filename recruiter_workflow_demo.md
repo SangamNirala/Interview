@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://tracking-backend.preview.emergentagent.com
+URL: https://session-monitor.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

@@ -29,7 +29,7 @@ from datetime import datetime, timedelta
 import random
 
 # Configuration
-BACKEND_URL = "https://tracking-backend.preview.emergentagent.com/api"
+BACKEND_URL = "https://session-monitor.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class DeviceConsistencyTester:
