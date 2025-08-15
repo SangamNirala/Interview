@@ -21232,5 +21232,89 @@ async def track_session_anomalies(request: SessionAnomalyRequest):
         logging.error(f"Error tracking session anomalies: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Session anomaly tracking failed: {str(e)}")
 
+@api_router.post("/session-fingerprinting/track-multi-device-usage")
+async def track_multi_device_usage(request: MultiDeviceUsageRequest):
+    """
+    🔗 TRACK MULTI-DEVICE USAGE
+    Comprehensive multi-device usage tracking including concurrent session detection,
+    device switching pattern analysis, session migration validation, multi-device collaboration indicators,
+    and device usage timeline correlation
+    
+    Request body example:
+    {
+        "session_id": "session_123",
+        "user_id": "user_456", 
+        "session_data": {
+            "user_id": "user_456",
+            "session_id": "session_123",
+            "active_sessions": [
+                {
+                    "session_id": "session_123",
+                    "device_fingerprint": "fp_desktop_chrome",
+                    "start_time": "2024-01-15T10:00:00Z",
+                    "location": {"country": "US", "city": "New York"},
+                    "ip_address": "192.168.1.100"
+                }
+            ],
+            "device_activity": [
+                {
+                    "device_id": "device_001",
+                    "timestamp": "2024-01-15T10:00:00Z",
+                    "activity_type": "data_input",
+                    "action_type": "document_creation"
+                }
+            ],
+            "session_history": [
+                {
+                    "session_id": "session_123",
+                    "device_fingerprint": "fp_desktop_chrome",
+                    "timestamp": "2024-01-15T10:00:00Z",
+                    "duration": 1800,
+                    "location": {"country": "US", "city": "New York"}
+                }
+            ]
+        }
+    }
+    
+    Returns comprehensive multi-device usage analysis with concurrent session detection,
+    device switching patterns, session migration validation, and collaboration indicators.
+    """
+    try:
+        # Connect to MongoDB
+        client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+        db = client.aptitude_test_db
+        
+        logging.info(f"Starting multi-device usage tracking for user: {request.user_id}, session: {request.session_id}")
+        
+        # Perform multi-device usage tracking using the session integrity monitor
+        result = session_integrity_monitor.track_multi_device_usage(request.session_data)
+        
+        if result.get('success'):
+            # Store multi-device usage analysis results in MongoDB
+            multi_device_analysis_doc = {
+                "user_id": request.user_id,
+                "session_id": request.session_id,
+                "multi_device_analysis": convert_numeric_keys_to_strings(result['multi_device_analysis']),
+                "analysis_summary": result['analysis_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into multi_device_usage_analyses collection
+            await db.multi_device_usage_analyses.insert_one(multi_device_analysis_doc)
+            
+            logging.info(f"Multi-device usage tracking completed for user: {request.user_id} - Risk Score: {result['analysis_summary']['risk_score']:.3f}")
+            
+            return {
+                "success": True,
+                "multi_device_analysis": result,
+                "storage_confirmation": "Multi-device usage analysis results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Multi-device usage tracking failed'))
+        
+    except Exception as e:
+        logging.error(f"Error tracking multi-device usage: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Multi-device usage tracking failed: {str(e)}")
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
