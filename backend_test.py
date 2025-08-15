@@ -1,35 +1,47 @@
 #!/usr/bin/env python3
 """
-🎯 PHASE 3.2: ADVANCED BROWSER & ENVIRONMENT ANALYSIS TESTING - REMAINING 2 METHODS
-Comprehensive testing of Network Characteristics Analysis and Timezone Consistency Analysis endpoints
+🎯 PHASE 3.3: SESSION INTEGRITY MONITORING TESTING - COMPREHENSIVE TESTING
+Testing the two newly implemented/enhanced Phase 3.3 Session Integrity Monitoring methods:
+
+1. track_multi_device_usage() - NEW METHOD testing
+2. validate_session_authenticity() - ENHANCED METHOD testing
 
 Test Coverage:
-1. Network Characteristics Analysis (POST /api/session-fingerprinting/monitor-network-characteristics)
-2. Timezone Consistency Analysis (POST /api/session-fingerprinting/track-timezone-consistency)
+- POST /api/session-fingerprinting/track-multi-device-usage
+- POST /api/session-fingerprinting/validate-session-authenticity
 
 Testing Scenarios:
-- Normal residential IPs vs VPN/Proxy detection
-- Various network configurations and ISP information
-- Normal timezone consistency vs timezone mismatches
-- System vs browser timezone validation
-- Edge cases with malformed data
+- Normal multi-device usage vs suspicious patterns
+- Concurrent session detection across devices
+- Device switching pattern analysis
+- Session migration validation
+- Multi-device collaboration indicators
+- Device usage timeline correlation
+- Biometric consistency validation
+- Behavioral pattern authentication
+- Session authentication token verification
+- Identity continuity assessment
+- Authenticity confidence scoring
+- Edge cases and error handling
 """
 
 import requests
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
+import random
 
 # Configuration
-BACKEND_URL = "https://session-guardian-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://session-guardian-1.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
-class Phase32BrowserEnvironmentTester:
+class Phase33SessionIntegrityTester:
     def __init__(self):
         self.session = requests.Session()
         self.test_results = []
         self.session_id = str(uuid.uuid4())
+        self.user_id = str(uuid.uuid4())
         
     def log_result(self, test_name, success, details, response_data=None):
         """Log test result with details"""
@@ -63,637 +75,824 @@ class Phase32BrowserEnvironmentTester:
             self.log_result("Admin Authentication", False, f"Authentication error: {str(e)}")
             return False
 
-    def test_browser_fingerprint_analysis_normal_chrome(self):
-        """Test browser fingerprint analysis with normal Chrome browser data"""
+    def test_track_multi_device_usage_normal_scenario(self):
+        """Test multi-device usage tracking with normal legitimate usage patterns"""
         try:
-            # Normal Chrome browser fingerprint data
-            browser_data = {
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-                "browser_name": "Chrome",
-                "browser_version": "119.0.0.0",
-                "engine_name": "Blink",
-                "engine_version": "119.0.0.0",
-                "plugins": [
-                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True},
-                    {"name": "Native Client", "version": "119.0.0.0", "enabled": True},
-                    {"name": "Widevine Content Decryption Module", "version": "4.10.2557.0", "enabled": True}
+            # Normal multi-device usage scenario
+            session_data = {
+                "user_id": self.user_id,
+                "session_id": self.session_id + "_normal",
+                "active_sessions": [
+                    {
+                        "session_id": self.session_id + "_desktop",
+                        "device_fingerprint": "fp_desktop_chrome_windows",
+                        "start_time": "2024-01-15T10:00:00Z",
+                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
+                        "ip_address": "192.168.1.100",
+                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "device_type": "desktop"
+                    },
+                    {
+                        "session_id": self.session_id + "_mobile",
+                        "device_fingerprint": "fp_mobile_safari_ios",
+                        "start_time": "2024-01-15T10:30:00Z",
+                        "location": {"country": "US", "city": "New York", "lat": 40.7589, "lng": -73.9851},
+                        "ip_address": "192.168.1.101",
+                        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+                        "device_type": "mobile"
+                    }
                 ],
-                "mime_types": [
-                    {"type": "application/pdf", "description": "Portable Document Format", "suffixes": "pdf"},
-                    {"type": "text/html", "description": "HTML Document", "suffixes": "html,htm"},
-                    {"type": "image/jpeg", "description": "JPEG Image", "suffixes": "jpg,jpeg"}
+                "device_activity": [
+                    {
+                        "device_id": "desktop_001",
+                        "timestamp": "2024-01-15T10:00:00Z",
+                        "activity_type": "data_input",
+                        "action_type": "document_creation",
+                        "session_id": self.session_id + "_desktop"
+                    },
+                    {
+                        "device_id": "mobile_001",
+                        "timestamp": "2024-01-15T10:35:00Z",
+                        "activity_type": "data_view",
+                        "action_type": "document_review",
+                        "session_id": self.session_id + "_mobile"
+                    }
                 ],
-                "languages": ["en-US", "en", "es"],
-                "cookie_enabled": True,
-                "local_storage": True,
-                "session_storage": True,
-                "webgl_support": True,
-                "canvas_support": True,
-                "css3_support": True,
-                "svg_support": True,
-                "javascript_features": {
-                    "async_support": True,
-                    "webworker_support": True,
-                    "websocket_support": True,
-                    "es6_support": True,
-                    "fetch_api": True
-                },
-                "screen_resolution": "1920x1080",
-                "color_depth": 24,
-                "timezone": "America/New_York",
-                "platform": "Win32"
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_chrome_normal",
-                "browser_data": browser_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('browser_fingerprint_analysis', {})
-                    self.log_result(
-                        "Browser Fingerprint Analysis - Normal Chrome", 
-                        True, 
-                        f"Analysis completed successfully. Analysis keys: {list(analysis.keys())}"
-                    )
-                    return True
-                else:
-                    self.log_result("Browser Fingerprint Analysis - Normal Chrome", False, f"Analysis failed: {data}")
-                    return False
-            else:
-                self.log_result("Browser Fingerprint Analysis - Normal Chrome", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Browser Fingerprint Analysis - Normal Chrome", False, f"Exception: {str(e)}")
-            return False
-
-    def test_browser_fingerprint_analysis_suspicious_firefox(self):
-        """Test browser fingerprint analysis with suspicious Firefox browser data"""
-        try:
-            # Suspicious Firefox browser fingerprint with inconsistencies
-            browser_data = {
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
-                "browser_name": "Firefox",
-                "browser_version": "119.0",
-                "engine_name": "Gecko",
-                "engine_version": "109.0",
-                "plugins": [
-                    # Suspicious: Chrome plugins in Firefox
-                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True},
-                    {"name": "Native Client", "version": "119.0.0.0", "enabled": True}
-                ],
-                "mime_types": [
-                    {"type": "application/pdf", "description": "Portable Document Format", "suffixes": "pdf"},
-                    {"type": "text/html", "description": "HTML Document", "suffixes": "html,htm"}
-                ],
-                "languages": ["en-US", "en"],
-                "cookie_enabled": True,
-                "local_storage": True,
-                "session_storage": True,
-                "webgl_support": False,  # Suspicious: WebGL disabled
-                "canvas_support": False,  # Suspicious: Canvas disabled
-                "css3_support": True,
-                "svg_support": True,
-                "javascript_features": {
-                    "async_support": True,
-                    "webworker_support": False,  # Suspicious: WebWorker disabled
-                    "websocket_support": True,
-                    "es6_support": True,
-                    "fetch_api": True
-                },
-                "screen_resolution": "800x600",  # Suspicious: Low resolution
-                "color_depth": 16,  # Suspicious: Low color depth
-                "timezone": "UTC",  # Suspicious: Generic timezone
-                "platform": "Linux x86_64"  # Inconsistent with Windows user agent
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_firefox_suspicious",
-                "browser_data": browser_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('browser_fingerprint_analysis', {})
-                    self.log_result(
-                        "Browser Fingerprint Analysis - Suspicious Firefox", 
-                        True, 
-                        f"Suspicious analysis completed. Analysis keys: {list(analysis.keys())}"
-                    )
-                    return True
-                else:
-                    self.log_result("Browser Fingerprint Analysis - Suspicious Firefox", False, f"Analysis failed: {data}")
-                    return False
-            else:
-                self.log_result("Browser Fingerprint Analysis - Suspicious Firefox", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Browser Fingerprint Analysis - Suspicious Firefox", False, f"Exception: {str(e)}")
-            return False
-
-    def test_browser_fingerprint_analysis_safari(self):
-        """Test browser fingerprint analysis with Safari browser data"""
-        try:
-            # Safari browser fingerprint data
-            browser_data = {
-                "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
-                "browser_name": "Safari",
-                "browser_version": "17.1",
-                "engine_name": "WebKit",
-                "engine_version": "605.1.15",
-                "plugins": [
-                    {"name": "WebKit built-in PDF", "version": "17.1", "enabled": True}
-                ],
-                "mime_types": [
-                    {"type": "application/pdf", "description": "Portable Document Format", "suffixes": "pdf"},
-                    {"type": "text/html", "description": "HTML Document", "suffixes": "html,htm"},
-                    {"type": "image/png", "description": "PNG Image", "suffixes": "png"}
-                ],
-                "languages": ["en-US", "en"],
-                "cookie_enabled": True,
-                "local_storage": True,
-                "session_storage": True,
-                "webgl_support": True,
-                "canvas_support": True,
-                "css3_support": True,
-                "svg_support": True,
-                "javascript_features": {
-                    "async_support": True,
-                    "webworker_support": True,
-                    "websocket_support": True,
-                    "es6_support": True,
-                    "fetch_api": True
-                },
-                "screen_resolution": "2560x1600",
-                "color_depth": 24,
-                "timezone": "America/Los_Angeles",
-                "platform": "MacIntel"
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_safari_normal",
-                "browser_data": browser_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('browser_fingerprint_analysis', {})
-                    self.log_result(
-                        "Browser Fingerprint Analysis - Safari", 
-                        True, 
-                        f"Safari analysis completed. Analysis keys: {list(analysis.keys())}"
-                    )
-                    return True
-                else:
-                    self.log_result("Browser Fingerprint Analysis - Safari", False, f"Analysis failed: {data}")
-                    return False
-            else:
-                self.log_result("Browser Fingerprint Analysis - Safari", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Browser Fingerprint Analysis - Safari", False, f"Exception: {str(e)}")
-            return False
-
-    def test_automation_detection_clean_session(self):
-        """Test automation detection with clean human-like session data"""
-        try:
-            # Clean browser data (no automation signatures)
-            browser_data = {
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-                "browser_name": "Chrome",
-                "webdriver": False,
-                "webdriver_properties": [],
-                "plugins": [
-                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True},
-                    {"name": "Native Client", "version": "119.0.0.0", "enabled": True}
-                ],
-                "user_gestures": True,
-                "async_execution": True,
-                "event_properties": {
-                    "isTrusted": True,
-                    "timeStamp": 1634567890123,
-                    "bubbles": True,
-                    "cancelable": True
-                },
-                "navigator_properties": {
-                    "webdriver": False,
-                    "permissions": True,
-                    "notification": True
-                }
-            }
-            
-            # Human-like behavioral data
-            behavioral_data = {
-                "mouse_data": {
-                    "movements": [
-                        {"x": 100, "y": 150, "timestamp": 1634567890123},
-                        {"x": 102, "y": 152, "timestamp": 1634567890140},
-                        {"x": 105, "y": 155, "timestamp": 1634567890157},
-                        {"x": 108, "y": 158, "timestamp": 1634567890174},
-                        {"x": 112, "y": 162, "timestamp": 1634567890191}
-                    ],
-                    "clicks": [
-                        {"target_x": 200, "target_y": 300, "actual_x": 201, "actual_y": 299, "timestamp": 1634567890500}
-                    ]
-                },
-                "timing_data": {
-                    "intervals": [16.7, 33.4, 50.1, 66.8, 83.5],  # Natural human timing
-                    "keypress_timings": [1634567890100, 1634567890200, 1634567890350, 1634567890520]
-                }
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_clean_session",
-                "browser_data": browser_data,
-                "behavioral_data": behavioral_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    detection = data.get('automation_detection', {})
-                    self.log_result(
-                        "Automation Detection - Clean Session", 
-                        True, 
-                        f"Clean session analysis completed. Detection keys: {list(detection.keys())}"
-                    )
-                    return True
-                else:
-                    self.log_result("Automation Detection - Clean Session", False, f"Detection failed: {data}")
-                    return False
-            else:
-                self.log_result("Automation Detection - Clean Session", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Automation Detection - Clean Session", False, f"Exception: {str(e)}")
-            return False
-
-    def test_automation_detection_selenium_signatures(self):
-        """Test automation detection with Selenium automation signatures"""
-        try:
-            # Browser data with Selenium signatures
-            browser_data = {
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-                "browser_name": "Chrome",
-                "webdriver": True,  # Selenium signature
-                "webdriver_properties": [
-                    "window.navigator.webdriver",
-                    "window.chrome.runtime",
-                    "window.callPhantom"
-                ],
-                "plugins": [
-                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True}
-                ],
-                "user_gestures": False,  # Automation signature
-                "async_execution": False,  # Automation signature
-                "event_properties": {
-                    "isTrusted": False,  # Automation signature
-                    "timeStamp": 1634567890123,
-                    "bubbles": True,
-                    "cancelable": True
-                },
-                "navigator_properties": {
-                    "webdriver": True,  # Selenium signature
-                    "permissions": False,
-                    "notification": False
-                },
-                "automation_indicators": [
-                    "selenium",
-                    "webdriver",
-                    "chrome_driver"
+                "session_history": [
+                    {
+                        "session_id": self.session_id + "_desktop",
+                        "device_fingerprint": "fp_desktop_chrome_windows",
+                        "timestamp": "2024-01-15T10:00:00Z",
+                        "duration": 1800,
+                        "location": {"country": "US", "city": "New York"},
+                        "activities_count": 25,
+                        "data_transferred": 1024000
+                    },
+                    {
+                        "session_id": self.session_id + "_mobile",
+                        "device_fingerprint": "fp_mobile_safari_ios",
+                        "timestamp": "2024-01-15T10:30:00Z",
+                        "duration": 900,
+                        "location": {"country": "US", "city": "New York"},
+                        "activities_count": 12,
+                        "data_transferred": 512000
+                    }
                 ]
             }
             
-            # Robotic behavioral data
-            behavioral_data = {
-                "mouse_data": {
-                    "movements": [
-                        {"x": 100, "y": 150, "timestamp": 1634567890123},
-                        {"x": 200, "y": 300, "timestamp": 1634567890124},  # Instant movement
-                        {"x": 300, "y": 450, "timestamp": 1634567890125}   # Instant movement
-                    ],
-                    "clicks": [
-                        {"target_x": 200, "target_y": 300, "actual_x": 200, "actual_y": 300, "timestamp": 1634567890500}  # Perfect accuracy
-                    ]
-                },
-                "timing_data": {
-                    "intervals": [16.0, 16.0, 16.0, 16.0],  # Perfect timing (robotic)
-                    "keypress_timings": [1634567890100, 1634567890200, 1634567890300, 1634567890400]  # Regular intervals
-                }
-            }
-            
             payload = {
-                "session_id": self.session_id + "_selenium_session",
-                "browser_data": browser_data,
-                "behavioral_data": behavioral_data
+                "session_id": self.session_id + "_normal",
+                "user_id": self.user_id,
+                "session_data": session_data
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
+                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
                 json=payload
             )
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    detection = data.get('automation_detection', {})
+                    analysis = data.get('multi_device_analysis', {})
+                    analysis_summary = analysis.get('analysis_summary', {})
+                    
                     self.log_result(
-                        "Automation Detection - Selenium Signatures", 
+                        "Multi-Device Usage - Normal Scenario", 
                         True, 
-                        f"Selenium detection completed. Detection keys: {list(detection.keys())}"
+                        f"Normal usage analysis completed. Risk Score: {analysis_summary.get('risk_score', 'N/A')}, Concurrent Sessions: {analysis_summary.get('concurrent_sessions_count', 'N/A')}"
                     )
                     return True
                 else:
-                    self.log_result("Automation Detection - Selenium Signatures", False, f"Detection failed: {data}")
+                    self.log_result("Multi-Device Usage - Normal Scenario", False, f"Analysis failed: {data}")
                     return False
             else:
-                self.log_result("Automation Detection - Selenium Signatures", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Multi-Device Usage - Normal Scenario", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Automation Detection - Selenium Signatures", False, f"Exception: {str(e)}")
+            self.log_result("Multi-Device Usage - Normal Scenario", False, f"Exception: {str(e)}")
             return False
 
-    def test_automation_detection_puppeteer_signatures(self):
-        """Test automation detection with Puppeteer automation signatures"""
+    def test_track_multi_device_usage_suspicious_scenario(self):
+        """Test multi-device usage tracking with suspicious patterns"""
         try:
-            # Browser data with Puppeteer signatures
-            browser_data = {
-                "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/119.0.0.0 Safari/537.36",
-                "browser_name": "Chrome",
-                "webdriver": False,
-                "webdriver_properties": [
-                    "window.chrome.app",
-                    "window.chrome.runtime"
+            # Suspicious multi-device usage scenario with impossible travel and concurrent access
+            session_data = {
+                "user_id": self.user_id,
+                "session_id": self.session_id + "_suspicious",
+                "active_sessions": [
+                    {
+                        "session_id": self.session_id + "_location1",
+                        "device_fingerprint": "fp_desktop_chrome_windows",
+                        "start_time": "2024-01-15T10:00:00Z",
+                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
+                        "ip_address": "192.168.1.100",
+                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "device_type": "desktop"
+                    },
+                    {
+                        "session_id": self.session_id + "_location2",
+                        "device_fingerprint": "fp_desktop_chrome_linux",
+                        "start_time": "2024-01-15T10:05:00Z",  # Only 5 minutes later
+                        "location": {"country": "JP", "city": "Tokyo", "lat": 35.6762, "lng": 139.6503},  # Impossible travel
+                        "ip_address": "203.0.113.1",
+                        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+                        "device_type": "desktop"
+                    },
+                    {
+                        "session_id": self.session_id + "_location3",
+                        "device_fingerprint": "fp_mobile_chrome_android",
+                        "start_time": "2024-01-15T10:10:00Z",  # Another 5 minutes later
+                        "location": {"country": "GB", "city": "London", "lat": 51.5074, "lng": -0.1278},  # Another impossible travel
+                        "ip_address": "198.51.100.1",
+                        "user_agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36",
+                        "device_type": "mobile"
+                    }
                 ],
-                "plugins": [],  # Headless Chrome has no plugins
-                "user_gestures": False,
-                "async_execution": True,
-                "event_properties": {
-                    "isTrusted": False,
-                    "timeStamp": 1634567890123,
-                    "bubbles": True,
-                    "cancelable": True
-                },
-                "navigator_properties": {
-                    "webdriver": False,
-                    "permissions": False,
-                    "notification": False,
-                    "headless": True  # Puppeteer signature
-                },
-                "automation_indicators": [
-                    "puppeteer",
-                    "headless_chrome",
-                    "chrome_headless"
+                "device_activity": [
+                    {
+                        "device_id": "desktop_001",
+                        "timestamp": "2024-01-15T10:00:00Z",
+                        "activity_type": "data_input",
+                        "action_type": "document_creation",
+                        "session_id": self.session_id + "_location1"
+                    },
+                    {
+                        "device_id": "desktop_002",
+                        "timestamp": "2024-01-15T10:05:30Z",  # Simultaneous activity
+                        "activity_type": "data_input",
+                        "action_type": "document_creation",
+                        "session_id": self.session_id + "_location2"
+                    },
+                    {
+                        "device_id": "mobile_001",
+                        "timestamp": "2024-01-15T10:10:15Z",  # More simultaneous activity
+                        "activity_type": "data_export",
+                        "action_type": "bulk_download",
+                        "session_id": self.session_id + "_location3"
+                    }
+                ],
+                "session_history": [
+                    {
+                        "session_id": self.session_id + "_location1",
+                        "device_fingerprint": "fp_desktop_chrome_windows",
+                        "timestamp": "2024-01-15T10:00:00Z",
+                        "duration": 600,
+                        "location": {"country": "US", "city": "New York"},
+                        "activities_count": 50,  # High activity
+                        "data_transferred": 5120000  # Large data transfer
+                    },
+                    {
+                        "session_id": self.session_id + "_location2",
+                        "device_fingerprint": "fp_desktop_chrome_linux",
+                        "timestamp": "2024-01-15T10:05:00Z",
+                        "duration": 300,
+                        "location": {"country": "JP", "city": "Tokyo"},
+                        "activities_count": 75,  # Very high activity
+                        "data_transferred": 10240000  # Very large data transfer
+                    },
+                    {
+                        "session_id": self.session_id + "_location3",
+                        "device_fingerprint": "fp_mobile_chrome_android",
+                        "timestamp": "2024-01-15T10:10:00Z",
+                        "duration": 180,
+                        "location": {"country": "GB", "city": "London"},
+                        "activities_count": 100,  # Extremely high activity
+                        "data_transferred": 20480000  # Extremely large data transfer
+                    }
                 ]
             }
             
-            # Puppeteer-like behavioral data
-            behavioral_data = {
-                "mouse_data": {
-                    "movements": [],  # No mouse movements in headless
-                    "clicks": [
-                        {"target_x": 200, "target_y": 300, "actual_x": 200, "actual_y": 300, "timestamp": 1634567890500}
-                    ]
-                },
-                "timing_data": {
-                    "intervals": [0, 0, 0, 0],  # No timing variation
-                    "keypress_timings": [1634567890100, 1634567890101, 1634567890102, 1634567890103]  # Rapid succession
-                }
-            }
-            
             payload = {
-                "session_id": self.session_id + "_puppeteer_session",
-                "browser_data": browser_data,
-                "behavioral_data": behavioral_data
+                "session_id": self.session_id + "_suspicious",
+                "user_id": self.user_id,
+                "session_data": session_data
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
+                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
                 json=payload
             )
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    detection = data.get('automation_detection', {})
+                    analysis = data.get('multi_device_analysis', {})
+                    analysis_summary = analysis.get('analysis_summary', {})
+                    
                     self.log_result(
-                        "Automation Detection - Puppeteer Signatures", 
+                        "Multi-Device Usage - Suspicious Scenario", 
                         True, 
-                        f"Puppeteer detection completed. Detection keys: {list(detection.keys())}"
+                        f"Suspicious usage analysis completed. Risk Score: {analysis_summary.get('risk_score', 'N/A')}, Concurrent Sessions: {analysis_summary.get('concurrent_sessions_count', 'N/A')}, Impossible Travel: {analysis_summary.get('impossible_travel_detected', 'N/A')}"
                     )
                     return True
                 else:
-                    self.log_result("Automation Detection - Puppeteer Signatures", False, f"Detection failed: {data}")
+                    self.log_result("Multi-Device Usage - Suspicious Scenario", False, f"Analysis failed: {data}")
                     return False
             else:
-                self.log_result("Automation Detection - Puppeteer Signatures", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Multi-Device Usage - Suspicious Scenario", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Automation Detection - Puppeteer Signatures", False, f"Exception: {str(e)}")
+            self.log_result("Multi-Device Usage - Suspicious Scenario", False, f"Exception: {str(e)}")
             return False
 
-    def test_automation_detection_playwright_signatures(self):
-        """Test automation detection with Playwright automation signatures"""
+    def test_validate_session_authenticity_valid_session(self):
+        """Test session authenticity validation with valid credentials and consistent identity"""
         try:
-            # Browser data with Playwright signatures
-            browser_data = {
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-                "browser_name": "Chrome",
-                "webdriver": False,
-                "webdriver_properties": [
-                    "window.playwright",
-                    "window.__playwright"
-                ],
-                "plugins": [
-                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True}
-                ],
-                "user_gestures": False,
-                "async_execution": True,
-                "event_properties": {
-                    "isTrusted": False,
-                    "timeStamp": 1634567890123,
-                    "bubbles": True,
-                    "cancelable": True
+            # Valid session authenticity data
+            session_data = {
+                "session_id": self.session_id + "_valid_auth",
+                "user_id": self.user_id,
+                "authentication_data": {
+                    "method": "multi_factor",
+                    "expires_at": int((datetime.now() + timedelta(hours=2)).timestamp()),
+                    "credential_hash": "sha256:a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+                    "mfa_verified": True,
+                    "last_auth_time": int(datetime.now().timestamp()),
+                    "auth_strength": "strong"
                 },
-                "navigator_properties": {
-                    "webdriver": False,
-                    "permissions": True,
-                    "notification": True,
-                    "playwright": True  # Playwright signature
+                "claimed_identity": {
+                    "username": "john_doe_authenticated",
+                    "email": "john.doe@company.com",
+                    "phone_number": "+1234567890",
+                    "user_id": self.user_id,
+                    "account_created": "2023-01-15T10:00:00Z",
+                    "last_login": "2024-01-15T09:30:00Z"
                 },
-                "automation_indicators": [
-                    "playwright",
-                    "pw_automation"
+                "biometric_data": {
+                    "current_template": {
+                        "keystroke_dynamics": {
+                            "dwell_times": [120, 115, 125, 118, 122],
+                            "flight_times": [85, 92, 88, 90, 87],
+                            "typing_rhythm": 0.85,
+                            "pressure_patterns": [0.7, 0.8, 0.75, 0.82, 0.78]
+                        },
+                        "mouse_dynamics": {
+                            "movement_velocity": [150, 145, 155, 148, 152],
+                            "click_patterns": [0.95, 0.92, 0.97, 0.94, 0.96],
+                            "scroll_behavior": [2.1, 2.3, 2.0, 2.2, 2.1]
+                        }
+                    },
+                    "reference_template": {
+                        "keystroke_dynamics": {
+                            "dwell_times": [118, 122, 120, 116, 124],
+                            "flight_times": [88, 90, 85, 92, 89],
+                            "typing_rhythm": 0.87,
+                            "pressure_patterns": [0.72, 0.78, 0.76, 0.80, 0.77]
+                        },
+                        "mouse_dynamics": {
+                            "movement_velocity": [148, 152, 150, 146, 154],
+                            "click_patterns": [0.94, 0.96, 0.95, 0.93, 0.97],
+                            "scroll_behavior": [2.0, 2.2, 2.1, 2.3, 2.0]
+                        }
+                    },
+                    "similarity_score": 0.92,
+                    "confidence_level": "high"
+                },
+                "auth_token_data": {
+                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                    "refresh_token": "rt_1234567890abcdef",
+                    "session_token": "st_abcdef1234567890",
+                    "mfa_token": "mfa_0987654321fedcba",
+                    "oauth_token": "oauth_fedcba0987654321",
+                    "signature": "valid_signature_hash",
+                    "payload": {
+                        "user_id": self.user_id,
+                        "username": "john_doe_authenticated",
+                        "roles": ["user", "verified"],
+                        "permissions": ["read", "write"]
+                    },
+                    "expires_at": int((datetime.now() + timedelta(hours=2)).timestamp()),
+                    "issued_at": int(datetime.now().timestamp()),
+                    "token_type": "Bearer"
+                }
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_valid_auth",
+                "session_data": session_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/validate-session-authenticity",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    analysis = data.get('authenticity_analysis', {})
+                    analysis_summary = analysis.get('analysis_summary', {})
+                    
+                    self.log_result(
+                        "Session Authenticity - Valid Session", 
+                        True, 
+                        f"Valid session analysis completed. Authentic: {analysis_summary.get('session_authentic', 'N/A')}, Confidence: {analysis_summary.get('authenticity_confidence', 'N/A')}, Biometric Match: {analysis_summary.get('biometric_match_score', 'N/A')}"
+                    )
+                    return True
+                else:
+                    self.log_result("Session Authenticity - Valid Session", False, f"Analysis failed: {data}")
+                    return False
+            else:
+                self.log_result("Session Authenticity - Valid Session", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Session Authenticity - Valid Session", False, f"Exception: {str(e)}")
+            return False
+
+    def test_validate_session_authenticity_invalid_session(self):
+        """Test session authenticity validation with invalid credentials and inconsistent identity"""
+        try:
+            # Invalid session authenticity data with multiple red flags
+            session_data = {
+                "session_id": self.session_id + "_invalid_auth",
+                "user_id": self.user_id,
+                "authentication_data": {
+                    "method": "password",
+                    "expires_at": int((datetime.now() - timedelta(hours=1)).timestamp()),  # Expired
+                    "credential_hash": "invalid_hash_format",  # Invalid hash
+                    "mfa_verified": False,
+                    "last_auth_time": int((datetime.now() - timedelta(days=30)).timestamp()),  # Very old
+                    "auth_strength": "weak"
+                },
+                "claimed_identity": {
+                    "username": "suspicious_user",
+                    "email": "fake@suspicious.com",
+                    "phone_number": "+0000000000",  # Suspicious phone
+                    "user_id": "different_user_id",  # Mismatched user ID
+                    "account_created": "2024-01-15T10:00:00Z",  # Very new account
+                    "last_login": "1970-01-01T00:00:00Z"  # Suspicious timestamp
+                },
+                "biometric_data": {
+                    "current_template": {
+                        "keystroke_dynamics": {
+                            "dwell_times": [50, 45, 55, 48, 52],  # Very different from reference
+                            "flight_times": [200, 195, 205, 198, 202],  # Very different
+                            "typing_rhythm": 0.3,  # Very different
+                            "pressure_patterns": [0.1, 0.2, 0.15, 0.12, 0.18]  # Very different
+                        },
+                        "mouse_dynamics": {
+                            "movement_velocity": [300, 295, 305, 298, 302],  # Very different
+                            "click_patterns": [0.1, 0.2, 0.15, 0.18, 0.12],  # Very different
+                            "scroll_behavior": [10.1, 10.3, 10.0, 10.2, 10.1]  # Very different
+                        }
+                    },
+                    "reference_template": {
+                        "keystroke_dynamics": {
+                            "dwell_times": [118, 122, 120, 116, 124],
+                            "flight_times": [88, 90, 85, 92, 89],
+                            "typing_rhythm": 0.87,
+                            "pressure_patterns": [0.72, 0.78, 0.76, 0.80, 0.77]
+                        },
+                        "mouse_dynamics": {
+                            "movement_velocity": [148, 152, 150, 146, 154],
+                            "click_patterns": [0.94, 0.96, 0.95, 0.93, 0.97],
+                            "scroll_behavior": [2.0, 2.2, 2.1, 2.3, 2.0]
+                        }
+                    },
+                    "similarity_score": 0.15,  # Very low similarity
+                    "confidence_level": "very_low"
+                },
+                "auth_token_data": {
+                    "access_token": "invalid.token.format",  # Invalid JWT format
+                    "refresh_token": "expired_refresh_token",
+                    "session_token": "invalid_session_token",
+                    "mfa_token": "",  # Empty MFA token
+                    "oauth_token": "revoked_oauth_token",
+                    "signature": "invalid_signature",
+                    "payload": {
+                        "user_id": "different_user_again",  # Another mismatch
+                        "username": "another_suspicious_user",
+                        "roles": ["admin"],  # Suspicious elevated privileges
+                        "permissions": ["read", "write", "delete", "admin"]  # Too many permissions
+                    },
+                    "expires_at": int((datetime.now() - timedelta(hours=5)).timestamp()),  # Expired
+                    "issued_at": int((datetime.now() + timedelta(hours=1)).timestamp()),  # Future issue time (impossible)
+                    "token_type": "Invalid"
+                }
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_invalid_auth",
+                "session_data": session_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/validate-session-authenticity",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    analysis = data.get('authenticity_analysis', {})
+                    analysis_summary = analysis.get('analysis_summary', {})
+                    
+                    self.log_result(
+                        "Session Authenticity - Invalid Session", 
+                        True, 
+                        f"Invalid session analysis completed. Authentic: {analysis_summary.get('session_authentic', 'N/A')}, Confidence: {analysis_summary.get('authenticity_confidence', 'N/A')}, Biometric Match: {analysis_summary.get('biometric_match_score', 'N/A')}"
+                    )
+                    return True
+                else:
+                    self.log_result("Session Authenticity - Invalid Session", False, f"Analysis failed: {data}")
+                    return False
+            else:
+                self.log_result("Session Authenticity - Invalid Session", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Session Authenticity - Invalid Session", False, f"Exception: {str(e)}")
+            return False
+
+    def test_multi_device_collaboration_indicators(self):
+        """Test detection of multi-device collaboration patterns"""
+        try:
+            # Collaboration scenario with coordinated activities across devices
+            session_data = {
+                "user_id": self.user_id,
+                "session_id": self.session_id + "_collaboration",
+                "active_sessions": [
+                    {
+                        "session_id": self.session_id + "_device1",
+                        "device_fingerprint": "fp_desktop_chrome_windows",
+                        "start_time": "2024-01-15T10:00:00Z",
+                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
+                        "ip_address": "192.168.1.100",
+                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "device_type": "desktop"
+                    },
+                    {
+                        "session_id": self.session_id + "_device2",
+                        "device_fingerprint": "fp_laptop_firefox_macos",
+                        "start_time": "2024-01-15T10:02:00Z",
+                        "location": {"country": "US", "city": "New York", "lat": 40.7589, "lng": -73.9851},
+                        "ip_address": "192.168.1.102",
+                        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0",
+                        "device_type": "laptop"
+                    }
+                ],
+                "device_activity": [
+                    # Coordinated activities suggesting collaboration
+                    {
+                        "device_id": "desktop_001",
+                        "timestamp": "2024-01-15T10:05:00Z",
+                        "activity_type": "data_input",
+                        "action_type": "question_answer",
+                        "session_id": self.session_id + "_device1",
+                        "content_type": "text_input",
+                        "response_time": 2.5
+                    },
+                    {
+                        "device_id": "laptop_001",
+                        "timestamp": "2024-01-15T10:05:05Z",  # 5 seconds later
+                        "activity_type": "data_search",
+                        "action_type": "web_search",
+                        "session_id": self.session_id + "_device2",
+                        "content_type": "search_query",
+                        "response_time": 0.8  # Very fast response
+                    },
+                    {
+                        "device_id": "desktop_001",
+                        "timestamp": "2024-01-15T10:05:15Z",  # 10 seconds after search
+                        "activity_type": "data_input",
+                        "action_type": "answer_update",
+                        "session_id": self.session_id + "_device1",
+                        "content_type": "text_modification",
+                        "response_time": 1.2  # Suspiciously fast for complex answer
+                    }
+                ],
+                "session_history": [
+                    {
+                        "session_id": self.session_id + "_device1",
+                        "device_fingerprint": "fp_desktop_chrome_windows",
+                        "timestamp": "2024-01-15T10:00:00Z",
+                        "duration": 1800,
+                        "location": {"country": "US", "city": "New York"},
+                        "activities_count": 45,
+                        "data_transferred": 2048000,
+                        "activity_pattern": "answer_focused"
+                    },
+                    {
+                        "session_id": self.session_id + "_device2",
+                        "device_fingerprint": "fp_laptop_firefox_macos",
+                        "timestamp": "2024-01-15T10:02:00Z",
+                        "duration": 1680,
+                        "location": {"country": "US", "city": "New York"},
+                        "activities_count": 120,  # High search activity
+                        "data_transferred": 5120000,  # High data usage for searches
+                        "activity_pattern": "search_focused"
+                    }
                 ]
             }
             
-            # Playwright-like behavioral data
-            behavioral_data = {
-                "mouse_data": {
-                    "movements": [
-                        {"x": 100, "y": 150, "timestamp": 1634567890123},
-                        {"x": 200, "y": 300, "timestamp": 1634567890200}  # Linear movement
-                    ],
-                    "clicks": [
-                        {"target_x": 200, "target_y": 300, "actual_x": 200, "actual_y": 300, "timestamp": 1634567890500}
-                    ]
-                },
-                "timing_data": {
-                    "intervals": [100, 100, 100, 100],  # Consistent timing
-                    "keypress_timings": [1634567890100, 1634567890200, 1634567890300, 1634567890400]
-                }
-            }
-            
             payload = {
-                "session_id": self.session_id + "_playwright_session",
-                "browser_data": browser_data,
-                "behavioral_data": behavioral_data
+                "session_id": self.session_id + "_collaboration",
+                "user_id": self.user_id,
+                "session_data": session_data
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
+                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
                 json=payload
             )
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    detection = data.get('automation_detection', {})
+                    analysis = data.get('multi_device_analysis', {})
+                    analysis_summary = analysis.get('analysis_summary', {})
+                    
                     self.log_result(
-                        "Automation Detection - Playwright Signatures", 
+                        "Multi-Device Collaboration Indicators", 
                         True, 
-                        f"Playwright detection completed. Detection keys: {list(detection.keys())}"
+                        f"Collaboration analysis completed. Risk Score: {analysis_summary.get('risk_score', 'N/A')}, Collaboration Detected: {analysis_summary.get('collaboration_indicators', 'N/A')}"
                     )
                     return True
                 else:
-                    self.log_result("Automation Detection - Playwright Signatures", False, f"Detection failed: {data}")
+                    self.log_result("Multi-Device Collaboration Indicators", False, f"Analysis failed: {data}")
                     return False
             else:
-                self.log_result("Automation Detection - Playwright Signatures", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Multi-Device Collaboration Indicators", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Automation Detection - Playwright Signatures", False, f"Exception: {str(e)}")
+            self.log_result("Multi-Device Collaboration Indicators", False, f"Exception: {str(e)}")
             return False
 
-    def test_browser_fingerprint_edge_cases(self):
-        """Test browser fingerprint analysis with malformed/edge case data"""
+    def test_session_migration_validation(self):
+        """Test session migration validation across devices"""
         try:
-            # Malformed browser data
-            browser_data = {
-                "user_agent": "",  # Empty user agent
-                "browser_name": None,  # Null browser name
-                "browser_version": "invalid_version",
-                "plugins": "not_an_array",  # Wrong type
-                "mime_types": [],  # Empty array
-                "languages": None,  # Null languages
-                "javascript_features": {
-                    "invalid_feature": "invalid_value"
+            # Session migration scenario
+            session_data = {
+                "user_id": self.user_id,
+                "session_id": self.session_id + "_migration",
+                "active_sessions": [
+                    {
+                        "session_id": self.session_id + "_original",
+                        "device_fingerprint": "fp_desktop_chrome_windows",
+                        "start_time": "2024-01-15T10:00:00Z",
+                        "end_time": "2024-01-15T10:30:00Z",  # Session ended
+                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
+                        "ip_address": "192.168.1.100",
+                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "device_type": "desktop",
+                        "status": "migrated"
+                    },
+                    {
+                        "session_id": self.session_id + "_migrated",
+                        "device_fingerprint": "fp_mobile_safari_ios",
+                        "start_time": "2024-01-15T10:32:00Z",  # Started 2 minutes after original ended
+                        "location": {"country": "US", "city": "New York", "lat": 40.7589, "lng": -73.9851},
+                        "ip_address": "192.168.1.101",  # Different IP but same network
+                        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+                        "device_type": "mobile",
+                        "status": "active",
+                        "migration_data": {
+                            "previous_session_id": self.session_id + "_original",
+                            "migration_timestamp": "2024-01-15T10:30:30Z",
+                            "state_transferred": True,
+                            "authentication_carried_over": True
+                        }
+                    }
+                ],
+                "device_activity": [
+                    {
+                        "device_id": "desktop_001",
+                        "timestamp": "2024-01-15T10:29:00Z",
+                        "activity_type": "session_save",
+                        "action_type": "state_preservation",
+                        "session_id": self.session_id + "_original"
+                    },
+                    {
+                        "device_id": "mobile_001",
+                        "timestamp": "2024-01-15T10:32:30Z",
+                        "activity_type": "session_restore",
+                        "action_type": "state_restoration",
+                        "session_id": self.session_id + "_migrated"
+                    }
+                ],
+                "session_history": [
+                    {
+                        "session_id": self.session_id + "_original",
+                        "device_fingerprint": "fp_desktop_chrome_windows",
+                        "timestamp": "2024-01-15T10:00:00Z",
+                        "duration": 1800,
+                        "location": {"country": "US", "city": "New York"},
+                        "activities_count": 35,
+                        "data_transferred": 1536000,
+                        "migration_prepared": True
+                    },
+                    {
+                        "session_id": self.session_id + "_migrated",
+                        "device_fingerprint": "fp_mobile_safari_ios",
+                        "timestamp": "2024-01-15T10:32:00Z",
+                        "duration": 900,
+                        "location": {"country": "US", "city": "New York"},
+                        "activities_count": 18,
+                        "data_transferred": 768000,
+                        "migration_restored": True
+                    }
+                ]
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_migration",
+                "user_id": self.user_id,
+                "session_data": session_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    analysis = data.get('multi_device_analysis', {})
+                    analysis_summary = analysis.get('analysis_summary', {})
+                    
+                    self.log_result(
+                        "Session Migration Validation", 
+                        True, 
+                        f"Migration analysis completed. Risk Score: {analysis_summary.get('risk_score', 'N/A')}, Migration Valid: {analysis_summary.get('migration_valid', 'N/A')}"
+                    )
+                    return True
+                else:
+                    self.log_result("Session Migration Validation", False, f"Analysis failed: {data}")
+                    return False
+            else:
+                self.log_result("Session Migration Validation", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Session Migration Validation", False, f"Exception: {str(e)}")
+            return False
+
+    def test_comprehensive_token_verification(self):
+        """Test comprehensive authentication token verification"""
+        try:
+            # Comprehensive token verification scenario
+            session_data = {
+                "session_id": self.session_id + "_token_verification",
+                "user_id": self.user_id,
+                "authentication_data": {
+                    "method": "multi_factor",
+                    "expires_at": int((datetime.now() + timedelta(hours=4)).timestamp()),
+                    "credential_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "mfa_verified": True,
+                    "last_auth_time": int(datetime.now().timestamp()),
+                    "auth_strength": "very_strong"
+                },
+                "claimed_identity": {
+                    "username": "verified_user_tokens",
+                    "email": "verified.user@company.com",
+                    "phone_number": "+1234567890",
+                    "user_id": self.user_id,
+                    "account_created": "2022-06-15T10:00:00Z",
+                    "last_login": "2024-01-15T09:45:00Z"
+                },
+                "biometric_data": {
+                    "current_template": {
+                        "keystroke_dynamics": {
+                            "dwell_times": [119, 121, 118, 120, 122],
+                            "flight_times": [87, 89, 86, 88, 90],
+                            "typing_rhythm": 0.88,
+                            "pressure_patterns": [0.73, 0.79, 0.75, 0.81, 0.77]
+                        }
+                    },
+                    "reference_template": {
+                        "keystroke_dynamics": {
+                            "dwell_times": [118, 122, 120, 116, 124],
+                            "flight_times": [88, 90, 85, 92, 89],
+                            "typing_rhythm": 0.87,
+                            "pressure_patterns": [0.72, 0.78, 0.76, 0.80, 0.77]
+                        }
+                    },
+                    "similarity_score": 0.94,
+                    "confidence_level": "very_high"
+                },
+                "auth_token_data": {
+                    # Access Token (JWT)
+                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2ZXJpZmllZF91c2VyX3Rva2VucyIsIm5hbWUiOiJWZXJpZmllZCBVc2VyIiwiaWF0IjoxNzA0MDY3MjAwLCJleHAiOjE3MDQwODUyMDB9.signature",
+                    "access_token_valid": True,
+                    "access_token_expires_at": int((datetime.now() + timedelta(hours=4)).timestamp()),
+                    
+                    # Refresh Token
+                    "refresh_token": "rt_secure_refresh_token_1234567890abcdef",
+                    "refresh_token_valid": True,
+                    "refresh_token_expires_at": int((datetime.now() + timedelta(days=30)).timestamp()),
+                    
+                    # Session Token
+                    "session_token": "st_secure_session_token_abcdef1234567890",
+                    "session_token_valid": True,
+                    "session_token_expires_at": int((datetime.now() + timedelta(hours=8)).timestamp()),
+                    
+                    # MFA Token
+                    "mfa_token": "mfa_verified_token_0987654321fedcba",
+                    "mfa_token_valid": True,
+                    "mfa_token_expires_at": int((datetime.now() + timedelta(minutes=30)).timestamp()),
+                    
+                    # OAuth Token
+                    "oauth_token": "oauth_provider_token_fedcba0987654321",
+                    "oauth_token_valid": True,
+                    "oauth_token_expires_at": int((datetime.now() + timedelta(hours=2)).timestamp()),
+                    
+                    "signature": "valid_hmac_sha256_signature",
+                    "payload": {
+                        "user_id": self.user_id,
+                        "username": "verified_user_tokens",
+                        "roles": ["user", "verified", "premium"],
+                        "permissions": ["read", "write", "profile_edit"],
+                        "token_version": "v2.1",
+                        "security_level": "high"
+                    },
+                    "expires_at": int((datetime.now() + timedelta(hours=4)).timestamp()),
+                    "issued_at": int((datetime.now() - timedelta(minutes=5)).timestamp()),
+                    "token_type": "Bearer",
+                    "token_integrity_verified": True
                 }
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_token_verification",
+                "session_data": session_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/validate-session-authenticity",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    analysis = data.get('authenticity_analysis', {})
+                    analysis_summary = analysis.get('analysis_summary', {})
+                    
+                    self.log_result(
+                        "Comprehensive Token Verification", 
+                        True, 
+                        f"Token verification completed. Authentic: {analysis_summary.get('session_authentic', 'N/A')}, Token Integrity: {analysis_summary.get('token_integrity_score', 'N/A')}, All Tokens Valid: {analysis_summary.get('all_tokens_valid', 'N/A')}"
+                    )
+                    return True
+                else:
+                    self.log_result("Comprehensive Token Verification", False, f"Analysis failed: {data}")
+                    return False
+            else:
+                self.log_result("Comprehensive Token Verification", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Comprehensive Token Verification", False, f"Exception: {str(e)}")
+            return False
+
+    def test_edge_cases_malformed_data(self):
+        """Test edge cases with malformed data"""
+        try:
+            # Malformed multi-device usage data
+            session_data = {
+                "user_id": None,  # Null user ID
+                "session_id": "",  # Empty session ID
+                "active_sessions": "not_an_array",  # Wrong type
+                "device_activity": [],  # Empty array
+                "session_history": None  # Null history
             }
             
             payload = {
                 "session_id": self.session_id + "_edge_case",
-                "browser_data": browser_data
+                "user_id": "edge_case_user",
+                "session_data": session_data
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
+                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
                 json=payload
             )
             
             # Should handle gracefully (either 200 with error handling or 500 with proper error)
             if response.status_code in [200, 500]:
                 self.log_result(
-                    "Browser Fingerprint Analysis - Edge Cases", 
+                    "Edge Cases - Malformed Multi-Device Data", 
                     True, 
-                    f"Edge case handled gracefully (Status: {response.status_code})"
+                    f"Malformed data handled gracefully (Status: {response.status_code})"
                 )
                 return True
             else:
-                self.log_result("Browser Fingerprint Analysis - Edge Cases", False, f"Unexpected status: {response.status_code}")
+                self.log_result("Edge Cases - Malformed Multi-Device Data", False, f"Unexpected status: {response.status_code}")
                 return False
                 
         except Exception as e:
-            self.log_result("Browser Fingerprint Analysis - Edge Cases", False, f"Exception: {str(e)}")
-            return False
-
-    def test_automation_detection_edge_cases(self):
-        """Test automation detection with malformed/edge case data"""
-        try:
-            # Malformed data
-            browser_data = {
-                "user_agent": 12345,  # Wrong type
-                "webdriver": "maybe",  # Wrong type
-                "plugins": None,  # Null plugins
-                "event_properties": "not_an_object"  # Wrong type
-            }
-            
-            behavioral_data = {
-                "mouse_data": "invalid",  # Wrong type
-                "timing_data": None  # Null timing data
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_automation_edge_case",
-                "browser_data": browser_data,
-                "behavioral_data": behavioral_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
-                json=payload
-            )
-            
-            # Should handle gracefully
-            if response.status_code in [200, 500]:
-                self.log_result(
-                    "Automation Detection - Edge Cases", 
-                    True, 
-                    f"Edge case handled gracefully (Status: {response.status_code})"
-                )
-                return True
-            else:
-                self.log_result("Automation Detection - Edge Cases", False, f"Unexpected status: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Automation Detection - Edge Cases", False, f"Exception: {str(e)}")
+            self.log_result("Edge Cases - Malformed Multi-Device Data", False, f"Exception: {str(e)}")
             return False
 
     def run_all_tests(self):
-        """Run all Phase 3.2 browser and environment analysis tests"""
-        print("🎯 STARTING PHASE 3.2: ADVANCED BROWSER & ENVIRONMENT ANALYSIS TESTING")
+        """Run all Phase 3.3 Session Integrity Monitoring tests"""
+        print("🎯 STARTING PHASE 3.3: SESSION INTEGRITY MONITORING TESTING")
         print("=" * 80)
         
         # Authenticate first
@@ -703,15 +902,14 @@ class Phase32BrowserEnvironmentTester:
         
         # Run all tests
         tests = [
-            self.test_browser_fingerprint_analysis_normal_chrome,
-            self.test_browser_fingerprint_analysis_suspicious_firefox,
-            self.test_browser_fingerprint_analysis_safari,
-            self.test_automation_detection_clean_session,
-            self.test_automation_detection_selenium_signatures,
-            self.test_automation_detection_puppeteer_signatures,
-            self.test_automation_detection_playwright_signatures,
-            self.test_browser_fingerprint_edge_cases,
-            self.test_automation_detection_edge_cases
+            self.test_track_multi_device_usage_normal_scenario,
+            self.test_track_multi_device_usage_suspicious_scenario,
+            self.test_validate_session_authenticity_valid_session,
+            self.test_validate_session_authenticity_invalid_session,
+            self.test_multi_device_collaboration_indicators,
+            self.test_session_migration_validation,
+            self.test_comprehensive_token_verification,
+            self.test_edge_cases_malformed_data
         ]
         
         passed = 0
@@ -724,7 +922,7 @@ class Phase32BrowserEnvironmentTester:
         
         # Print summary
         print("\n" + "=" * 80)
-        print("🎯 PHASE 3.2 TESTING SUMMARY")
+        print("🎯 PHASE 3.3 SESSION INTEGRITY MONITORING TESTING SUMMARY")
         print("=" * 80)
         print(f"Total Tests: {total}")
         print(f"Passed: {passed}")
@@ -740,642 +938,10 @@ class Phase32BrowserEnvironmentTester:
         return passed, total
 
 if __name__ == "__main__":
-    tester = Phase32BrowserEnvironmentTester()
+    tester = Phase33SessionIntegrityTester()
     passed, total = tester.run_all_tests()
     
     if passed == total:
-        print(f"\n🎉 ALL TESTS PASSED! Phase 3.2 functionality is working perfectly.")
+        print(f"\n🎉 ALL TESTS PASSED! Phase 3.3 Session Integrity Monitoring functionality is working perfectly.")
     else:
         print(f"\n⚠️  {total - passed} test(s) failed. Please review the results above.")
-
-#!/usr/bin/env python3
-"""
-Comprehensive Backend Testing for Placement Preparation Assessment Reports and Token-Based Visibility Logic
-Testing the complete end-to-end workflow for placement preparation vs admin token separation
-"""
-
-import requests
-import json
-import time
-import os
-from datetime import datetime
-
-# Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://session-guardian-2.preview.emergentagent.com')
-BASE_URL = f"{BACKEND_URL}/api"
-
-class PlacementPreparationTester:
-    def __init__(self):
-        self.session = requests.Session()
-        self.admin_authenticated = False
-        self.placement_prep_token = None
-        self.admin_token = None
-        self.placement_prep_session_id = None
-        self.admin_session_id = None
-        self.placement_prep_assessment_id = None
-        self.admin_assessment_id = None
-        
-    def log_test(self, test_name, status, details=""):
-        """Log test results with timestamp"""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        status_symbol = "✅" if status == "PASS" else "❌" if status == "FAIL" else "⚠️"
-        print(f"[{timestamp}] {status_symbol} {test_name}")
-        if details:
-            print(f"    {details}")
-        print()
-
-    def test_admin_authentication(self):
-        """Test admin authentication with Game@1234 password"""
-        try:
-            response = self.session.post(f"{BASE_URL}/admin/login", 
-                                       json={"password": "Game@1234"})
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("success"):
-                    self.admin_authenticated = True
-                    self.log_test("Admin Authentication", "PASS", 
-                                f"Successfully authenticated with Game@1234 password")
-                    return True
-                else:
-                    self.log_test("Admin Authentication", "FAIL", 
-                                f"Authentication failed: {data.get('message', 'Unknown error')}")
-                    return False
-            else:
-                self.log_test("Admin Authentication", "FAIL", 
-                            f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Admin Authentication", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def create_placement_preparation_token(self):
-        """Create a token via placement preparation endpoint"""
-        try:
-            # Create sample resume content
-            resume_content = """
-            John Smith
-            Senior Software Engineer
-            
-            EXPERIENCE:
-            - 5+ years Python development
-            - 3+ years React/JavaScript
-            - Experience with FastAPI, MongoDB
-            - Team leadership experience
-            - AWS cloud deployment
-            
-            EDUCATION:
-            - Bachelor's in Computer Science
-            - Master's in Software Engineering
-            
-            SKILLS:
-            Python, JavaScript, React, FastAPI, MongoDB, Docker, AWS, Team Leadership
-            """
-            
-            token_request = {
-                "job_title": "Senior Full Stack Developer - Placement Prep",
-                "job_description": "We are looking for a senior full stack developer with expertise in Python and React.",
-                "job_requirements": "5+ years experience, Python, React, FastAPI, MongoDB, leadership skills",
-                "resume_text": resume_content.strip(),
-                "role_archetype": "Software Engineer",
-                "interview_focus": "Technical Deep-Dive",
-                "include_coding_challenge": True,
-                "min_questions": 8,
-                "max_questions": 12
-            }
-            
-            response = self.session.post(f"{BASE_URL}/admin/create-token", 
-                                       json=token_request)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("success") and data.get("token"):
-                    self.placement_prep_token = data["token"]
-                    self.log_test("Placement Preparation Token Creation", "PASS", 
-                                f"Token created: {self.placement_prep_token[:8]}... via placement preparation")
-                    return True
-                else:
-                    self.log_test("Placement Preparation Token Creation", "FAIL", 
-                                f"Token creation failed: {data}")
-                    return False
-            else:
-                self.log_test("Placement Preparation Token Creation", "FAIL", 
-                            f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Placement Preparation Token Creation", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def create_admin_token(self):
-        """Create a token via admin dashboard endpoint"""
-        try:
-            # Create sample resume file content
-            resume_content = """
-            Jane Doe
-            Senior Backend Developer
-            
-            EXPERIENCE:
-            - 6+ years Python development
-            - 4+ years Django/FastAPI
-            - Database design and optimization
-            - Microservices architecture
-            - DevOps and CI/CD
-            
-            EDUCATION:
-            - Bachelor's in Computer Engineering
-            - AWS Certified Solutions Architect
-            
-            SKILLS:
-            Python, Django, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS
-            """
-            
-            # Prepare form data for admin upload
-            files = {
-                'resume_file': ('jane_resume.txt', resume_content.encode(), 'text/plain')
-            }
-            
-            form_data = {
-                'job_title': 'Senior Backend Developer - Admin',
-                'job_description': 'We are seeking a senior backend developer with strong Python skills.',
-                'job_requirements': '6+ years experience, Python, Django/FastAPI, database design, microservices'
-            }
-            
-            response = self.session.post(f"{BASE_URL}/admin/upload-job", 
-                                       files=files, data=form_data)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("success") and data.get("token"):
-                    self.admin_token = data["token"]
-                    self.log_test("Admin Token Creation", "PASS", 
-                                f"Token created: {self.admin_token[:8]}... via admin dashboard")
-                    return True
-                else:
-                    self.log_test("Admin Token Creation", "FAIL", 
-                                f"Token creation failed: {data}")
-                    return False
-            else:
-                self.log_test("Admin Token Creation", "FAIL", 
-                            f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Admin Token Creation", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def verify_token_source_marking(self):
-        """Verify that tokens are marked with correct created_via field"""
-        try:
-            # Check placement preparation token in database
-            # We'll validate this by starting interviews and checking the assessment created_via field
-            # since we can't directly query the database from the test
-            
-            # Validate placement prep token
-            pp_response = self.session.post(f"{BASE_URL}/candidate/validate-token", 
-                                          json={"token": self.placement_prep_token})
-            
-            # Validate admin token  
-            admin_response = self.session.post(f"{BASE_URL}/candidate/validate-token", 
-                                             json={"token": self.admin_token})
-            
-            if pp_response.status_code == 200 and admin_response.status_code == 200:
-                pp_data = pp_response.json()
-                admin_data = admin_response.json()
-                
-                self.log_test("Token Source Marking Validation", "PASS", 
-                            f"Both tokens validated successfully - PP: {pp_data.get('job_title')}, Admin: {admin_data.get('job_title')}")
-                return True
-            else:
-                self.log_test("Token Source Marking Validation", "FAIL", 
-                            f"Token validation failed - PP: {pp_response.status_code}, Admin: {admin_response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_test("Token Source Marking Validation", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def complete_placement_preparation_interview(self):
-        """Complete a full interview using placement preparation token"""
-        try:
-            # Start interview
-            start_response = self.session.post(f"{BASE_URL}/candidate/start-interview", 
-                                             json={
-                                                 "token": self.placement_prep_token,
-                                                 "candidate_name": "John Smith",
-                                                 "voice_mode": False
-                                             })
-            
-            if start_response.status_code != 200:
-                self.log_test("Placement Prep Interview Start", "FAIL", 
-                            f"Failed to start interview: {start_response.status_code}")
-                return False
-            
-            start_data = start_response.json()
-            self.placement_prep_session_id = start_data.get("session_id")
-            
-            if not self.placement_prep_session_id:
-                self.log_test("Placement Prep Interview Start", "FAIL", 
-                            "No session ID returned")
-                return False
-            
-            self.log_test("Placement Prep Interview Start", "PASS", 
-                        f"Interview started with session ID: {self.placement_prep_session_id}")
-            
-            # Answer questions to complete the interview
-            questions_answered = 0
-            max_questions = 8
-            
-            sample_answers = [
-                "I have 5+ years of experience in Python development, working on web applications and APIs.",
-                "I've led a team of 4 developers on a microservices project using FastAPI and MongoDB.",
-                "My approach to debugging involves systematic logging, unit testing, and using debugging tools.",
-                "I stay updated through tech blogs, conferences, and contributing to open source projects.",
-                "I handled a critical production issue by implementing proper monitoring and rollback procedures.",
-                "I believe in collaborative leadership, clear communication, and mentoring team members.",
-                "I prioritize tasks based on business impact, technical complexity, and dependencies.",
-                "I've worked with AWS services including EC2, RDS, Lambda, and implemented CI/CD pipelines."
-            ]
-            
-            while questions_answered < max_questions:
-                # Send answer
-                answer_response = self.session.post(f"{BASE_URL}/candidate/send-message", 
-                                                  json={
-                                                      "token": self.placement_prep_token,
-                                                      "message": sample_answers[questions_answered % len(sample_answers)]
-                                                  })
-                
-                if answer_response.status_code != 200:
-                    self.log_test("Placement Prep Interview Answer", "FAIL", 
-                                f"Failed to submit answer {questions_answered + 1}: {answer_response.status_code}")
-                    return False
-                
-                answer_data = answer_response.json()
-                questions_answered += 1
-                
-                # Check if interview is complete
-                if answer_data.get("interview_complete"):
-                    self.log_test("Placement Prep Interview Completion", "PASS", 
-                                f"Interview completed after {questions_answered} questions")
-                    break
-                
-                # Small delay between questions
-                time.sleep(0.5)
-            
-            return True
-            
-        except Exception as e:
-            self.log_test("Placement Prep Interview Completion", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def complete_admin_interview(self):
-        """Complete a full interview using admin token"""
-        try:
-            # Start interview
-            start_response = self.session.post(f"{BASE_URL}/candidate/start-interview", 
-                                             json={
-                                                 "token": self.admin_token,
-                                                 "candidate_name": "Jane Doe",
-                                                 "voice_mode": False
-                                             })
-            
-            if start_response.status_code != 200:
-                self.log_test("Admin Interview Start", "FAIL", 
-                            f"Failed to start interview: {start_response.status_code}")
-                return False
-            
-            start_data = start_response.json()
-            self.admin_session_id = start_data.get("session_id")
-            
-            if not self.admin_session_id:
-                self.log_test("Admin Interview Start", "FAIL", 
-                            "No session ID returned")
-                return False
-            
-            self.log_test("Admin Interview Start", "PASS", 
-                        f"Interview started with session ID: {self.admin_session_id}")
-            
-            # Answer questions to complete the interview
-            questions_answered = 0
-            max_questions = 8
-            
-            sample_answers = [
-                "I have 6+ years of backend development experience with Python and Django/FastAPI.",
-                "I've designed and implemented microservices architectures for high-traffic applications.",
-                "I use profiling tools, database query optimization, and caching strategies for performance.",
-                "I follow TDD practices, write comprehensive unit tests, and use CI/CD for quality assurance.",
-                "I've implemented OAuth2, JWT tokens, and proper input validation for security.",
-                "I use monitoring tools like Prometheus, implement proper logging, and set up alerts.",
-                "I've mentored junior developers and led technical architecture discussions.",
-                "I've worked with Docker, Kubernetes, AWS services, and implemented infrastructure as code."
-            ]
-            
-            while questions_answered < max_questions:
-                # Send answer
-                answer_response = self.session.post(f"{BASE_URL}/candidate/send-message", 
-                                                  json={
-                                                      "token": self.admin_token,
-                                                      "message": sample_answers[questions_answered % len(sample_answers)]
-                                                  })
-                
-                if answer_response.status_code != 200:
-                    self.log_test("Admin Interview Answer", "FAIL", 
-                                f"Failed to submit answer {questions_answered + 1}: {answer_response.status_code}")
-                    return False
-                
-                answer_data = answer_response.json()
-                questions_answered += 1
-                
-                # Check if interview is complete
-                if answer_data.get("interview_complete"):
-                    self.log_test("Admin Interview Completion", "PASS", 
-                                f"Interview completed after {questions_answered} questions")
-                    break
-                
-                # Small delay between questions
-                time.sleep(0.5)
-            
-            return True
-            
-        except Exception as e:
-            self.log_test("Admin Interview Completion", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def test_placement_preparation_reports_visibility(self):
-        """Test that placement preparation reports endpoint only shows placement preparation assessments"""
-        try:
-            response = self.session.get(f"{BASE_URL}/placement-preparation/reports")
-            
-            if response.status_code != 200:
-                self.log_test("Placement Preparation Reports Visibility", "FAIL", 
-                            f"HTTP {response.status_code}: {response.text}")
-                return False
-            
-            data = response.json()
-            reports = data.get("reports", [])
-            
-            # Verify all reports are from placement preparation
-            placement_prep_count = 0
-            admin_count = 0
-            
-            for report in reports:
-                created_via = report.get("created_via", "unknown")
-                if created_via == "placement_preparation":
-                    placement_prep_count += 1
-                elif created_via == "admin":
-                    admin_count += 1
-                    
-                # Check if our placement prep session is in the results
-                if report.get("session_id") == self.placement_prep_session_id:
-                    self.placement_prep_assessment_id = report.get("id")
-            
-            if admin_count > 0:
-                self.log_test("Placement Preparation Reports Visibility", "FAIL", 
-                            f"Found {admin_count} admin reports in placement preparation endpoint")
-                return False
-            
-            self.log_test("Placement Preparation Reports Visibility", "PASS", 
-                        f"Found {placement_prep_count} placement preparation reports, 0 admin reports (correct separation)")
-            return True
-            
-        except Exception as e:
-            self.log_test("Placement Preparation Reports Visibility", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def test_admin_reports_visibility(self):
-        """Test that admin reports endpoint only shows admin and legacy assessments"""
-        try:
-            response = self.session.get(f"{BASE_URL}/admin/reports")
-            
-            if response.status_code != 200:
-                self.log_test("Admin Reports Visibility", "FAIL", 
-                            f"HTTP {response.status_code}: {response.text}")
-                return False
-            
-            data = response.json()
-            reports = data.get("reports", [])
-            
-            # Verify no placement preparation reports are shown
-            placement_prep_count = 0
-            admin_count = 0
-            legacy_count = 0
-            
-            for report in reports:
-                created_via = report.get("created_via")
-                if created_via == "placement_preparation":
-                    placement_prep_count += 1
-                elif created_via == "admin":
-                    admin_count += 1
-                elif created_via is None:  # Legacy reports
-                    legacy_count += 1
-                    
-                # Check if our admin session is in the results
-                if report.get("session_id") == self.admin_session_id:
-                    self.admin_assessment_id = report.get("id")
-            
-            if placement_prep_count > 0:
-                self.log_test("Admin Reports Visibility", "FAIL", 
-                            f"Found {placement_prep_count} placement preparation reports in admin endpoint")
-                return False
-            
-            self.log_test("Admin Reports Visibility", "PASS", 
-                        f"Found {admin_count} admin reports, {legacy_count} legacy reports, 0 placement prep reports (correct separation)")
-            return True
-            
-        except Exception as e:
-            self.log_test("Admin Reports Visibility", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def test_placement_preparation_detailed_report(self):
-        """Test placement preparation detailed report endpoint"""
-        try:
-            if not self.placement_prep_session_id:
-                self.log_test("Placement Preparation Detailed Report", "FAIL", 
-                            "No placement preparation session ID available")
-                return False
-            
-            response = self.session.get(f"{BASE_URL}/placement-preparation/reports/{self.placement_prep_session_id}")
-            
-            if response.status_code == 404:
-                self.log_test("Placement Preparation Detailed Report", "FAIL", 
-                            "Report not found - assessment may not have been created yet")
-                return False
-            elif response.status_code != 200:
-                self.log_test("Placement Preparation Detailed Report", "FAIL", 
-                            f"HTTP {response.status_code}: {response.text}")
-                return False
-            
-            data = response.json()
-            report = data.get("report", {})
-            
-            # Verify report structure and content
-            required_fields = ["session_id", "candidate_name", "job_title", "technical_score", 
-                             "behavioral_score", "overall_score", "created_via"]
-            
-            missing_fields = [field for field in required_fields if field not in report]
-            if missing_fields:
-                self.log_test("Placement Preparation Detailed Report", "FAIL", 
-                            f"Missing required fields: {missing_fields}")
-                return False
-            
-            # Verify it's marked as placement preparation
-            if report.get("created_via") != "placement_preparation":
-                self.log_test("Placement Preparation Detailed Report", "FAIL", 
-                            f"Report has incorrect created_via: {report.get('created_via')}")
-                return False
-            
-            self.log_test("Placement Preparation Detailed Report", "PASS", 
-                        f"Retrieved detailed report for {report.get('candidate_name')} - {report.get('job_title')}")
-            return True
-            
-        except Exception as e:
-            self.log_test("Placement Preparation Detailed Report", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def test_admin_detailed_report(self):
-        """Test admin detailed report endpoint"""
-        try:
-            if not self.admin_session_id:
-                self.log_test("Admin Detailed Report", "FAIL", 
-                            "No admin session ID available")
-                return False
-            
-            response = self.session.get(f"{BASE_URL}/admin/reports/{self.admin_session_id}")
-            
-            if response.status_code == 404:
-                self.log_test("Admin Detailed Report", "FAIL", 
-                            "Report not found - assessment may not have been created yet")
-                return False
-            elif response.status_code != 200:
-                self.log_test("Admin Detailed Report", "FAIL", 
-                            f"HTTP {response.status_code}: {response.text}")
-                return False
-            
-            data = response.json()
-            report = data.get("report", {})
-            
-            # Verify report structure and content
-            required_fields = ["session_id", "candidate_name", "job_title", "technical_score", 
-                             "behavioral_score", "overall_score", "created_via"]
-            
-            missing_fields = [field for field in required_fields if field not in report]
-            if missing_fields:
-                self.log_test("Admin Detailed Report", "FAIL", 
-                            f"Missing required fields: {missing_fields}")
-                return False
-            
-            # Verify it's marked as admin
-            if report.get("created_via") != "admin":
-                self.log_test("Admin Detailed Report", "FAIL", 
-                            f"Report has incorrect created_via: {report.get('created_via')}")
-                return False
-            
-            self.log_test("Admin Detailed Report", "PASS", 
-                        f"Retrieved detailed report for {report.get('candidate_name')} - {report.get('job_title')}")
-            return True
-            
-        except Exception as e:
-            self.log_test("Admin Detailed Report", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def test_cross_endpoint_isolation(self):
-        """Test that placement preparation reports are not accessible via admin endpoint and vice versa"""
-        try:
-            # Try to access placement preparation report via admin endpoint
-            if self.placement_prep_session_id:
-                admin_access_response = self.session.get(f"{BASE_URL}/admin/reports/{self.placement_prep_session_id}")
-                if admin_access_response.status_code != 404:
-                    self.log_test("Cross-Endpoint Isolation", "FAIL", 
-                                f"Placement prep report accessible via admin endpoint (should be 404)")
-                    return False
-            
-            # Try to access admin report via placement preparation endpoint
-            if self.admin_session_id:
-                pp_access_response = self.session.get(f"{BASE_URL}/placement-preparation/reports/{self.admin_session_id}")
-                if pp_access_response.status_code != 404:
-                    self.log_test("Cross-Endpoint Isolation", "FAIL", 
-                                f"Admin report accessible via placement prep endpoint (should be 404)")
-                    return False
-            
-            self.log_test("Cross-Endpoint Isolation", "PASS", 
-                        "Reports are properly isolated - placement prep reports not accessible via admin endpoint and vice versa")
-            return True
-            
-        except Exception as e:
-            self.log_test("Cross-Endpoint Isolation", "FAIL", f"Exception: {str(e)}")
-            return False
-
-    def run_comprehensive_test(self):
-        """Run all tests in sequence"""
-        print("=" * 80)
-        print("PLACEMENT PREPARATION ASSESSMENT REPORTS & TOKEN-BASED VISIBILITY TESTING")
-        print("=" * 80)
-        print()
-        
-        test_results = []
-        
-        # Test 1: Admin Authentication
-        test_results.append(self.test_admin_authentication())
-        
-        if not self.admin_authenticated:
-            print("❌ Cannot proceed without admin authentication")
-            return False
-        
-        # Test 2: Token Creation & Source Marking
-        test_results.append(self.create_placement_preparation_token())
-        test_results.append(self.create_admin_token())
-        test_results.append(self.verify_token_source_marking())
-        
-        # Test 3: Complete Interview Workflows
-        test_results.append(self.complete_placement_preparation_interview())
-        test_results.append(self.complete_admin_interview())
-        
-        # Wait a moment for assessments to be generated
-        print("⏳ Waiting for assessments to be generated...")
-        time.sleep(3)
-        
-        # Test 4: Assessment Reports Visibility
-        test_results.append(self.test_placement_preparation_reports_visibility())
-        test_results.append(self.test_admin_reports_visibility())
-        
-        # Test 5: Detailed Report Functionality
-        test_results.append(self.test_placement_preparation_detailed_report())
-        test_results.append(self.test_admin_detailed_report())
-        
-        # Test 6: Cross-Endpoint Isolation
-        test_results.append(self.test_cross_endpoint_isolation())
-        
-        # Summary
-        print("=" * 80)
-        print("TEST SUMMARY")
-        print("=" * 80)
-        
-        passed_tests = sum(test_results)
-        total_tests = len(test_results)
-        
-        print(f"✅ Passed: {passed_tests}/{total_tests} tests")
-        print(f"❌ Failed: {total_tests - passed_tests}/{total_tests} tests")
-        print(f"📊 Success Rate: {(passed_tests/total_tests)*100:.1f}%")
-        
-        if passed_tests == total_tests:
-            print("\n🎉 ALL TESTS PASSED! Placement preparation assessment reports and token-based visibility logic is working correctly.")
-        else:
-            print(f"\n⚠️  {total_tests - passed_tests} test(s) failed. Please review the issues above.")
-        
-        return passed_tests == total_tests
-
-def main():
-    """Main test execution"""
-    tester = PlacementPreparationTester()
-    success = tester.run_comprehensive_test()
-    
-    if success:
-        print("\n✅ PLACEMENT PREPARATION TESTING COMPLETED SUCCESSFULLY")
-        exit(0)
-    else:
-        print("\n❌ PLACEMENT PREPARATION TESTING COMPLETED WITH FAILURES")
-        exit(1)
-
-if __name__ == "__main__":
-    main()
