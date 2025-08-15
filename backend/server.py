@@ -21386,10 +21386,18 @@ async def detect_virtual_machines(request: DeviceFingerprintRequest):
         result = device_fingerprinting_engine.detect_virtual_machines(request.device_data)
         
         if result.get('success'):
-            # Ensure confidence_level is properly set
-            confidence_level = result.get('confidence_level', 'medium')
-            if not isinstance(confidence_level, str):
-                confidence_level = str(confidence_level) if confidence_level is not None else 'medium'
+            # Extract confidence_level from confidence_metrics
+            confidence_metrics = result.get('confidence_metrics', {})
+            confidence_level = confidence_metrics.get('detection_quality', 'medium')
+            
+            # Validate confidence_level is a valid string
+            valid_confidence_levels = ['high', 'medium', 'low', 'insufficient', 'unknown']
+            if not isinstance(confidence_level, str) or confidence_level.lower() not in valid_confidence_levels:
+                # Log warning and use default
+                logging.warning(f"Invalid confidence_level '{confidence_level}' received, using 'medium' as default")
+                confidence_level = 'medium'
+            else:
+                confidence_level = confidence_level.lower()
             
             # Store VM detection results in MongoDB
             vm_detection_doc = {
@@ -21399,6 +21407,7 @@ async def detect_virtual_machines(request: DeviceFingerprintRequest):
                 "vm_classification": result['vm_classification'],
                 "is_virtual_machine": result['is_virtual_machine'],
                 "confidence_level": confidence_level,
+                "confidence_metrics": confidence_metrics,
                 "analysis_timestamp": result['analysis_timestamp'],
                 "created_at": datetime.utcnow()
             }
