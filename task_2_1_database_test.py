@@ -23,7 +23,7 @@ from typing import Dict, Any, List
 sys.path.append('/app/backend')
 
 # Test Configuration
-BACKEND_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
+BACKEND_URL = "http://localhost:8001/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class DatabaseSetupTester:
