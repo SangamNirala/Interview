@@ -148,8 +148,9 @@ class DatabaseOptimizationTester:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    compound_indexes_created = data.get('compound_indexes_created', 0)
-                    collections_processed = data.get('collections_processed', 0)
+                    details = data.get('details', {})
+                    compound_indexes_created = details.get('compound_indexes_created', 0)
+                    collections_processed = details.get('collections_processed', 0)
                     
                     # Verify expected compound indexes (24 across 6 collections)
                     expected_indexes = 24
