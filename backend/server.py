@@ -20941,5 +20941,291 @@ async def track_timezone_consistency(request: TimezoneAnalysisRequest):
         logging.error(f"Error tracking timezone consistency: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Timezone consistency analysis failed: {str(e)}")
 
+# ===== PHASE 3.3: SESSION INTEGRITY MONITORING ENDPOINTS =====
+
+@api_router.post("/session-fingerprinting/monitor-session-continuity")
+async def monitor_session_continuity(request: SessionContinuityRequest):
+    """
+    🔍 MONITOR SESSION CONTINUITY
+    Comprehensive session continuity monitoring including token validation, activity pattern analysis,
+    session break detection, user behavior consistency monitoring, and session hijacking detection
+    
+    Expected session_data format:
+    {
+        "session_id": "uuid_session_id",
+        "user_id": "user_identifier",
+        "session_token": "session_authentication_token",
+        "session_created_at": "2023-12-07T10:00:00Z",
+        "last_activity_at": "2023-12-07T15:30:00Z",
+        "current_time": 1701958200.123,
+        "activity_log": [
+            {"timestamp": 1701958100, "action": "login", "details": {}},
+            {"timestamp": 1701958150, "action": "navigate", "details": {"page": "/dashboard"}},
+            {"timestamp": 1701958200, "action": "click", "details": {"element": "button"}}
+        ],
+        "behavioral_data": {
+            "mouse_patterns": {"movements": [], "clicks": []},
+            "typing_patterns": {"keystrokes": []},
+            "navigation_patterns": {"page_visits": []}
+        },
+        "current_ip": "203.0.113.45",
+        "initial_ip": "203.0.113.45",
+        "current_user_agent": "Mozilla/5.0...",
+        "initial_user_agent": "Mozilla/5.0...",
+        "current_device_fingerprint": {"screen_resolution": "1920x1080"},
+        "initial_device_fingerprint": {"screen_resolution": "1920x1080"}
+    }
+    
+    Returns comprehensive session continuity analysis with hijacking detection,
+    behavior consistency monitoring, and risk assessment.
+    """
+    try:
+        # Connect to MongoDB
+        client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+        db = client.aptitude_test_db
+        
+        logging.info(f"Starting session continuity monitoring for session: {request.session_id}")
+        
+        # Perform session continuity analysis using the session integrity monitor
+        result = session_integrity_monitor.monitor_session_continuity(request.session_data)
+        
+        if result.get('success'):
+            # Store session continuity analysis results in MongoDB
+            continuity_analysis_doc = {
+                "session_id": request.session_id,
+                "session_continuity_analysis": convert_numeric_keys_to_strings(result['session_continuity_analysis']),
+                "analysis_summary": result['analysis_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into session_continuity_analyses collection
+            await db.session_continuity_analyses.insert_one(continuity_analysis_doc)
+            
+            logging.info(f"Session continuity monitoring completed for session: {request.session_id} - Status: {result['analysis_summary']['continuity_status']}")
+            
+            return {
+                "success": True,
+                "session_continuity_analysis": result,
+                "storage_confirmation": "Session continuity analysis results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Session continuity monitoring failed'))
+        
+    except Exception as e:
+        logging.error(f"Error monitoring session continuity: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Session continuity monitoring failed: {str(e)}")
+
+@api_router.post("/session-fingerprinting/detect-session-manipulation")
+async def detect_session_manipulation(request: SessionManipulationRequest):
+    """
+    🕵️ DETECT SESSION MANIPULATION
+    Advanced session manipulation detection including replay attack detection, timestamp manipulation analysis,
+    session data integrity validation, cross-session correlation analysis, and manipulation pattern recognition
+    
+    Expected session_data format:
+    {
+        "session_id": "uuid_session_id",
+        "user_id": "user_identifier", 
+        "request_history": [
+            {"method": "POST", "path": "/api/login", "timestamp": 1701958100, "body_hash": "abc123"},
+            {"method": "GET", "path": "/api/dashboard", "timestamp": 1701958150, "sequence_number": 1},
+            {"method": "POST", "path": "/api/action", "timestamp": 1701958200, "sequence_number": 2}
+        ],
+        "timestamps": [1701958100.123, 1701958150.456, 1701958200.789],
+        "server_timestamps": [1701958100.125, 1701958150.458, 1701958200.791],
+        "original_session_data": {"session_id": "uuid", "user_id": "user", "creation_time": "2023-12-07T10:00:00Z"},
+        "core_data": {"key": "value", "important_field": "data"},
+        "data_checksum": "md5_checksum_of_core_data",
+        "request_intervals": [50.0, 50.0, 50.0],
+        "token_history": ["token1", "token2", "token1"],
+        "request_signatures": ["sig1", "sig2", "sig1", "sig2"]
+    }
+    
+    Returns comprehensive session manipulation detection with replay attack analysis,
+    timestamp validation, data integrity checks, and manipulation pattern recognition.
+    """
+    try:
+        # Connect to MongoDB
+        client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+        db = client.aptitude_test_db
+        
+        logging.info(f"Starting session manipulation detection for session: {request.session_id}")
+        
+        # Perform session manipulation detection using the session integrity monitor
+        result = session_integrity_monitor.detect_session_manipulation(request.session_data)
+        
+        if result.get('success'):
+            # Store session manipulation analysis results in MongoDB
+            manipulation_analysis_doc = {
+                "session_id": request.session_id,
+                "manipulation_analysis": convert_numeric_keys_to_strings(result['manipulation_analysis']),
+                "analysis_summary": result['analysis_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into session_manipulation_analyses collection
+            await db.session_manipulation_analyses.insert_one(manipulation_analysis_doc)
+            
+            logging.info(f"Session manipulation detection completed for session: {request.session_id} - Manipulation: {result['analysis_summary']['manipulation_detected']}")
+            
+            return {
+                "success": True,
+                "manipulation_analysis": result,
+                "storage_confirmation": "Session manipulation analysis results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Session manipulation detection failed'))
+        
+    except Exception as e:
+        logging.error(f"Error detecting session manipulation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Session manipulation detection failed: {str(e)}")
+
+@api_router.post("/session-fingerprinting/validate-session-authenticity")
+async def validate_session_authenticity(request: SessionAuthenticityRequest):
+    """
+    ✅ VALIDATE SESSION AUTHENTICITY
+    Comprehensive session authenticity validation including authentication validation,
+    user identity consistency, biometric validation, and authentication token integrity
+    
+    Expected session_data format:
+    {
+        "session_id": "uuid_session_id",
+        "user_id": "user_identifier",
+        "authentication_data": {
+            "method": "password", // "password", "token", "biometric", "multi_factor"
+            "expires_at": 1701972000,
+            "credential_hash": "hashed_credential"
+        },
+        "claimed_identity": {
+            "username": "john_doe",
+            "email": "john@example.com", 
+            "phone_number": "+1234567890"
+        },
+        "biometric_data": {
+            "current_template": "biometric_template_data",
+            "reference_template": "stored_reference_template"
+        },
+        "auth_token_data": {
+            "token": "jwt_or_session_token",
+            "signature": "token_signature",
+            "payload": "token_payload_data",
+            "expires_at": 1701972000
+        }
+    }
+    
+    Returns comprehensive session authenticity validation with authentication verification,
+    identity consistency checks, biometric validation, and token integrity analysis.
+    """
+    try:
+        # Connect to MongoDB
+        client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+        db = client.aptitude_test_db
+        
+        logging.info(f"Starting session authenticity validation for session: {request.session_id}")
+        
+        # Perform session authenticity validation using the session integrity monitor
+        result = session_integrity_monitor.validate_session_authenticity(request.session_data)
+        
+        if result.get('success'):
+            # Store session authenticity analysis results in MongoDB
+            authenticity_analysis_doc = {
+                "session_id": request.session_id,
+                "authenticity_analysis": convert_numeric_keys_to_strings(result['authenticity_analysis']),
+                "analysis_summary": result['analysis_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into session_authenticity_analyses collection
+            await db.session_authenticity_analyses.insert_one(authenticity_analysis_doc)
+            
+            logging.info(f"Session authenticity validation completed for session: {request.session_id} - Authentic: {result['analysis_summary']['session_authentic']}")
+            
+            return {
+                "success": True,
+                "authenticity_analysis": result,
+                "storage_confirmation": "Session authenticity analysis results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Session authenticity validation failed'))
+        
+    except Exception as e:
+        logging.error(f"Error validating session authenticity: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Session authenticity validation failed: {str(e)}")
+
+@api_router.post("/session-fingerprinting/track-session-anomalies")
+async def track_session_anomalies(request: SessionAnomalyRequest):
+    """
+    📊 TRACK SESSION ANOMALIES
+    Comprehensive session anomaly tracking including unusual session patterns,
+    behavioral anomaly detection, session duration analysis, and access pattern monitoring
+    
+    Expected session_data format:
+    {
+        "session_id": "uuid_session_id",
+        "session_start_time": 1701958000.0,
+        "current_time": 1701958600.0,
+        "activity_log": [
+            {"timestamp": 1701958100, "action": "login"},
+            {"timestamp": 1701958150, "action": "navigate"},
+            {"timestamp": 1701958200, "action": "click"}
+        ],
+        "behavioral_data": {
+            "mouse_data": {
+                "movements": [{"velocity": 150, "linearity": 0.95}],
+                "clicks": [{"accuracy": 0.98, "timestamp": 1701958200}]
+            },
+            "keyboard_data": {
+                "keystrokes": [{"timestamp": 1701958180, "key": "a"}]
+            },
+            "navigation_data": {
+                "page_visits": [{"page": "/dashboard", "time_on_page": 30.5}]
+            }
+        },
+        "access_log": [
+            {"timestamp": 1701958100, "resource": "/api/login"},
+            {"timestamp": 1701958150, "resource": "/api/dashboard"},
+            {"timestamp": 1701958200, "resource": "/api/data"}
+        ]
+    }
+    
+    Returns comprehensive session anomaly analysis with unusual pattern detection,
+    behavioral analysis, duration assessment, and access pattern monitoring.
+    """
+    try:
+        # Connect to MongoDB
+        client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+        db = client.aptitude_test_db
+        
+        logging.info(f"Starting session anomaly tracking for session: {request.session_id}")
+        
+        # Perform session anomaly tracking using the session integrity monitor
+        result = session_integrity_monitor.track_session_anomalies(request.session_data)
+        
+        if result.get('success'):
+            # Store session anomaly analysis results in MongoDB
+            anomaly_analysis_doc = {
+                "session_id": request.session_id,
+                "anomaly_analysis": convert_numeric_keys_to_strings(result['anomaly_analysis']),
+                "analysis_summary": result['analysis_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into session_anomaly_analyses collection
+            await db.session_anomaly_analyses.insert_one(anomaly_analysis_doc)
+            
+            logging.info(f"Session anomaly tracking completed for session: {request.session_id} - Anomalies: {result['analysis_summary']['anomalies_detected']}")
+            
+            return {
+                "success": True,
+                "anomaly_analysis": result,
+                "storage_confirmation": "Session anomaly analysis results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Session anomaly tracking failed'))
+        
+    except Exception as e:
+        logging.error(f"Error tracking session anomalies: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Session anomaly tracking failed: {str(e)}")
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
