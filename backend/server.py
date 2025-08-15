@@ -20415,10 +20415,11 @@ async def track_device_consistency(request: DeviceTrackingRequest):
         
         if result.get('success'):
             # Store device tracking results in MongoDB
+            # Convert any numeric keys to strings to avoid MongoDB key errors
             device_tracking_doc = {
                 "device_id": request.device_id,
-                "consistency_analysis": result['consistency_analysis'],
-                "tracking_update": result['tracking_update'],
+                "consistency_analysis": convert_numeric_keys_to_strings(result['consistency_analysis']),
+                "tracking_update": convert_numeric_keys_to_strings(result['tracking_update']),
                 "consistency_score": result['consistency_score'],
                 "risk_assessment": result['risk_assessment'],
                 "analysis_timestamp": result['analysis_timestamp'],
