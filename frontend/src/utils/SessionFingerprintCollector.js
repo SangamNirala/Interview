@@ -2626,34 +2626,39 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Detect thermal throttling
+     * PHASE 1.1.3: Thermal throttling detection through performance monitoring
      */
     async detectThermalThrottling() {
         try {
             const thermalAnalysis = {
-                // Performance consistency over time
-                performance_consistency: await this.analyzePerformanceConsistency(),
+                // Performance Consistency Testing
+                performance_consistency: await this.testPerformanceConsistency(),
                 
-                // Clock speed variation detection
-                clock_speed_variation: await this.detectClockSpeedVariation(),
+                // Sustained Load Testing
+                sustained_load_test: await this.testSustainedLoad(),
                 
-                // Thermal throttling indicators
-                throttling_indicators: await this.detectThrottlingIndicators(),
+                // Clock Speed Monitoring
+                clock_speed_monitoring: await this.monitorClockSpeed(),
                 
-                // Performance degradation detection
-                performance_degradation: await this.detectPerformanceDegradation(),
+                // Temperature Inference
+                temperature_inference: await this.inferTemperatureCharacteristics(),
                 
-                // System responsiveness analysis
-                system_responsiveness: await this.analyzeSystemResponsiveness(),
+                // Throttling Pattern Detection
+                throttling_patterns: await this.detectThrottlingPatterns(),
                 
-                // Battery impact analysis (mobile devices)
-                battery_impact: await this.analyzeBatteryImpactOnPerformance()
+                // Recovery Time Analysis
+                recovery_analysis: await this.analyzeThrottlingRecovery()
             };
+            
+            // Determine thermal throttling likelihood
+            thermalAnalysis.throttling_detected = this.assessThermalThrottling(thermalAnalysis);
+            thermalAnalysis.confidence_level = this.calculateThrottlingConfidence(thermalAnalysis);
             
             return thermalAnalysis;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error detecting thermal throttling:", error);
+            return { error: error.message, throttling_status: "unknown" };
         }
     }
     
