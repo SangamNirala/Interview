@@ -10447,25 +10447,322 @@ class SessionFingerprintCollector {
     async detectV8Features() {
         try {
             const v8Features = {
-                engine_detected: false,
-                version_indicators: {},
-                v8_specific_features: {},
-                performance_optimizations: {},
-                memory_management: {}
+                // V8 Version Detection
+                v8_version: await this.detectV8Version(),
+                
+                // V8-Specific APIs
+                v8_apis: await this.detectV8APIs(),
+                
+                // V8 Optimization Features
+                optimization_features: await this.detectV8Optimizations(),
+                
+                // V8 Memory Management
+                memory_management: await this.analyzeV8MemoryManagement(),
+                
+                // V8 JIT Compilation
+                jit_compilation: await this.analyzeV8JITCompilation(),
+                
+                // V8 Garbage Collection
+                garbage_collection: await this.analyzeV8GarbageCollection(),
+                
+                // V8 Performance Counters
+                performance_counters: await this.accessV8PerformanceCounters(),
+                
+                // V8 Flag Detection
+                v8_flags: await this.detectV8Flags()
             };
             
-            // V8 engine detection
-            v8Features.engine_detected = this.detectV8Engine();
+            return v8Features;
             
-            if (v8Features.engine_detected) {
-                // V8 version indicators
-                v8Features.version_indicators = {
-                    error_stack_trace_api: Error.captureStackTrace ? true : false,
-                    v8_compile_cache: 'v8' in process ? true : false, // Node.js specific
-                    array_buffer_transfer: ArrayBuffer.prototype.transfer ? true : false,
-                    weak_ref_support: 'WeakRef' in window,
-                    finalization_registry: 'FinalizationRegistry' in window
+        } catch (error) {
+            this.logger.error("Error detecting V8 features:", error);
+            return { error: error.message, v8_available: false };
+        }
+    }
+    
+    // Detect V8 Version
+    async detectV8Version() {
+        try {
+            const versionInfo = {
+                major: 'unknown',
+                minor: 'unknown',
+                patch: 'unknown',
+                build: 'unknown',
+                detection_method: 'unknown',
+                confidence: 0
+            };
+            
+            // Direct V8 version from Node.js environment
+            if (typeof process !== 'undefined' && process.versions?.v8) {
+                const v8Version = process.versions.v8;
+                const parts = v8Version.split('.');
+                versionInfo.major = parts[0] || 'unknown';
+                versionInfo.minor = parts[1] || 'unknown';
+                versionInfo.patch = parts[2] || 'unknown';
+                versionInfo.build = parts[3] || 'unknown';
+                versionInfo.detection_method = 'process.versions.v8';
+                versionInfo.confidence = 1.0;
+                return versionInfo;
+            }
+            
+            // Chrome version-based V8 estimation
+            const ua = navigator.userAgent;
+            const chromeMatch = ua.match(/Chrome\/([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)/);
+            if (chromeMatch) {
+                const chromeMajor = parseInt(chromeMatch[1]);
+                versionInfo.major = this.estimateV8MajorFromChrome(chromeMajor);
+                versionInfo.detection_method = 'chrome_version_mapping';
+                versionInfo.confidence = 0.8;
+                versionInfo.chrome_version = `${chromeMatch[1]}.${chromeMatch[2]}.${chromeMatch[3]}.${chromeMatch[4]}`;
+            }
+            
+            // Edge version-based V8 estimation
+            const edgeMatch = ua.match(/Edg\/([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)/);
+            if (edgeMatch) {
+                const edgeMajor = parseInt(edgeMatch[1]);
+                versionInfo.major = this.estimateV8MajorFromEdge(edgeMajor);
+                versionInfo.detection_method = 'edge_version_mapping';
+                versionInfo.confidence = 0.7;
+                versionInfo.edge_version = `${edgeMatch[1]}.${edgeMatch[2]}.${edgeMatch[3]}.${edgeMatch[4]}`;
+            }
+            
+            // Feature-based version estimation
+            if (versionInfo.major === 'unknown') {
+                versionInfo.major = this.estimateV8VersionFromFeatures();
+                versionInfo.detection_method = 'feature_detection';
+                versionInfo.confidence = 0.6;
+            }
+            
+            return versionInfo;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect V8 APIs
+    async detectV8APIs() {
+        try {
+            const apis = {
+                error_apis: {},
+                performance_apis: {},
+                memory_apis: {},
+                compilation_apis: {},
+                debugging_apis: {}
+            };
+            
+            // Error APIs
+            apis.error_apis = {
+                capture_stack_trace: typeof Error.captureStackTrace === 'function',
+                prepare_stack_trace: typeof Error.prepareStackTrace === 'function',
+                stack_trace_limit: typeof Error.stackTraceLimit === 'number'
+            };
+            
+            // Performance APIs
+            apis.performance_apis = {
+                performance_now: typeof performance.now === 'function',
+                performance_mark: typeof performance.mark === 'function',
+                performance_measure: typeof performance.measure === 'function',
+                performance_observer: typeof PerformanceObserver === 'function'
+            };
+            
+            // Memory APIs
+            apis.memory_apis = {
+                memory_info: typeof performance.memory === 'object',
+                heap_statistics: typeof process !== 'undefined' && typeof process.memoryUsage === 'function',
+                weak_ref: typeof WeakRef === 'function',
+                finalization_registry: typeof FinalizationRegistry === 'function'
+            };
+            
+            // Compilation APIs
+            apis.compilation_apis = {
+                webassembly: typeof WebAssembly === 'object',
+                shared_array_buffer: typeof SharedArrayBuffer === 'function',
+                atomics: typeof Atomics === 'object',
+                big_int: typeof BigInt === 'function'
+            };
+            
+            // Debugging APIs (Node.js specific)
+            if (typeof process !== 'undefined') {
+                apis.debugging_apis = {
+                    inspector: typeof inspector !== 'undefined',
+                    debug_log: typeof process.debugPort === 'number',
+                    trace_events: 'trace_events' in (process.binding?.('trace_events') || {}),
+                    profiler: typeof process.profiler !== 'undefined'
                 };
+            }
+            
+            return apis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect V8 Optimizations
+    async detectV8Optimizations() {
+        try {
+            const optimizations = {
+                turbofan_optimizations: await this.detectTurboFanOptimizations(),
+                ignition_interpreter: await this.detectIgnitionInterpreter(),
+                orinoco_gc: await this.detectOrinocoGC(),
+                concurrent_marking: await this.detectConcurrentMarking(),
+                incremental_marking: await this.detectIncrementalMarking(),
+                pointer_compression: await this.detectPointerCompression(),
+                sparkplug_compiler: await this.detectSparkplugCompiler()
+            };
+            
+            return optimizations;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze V8 Memory Management
+    async analyzeV8MemoryManagement() {
+        try {
+            const analysis = {
+                heap_analysis: await this.analyzeV8Heap(),
+                gc_behavior: await this.analyzeV8GCBehavior(),
+                memory_pressure: await this.analyzeV8MemoryPressure(),
+                allocation_patterns: await this.analyzeV8AllocationPatterns(),
+                weak_reference_handling: await this.analyzeV8WeakReferences()
+            };
+            
+            return analysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze V8 JIT Compilation
+    async analyzeV8JITCompilation() {
+        try {
+            const analysis = {
+                compilation_tiers: await this.analyzeV8CompilationTiers(),
+                optimization_decisions: await this.analyzeV8OptimizationDecisions(),
+                deoptimization_patterns: await this.analyzeV8DeoptimizationPatterns(),
+                inline_caching: await this.analyzeV8InlineCaching(),
+                type_feedback: await this.analyzeV8TypeFeedback()
+            };
+            
+            return analysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze V8 Garbage Collection
+    async analyzeV8GarbageCollection() {
+        try {
+            const analysis = {
+                generational_structure: await this.analyzeV8GenerationalGC(),
+                incremental_marking: await this.analyzeV8IncrementalMarking(),
+                concurrent_sweeping: await this.analyzeV8ConcurrentSweeping(),
+                scavenger_behavior: await this.analyzeV8ScavengerBehavior(),
+                major_gc_behavior: await this.analyzeV8MajorGCBehavior()
+            };
+            
+            return analysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Access V8 Performance Counters
+    async accessV8PerformanceCounters() {
+        try {
+            const counters = {
+                available_counters: [],
+                compilation_counters: {},
+                gc_counters: {},
+                memory_counters: {},
+                runtime_counters: {}
+            };
+            
+            // Check if performance counters are available (Node.js)
+            if (typeof process !== 'undefined' && process.binding) {
+                try {
+                    const v8 = process.binding('v8');
+                    if (v8.getHeapStatistics) {
+                        const heapStats = v8.getHeapStatistics();
+                        counters.memory_counters = {
+                            total_heap_size: heapStats.total_heap_size,
+                            used_heap_size: heapStats.used_heap_size,
+                            heap_size_limit: heapStats.heap_size_limit,
+                            total_physical_size: heapStats.total_physical_size
+                        };
+                    }
+                } catch (e) {
+                    // V8 binding not available
+                }
+            }
+            
+            // Browser-specific performance counters
+            if (typeof performance !== 'undefined' && performance.memory) {
+                counters.memory_counters = {
+                    used_js_heap_size: performance.memory.usedJSHeapSize,
+                    total_js_heap_size: performance.memory.totalJSHeapSize,
+                    js_heap_size_limit: performance.memory.jsHeapSizeLimit
+                };
+            }
+            
+            // Runtime performance measurements
+            counters.runtime_counters = await this.measureV8RuntimePerformance();
+            
+            return counters;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect V8 Flags
+    async detectV8Flags() {
+        try {
+            const flags = {
+                detected_flags: [],
+                optimization_flags: [],
+                debugging_flags: [],
+                experimental_flags: [],
+                flag_sources: []
+            };
+            
+            // Check Node.js V8 flags
+            if (typeof process !== 'undefined' && process.execArgv) {
+                const v8Flags = process.execArgv.filter(arg => arg.startsWith('--'));
+                flags.detected_flags = v8Flags;
+                flags.flag_sources.push('process.execArgv');
+                
+                // Categorize flags
+                v8Flags.forEach(flag => {
+                    if (flag.includes('optimize') || flag.includes('turbo') || flag.includes('crankshaft')) {
+                        flags.optimization_flags.push(flag);
+                    }
+                    if (flag.includes('debug') || flag.includes('trace')) {
+                        flags.debugging_flags.push(flag);
+                    }
+                    if (flag.includes('experimental') || flag.includes('harmony')) {
+                        flags.experimental_flags.push(flag);
+                    }
+                });
+            }
+            
+            // Infer flags from feature availability
+            const inferredFlags = await this.inferV8FlagsFromFeatures();
+            flags.detected_flags.push(...inferredFlags);
+            flags.flag_sources.push('feature_inference');
+            
+            return flags;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
                 
                 // V8 specific features
                 v8Features.v8_specific_features = {
