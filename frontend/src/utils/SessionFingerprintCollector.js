@@ -850,6 +850,2145 @@ class SessionFingerprintCollector {
         return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     }
     
+    
+    // ===== ENHANCED DEVICE FINGERPRINTING METHODS =====
+    
+    /**
+     * Collect comprehensive hardware enumeration via WebGL and Canvas
+     */
+    async collectHardwareEnumeration() {
+        try {
+            const hardware = {
+                gpu: await this.getGPUCharacteristics(),
+                webgl_info: await this.getWebGLHardwareInfo(),
+                canvas_info: await this.getCanvasHardwareInfo(),
+                graphics_capabilities: await this.getGraphicsCapabilities(),
+                compute_capabilities: await this.getComputeCapabilities()
+            };
+            
+            return hardware;
+        } catch (error) {
+            this.logger.error("Error in hardware enumeration:", error);
+            return {};
+        }
+    }
+    
+    /**
+     * Get WebGL hardware information
+     */
+    async getWebGLHardwareInfo() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) return { supported: false };
+            
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            const extensions = gl.getSupportedExtensions() || [];
+            
+            const webglInfo = {
+                version: gl.getParameter(gl.VERSION),
+                shading_language_version: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+                vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+                renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+                max_texture_size: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+                max_viewport_dims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
+                max_vertex_attribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
+                max_vertex_uniform_vectors: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
+                max_fragment_uniform_vectors: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
+                max_varying_vectors: gl.getParameter(gl.MAX_VARYING_VECTORS),
+                extensions_count: extensions.length,
+                extensions: extensions.slice(0, 15), // Limit for privacy
+                aliased_line_width_range: gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE),
+                aliased_point_size_range: gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE),
+                supported_formats: this.getWebGLSupportedFormats(gl)
+            };
+            
+            // WebGL2 specific parameters
+            if (gl.constructor.name === 'WebGL2RenderingContext') {
+                webglInfo.webgl2 = true;
+                webglInfo.max_3d_texture_size = gl.getParameter(gl.MAX_3D_TEXTURE_SIZE);
+                webglInfo.max_array_texture_layers = gl.getParameter(gl.MAX_ARRAY_TEXTURE_LAYERS);
+                webglInfo.max_color_attachments = gl.getParameter(gl.MAX_COLOR_ATTACHMENTS);
+            }
+            
+            canvas.remove();
+            return webglInfo;
+        } catch (error) {
+            this.logger.error("Error getting WebGL hardware info:", error);
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get WebGL supported formats
+     */
+    getWebGLSupportedFormats(gl) {
+        const formats = [];
+        const compressionFormats = [
+            'COMPRESSED_RGB_S3TC_DXT1_EXT',
+            'COMPRESSED_RGBA_S3TC_DXT1_EXT',
+            'COMPRESSED_RGBA_S3TC_DXT3_EXT',
+            'COMPRESSED_RGBA_S3TC_DXT5_EXT',
+            'COMPRESSED_RGB_PVRTC_4BPPV1_IMG',
+            'COMPRESSED_RGBA_PVRTC_4BPPV1_IMG',
+            'COMPRESSED_RGB_PVRTC_2BPPV1_IMG',
+            'COMPRESSED_RGBA_PVRTC_2BPPV1_IMG',
+            'COMPRESSED_RGB_ETC1_WEBGL'
+        ];
+        
+        compressionFormats.forEach(format => {
+            const extension = gl.getExtension('WEBGL_compressed_texture_s3tc') ||
+                             gl.getExtension('WEBGL_compressed_texture_pvrtc') ||
+                             gl.getExtension('WEBGL_compressed_texture_etc1');
+            if (extension && extension[format]) {
+                formats.push(format);
+            }
+        });
+        
+        return formats;
+    }
+    
+    /**
+     * Get Canvas hardware information
+     */
+    async getCanvasHardwareInfo() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) return { supported: false };
+            
+            const canvasInfo = {
+                max_width: 32767, // Most browsers limit this
+                max_height: 32767,
+                image_smoothing_enabled: ctx.imageSmoothingEnabled,
+                image_smoothing_quality: ctx.imageSmoothingQuality || 'unknown',
+                text_rendering: this.getTextRenderingCapabilities(ctx),
+                drawing_performance: await this.benchmarkCanvasDrawing(ctx),
+                pixel_manipulation: await this.testCanvasPixelManipulation(ctx),
+                supported_formats: await this.getCanvasSupportedFormats(ctx)
+            };
+            
+            canvas.remove();
+            return canvasInfo;
+        } catch (error) {
+            this.logger.error("Error getting Canvas hardware info:", error);
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get text rendering capabilities
+     */
+    getTextRenderingCapabilities(ctx) {
+        const fonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana'];
+        const capabilities = {
+            supported_fonts: [],
+            font_rendering_quality: 'unknown',
+            text_metrics_precision: 0
+        };
+        
+        fonts.forEach(font => {
+            ctx.font = `20px ${font}`;
+            const metrics = ctx.measureText('Test Text 123');
+            if (metrics.width > 0) {
+                capabilities.supported_fonts.push({
+                    font: font,
+                    width: metrics.width,
+                    height: metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent || 0
+                });
+            }
+        });
+        
+        return capabilities;
+    }
+    
+    /**
+     * Benchmark canvas drawing performance
+     */
+    async benchmarkCanvasDrawing(ctx) {
+        const startTime = performance.now();
+        
+        // Simple drawing operations
+        for (let i = 0; i < 100; i++) {
+            ctx.fillStyle = `hsl(${i * 3.6}, 50%, 50%)`;
+            ctx.fillRect(i % 16 * 16, Math.floor(i / 16) * 16, 15, 15);
+        }
+        
+        const endTime = performance.now();
+        return {
+            operations_per_ms: 100 / (endTime - startTime),
+            total_time: endTime - startTime
+        };
+    }
+    
+    /**
+     * Test canvas pixel manipulation capabilities
+     */
+    async testCanvasPixelManipulation(ctx) {
+        try {
+            const startTime = performance.now();
+            
+            // Create gradient
+            ctx.fillStyle = 'red';
+            ctx.fillRect(0, 0, 100, 100);
+            
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, 100, 100);
+            
+            // Manipulate pixels
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                imageData.data[i] = 255 - imageData.data[i]; // Invert red
+            }
+            
+            // Put back image data
+            ctx.putImageData(imageData, 0, 0);
+            
+            const endTime = performance.now();
+            
+            return {
+                pixel_access_time: endTime - startTime,
+                image_data_size: imageData.data.length,
+                supports_pixel_manipulation: true
+            };
+        } catch (error) {
+            return { supports_pixel_manipulation: false };
+        }
+    }
+    
+    /**
+     * Get canvas supported formats
+     */
+    async getCanvasSupportedFormats(ctx) {
+        const formats = {
+            image_formats: [],
+            export_formats: []
+        };
+        
+        // Test export formats
+        const canvas = ctx.canvas;
+        const exportFormats = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+        
+        exportFormats.forEach(format => {
+            try {
+                const dataURL = canvas.toDataURL(format, 0.5);
+                if (dataURL.startsWith(`data:${format}`)) {
+                    formats.export_formats.push(format);
+                }
+            } catch (e) {
+                // Format not supported
+            }
+        });
+        
+        return formats;
+    }
+    
+    /**
+     * Get graphics capabilities
+     */
+    async getGraphicsCapabilities() {
+        try {
+            const capabilities = {
+                webgl: this.testWebGLSupport(),
+                webgl2: this.testWebGL2Support(),
+                canvas_2d: this.testCanvasSupport(),
+                svg: 'SVGElement' in window,
+                css_filters: this.testCSSFiltersSupport(),
+                css_animations: this.testCSSAnimationsSupport(),
+                css_transforms: this.testCSSTransformsSupport(),
+                hardware_acceleration: await this.detectHardwareAcceleration()
+            };
+            
+            return capabilities;
+        } catch (error) {
+            this.logger.error("Error getting graphics capabilities:", error);
+            return {};
+        }
+    }
+    
+    /**
+     * Test WebGL2 support
+     */
+    testWebGL2Support() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2');
+            canvas.remove();
+            return !!gl;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Test CSS filters support
+     */
+    testCSSFiltersSupport() {
+        const element = document.createElement('div');
+        element.style.filter = 'blur(1px)';
+        return element.style.filter === 'blur(1px)';
+    }
+    
+    /**
+     * Test CSS animations support
+     */
+    testCSSAnimationsSupport() {
+        const element = document.createElement('div');
+        const prefixes = ['', '-webkit-', '-moz-', '-o-', '-ms-'];
+        
+        for (const prefix of prefixes) {
+            if (`${prefix}animation` in element.style) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Test CSS transforms support
+     */
+    testCSSTransformsSupport() {
+        const element = document.createElement('div');
+        const prefixes = ['', '-webkit-', '-moz-', '-o-', '-ms-'];
+        
+        for (const prefix of prefixes) {
+            if (`${prefix}transform` in element.style) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Detect hardware acceleration
+     */
+    async detectHardwareAcceleration() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl');
+            
+            if (!gl) return false;
+            
+            // Check for hardware acceleration indicators
+            const renderer = gl.getParameter(gl.RENDERER);
+            const isHardwareAccelerated = 
+                !renderer.includes('Software') &&
+                !renderer.includes('Microsoft') &&
+                !renderer.includes('Generic');
+            
+            canvas.remove();
+            return isHardwareAccelerated;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    /**
+     * Get compute capabilities
+     */
+    async getComputeCapabilities() {
+        try {
+            const capabilities = {
+                web_assembly: 'WebAssembly' in window,
+                shared_array_buffer: 'SharedArrayBuffer' in window,
+                atomics: 'Atomics' in window,
+                bigint: typeof BigInt !== 'undefined',
+                workers: 'Worker' in window,
+                shared_workers: 'SharedWorker' in window,
+                service_workers: 'serviceWorker' in navigator,
+                crypto_subtle: 'crypto' in window && 'subtle' in crypto,
+                performance_observer: 'PerformanceObserver' in window,
+                intersection_observer: 'IntersectionObserver' in window
+            };
+            
+            if (capabilities.web_assembly) {
+                capabilities.wasm_features = await this.detectWasmFeatures();
+            }
+            
+            return capabilities;
+        } catch (error) {
+            this.logger.error("Error getting compute capabilities:", error);
+            return {};
+        }
+    }
+    
+    /**
+     * Detect WebAssembly features
+     */
+    async detectWasmFeatures() {
+        try {
+            const features = {
+                basic_support: true,
+                streaming: 'instantiateStreaming' in WebAssembly,
+                bulk_memory: false,
+                reference_types: false,
+                multi_value: false,
+                simd: false,
+                threads: 'SharedArrayBuffer' in window
+            };
+            
+            // Test SIMD support
+            try {
+                // Simple WASM module that uses SIMD (if supported)
+                const wasmBytes = new Uint8Array([
+                    0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00
+                ]);
+                await WebAssembly.instantiate(wasmBytes);
+                features.instantiation_works = true;
+            } catch (e) {
+                features.instantiation_works = false;
+            }
+            
+            return features;
+        } catch (error) {
+            return { basic_support: false };
+        }
+    }
+    
+    /**
+     * Collect device performance benchmarks
+     */
+    async collectDevicePerformanceBenchmarks() {
+        try {
+            const benchmarks = {
+                cpu_performance: await this.benchmarkCPUPerformance(),
+                memory_performance: await this.benchmarkMemoryPerformance(),
+                graphics_performance: await this.benchmarkGraphicsPerformance(),
+                storage_performance: await this.benchmarkStoragePerformance(),
+                network_performance: await this.benchmarkNetworkPerformance()
+            };
+            
+            benchmarks.overall_score = this.calculateDevicePerformanceScore(benchmarks);
+            
+            return benchmarks;
+        } catch (error) {
+            this.logger.error("Error collecting device performance benchmarks:", error);
+            return {};
+        }
+    }
+    
+    /**
+     * Benchmark graphics performance
+     */
+    async benchmarkGraphicsPerformance() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 500;
+            canvas.height = 500;
+            const gl = canvas.getContext('webgl');
+            
+            if (!gl) return { score: 0 };
+            
+            const startTime = performance.now();
+            
+            // Create a simple shader program
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, `
+                attribute vec2 position;
+                void main() {
+                    gl_Position = vec4(position, 0.0, 1.0);
+                }
+            `);
+            gl.compileShader(vertexShader);
+            
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, `
+                precision mediump float;
+                void main() {
+                    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                }
+            `);
+            gl.compileShader(fragmentShader);
+            
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            gl.useProgram(program);
+            
+            // Simple rendering test
+            const vertices = new Float32Array([-1, -1, 1, -1, 0, 1]);
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            
+            const positionLocation = gl.getAttribLocation(program, 'position');
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+            
+            // Render multiple times to benchmark
+            for (let i = 0; i < 100; i++) {
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.drawArrays(gl.TRIANGLES, 0, 3);
+            }
+            
+            gl.finish(); // Wait for GPU operations to complete
+            
+            const endTime = performance.now();
+            
+            // Cleanup
+            gl.deleteBuffer(buffer);
+            gl.deleteShader(vertexShader);
+            gl.deleteShader(fragmentShader);
+            gl.deleteProgram(program);
+            canvas.remove();
+            
+            return {
+                score: Math.max(0, 1000 - (endTime - startTime)),
+                render_time: endTime - startTime,
+                frames_per_second: Math.round(100 * 1000 / (endTime - startTime))
+            };
+        } catch (error) {
+            return { score: 0, error: error.message };
+        }
+    }
+    
+    /**
+     * Benchmark storage performance
+     */
+    async benchmarkStoragePerformance() {
+        try {
+            const results = {
+                localStorage: await this.benchmarkLocalStoragePerformance(),
+                sessionStorage: await this.benchmarkSessionStoragePerformance(),
+                indexedDB: await this.benchmarkIndexedDBPerformance()
+            };
+            
+            return results;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Benchmark localStorage performance
+     */
+    async benchmarkLocalStoragePerformance() {
+        try {
+            const testData = 'x'.repeat(1000); // 1KB test data
+            const iterations = 100;
+            
+            const writeStartTime = performance.now();
+            for (let i = 0; i < iterations; i++) {
+                localStorage.setItem(`perf_test_${i}`, testData);
+            }
+            const writeEndTime = performance.now();
+            
+            const readStartTime = performance.now();
+            for (let i = 0; i < iterations; i++) {
+                localStorage.getItem(`perf_test_${i}`);
+            }
+            const readEndTime = performance.now();
+            
+            // Cleanup
+            for (let i = 0; i < iterations; i++) {
+                localStorage.removeItem(`perf_test_${i}`);
+            }
+            
+            return {
+                write_time: writeEndTime - writeStartTime,
+                read_time: readEndTime - readStartTime,
+                write_ops_per_ms: iterations / (writeEndTime - writeStartTime),
+                read_ops_per_ms: iterations / (readEndTime - readStartTime)
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Benchmark sessionStorage performance
+     */
+    async benchmarkSessionStoragePerformance() {
+        try {
+            const testData = 'x'.repeat(1000);
+            const iterations = 100;
+            
+            const writeStartTime = performance.now();
+            for (let i = 0; i < iterations; i++) {
+                sessionStorage.setItem(`perf_test_${i}`, testData);
+            }
+            const writeEndTime = performance.now();
+            
+            const readStartTime = performance.now();
+            for (let i = 0; i < iterations; i++) {
+                sessionStorage.getItem(`perf_test_${i}`);
+            }
+            const readEndTime = performance.now();
+            
+            // Cleanup
+            for (let i = 0; i < iterations; i++) {
+                sessionStorage.removeItem(`perf_test_${i}`);
+            }
+            
+            return {
+                write_time: writeEndTime - writeStartTime,
+                read_time: readEndTime - readStartTime,
+                write_ops_per_ms: iterations / (writeEndTime - writeStartTime),
+                read_ops_per_ms: iterations / (readEndTime - readStartTime)
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Benchmark IndexedDB performance
+     */
+    async benchmarkIndexedDBPerformance() {
+        return new Promise((resolve) => {
+            try {
+                const request = indexedDB.open('PerfTestDB', 1);
+                
+                request.onerror = () => resolve({ error: 'IndexedDB not available' });
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('testStore')) {
+                        db.createObjectStore('testStore', { keyPath: 'id' });
+                    }
+                };
+                
+                request.onsuccess = async (event) => {
+                    const db = event.target.result;
+                    
+                    try {
+                        const transaction = db.transaction(['testStore'], 'readwrite');
+                        const store = transaction.objectStore('testStore');
+                        
+                        const testData = { data: 'x'.repeat(1000) };
+                        const iterations = 50; // Fewer iterations for IndexedDB
+                        
+                        const writeStartTime = performance.now();
+                        for (let i = 0; i < iterations; i++) {
+                            store.put({ id: i, ...testData });
+                        }
+                        const writeEndTime = performance.now();
+                        
+                        transaction.oncomplete = () => {
+                            const readTransaction = db.transaction(['testStore'], 'readonly');
+                            const readStore = readTransaction.objectStore('testStore');
+                            
+                            const readStartTime = performance.now();
+                            for (let i = 0; i < iterations; i++) {
+                                readStore.get(i);
+                            }
+                            const readEndTime = performance.now();
+                            
+                            // Cleanup
+                            const cleanupTransaction = db.transaction(['testStore'], 'readwrite');
+                            const cleanupStore = cleanupTransaction.objectStore('testStore');
+                            cleanupStore.clear();
+                            
+                            db.close();
+                            
+                            resolve({
+                                write_time: writeEndTime - writeStartTime,
+                                read_time: readEndTime - readStartTime,
+                                write_ops_per_ms: iterations / (writeEndTime - writeStartTime),
+                                read_ops_per_ms: iterations / (readEndTime - readStartTime)
+                            });
+                        };
+                    } catch (error) {
+                        db.close();
+                        resolve({ error: error.message });
+                    }
+                };
+            } catch (error) {
+                resolve({ error: error.message });
+            }
+        });
+    }
+    
+    /**
+     * Benchmark network performance
+     */
+    async benchmarkNetworkPerformance() {
+        try {
+            const results = [];
+            const testUrls = ['/favicon.ico', '/', window.location.href];
+            
+            for (const url of testUrls) {
+                try {
+                    const startTime = performance.now();
+                    const response = await fetch(url, { 
+                        method: 'HEAD', 
+                        cache: 'no-cache',
+                        mode: 'cors'
+                    });
+                    const endTime = performance.now();
+                    
+                    results.push({
+                        url: url,
+                        latency: endTime - startTime,
+                        status: response.status,
+                        success: response.ok
+                    });
+                } catch (error) {
+                    results.push({
+                        url: url,
+                        error: error.message,
+                        success: false
+                    });
+                }
+            }
+            
+            const successful = results.filter(r => r.success);
+            const avgLatency = successful.length > 0 
+                ? successful.reduce((sum, r) => sum + r.latency, 0) / successful.length
+                : 0;
+            
+            return {
+                average_latency: avgLatency,
+                test_results: results,
+                connection_type: this.getConnectionType(),
+                effective_bandwidth: avgLatency > 0 ? 1000 / avgLatency : 0
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Calculate overall device performance score
+     */
+    calculateDevicePerformanceScore(benchmarks) {
+        try {
+            const scores = [];
+            
+            if (benchmarks.cpu_performance && benchmarks.cpu_performance.score) {
+                scores.push(benchmarks.cpu_performance.score);
+            }
+            
+            if (benchmarks.memory_performance && benchmarks.memory_performance.score) {
+                scores.push(benchmarks.memory_performance.score);
+            }
+            
+            if (benchmarks.graphics_performance && benchmarks.graphics_performance.score) {
+                scores.push(benchmarks.graphics_performance.score);
+            }
+            
+            return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+        } catch (error) {
+            return 0;
+        }
+    }
+    
+    /**
+     * Generate comprehensive Canvas fingerprint
+     */
+    async generateCanvasFingerprint() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 50;
+            const ctx = canvas.getContext('2d');
+            
+            // Text rendering fingerprint
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(125, 1, 62, 20);
+            ctx.fillStyle = '#069';
+            ctx.fillText('Canvas fingerprint text! 🔐', 2, 15);
+            
+            // Geometric shapes fingerprint
+            ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+            ctx.fillRect(26, 26, 100, 20);
+            
+            // Additional complexity
+            ctx.beginPath();
+            ctx.arc(50, 50, 20, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Get canvas data
+            const dataURL = canvas.toDataURL();
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            canvas.remove();
+            
+            // Generate hash of the canvas content
+            const canvasHash = await this.hashSensitiveData(dataURL);
+            
+            return {
+                canvas_hash: canvasHash,
+                image_data_length: imageData.data.length,
+                canvas_size: `${canvas.width}x${canvas.height}`,
+                data_url_length: dataURL.length,
+                rendering_context: '2d'
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Generate comprehensive WebGL fingerprint
+     */
+    async generateWebGLFingerprint() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) {
+                canvas.remove();
+                return { supported: false };
+            }
+            
+            // Render a simple scene
+            gl.clearColor(0.2, 0.3, 0.4, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            
+            // Simple triangle
+            const vertices = new Float32Array([
+                0.0,  0.5,
+               -0.5, -0.5,
+                0.5, -0.5
+            ]);
+            
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            
+            // Create shaders
+            const vertexShaderSource = `
+                attribute vec2 a_position;
+                void main() {
+                    gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+            `;
+            
+            const fragmentShaderSource = `
+                precision mediump float;
+                void main() {
+                    gl_FragColor = vec4(1.0, 0.5, 0.0, 1.0);
+                }
+            `;
+            
+            const vertexShader = this.createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+            const fragmentShader = this.createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+            
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            gl.useProgram(program);
+            
+            const positionLocation = gl.getAttribLocation(program, 'a_position');
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+            
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+            
+            // Get rendered pixels
+            const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+            gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+            
+            // Get WebGL info
+            const webglInfo = await this.getWebGLHardwareInfo();
+            
+            // Generate fingerprint hash
+            const pixelHash = await this.hashSensitiveData(Array.from(pixels).join(''));
+            
+            // Cleanup
+            gl.deleteBuffer(buffer);
+            gl.deleteShader(vertexShader);
+            gl.deleteShader(fragmentShader);
+            gl.deleteProgram(program);
+            canvas.remove();
+            
+            return {
+                pixel_hash: pixelHash,
+                webgl_info: webglInfo,
+                canvas_size: `${canvas.width}x${canvas.height}`,
+                pixel_count: pixels.length,
+                supported: true
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Create WebGL shader
+     */
+    createShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            gl.deleteShader(shader);
+            throw new Error('Shader compilation failed');
+        }
+        
+        return shader;
+    }
+    
+    /**
+     * Extract platform information from user agent
+     */
+    extractPlatformFromUserAgent() {
+        const ua = navigator.userAgent.toLowerCase();
+        
+        if (ua.includes('windows nt 10.0')) return 'Windows 10';
+        if (ua.includes('windows nt 6.3')) return 'Windows 8.1';
+        if (ua.includes('windows nt 6.2')) return 'Windows 8';
+        if (ua.includes('windows nt 6.1')) return 'Windows 7';
+        if (ua.includes('mac os x')) return 'macOS';
+        if (ua.includes('android')) return 'Android';
+        if (ua.includes('iphone') || ua.includes('ipad')) return 'iOS';
+        if (ua.includes('linux')) return 'Linux';
+        if (ua.includes('cros')) return 'Chrome OS';
+        
+        return 'Unknown';
+    }
+    
+    /**
+     * Get fallback device fingerprint
+     */
+    getFallbackDeviceFingerprint() {
+        return {
+            fallback: true,
+            basic_device_info: {
+                hardware_concurrency: navigator.hardwareConcurrency || 0,
+                device_memory: navigator.deviceMemory || 0,
+                platform: navigator.platform,
+                user_agent: navigator.userAgent,
+                screen_resolution: `${screen.width}x${screen.height}`,
+                color_depth: screen.colorDepth,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timestamp: new Date().toISOString()
+            },
+            error: 'Enhanced device fingerprinting failed, using fallback method'
+        };
+    }
+    
+    // ===== ENHANCED BROWSER CHARACTERISTICS METHODS =====
+    
+    /**
+     * Collect JavaScript engine information and performance
+     */
+    async collectJavaScriptEngineInfo() {
+        try {
+            const engineInfo = {
+                engine_identification: this.getEngineInfo(),
+                v8_features: this.detectV8Features(),
+                javascript_version: this.detectJavaScriptVersion(),
+                performance_characteristics: await this.benchmarkJavaScriptPerformance(),
+                memory_management: this.getJavaScriptMemoryInfo(),
+                execution_environment: this.getExecutionEnvironmentInfo()
+            };
+            
+            return engineInfo;
+        } catch (error) {
+            this.logger.error("Error collecting JavaScript engine info:", error);
+            return {};
+        }
+    }
+    
+    /**
+     * Detect V8 specific features
+     */
+    detectV8Features() {
+        const features = {
+            has_v8: false,
+            compile_hints: false,
+            wasm_compilation: false,
+            shared_array_buffer: 'SharedArrayBuffer' in window,
+            atomics: 'Atomics' in window,
+            bigint_support: typeof BigInt !== 'undefined',
+            private_fields: false,
+            optional_chaining: false
+        };
+        
+        // Check for V8-specific properties
+        if (navigator.userAgent.includes('Chrome') || navigator.userAgent.includes('Edge')) {
+            features.has_v8 = true;
+        }
+        
+        // Test modern JavaScript features
+        try {
+            // Test private fields
+            eval('class TestClass { #private = 1; }');
+            features.private_fields = true;
+        } catch (e) {}
+        
+        try {
+            // Test optional chaining
+            eval('const test = {}; test?.property?.nested;');
+            features.optional_chaining = true;
+        } catch (e) {}
+        
+        return features;
+    }
+    
+    /**
+     * Detect JavaScript version/features
+     */
+    detectJavaScriptVersion() {
+        const features = {
+            es5: true, // Assume ES5 as baseline
+            es6: false,
+            es2017: false,
+            es2018: false,
+            es2019: false,
+            es2020: false,
+            es2021: false,
+            es2022: false
+        };
+        
+        // ES6 features
+        try {
+            eval('const test = () => {}; class TestClass {}');
+            features.es6 = true;
+        } catch (e) {}
+        
+        // ES2017 features
+        try {
+            eval('async function test() { await Promise.resolve(); }');
+            features.es2017 = true;
+        } catch (e) {}
+        
+        // ES2018 features
+        try {
+            eval('const obj = {a: 1}; const {a, ...rest} = obj;');
+            features.es2018 = true;
+        } catch (e) {}
+        
+        // ES2019 features
+        try {
+            eval('[1, 2, 3].flat();');
+            features.es2019 = true;
+        } catch (e) {}
+        
+        // ES2020 features
+        try {
+            eval('1n + 2n; globalThis;');
+            features.es2020 = true;
+        } catch (e) {}
+        
+        // ES2021 features
+        try {
+            eval('Promise.any([]);');
+            features.es2021 = true;
+        } catch (e) {}
+        
+        // ES2022 features
+        try {
+            eval('class TestClass { #private = 1; }');
+            features.es2022 = true;
+        } catch (e) {}
+        
+        return features;
+    }
+    
+    /**
+     * Get JavaScript memory information
+     */
+    getJavaScriptMemoryInfo() {
+        if (performance.memory) {
+            return {
+                js_heap_size_limit: performance.memory.jsHeapSizeLimit,
+                total_js_heap_size: performance.memory.totalJSHeapSize,
+                used_js_heap_size: performance.memory.usedJSHeapSize,
+                memory_pressure: performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit
+            };
+        }
+        
+        return { available: false };
+    }
+    
+    /**
+     * Get execution environment information
+     */
+    getExecutionEnvironmentInfo() {
+        return {
+            global_object: typeof globalThis !== 'undefined' ? 'globalThis' : 
+                          typeof window !== 'undefined' ? 'window' : 
+                          typeof global !== 'undefined' ? 'global' : 'unknown',
+            strict_mode: (function() { return !this; })(),
+            eval_available: typeof eval !== 'undefined',
+            function_constructor: typeof Function !== 'undefined',
+            worker_support: 'Worker' in window,
+            module_support: 'import' in document.createElement('script'),
+            dynamic_import: false // Would need async testing
+        };
+    }
+    
+    /**
+     * Collect rendering engine information
+     */
+    async collectRenderingEngineInfo() {
+        try {
+            const renderingInfo = {
+                engine_identification: this.getEngineInfo(),
+                css_support: await this.detectCSSSupport(),
+                rendering_performance: await this.benchmarkRenderingPerformance(),
+                layout_engine: this.detectLayoutEngine(),
+                graphics_rendering: await this.getGraphicsRenderingInfo()
+            };
+            
+            return renderingInfo;
+        } catch (error) {
+            this.logger.error("Error collecting rendering engine info:", error);
+            return {};
+        }
+    }
+    
+    /**
+     * Detect CSS support features
+     */
+    async detectCSSSupport() {
+        const testElement = document.createElement('div');
+        document.body.appendChild(testElement);
+        
+        const features = {
+            flexbox: this.testCSSProperty(testElement, 'display', 'flex'),
+            grid: this.testCSSProperty(testElement, 'display', 'grid'),
+            custom_properties: this.testCSSCustomProperties(testElement),
+            animations: this.testCSSAnimationsSupport(),
+            transforms: this.testCSSTransformsSupport(),
+            filters: this.testCSSFiltersSupport(),
+            masks: this.testCSSProperty(testElement, 'mask', 'url()'),
+            blend_modes: this.testCSSProperty(testElement, 'mix-blend-mode', 'multiply'),
+            gradients: this.testCSSProperty(testElement, 'background', 'linear-gradient(red, blue)'),
+            calc: this.testCSSProperty(testElement, 'width', 'calc(100px + 10px)'),
+            vh_vw_units: this.testCSSProperty(testElement, 'width', '50vw'),
+            css_shapes: this.testCSSProperty(testElement, 'shape-outside', 'circle()'),
+            css_scroll_snap: this.testCSSProperty(testElement, 'scroll-snap-type', 'x mandatory'),
+            css_containment: this.testCSSProperty(testElement, 'contain', 'layout'),
+            css_logical_properties: this.testCSSProperty(testElement, 'margin-inline-start', '10px')
+        };
+        
+        document.body.removeChild(testElement);
+        return features;
+    }
+    
+    /**
+     * Test CSS property support
+     */
+    testCSSProperty(element, property, value) {
+        try {
+            element.style[property] = value;
+            return element.style[property] === value || element.style[property] !== '';
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Test CSS custom properties support
+     */
+    testCSSCustomProperties(element) {
+        try {
+            element.style.setProperty('--test-property', 'test-value');
+            return element.style.getPropertyValue('--test-property') === 'test-value';
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Detect layout engine
+     */
+    detectLayoutEngine() {
+        const userAgent = navigator.userAgent;
+        
+        if (userAgent.includes('Blink') || userAgent.includes('Chrome')) {
+            return 'Blink';
+        }
+        if (userAgent.includes('Gecko') && userAgent.includes('Firefox')) {
+            return 'Gecko';
+        }
+        if (userAgent.includes('WebKit') && userAgent.includes('Safari')) {
+            return 'WebKit';
+        }
+        if (userAgent.includes('Trident') || userAgent.includes('MSIE')) {
+            return 'Trident';
+        }
+        if (userAgent.includes('EdgeHTML')) {
+            return 'EdgeHTML';
+        }
+        
+        return 'Unknown';
+    }
+    
+    /**
+     * Benchmark rendering performance
+     */
+    async benchmarkRenderingPerformance() {
+        try {
+            const results = {
+                dom_manipulation: await this.benchmarkDOMManipulation(),
+                css_animation: await this.benchmarkCSSAnimation(),
+                layout_thrashing: await this.benchmarkLayoutThrashing(),
+                paint_performance: await this.benchmarkPaintPerformance()
+            };
+            
+            return results;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Benchmark CSS animation performance
+     */
+    async benchmarkCSSAnimation() {
+        return new Promise((resolve) => {
+            try {
+                const testElement = document.createElement('div');
+                testElement.style.cssText = `
+                    position: absolute;
+                    left: -9999px;
+                    width: 100px;
+                    height: 100px;
+                    background: red;
+                    transition: transform 0.1s ease;
+                `;
+                
+                document.body.appendChild(testElement);
+                
+                const startTime = performance.now();
+                let animationCount = 0;
+                
+                const animate = () => {
+                    animationCount++;
+                    testElement.style.transform = `translateX(${animationCount % 2 * 100}px)`;
+                    
+                    if (animationCount < 50) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        const endTime = performance.now();
+                        document.body.removeChild(testElement);
+                        
+                        resolve({
+                            total_time: endTime - startTime,
+                            animations_per_ms: animationCount / (endTime - startTime),
+                            frame_rate: Math.round(animationCount * 1000 / (endTime - startTime))
+                        });
+                    }
+                };
+                
+                requestAnimationFrame(animate);
+            } catch (error) {
+                resolve({ error: error.message });
+            }
+        });
+    }
+    
+    /**
+     * Benchmark layout thrashing
+     */
+    async benchmarkLayoutThrashing() {
+        try {
+            const testElement = document.createElement('div');
+            testElement.style.cssText = 'position: absolute; left: -9999px;';
+            document.body.appendChild(testElement);
+            
+            const startTime = performance.now();
+            
+            // Force layout recalculation
+            for (let i = 0; i < 1000; i++) {
+                testElement.style.width = `${100 + i % 50}px`;
+                testElement.offsetWidth; // Force layout
+            }
+            
+            const endTime = performance.now();
+            document.body.removeChild(testElement);
+            
+            return {
+                total_time: endTime - startTime,
+                layouts_per_ms: 1000 / (endTime - startTime)
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Benchmark paint performance
+     */
+    async benchmarkPaintPerformance() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 200;
+            canvas.style.position = 'absolute';
+            canvas.style.left = '-9999px';
+            document.body.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            const startTime = performance.now();
+            
+            // Paint operations
+            for (let i = 0; i < 100; i++) {
+                ctx.fillStyle = `hsl(${i * 3.6}, 50%, 50%)`;
+                ctx.fillRect(i % 20 * 10, Math.floor(i / 20) * 10, 10, 10);
+            }
+            
+            const endTime = performance.now();
+            document.body.removeChild(canvas);
+            
+            return {
+                total_time: endTime - startTime,
+                paint_ops_per_ms: 100 / (endTime - startTime)
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get graphics rendering information
+     */
+    async getGraphicsRenderingInfo() {
+        try {
+            const info = {
+                canvas_2d: this.testCanvasSupport(),
+                webgl: this.testWebGLSupport(),
+                webgl2: this.testWebGL2Support(),
+                svg_support: 'SVGElement' in window,
+                hardware_acceleration: await this.detectHardwareAcceleration(),
+                color_spaces: this.detectColorSpaceSupport(),
+                hdr_support: this.detectHDRSupport()
+            };
+            
+            if (info.webgl) {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl');
+                if (gl) {
+                    info.webgl_extensions = gl.getSupportedExtensions();
+                    info.webgl_params = this.getWebGLParameters(gl);
+                }
+                canvas.remove();
+            }
+            
+            return info;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Detect color space support
+     */
+    detectColorSpaceSupport() {
+        const spaces = {
+            srgb: false,
+            display_p3: false,
+            rec2020: false
+        };
+        
+        if (window.matchMedia) {
+            spaces.srgb = window.matchMedia('(color-gamut: srgb)').matches;
+            spaces.display_p3 = window.matchMedia('(color-gamut: p3)').matches;
+            spaces.rec2020 = window.matchMedia('(color-gamut: rec2020)').matches;
+        }
+        
+        return spaces;
+    }
+    
+    /**
+     * Get WebGL parameters
+     */
+    getWebGLParameters(gl) {
+        const params = {};
+        
+        const parameters = [
+            'MAX_TEXTURE_SIZE',
+            'MAX_VERTEX_ATTRIBS',
+            'MAX_VERTEX_UNIFORM_VECTORS',
+            'MAX_FRAGMENT_UNIFORM_VECTORS',
+            'MAX_VARYING_VECTORS',
+            'MAX_VIEWPORT_DIMS',
+            'RENDERER',
+            'VENDOR',
+            'VERSION',
+            'SHADING_LANGUAGE_VERSION'
+        ];
+        
+        parameters.forEach(param => {
+            try {
+                params[param.toLowerCase()] = gl.getParameter(gl[param]);
+            } catch (e) {
+                params[param.toLowerCase()] = 'unknown';
+            }
+        });
+        
+        return params;
+    }
+    
+    /**
+     * Collect comprehensive font analysis
+     */
+    async collectFontAnalysis() {
+        try {
+            const fontInfo = {
+                system_fonts: await this.detectSystemFonts(),
+                font_rendering: await this.analyzeFontRendering(),
+                web_font_support: this.detectWebFontSupport(),
+                font_metrics: await this.analyzeFontMetrics(),
+                emoji_support: await this.analyzeEmojiSupport()
+            };
+            
+            return fontInfo;
+        } catch (error) {
+            this.logger.error("Error collecting font analysis:", error);
+            return {};
+        }
+    }
+    
+    /**
+     * Detect system fonts
+     */
+    async detectSystemFonts() {
+        const baseFonts = ['monospace', 'sans-serif', 'serif'];
+        const testFonts = [
+            'Arial', 'Arial Black', 'Arial Unicode MS', 'Calibri', 'Cambria',
+            'Comic Sans MS', 'Courier', 'Courier New', 'Georgia', 'Helvetica',
+            'Impact', 'Lucida Console', 'Lucida Sans Unicode', 'Microsoft Sans Serif',
+            'Palatino', 'Times', 'Times New Roman', 'Trebuchet MS', 'Verdana',
+            // macOS fonts
+            'Avenir', 'Avenir Next', 'Helvetica Neue', 'San Francisco', 'SF Pro Display',
+            // Linux fonts
+            'Ubuntu', 'DejaVu Sans', 'Liberation Sans', 'Droid Sans',
+            // Mobile fonts
+            'Roboto', 'Noto Sans', 'Segoe UI'
+        ];
+        
+        const availableFonts = [];
+        
+        for (const font of testFonts) {
+            if (await this.isFontAvailable(font, baseFonts)) {
+                availableFonts.push(font);
+            }
+        }
+        
+        return {
+            detected_count: availableFonts.length,
+            available_fonts: availableFonts.slice(0, 20), // Limit for privacy
+            base_fonts: baseFonts
+        };
+    }
+    
+    /**
+     * Check if font is available
+     */
+    async isFontAvailable(font, baseFonts) {
+        const testString = 'mmmmmmmmmmlli';
+        const testSize = '72px';
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Measure with base font
+        ctx.font = `${testSize} ${baseFonts[0]}`;
+        const baseWidth = ctx.measureText(testString).width;
+        
+        // Measure with test font
+        ctx.font = `${testSize} ${font}, ${baseFonts[0]}`;
+        const testWidth = ctx.measureText(testString).width;
+        
+        canvas.remove();
+        
+        // If widths differ, the font is likely available
+        return Math.abs(baseWidth - testWidth) > 1;
+    }
+    
+    /**
+     * Analyze font rendering characteristics
+     */
+    async analyzeFontRendering() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+            
+            const renderingTests = [];
+            
+            // Test different fonts and sizes
+            const testConfigs = [
+                { font: 'Arial', size: 12 },
+                { font: 'Times New Roman', size: 14 },
+                { font: 'Courier New', size: 16 }
+            ];
+            
+            testConfigs.forEach((config, index) => {
+                ctx.font = `${config.size}px ${config.font}`;
+                ctx.fillStyle = 'black';
+                ctx.fillText('Test Text Rendering', 10, 20 + index * 25);
+                
+                // Get metrics
+                const metrics = ctx.measureText('Test Text Rendering');
+                renderingTests.push({
+                    font: config.font,
+                    size: config.size,
+                    width: metrics.width,
+                    height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+                });
+            });
+            
+            // Get pixel data for fingerprinting
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixelHash = await this.hashSensitiveData(Array.from(imageData.data.slice(0, 100)).join(''));
+            
+            canvas.remove();
+            
+            return {
+                rendering_tests: renderingTests,
+                pixel_fingerprint: pixelHash,
+                anti_aliasing: this.detectFontAntiAliasing()
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Detect font anti-aliasing
+     */
+    detectFontAntiAliasing() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 50;
+        canvas.height = 50;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.font = '20px Arial';
+        ctx.fillStyle = 'black';
+        ctx.fillText('A', 10, 30);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Look for gray pixels (anti-aliasing)
+        let grayPixels = 0;
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            const r = imageData.data[i];
+            const g = imageData.data[i + 1];
+            const b = imageData.data[i + 2];
+            
+            // Check for gray values (not pure black or white)
+            if (r === g && g === b && r > 0 && r < 255) {
+                grayPixels++;
+            }
+        }
+        
+        canvas.remove();
+        
+        return {
+            anti_aliased: grayPixels > 10,
+            gray_pixel_count: grayPixels
+        };
+    }
+    
+    /**
+     * Detect web font support
+     */
+    detectWebFontSupport() {
+        const support = {
+            woff: false,
+            woff2: false,
+            ttf: false,
+            otf: false,
+            eot: false,
+            svg_fonts: false
+        };
+        
+        // Test format support
+        const formatTests = [
+            { format: 'woff', mimeType: 'application/font-woff' },
+            { format: 'woff2', mimeType: 'application/font-woff2' },
+            { format: 'ttf', mimeType: 'application/x-font-ttf' },
+            { format: 'otf', mimeType: 'application/x-font-opentype' },
+            { format: 'eot', mimeType: 'application/vnd.ms-fontobject' }
+        ];
+        
+        formatTests.forEach(test => {
+            try {
+                const testElement = document.createElement('style');
+                testElement.textContent = `@font-face { font-family: 'test'; src: url('data:${test.mimeType};base64,') format('${test.format}'); }`;
+                document.head.appendChild(testElement);
+                
+                // Simple heuristic: if no error thrown, format might be supported
+                support[test.format] = true;
+                
+                document.head.removeChild(testElement);
+            } catch (e) {
+                support[test.format] = false;
+            }
+        });
+        
+        support.svg_fonts = 'SVGElement' in window;
+        
+        return support;
+    }
+    
+    /**
+     * Analyze font metrics
+     */
+    async analyzeFontMetrics() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const testFonts = ['Arial', 'Times New Roman', 'Courier New'];
+            const metrics = [];
+            
+            testFonts.forEach(font => {
+                ctx.font = `16px ${font}`;
+                const testText = 'The quick brown fox jumps over the lazy dog';
+                const measurement = ctx.measureText(testText);
+                
+                metrics.push({
+                    font: font,
+                    width: measurement.width,
+                    actual_height: measurement.actualBoundingBoxAscent + measurement.actualBoundingBoxDescent,
+                    font_height: measurement.fontBoundingBoxAscent + measurement.fontBoundingBoxDescent,
+                    baseline: measurement.actualBoundingBoxAscent
+                });
+            });
+            
+            canvas.remove();
+            
+            return {
+                font_metrics: metrics,
+                metrics_precision: 'high'
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Analyze emoji support
+     */
+    async analyzeEmojiSupport() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 50;
+            canvas.height = 50;
+            const ctx = canvas.getContext('2d');
+            
+            const testEmojis = ['😀', '🚀', '💻', '🌟', '🔥'];
+            const emojiSupport = [];
+            
+            testEmojis.forEach(emoji => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '20px Arial';
+                ctx.fillStyle = 'black';
+                ctx.fillText(emoji, 10, 30);
+                
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // Check if anything was drawn (non-white pixels)
+                let hasContent = false;
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    if (imageData.data[i] !== 255 || 
+                        imageData.data[i + 1] !== 255 || 
+                        imageData.data[i + 2] !== 255) {
+                        hasContent = true;
+                        break;
+                    }
+                }
+                
+                emojiSupport.push({
+                    emoji: emoji,
+                    supported: hasContent
+                });
+            });
+            
+            canvas.remove();
+            
+            return {
+                emoji_tests: emojiSupport,
+                overall_support: emojiSupport.filter(e => e.supported).length / emojiSupport.length
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Collect comprehensive API availability information
+     */
+    async collectAPIAvailability() {
+        try {
+            const apis = {
+                // Core Web APIs
+                dom_apis: this.testDOMAPIs(),
+                storage_apis: this.testStorageAPIs(),
+                network_apis: this.testNetworkAPIs(),
+                media_apis: this.testMediaAPIs(),
+                security_apis: this.testSecurityAPIs(),
+                performance_apis: this.testPerformanceAPIs(),
+                
+                // Modern Web APIs
+                modern_apis: this.testModernAPIs(),
+                experimental_apis: this.testExperimentalAPIs(),
+                
+                // Browser-specific APIs
+                browser_specific: this.testBrowserSpecificAPIs(),
+                
+                // Permissions and capabilities
+                permissions: await this.testPermissionsAPI()
+            };
+            
+            return apis;
+        } catch (error) {
+            this.logger.error("Error collecting API availability:", error);
+            return {};
+        }
+    }
+    
+    /**
+     * Test DOM APIs
+     */
+    testDOMAPIs() {
+        return {
+            query_selector: 'querySelector' in document,
+            get_elements_by_class: 'getElementsByClassName' in document,
+            create_element: 'createElement' in document,
+            mutation_observer: 'MutationObserver' in window,
+            intersection_observer: 'IntersectionObserver' in window,
+            resize_observer: 'ResizeObserver' in window,
+            custom_elements: 'customElements' in window,
+            shadow_dom: 'attachShadow' in Element.prototype,
+            template_element: 'HTMLTemplateElement' in window,
+            slot_element: 'HTMLSlotElement' in window
+        };
+    }
+    
+    /**
+     * Test storage APIs
+     */
+    testStorageAPIs() {
+        return {
+            local_storage: this.testLocalStorage(),
+            session_storage: this.testSessionStorage(),
+            indexed_db: this.testIndexedDB(),
+            web_sql: 'openDatabase' in window,
+            cache_api: 'caches' in window,
+            storage_manager: 'storage' in navigator,
+            persistent_storage: 'storage' in navigator && 'persist' in navigator.storage,
+            quota_management: 'storage' in navigator && 'estimate' in navigator.storage
+        };
+    }
+    
+    /**
+     * Test network APIs
+     */
+    testNetworkAPIs() {
+        return {
+            fetch: 'fetch' in window,
+            xml_http_request: 'XMLHttpRequest' in window,
+            websockets: 'WebSocket' in window,
+            server_sent_events: 'EventSource' in window,
+            web_rtc: 'RTCPeerConnection' in window,
+            network_information: 'connection' in navigator,
+            online_events: 'onLine' in navigator,
+            beacon_api: 'sendBeacon' in navigator,
+            background_sync: 'serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype
+        };
+    }
+    
+    /**
+     * Test media APIs
+     */
+    testMediaAPIs() {
+        return {
+            media_devices: 'mediaDevices' in navigator,
+            get_user_media: 'getUserMedia' in navigator || 'webkitGetUserMedia' in navigator,
+            media_recorder: 'MediaRecorder' in window,
+            audio_context: 'AudioContext' in window || 'webkitAudioContext' in window,
+            web_audio: 'AudioContext' in window,
+            media_source: 'MediaSource' in window,
+            encrypted_media: 'requestMediaKeySystemAccess' in navigator,
+            picture_in_picture: 'pictureInPictureEnabled' in document,
+            screen_capture: 'getDisplayMedia' in navigator.mediaDevices || false,
+            media_session: 'mediaSession' in navigator
+        };
+    }
+    
+    /**
+     * Test security APIs
+     */
+    testSecurityAPIs() {
+        return {
+            crypto_subtle: 'crypto' in window && 'subtle' in crypto,
+            crypto_random: 'crypto' in window && 'getRandomValues' in crypto,
+            csp: 'SecurityPolicyViolationEvent' in window,
+            sri: 'HTMLScriptElement' in window && 'integrity' in HTMLScriptElement.prototype,
+            credential_management: 'credentials' in navigator,
+            web_authentication: 'credentials' in navigator && 'create' in navigator.credentials,
+            payment_request: 'PaymentRequest' in window,
+            permissions_api: 'permissions' in navigator
+        };
+    }
+    
+    /**
+     * Test performance APIs
+     */
+    testPerformanceAPIs() {
+        return {
+            performance_now: 'performance' in window && 'now' in performance,
+            performance_observer: 'PerformanceObserver' in window,
+            performance_timeline: 'getEntries' in performance,
+            resource_timing: 'getEntriesByType' in performance,
+            navigation_timing: 'timing' in performance,
+            user_timing: 'mark' in performance && 'measure' in performance,
+            high_resolution_time: 'performance' in window && performance.now() % 1 !== 0,
+            frame_timing: 'PerformanceFrameTiming' in window || false,
+            paint_timing: performance.getEntriesByType('paint').length > 0
+        };
+    }
+    
+    /**
+     * Test modern Web APIs
+     */
+    testModernAPIs() {
+        return {
+            streams: 'ReadableStream' in window,
+            payment_handler: 'PaymentManager' in window || false,
+            background_fetch: 'BackgroundFetch' in window || false,
+            clipboard_async: 'clipboard' in navigator,
+            share_api: 'share' in navigator,
+            contact_picker: 'contacts' in navigator || false,
+            device_memory: 'deviceMemory' in navigator,
+            hardware_concurrency: 'hardwareConcurrency' in navigator,
+            connection_api: 'connection' in navigator,
+            wake_lock: 'wakeLock' in navigator || false,
+            idle_detection: 'IdleDetector' in window || false,
+            web_locks: 'locks' in navigator || false,
+            web_share_target: 'serviceWorker' in navigator // Simplified check
+        };
+    }
+    
+    /**
+     * Test experimental APIs
+     */
+    testExperimentalAPIs() {
+        return {
+            file_system_access: 'showOpenFilePicker' in window || false,
+            web_hid: 'hid' in navigator || false,
+            web_serial: 'serial' in navigator || false,
+            web_usb: 'usb' in navigator || false,
+            web_bluetooth: 'bluetooth' in navigator || false,
+            web_nfc: 'nfc' in navigator || false,
+            eye_dropper: 'EyeDropper' in window || false,
+            window_controls_overlay: 'windowControlsOverlay' in navigator || false,
+            virtual_keyboard: 'virtualKeyboard' in navigator || false,
+            keyboard_map: 'keyboard' in navigator && 'getLayoutMap' in navigator.keyboard || false
+        };
+    }
+    
+    /**
+     * Test browser-specific APIs
+     */
+    testBrowserSpecificAPIs() {
+        return {
+            // Chrome/Blink specific
+            chrome_extension: 'chrome' in window && 'extension' in window.chrome || false,
+            performance_memory: 'memory' in performance,
+            
+            // Firefox specific
+            moz_apis: 'mozInnerScreenX' in window || false,
+            
+            // Safari specific
+            webkit_apis: 'webkitAudioContext' in window,
+            
+            // Edge specific
+            ms_apis: 'MSInputMethodContext' in window || false,
+            
+            // General vendor prefixes
+            vendor_prefixed: this.detectVendorPrefixes()
+        };
+    }
+    
+    /**
+     * Detect vendor prefixes
+     */
+    detectVendorPrefixes() {
+        const prefixes = {
+            webkit: false,
+            moz: false,
+            ms: false,
+            o: false
+        };
+        
+        const testElement = document.createElement('div');
+        
+        if ('webkitTransform' in testElement.style) prefixes.webkit = true;
+        if ('MozTransform' in testElement.style) prefixes.moz = true;
+        if ('msTransform' in testElement.style) prefixes.ms = true;
+        if ('OTransform' in testElement.style) prefixes.o = true;
+        
+        return prefixes;
+    }
+    
+    /**
+     * Test Permissions API
+     */
+    async testPermissionsAPI() {
+        if (!('permissions' in navigator)) {
+            return { available: false };
+        }
+        
+        const permissions = {};
+        const testPermissions = [
+            'camera', 'microphone', 'geolocation', 'notifications',
+            'push', 'accelerometer', 'gyroscope', 'magnetometer'
+        ];
+        
+        for (const permission of testPermissions) {
+            try {
+                const result = await navigator.permissions.query({ name: permission });
+                permissions[permission] = result.state;
+            } catch (e) {
+                permissions[permission] = 'unsupported';
+            }
+        }
+        
+        return {
+            available: true,
+            permissions: permissions
+        };
+    }
+    
+    /**
+     * Get browser build ID
+     */
+    getBrowserBuildId() {
+        // Firefox has buildID
+        if (navigator.buildID) {
+            return navigator.buildID;
+        }
+        
+        // Extract from user agent if possible
+        const ua = navigator.userAgent;
+        const buildMatch = ua.match(/(?:Chrome|Firefox|Safari)\/([^\s]+)/);
+        return buildMatch ? buildMatch[1] : 'unknown';
+    }
+    
+    /**
+     * Collect browser performance information
+     */
+    async collectBrowserPerformanceInfo() {
+        try {
+            const performance_info = {
+                javascript_performance: await this.benchmarkJavaScriptPerformance(),
+                dom_performance: await this.benchmarkDOMManipulation(),
+                rendering_performance: await this.benchmarkRenderingPerformance(),
+                memory_usage: this.getJavaScriptMemoryInfo(),
+                timing_precision: this.getTimingPrecision()
+            };
+            
+            return performance_info;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get timing precision
+     */
+    getTimingPrecision() {
+        const measurements = [];
+        
+        for (let i = 0; i < 10; i++) {
+            measurements.push(performance.now());
+        }
+        
+        // Calculate precision based on decimal places
+        const precisions = measurements.map(m => {
+            const str = m.toString();
+            const decimal = str.indexOf('.');
+            return decimal >= 0 ? str.length - decimal - 1 : 0;
+        });
+        
+        return {
+            average_precision: precisions.reduce((a, b) => a + b, 0) / precisions.length,
+            max_precision: Math.max(...precisions),
+            min_precision: Math.min(...precisions),
+            reduced_precision: Math.max(...precisions) < 3 // Indicates timing attack mitigation
+        };
+    }
+    
+    /**
+     * Generate browser rendering fingerprint
+     */
+    async generateBrowserRenderingFingerprint() {
+        try {
+            const fingerprint = {
+                canvas_fingerprint: await this.generateCanvasFingerprint(),
+                webgl_fingerprint: await this.generateWebGLFingerprint(),
+                css_fingerprint: await this.generateCSSFingerprint(),
+                font_fingerprint: await this.generateFontFingerprint()
+            };
+            
+            return fingerprint;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Generate CSS fingerprint
+     */
+    async generateCSSFingerprint() {
+        try {
+            const testElement = document.createElement('div');
+            testElement.innerHTML = 'CSS Test Element';
+            testElement.style.cssText = `
+                font-family: Arial;
+                font-size: 12px;
+                color: red;
+                background: linear-gradient(45deg, blue, green);
+                transform: rotate(5deg);
+                border-radius: 5px;
+                box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            `;
+            
+            document.body.appendChild(testElement);
+            
+            // Get computed styles
+            const computed = window.getComputedStyle(testElement);
+            const cssProperties = [
+                'fontFamily', 'fontSize', 'color', 'background',
+                'transform', 'borderRadius', 'boxShadow', 'width', 'height'
+            ];
+            
+            const styleData = {};
+            cssProperties.forEach(prop => {
+                styleData[prop] = computed.getPropertyValue(prop.replace(/([A-Z])/g, '-$1').toLowerCase());
+            });
+            
+            document.body.removeChild(testElement);
+            
+            // Generate hash
+            const styleHash = await this.hashSensitiveData(JSON.stringify(styleData));
+            
+            return {
+                css_hash: styleHash,
+                computed_styles: styleData
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Generate font fingerprint
+     */
+    async generateFontFingerprint() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 300;
+            canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+            
+            // Render text with different fonts
+            const fonts = ['Arial', 'Times New Roman', 'Courier New'];
+            const text = 'Font fingerprint test 123 !@#';
+            
+            fonts.forEach((font, index) => {
+                ctx.font = `16px ${font}`;
+                ctx.fillStyle = `hsl(${index * 120}, 70%, 50%)`;
+                ctx.fillText(text, 10, 20 + index * 25);
+            });
+            
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const fontHash = await this.hashSensitiveData(Array.from(imageData.data.slice(0, 500)).join(''));
+            
+            canvas.remove();
+            
+            return {
+                font_hash: fontHash,
+                canvas_size: `${canvas.width}x${canvas.height}`,
+                fonts_tested: fonts.length
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Enumerate media devices
+     */
+    async enumerateMediaDevices() {
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                return { available: false };
+            }
+            
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            
+            const deviceInfo = {
+                total_devices: devices.length,
+                audio_input: devices.filter(d => d.kind === 'audioinput').length,
+                audio_output: devices.filter(d => d.kind === 'audiooutput').length,
+                video_input: devices.filter(d => d.kind === 'videoinput').length,
+                device_ids: devices.map(d => d.deviceId ? 'present' : 'absent'),
+                labels_available: devices.some(d => d.label !== '')
+            };
+            
+            return deviceInfo;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get storage estimate
+     */
+    async getStorageEstimate() {
+        try {
+            if ('storage' in navigator && 'estimate' in navigator.storage) {
+                const estimate = await navigator.storage.estimate();
+                return {
+                    quota: estimate.quota,
+                    usage: estimate.usage,
+                    available: estimate.quota - estimate.usage,
+                    usage_percentage: Math.round((estimate.usage / estimate.quota) * 100)
+                };
+            }
+            
+            return { available: false };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get fallback browser fingerprint
+     */
+    getFallbackBrowserFingerprint() {
+        return {
+            fallback: true,
+            basic_browser_info: {
+                user_agent: navigator.userAgent,
+                language: navigator.language,
+                platform: navigator.platform,
+                cookie_enabled: navigator.cookieEnabled,
+                online: navigator.onLine,
+                java_enabled: navigator.javaEnabled ? navigator.javaEnabled() : false,
+                plugins_count: navigator.plugins.length,
+                mime_types_count: navigator.mimeTypes.length,
+                screen_resolution: `${screen.width}x${screen.height}`,
+                color_depth: screen.colorDepth,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timestamp: new Date().toISOString()
+            },
+            error: 'Enhanced browser characteristics collection failed, using fallback method'
+        };
+    }
+    
     // ===== HELPER METHODS =====
     
     generateUniqueId() {
