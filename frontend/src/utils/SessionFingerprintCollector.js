@@ -4908,8 +4908,8 @@ class SessionFingerprintCollector {
         // Note: ProximitySensor is not widely supported
         return new Promise((resolve) => {
             try {
-                if ('ProximitySensor' in window) {
-                    const sensor = new ProximitySensor();
+                if (window.ProximitySensor) {
+                    const sensor = new window.ProximitySensor();
                     sensor.onreading = () => {
                         resolve({ 
                             distance: sensor.distance,
