@@ -90,155 +90,145 @@ class EnhancedFingerprintingTester:
             # Create comprehensive enhanced browser fingerprint data
             enhanced_fingerprint_data = {
                 "session_id": self.session_id,
-                "device_id": str(uuid.uuid4()),
-                "timestamp": datetime.now().isoformat(),
-                
-                # Enhanced browser identification
-                "enhanced_browser_identification": {
-                    "detailed_user_agent_analysis": {
-                        "browser_name": "Chrome",
-                        "browser_version": "120.0.6099.109",
-                        "browser_major_version": 120,
-                        "browser_minor_version": "0.6099.109",
-                        "engine_name": "Blink",
-                        "engine_version": "120.0.6099.109",
-                        "os_name": "Windows",
-                        "os_version": "10.0",
-                        "device_type": "desktop",
-                        "architecture": "x64",
-                        "user_agent_string": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                    },
-                    "browser_build_detection": {
-                        "build_number": "6099.109",
-                        "build_date": "2024-01-10",
-                        "channel": "stable",
-                        "update_level": "current",
-                        "security_patches": ["CVE-2023-7024", "CVE-2023-6345"],
-                        "feature_flags": ["WebGPU", "OriginPrivateFileSystemAPI", "WebCodecs"]
-                    },
-                    "js_engine_fingerprinting": {
-                        "engine_type": "V8",
-                        "engine_version": "12.0.267.8",
-                        "compilation_mode": "turbofan",
-                        "optimization_level": "O3",
-                        "memory_model": "generational_gc",
-                        "features_supported": ["BigInt", "WeakRef", "FinalizationRegistry", "TopLevelAwait"]
-                    },
-                    "headless_browser_detection": {
-                        "is_headless": False,
-                        "headless_indicators": [],
-                        "automation_detected": False,
-                        "webdriver_present": False,
-                        "phantom_properties": [],
-                        "selenium_artifacts": []
-                    }
-                },
-                
-                # JavaScript engine profiling
-                "javascript_engine_profiling": {
-                    "v8_features": {
-                        "turbofan_enabled": True,
-                        "ignition_interpreter": True,
-                        "sparkplug_compiler": True,
-                        "maglev_compiler": True,
-                        "concurrent_marking": True,
-                        "incremental_marking": True,
-                        "pointer_compression": True,
-                        "sandbox_enabled": True
-                    },
-                    "performance_characteristics": {
-                        "compilation_time_ms": 12.5,
-                        "execution_time_ms": 8.3,
-                        "gc_pause_time_ms": 2.1,
-                        "memory_allocation_rate_mb_s": 45.2,
-                        "optimization_tier": "turbofan",
-                        "deoptimization_count": 0,
-                        "inline_cache_hits": 0.95
-                    },
-                    "memory_management": {
-                        "heap_size_mb": 128.5,
-                        "used_heap_mb": 67.3,
-                        "heap_limit_mb": 512.0,
-                        "gc_type": "mark_sweep_compact",
-                        "gc_frequency_hz": 0.5,
-                        "memory_pressure": "low",
-                        "allocation_pattern": "steady"
-                    },
-                    "optimization_detection": {
-                        "hot_functions_count": 15,
-                        "optimized_functions_count": 12,
-                        "deoptimized_functions_count": 0,
-                        "inline_cache_efficiency": 0.94,
-                        "hidden_class_transitions": 3,
-                        "polymorphic_call_sites": 2
-                    }
-                },
-                
-                # Rendering engine analysis
-                "rendering_engine_analysis": {
-                    "layout_engine_fingerprinting": {
-                        "engine_name": "Blink",
-                        "engine_version": "120.0.6099.109",
-                        "layout_algorithm": "LayoutNG",
-                        "text_rendering": "DirectWrite",
-                        "font_rendering": "ClearType",
-                        "subpixel_rendering": True,
-                        "hardware_acceleration": True
-                    },
-                    "css_feature_matrices": {
-                        "css_version": "CSS3",
-                        "flexbox_support": True,
-                        "grid_support": True,
-                        "custom_properties": True,
-                        "container_queries": True,
-                        "cascade_layers": True,
-                        "color_functions": ["oklch", "oklab", "hwb"],
-                        "viewport_units": ["dvh", "lvh", "svh"]
-                    },
-                    "rendering_quirks": {
-                        "subpixel_precision": 0.25,
-                        "font_smoothing": "antialiased",
-                        "text_stroke_support": True,
-                        "backdrop_filter_support": True,
-                        "clip_path_support": True,
-                        "mask_support": True,
-                        "filter_effects": ["blur", "brightness", "contrast", "drop-shadow"]
-                    },
-                    "graphics_acceleration": {
-                        "webgl_enabled": True,
-                        "webgl_version": "2.0",
-                        "webgpu_enabled": True,
-                        "hardware_acceleration": True,
-                        "gpu_vendor": "NVIDIA Corporation",
-                        "gpu_renderer": "NVIDIA GeForce RTX 4080",
-                        "gpu_driver_version": "537.13",
-                        "max_texture_size": 16384
-                    }
-                },
-                
-                # Additional comprehensive data
-                "device_characteristics": {
+                "fingerprint_data": {
+                    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                     "screen_resolution": "2560x1440",
                     "color_depth": 24,
-                    "pixel_ratio": 1.5,
-                    "available_fonts": ["Arial", "Times New Roman", "Helvetica", "Georgia"],
                     "timezone": "America/New_York",
                     "language": "en-US",
-                    "platform": "Win32"
-                },
-                
-                "network_characteristics": {
-                    "connection_type": "ethernet",
-                    "effective_bandwidth": "10mbps",
-                    "rtt": 25,
-                    "downlink": 10.5,
-                    "save_data": False
+                    "platform": "Win32",
+                    "canvas_fingerprint": "canvas_hash_67890",
+                    "webgl_fingerprint": "webgl_hash_12345",
+                    "audio_fingerprint": "audio_hash_54321",
+                    "font_fingerprint": "font_hash_98765",
+                    
+                    # Enhanced browser identification
+                    "enhanced_browser_identification": {
+                        "detailed_user_agent_analysis": {
+                            "browser_name": "Chrome",
+                            "browser_version": "120.0.6099.109",
+                            "browser_major_version": 120,
+                            "browser_minor_version": "0.6099.109",
+                            "engine_name": "Blink",
+                            "engine_version": "120.0.6099.109",
+                            "os_name": "Windows",
+                            "os_version": "10.0",
+                            "device_type": "desktop",
+                            "architecture": "x64"
+                        },
+                        "browser_build_detection": {
+                            "build_number": "6099.109",
+                            "build_date": "2024-01-10",
+                            "channel": "stable",
+                            "update_level": "current",
+                            "security_patches": ["CVE-2023-7024", "CVE-2023-6345"],
+                            "feature_flags": ["WebGPU", "OriginPrivateFileSystemAPI", "WebCodecs"]
+                        },
+                        "js_engine_fingerprinting": {
+                            "engine_type": "V8",
+                            "engine_version": "12.0.267.8",
+                            "compilation_mode": "turbofan",
+                            "optimization_level": "O3",
+                            "memory_model": "generational_gc",
+                            "features_supported": ["BigInt", "WeakRef", "FinalizationRegistry", "TopLevelAwait"]
+                        },
+                        "headless_browser_detection": {
+                            "is_headless": False,
+                            "headless_indicators": [],
+                            "automation_detected": False,
+                            "webdriver_present": False,
+                            "phantom_properties": [],
+                            "selenium_artifacts": []
+                        }
+                    },
+                    
+                    # JavaScript engine profiling
+                    "javascript_engine_profiling": {
+                        "v8_features": {
+                            "turbofan_enabled": True,
+                            "ignition_interpreter": True,
+                            "sparkplug_compiler": True,
+                            "maglev_compiler": True,
+                            "concurrent_marking": True,
+                            "incremental_marking": True,
+                            "pointer_compression": True,
+                            "sandbox_enabled": True
+                        },
+                        "performance_characteristics": {
+                            "compilation_time_ms": 12.5,
+                            "execution_time_ms": 8.3,
+                            "gc_pause_time_ms": 2.1,
+                            "memory_allocation_rate_mb_s": 45.2,
+                            "optimization_tier": "turbofan",
+                            "deoptimization_count": 0,
+                            "inline_cache_hits": 0.95
+                        },
+                        "memory_management": {
+                            "heap_size_mb": 128.5,
+                            "used_heap_mb": 67.3,
+                            "heap_limit_mb": 512.0,
+                            "gc_type": "mark_sweep_compact",
+                            "gc_frequency_hz": 0.5,
+                            "memory_pressure": "low",
+                            "allocation_pattern": "steady"
+                        },
+                        "optimization_detection": {
+                            "hot_functions_count": 15,
+                            "optimized_functions_count": 12,
+                            "deoptimized_functions_count": 0,
+                            "inline_cache_efficiency": 0.94,
+                            "hidden_class_transitions": 3,
+                            "polymorphic_call_sites": 2
+                        }
+                    },
+                    
+                    # Rendering engine analysis
+                    "rendering_engine_analysis": {
+                        "layout_engine_fingerprinting": {
+                            "engine_name": "Blink",
+                            "engine_version": "120.0.6099.109",
+                            "layout_algorithm": "LayoutNG",
+                            "text_rendering": "DirectWrite",
+                            "font_rendering": "ClearType",
+                            "subpixel_rendering": True,
+                            "hardware_acceleration": True
+                        },
+                        "css_feature_matrices": {
+                            "css_version": "CSS3",
+                            "flexbox_support": True,
+                            "grid_support": True,
+                            "custom_properties": True,
+                            "container_queries": True,
+                            "cascade_layers": True,
+                            "color_functions": ["oklch", "oklab", "hwb"],
+                            "viewport_units": ["dvh", "lvh", "svh"]
+                        },
+                        "rendering_quirks": {
+                            "subpixel_precision": 0.25,
+                            "font_smoothing": "antialiased",
+                            "text_stroke_support": True,
+                            "backdrop_filter_support": True,
+                            "clip_path_support": True,
+                            "mask_support": True,
+                            "filter_effects": ["blur", "brightness", "contrast", "drop-shadow"]
+                        },
+                        "graphics_acceleration": {
+                            "webgl_enabled": True,
+                            "webgl_version": "2.0",
+                            "webgpu_enabled": True,
+                            "hardware_acceleration": True,
+                            "gpu_vendor": "NVIDIA Corporation",
+                            "gpu_renderer": "NVIDIA GeForce RTX 4080",
+                            "gpu_driver_version": "537.13",
+                            "max_texture_size": 16384
+                        }
+                    }
                 }
             }
             
             # Test browser fingerprint analysis endpoint
             response = self.session.post(
-                f"{BACKEND_URL}/fingerprinting/analyze-browser-fingerprint",
+                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
                 json=enhanced_fingerprint_data
             )
             
