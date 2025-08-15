@@ -20236,7 +20236,7 @@ try:
     print("✅ Device Fingerprinting Engine loaded successfully")
 except Exception as e:
     print(f"⚠️  Warning: Could not load Device Fingerprinting Engine - {e}")
-    # Create stub class
+    # Create stub classes
     class DeviceFingerprintingEngine:
         def __init__(self): pass
         def generate_device_signature(self, *args, **kwargs): return {"error": "Module not loaded"}
@@ -20244,7 +20244,13 @@ except Exception as e:
         def analyze_hardware_characteristics(self, *args, **kwargs): return {"error": "Module not loaded"}
         def track_device_consistency(self, *args, **kwargs): return {"error": "Module not loaded"}
     
+    class EnvironmentAnalyzer:
+        def __init__(self): pass
+        def analyze_browser_fingerprint(self, *args, **kwargs): return {"error": "Module not loaded"}
+        def detect_automation_tools(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
     device_fingerprinting_engine = DeviceFingerprintingEngine()
+    environment_analyzer = EnvironmentAnalyzer()
 
 # Pydantic models for API requests
 class DeviceFingerprintRequest(BaseModel):
