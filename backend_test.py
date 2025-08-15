@@ -249,51 +249,53 @@ class EnhancedFingerprintingBackendTest:
             # Enhanced browser fingerprint data
             browser_data = {
                 "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-                "browser_characteristics": {
-                    # Enhanced browser identification (from helper methods)
-                    "browser_name": "Chrome",
-                    "browser_version": "109.0.0.0",
-                    "engine_name": "Blink",
-                    "engine_version": "109.0.5414.74",
-                    "build_info": {
-                        "build_number": "5414.74",
-                        "branch": "stable",
-                        "architecture": "x64"
-                    },
-                    # JavaScript engine profiling (from helper methods)
-                    "js_engine": {
-                        "name": "V8",
-                        "version": "10.9.194.4",
-                        "features": ["BigInt", "WebAssembly", "SharedArrayBuffer"],
-                        "performance_characteristics": {
-                            "integer_ops_score": 95.2,
-                            "float_ops_score": 87.4,
-                            "memory_management": "efficient"
+                "browser_data": {
+                    "browser_characteristics": {
+                        # Enhanced browser identification (from helper methods)
+                        "browser_name": "Chrome",
+                        "browser_version": "109.0.0.0",
+                        "engine_name": "Blink",
+                        "engine_version": "109.0.5414.74",
+                        "build_info": {
+                            "build_number": "5414.74",
+                            "branch": "stable",
+                            "architecture": "x64"
+                        },
+                        # JavaScript engine profiling (from helper methods)
+                        "js_engine": {
+                            "name": "V8",
+                            "version": "10.9.194.4",
+                            "features": ["BigInt", "WebAssembly", "SharedArrayBuffer"],
+                            "performance_characteristics": {
+                                "integer_ops_score": 95.2,
+                                "float_ops_score": 87.4,
+                                "memory_management": "efficient"
+                            }
+                        },
+                        # Rendering engine analysis (from helper methods)
+                        "rendering_engine": {
+                            "layout_engine": "Blink",
+                            "css_feature_matrix": {
+                                "grid": True,
+                                "flexbox": True,
+                                "transforms_3d": True,
+                                "filters": True
+                            },
+                            "rendering_quirks": ["subpixel_rendering"],
+                            "graphics_acceleration": True
                         }
                     },
-                    # Rendering engine analysis (from helper methods)
-                    "rendering_engine": {
-                        "layout_engine": "Blink",
-                        "css_feature_matrix": {
-                            "grid": True,
-                            "flexbox": True,
-                            "transforms_3d": True,
-                            "filters": True
-                        },
-                        "rendering_quirks": ["subpixel_rendering"],
-                        "graphics_acceleration": True
-                    }
-                },
-                "plugins": [],
-                "screen_info": {
-                    "width": 1920,
-                    "height": 1080,
-                    "color_depth": 24,
-                    "pixel_ratio": 1
-                },
-                "timezone": "America/New_York",
-                "language": "en-US",
-                "session_id": str(uuid.uuid4())
+                    "plugins": [],
+                    "screen_info": {
+                        "width": 1920,
+                        "height": 1080,
+                        "color_depth": 24,
+                        "pixel_ratio": 1
+                    },
+                    "timezone": "America/New_York",
+                    "language": "en-US",
+                    "session_id": str(uuid.uuid4())
+                }
             }
             
             response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
