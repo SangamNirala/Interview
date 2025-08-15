@@ -3856,12 +3856,373 @@ class SessionFingerprintCollector {
         }
     }
     
-    // Canvas Analysis Stubs
-    detectSubpixelRendering(ctx, canvas) { return { subpixel_rendering: 'unknown' }; }
-    analyzeCanvasColorSpace(ctx, canvas) { return { color_space: 'srgb' }; }
-    async profileCanvasRenderingPerformance(ctx, canvas) { return { performance_score: 0 }; }
-    detectCanvasRenderingQuirks(ctx, canvas) { return { quirks: [] }; }
-    analyzeTextMeasurementPrecision(ctx) { return { precision: 'standard' }; }
+    // Canvas Analysis - Enhanced Implementation
+    detectSubpixelRendering(ctx, canvas) {
+        try {
+            // Test subpixel rendering by drawing at fractional coordinates
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0.5, 0.5, 10.5, 10.5);
+            
+            const imageData = ctx.getImageData(0, 0, 12, 12);
+            const data = imageData.data;
+            
+            // Analyze pixel data for subpixel rendering characteristics
+            let antialiasedPixels = 0;
+            let totalEdgePixels = 0;
+            
+            // Check edge pixels for anti-aliasing (grayscale values indicating subpixel rendering)
+            for (let y = 0; y < 12; y++) {
+                for (let x = 0; x < 12; x++) {
+                    const index = (y * 12 + x) * 4;
+                    const r = data[index];
+                    const g = data[index + 1];
+                    const b = data[index + 2];
+                    
+                    // Check if pixel is on edge of drawn rectangle
+                    if ((x === 0 || x === 11 || y === 0 || y === 11) && (r > 0 || g > 0 || b > 0)) {
+                        totalEdgePixels++;
+                        
+                        // Check for anti-aliasing (non-pure black/white values)
+                        if (r > 0 && r < 255 && r === g && g === b) {
+                            antialiasedPixels++;
+                        }
+                    }
+                }
+            }
+            
+            const subpixelRatio = totalEdgePixels > 0 ? antialiasedPixels / totalEdgePixels : 0;
+            
+            let renderingType = 'crisp';
+            if (subpixelRatio > 0.5) {
+                renderingType = 'subpixel_antialiased';
+            } else if (subpixelRatio > 0.2) {
+                renderingType = 'antialiased';
+            }
+            
+            return {
+                subpixel_rendering: renderingType,
+                antialiasing_ratio: subpixelRatio,
+                edge_pixels_analyzed: totalEdgePixels,
+                antialiased_pixels: antialiasedPixels
+            };
+            
+        } catch (error) {
+            return { subpixel_rendering: 'unknown', error: error.message };
+        }
+    }
+    
+    analyzeCanvasColorSpace(ctx, canvas) {
+        try {
+            // Test color space capabilities
+            const colorSpaceInfo = {
+                color_space: 'srgb', // Default assumption
+                gamut_support: [],
+                hdr_support: false,
+                bit_depth: 8
+            };
+            
+            // Test for wide gamut support
+            if ('colorSpace' in canvas) {
+                colorSpaceInfo.color_space = canvas.colorSpace || 'srgb';
+            }
+            
+            // Test P3 color space support
+            try {
+                const p3Canvas = document.createElement('canvas');
+                const p3Ctx = p3Canvas.getContext('2d', { colorSpace: 'display-p3' });
+                if (p3Ctx && p3Ctx.getContextAttributes().colorSpace === 'display-p3') {
+                    colorSpaceInfo.gamut_support.push('display-p3');
+                }
+            } catch (e) {
+                // P3 not supported
+            }
+            
+            // Test Rec2020 color space support  
+            try {
+                const rec2020Canvas = document.createElement('canvas');
+                const rec2020Ctx = rec2020Canvas.getContext('2d', { colorSpace: 'rec2020' });
+                if (rec2020Ctx && rec2020Ctx.getContextAttributes().colorSpace === 'rec2020') {
+                    colorSpaceInfo.gamut_support.push('rec2020');
+                }
+            } catch (e) {
+                // Rec2020 not supported
+            }
+            
+            // Test HDR support through pixel manipulation
+            try {
+                ctx.fillStyle = 'color(display-p3 1 1 1)';
+                ctx.fillRect(0, 0, 1, 1);
+                const imageData = ctx.getImageData(0, 0, 1, 1);
+                const data = imageData.data;
+                
+                // Check if HDR values are preserved
+                if (data[0] > 235 || data[1] > 235 || data[2] > 235) {
+                    colorSpaceInfo.hdr_support = true;
+                }
+            } catch (e) {
+                // HDR test failed
+            }
+            
+            // Estimate bit depth based on color precision
+            ctx.fillStyle = '#ff0001';
+            ctx.fillRect(0, 0, 1, 1);
+            const testData = ctx.getImageData(0, 0, 1, 1);
+            const precision = testData.data[0] - testData.data[2]; // Red - Blue difference
+            
+            if (precision === 1) {
+                colorSpaceInfo.bit_depth = 8;
+            } else if (precision > 1) {
+                colorSpaceInfo.bit_depth = 10; // Possible 10-bit support
+            }
+            
+            return colorSpaceInfo;
+            
+        } catch (error) {
+            return { color_space: 'srgb', error: error.message };
+        }
+    }
+    
+    async profileCanvasRenderingPerformance(ctx, canvas) {
+        try {
+            const performance_tests = {
+                fill_operations: 0,
+                stroke_operations: 0,
+                text_rendering: 0,
+                image_operations: 0,
+                path_operations: 0,
+                composite_operations: 0
+            };
+            
+            // Test fill operations performance
+            const fillStart = performance.now();
+            for (let i = 0; i < 1000; i++) {
+                ctx.fillStyle = `rgb(${i % 255}, ${(i * 2) % 255}, ${(i * 3) % 255})`;
+                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 10, 10);
+            }
+            performance_tests.fill_operations = performance.now() - fillStart;
+            
+            // Test stroke operations performance
+            const strokeStart = performance.now();
+            for (let i = 0; i < 500; i++) {
+                ctx.strokeStyle = `rgb(${i % 255}, ${(i * 2) % 255}, ${(i * 3) % 255})`;
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                ctx.stroke();
+            }
+            performance_tests.stroke_operations = performance.now() - strokeStart;
+            
+            // Test text rendering performance
+            const textStart = performance.now();
+            ctx.font = '12px Arial';
+            for (let i = 0; i < 200; i++) {
+                ctx.fillText(`Test ${i}`, Math.random() * canvas.width, Math.random() * canvas.height);
+            }
+            performance_tests.text_rendering = performance.now() - textStart;
+            
+            // Test path operations performance
+            const pathStart = performance.now();
+            for (let i = 0; i < 100; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 20, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            performance_tests.path_operations = performance.now() - pathStart;
+            
+            // Test composite operations performance
+            const compositeStart = performance.now();
+            const originalComposite = ctx.globalCompositeOperation;
+            const compositeOps = ['multiply', 'screen', 'overlay', 'soft-light'];
+            for (let i = 0; i < 100; i++) {
+                ctx.globalCompositeOperation = compositeOps[i % compositeOps.length];
+                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 20, 20);
+            }
+            ctx.globalCompositeOperation = originalComposite;
+            performance_tests.composite_operations = performance.now() - compositeStart;
+            
+            // Calculate overall performance score (lower is better)
+            const totalTime = Object.values(performance_tests).reduce((sum, time) => sum + time, 0);
+            const normalizedScore = Math.max(0, Math.min(100, 100 - (totalTime / 50))); // Normalize to 0-100
+            
+            return {
+                performance_score: normalizedScore,
+                detailed_timings: performance_tests,
+                total_time_ms: totalTime,
+                operations_per_second: {
+                    fill_ops_per_sec: performance_tests.fill_operations > 0 ? 1000 / (performance_tests.fill_operations / 1000) : 0,
+                    stroke_ops_per_sec: performance_tests.stroke_operations > 0 ? 500 / (performance_tests.stroke_operations / 1000) : 0,
+                    text_ops_per_sec: performance_tests.text_rendering > 0 ? 200 / (performance_tests.text_rendering / 1000) : 0
+                }
+            };
+            
+        } catch (error) {
+            return { performance_score: 0, error: error.message };
+        }
+    }
+    
+    detectCanvasRenderingQuirks(ctx, canvas) {
+        try {
+            const quirks = [];
+            const quirkTests = {};
+            
+            // Test 1: Fractional pixel rendering
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0.5, 0.5, 1, 1);
+            const fractionalData = ctx.getImageData(0, 0, 2, 2);
+            if (fractionalData.data.some(value => value > 0 && value < 255)) {
+                quirks.push('fractional_pixel_antialiasing');
+                quirkTests.fractional_rendering = true;
+            }
+            
+            // Test 2: Text measurement precision
+            ctx.font = '12px Arial';
+            const width1 = ctx.measureText('W').width;
+            const width2 = ctx.measureText('W').width;
+            if (width1 !== width2) {
+                quirks.push('inconsistent_text_measurement');
+                quirkTests.text_measurement_variance = true;
+            }
+            
+            // Test 3: Color precision
+            ctx.fillStyle = '#010101';
+            ctx.fillRect(0, 0, 1, 1);
+            const colorData = ctx.getImageData(0, 0, 1, 1);
+            const expectedValue = 1;
+            const actualValue = colorData.data[0];
+            if (Math.abs(actualValue - expectedValue) > 2) {
+                quirks.push('color_precision_loss');
+                quirkTests.color_precision_delta = actualValue - expectedValue;
+            }
+            
+            // Test 4: Global alpha behavior
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(0, 0, 1, 1);
+            ctx.globalAlpha = 1.0;
+            const alphaData = ctx.getImageData(0, 0, 1, 1);
+            const expectedAlpha = Math.round(255 * 0.5);
+            const actualAlpha = alphaData.data[0];
+            if (Math.abs(actualAlpha - expectedAlpha) > 5) {
+                quirks.push('non_standard_alpha_blending');
+                quirkTests.alpha_precision_delta = actualAlpha - expectedAlpha;
+            }
+            
+            // Test 5: Line width consistency
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(10, 0);
+            ctx.stroke();
+            const lineData = ctx.getImageData(0, 0, 10, 2);
+            let linePixels = 0;
+            for (let i = 0; i < lineData.data.length; i += 4) {
+                if (lineData.data[i] > 0) linePixels++;
+            }
+            if (linePixels < 5 || linePixels > 20) {
+                quirks.push('non_standard_line_rendering');
+                quirkTests.line_pixel_count = linePixels;
+            }
+            
+            // Test 6: Image smoothing behavior
+            if (ctx.imageSmoothingEnabled !== undefined) {
+                const originalSmoothing = ctx.imageSmoothingEnabled;
+                ctx.imageSmoothingEnabled = false;
+                const smoothingDisabled = ctx.imageSmoothingEnabled;
+                ctx.imageSmoothingEnabled = originalSmoothing;
+                
+                if (smoothingDisabled !== false) {
+                    quirks.push('image_smoothing_override_failed');
+                    quirkTests.smoothing_control_available = false;
+                }
+            }
+            
+            return {
+                quirks: quirks,
+                quirk_test_results: quirkTests,
+                total_quirks_detected: quirks.length,
+                rendering_behavior: quirks.length > 2 ? 'non_standard' : 'standard'
+            };
+            
+        } catch (error) {
+            return { quirks: ['test_execution_failed'], error: error.message };
+        }
+    }
+    
+    analyzeTextMeasurementPrecision(ctx) {
+        try {
+            const testStrings = ['W', 'i', 'M', 'l', '1', 'WWW', 'iii', 'Test String', 'The quick brown fox jumps over the lazy dog'];
+            const fonts = ['12px Arial', '14px Times', '16px Helvetica', '12px monospace'];
+            
+            const measurements = {
+                consistency_score: 0,
+                precision_level: 'standard',
+                font_variations: {},
+                measurement_variance: {}
+            };
+            
+            let totalConsistencyTests = 0;
+            let passedConsistencyTests = 0;
+            
+            for (let font of fonts) {
+                ctx.font = font;
+                measurements.font_variations[font] = {};
+                
+                for (let testStr of testStrings) {
+                    // Measure the same string multiple times to check consistency
+                    const measurements_array = [];
+                    for (let i = 0; i < 5; i++) {
+                        measurements_array.push(ctx.measureText(testStr).width);
+                    }
+                    
+                    // Check for consistency
+                    const minWidth = Math.min(...measurements_array);
+                    const maxWidth = Math.max(...measurements_array);
+                    const variance = maxWidth - minWidth;
+                    
+                    measurements.font_variations[font][testStr] = {
+                        avg_width: measurements_array.reduce((a, b) => a + b) / measurements_array.length,
+                        variance: variance,
+                        consistent: variance < 0.1
+                    };
+                    
+                    totalConsistencyTests++;
+                    if (variance < 0.1) {
+                        passedConsistencyTests++;
+                    }
+                }
+            }
+            
+            // Calculate overall consistency score
+            measurements.consistency_score = totalConsistencyTests > 0 ? (passedConsistencyTests / totalConsistencyTests) * 100 : 0;
+            
+            // Determine precision level
+            if (measurements.consistency_score > 95) {
+                measurements.precision_level = 'high';
+            } else if (measurements.consistency_score > 80) {
+                measurements.precision_level = 'standard';
+            } else {
+                measurements.precision_level = 'low';
+            }
+            
+            // Test subpixel precision
+            ctx.font = '12px Arial';
+            const baseWidth = ctx.measureText('A').width;
+            const scaledWidth = ctx.measureText('AA').width;
+            measurements.subpixel_precision = Math.abs(scaledWidth - (baseWidth * 2)) < 0.5;
+            
+            // Test fractional measurements
+            const fractionalTest = ctx.measureText('W').width % 1;
+            measurements.supports_fractional_widths = fractionalTest !== 0;
+            
+            return measurements;
+            
+        } catch (error) {
+            return { precision: 'standard', error: error.message };
+        }
+    }
     
     // Thermal and Performance Analysis Stubs
     async detectClockSpeedVariation() { return { variation_detected: false }; }
