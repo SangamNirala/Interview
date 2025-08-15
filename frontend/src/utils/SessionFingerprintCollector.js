@@ -13973,6 +13973,11 @@ class SessionFingerprintCollector {
     
     async testProximitySensorAPI() {
         try {
+            // Check if ProximitySensor is available
+            if (typeof ProximitySensor === 'undefined') {
+                throw new Error('ProximitySensor not available');
+            }
+            
             const sensor = new ProximitySensor();
             
             return await new Promise((resolve, reject) => {
