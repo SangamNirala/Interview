@@ -7,7 +7,7 @@ import requests
 import json
 import time
 
-BASE_URL = 'https://system-scanner-1.preview.emergentagent.com/api'
+BASE_URL = 'https://tracking-backend.preview.emergentagent.com/api'
 
 def test_comprehensive_enhanced_features():
     session = requests.Session()

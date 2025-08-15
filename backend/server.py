@@ -17778,7 +17778,7 @@ async def root():
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["https://system-scanner-1.preview.emergentagent.com", "http://localhost:3000", "*"],
+    allow_origins=["https://tracking-backend.preview.emergentagent.com", "http://localhost:3000", "*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
