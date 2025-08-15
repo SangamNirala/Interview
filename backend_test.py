@@ -1,947 +1,609 @@
 #!/usr/bin/env python3
 """
-🎯 PHASE 3.3: SESSION INTEGRITY MONITORING TESTING - COMPREHENSIVE TESTING
-Testing the two newly implemented/enhanced Phase 3.3 Session Integrity Monitoring methods:
+Enhanced Fingerprinting Backend Integration Test
+Testing backend integration with 150+ helper methods from SessionFingerprintCollector.js
 
-1. track_multi_device_usage() - NEW METHOD testing
-2. validate_session_authenticity() - ENHANCED METHOD testing
-
-Test Coverage:
-- POST /api/session-fingerprinting/track-multi-device-usage
-- POST /api/session-fingerprinting/validate-session-authenticity
-
-Testing Scenarios:
-- Normal multi-device usage vs suspicious patterns
-- Concurrent session detection across devices
-- Device switching pattern analysis
-- Session migration validation
-- Multi-device collaboration indicators
-- Device usage timeline correlation
-- Biometric consistency validation
-- Behavioral pattern authentication
-- Session authentication token verification
-- Identity continuity assessment
-- Authenticity confidence scoring
-- Edge cases and error handling
+Focus Areas:
+1. Basic Backend Connectivity
+2. Admin Authentication  
+3. Fingerprinting Endpoints (Device, Browser, Session)
+4. Database Integration
+5. API Response Validation
 """
 
-import requests
+import asyncio
+import aiohttp
 import json
-import uuid
-from datetime import datetime, timedelta
 import time
-import random
+import uuid
+from datetime import datetime
+import sys
+import os
 
-# Configuration
+# Backend URL from environment
 BACKEND_URL = "https://session-tracker-7.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
-class Phase33SessionIntegrityTester:
+class EnhancedFingerprintingBackendTest:
     def __init__(self):
-        self.session = requests.Session()
+        self.session = None
         self.test_results = []
-        self.session_id = str(uuid.uuid4())
-        self.user_id = str(uuid.uuid4())
+        self.admin_authenticated = False
         
-    def log_result(self, test_name, success, details, response_data=None):
-        """Log test result with details"""
-        result = {
+    async def setup(self):
+        """Initialize HTTP session"""
+        self.session = aiohttp.ClientSession()
+        
+    async def cleanup(self):
+        """Cleanup HTTP session"""
+        if self.session:
+            await self.session.close()
+            
+    def log_result(self, test_name, success, details="", response_data=None):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status} {test_name}")
+        if details:
+            print(f"    {details}")
+        if response_data and not success:
+            print(f"    Response: {response_data}")
+        
+        self.test_results.append({
             "test": test_name,
             "success": success,
             "details": details,
-            "timestamp": datetime.now().isoformat(),
-            "response_data": response_data
-        }
-        self.test_results.append(result)
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status} {test_name}: {details}")
+            "timestamp": datetime.now().isoformat()
+        })
         
-    def authenticate_admin(self):
-        """Authenticate as admin"""
+    async def test_basic_connectivity(self):
+        """Test 1: Basic Backend Connectivity"""
         try:
-            response = self.session.post(
-                f"{BACKEND_URL}/admin/login",
-                json={"password": ADMIN_PASSWORD}
-            )
-            
-            if response.status_code == 200:
-                self.log_result("Admin Authentication", True, f"Successfully authenticated (Status: {response.status_code})")
-                return True
-            else:
-                self.log_result("Admin Authentication", False, f"Authentication failed (Status: {response.status_code})")
-                return False
-                
-        except Exception as e:
-            self.log_result("Admin Authentication", False, f"Authentication error: {str(e)}")
-            return False
-
-    def test_track_multi_device_usage_normal_scenario(self):
-        """Test multi-device usage tracking with normal legitimate usage patterns"""
-        try:
-            # Normal multi-device usage scenario
-            session_data = {
-                "user_id": self.user_id,
-                "session_id": self.session_id + "_normal",
-                "active_sessions": [
-                    {
-                        "session_id": self.session_id + "_desktop",
-                        "device_fingerprint": "fp_desktop_chrome_windows",
-                        "start_time": "2024-01-15T10:00:00Z",
-                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
-                        "ip_address": "192.168.1.100",
-                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                        "device_type": "desktop"
-                    },
-                    {
-                        "session_id": self.session_id + "_mobile",
-                        "device_fingerprint": "fp_mobile_safari_ios",
-                        "start_time": "2024-01-15T10:30:00Z",
-                        "location": {"country": "US", "city": "New York", "lat": 40.7589, "lng": -73.9851},
-                        "ip_address": "192.168.1.101",
-                        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-                        "device_type": "mobile"
-                    }
-                ],
-                "device_activity": [
-                    {
-                        "device_id": "desktop_001",
-                        "timestamp": "2024-01-15T10:00:00Z",
-                        "activity_type": "data_input",
-                        "action_type": "document_creation",
-                        "session_id": self.session_id + "_desktop"
-                    },
-                    {
-                        "device_id": "mobile_001",
-                        "timestamp": "2024-01-15T10:35:00Z",
-                        "activity_type": "data_view",
-                        "action_type": "document_review",
-                        "session_id": self.session_id + "_mobile"
-                    }
-                ],
-                "session_history": [
-                    {
-                        "session_id": self.session_id + "_desktop",
-                        "device_fingerprint": "fp_desktop_chrome_windows",
-                        "timestamp": "2024-01-15T10:00:00Z",
-                        "duration": 1800,
-                        "location": {"country": "US", "city": "New York"},
-                        "activities_count": 25,
-                        "data_transferred": 1024000
-                    },
-                    {
-                        "session_id": self.session_id + "_mobile",
-                        "device_fingerprint": "fp_mobile_safari_ios",
-                        "timestamp": "2024-01-15T10:30:00Z",
-                        "duration": 900,
-                        "location": {"country": "US", "city": "New York"},
-                        "activities_count": 12,
-                        "data_transferred": 512000
-                    }
-                ]
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_normal",
-                "user_id": self.user_id,
-                "session_data": session_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('multi_device_analysis', {})
-                    analysis_summary = analysis.get('analysis_summary', {})
-                    
-                    self.log_result(
-                        "Multi-Device Usage - Normal Scenario", 
-                        True, 
-                        f"Normal usage analysis completed. Risk Score: {analysis_summary.get('risk_score', 'N/A')}, Concurrent Sessions: {analysis_summary.get('concurrent_sessions_count', 'N/A')}"
-                    )
+            async with self.session.get(f"{BACKEND_URL}/health", timeout=10) as response:
+                if response.status == 200:
+                    self.log_result("Basic Backend Connectivity", True, f"Status: {response.status}")
                     return True
                 else:
-                    self.log_result("Multi-Device Usage - Normal Scenario", False, f"Analysis failed: {data}")
-                    return False
-            else:
-                self.log_result("Multi-Device Usage - Normal Scenario", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
+                    # Try alternative endpoint if health doesn't exist
+                    async with self.session.get(f"{BACKEND_URL}/languages", timeout=10) as alt_response:
+                        if alt_response.status == 200:
+                            self.log_result("Basic Backend Connectivity", True, f"Status: {alt_response.status} (via /languages)")
+                            return True
+                        else:
+                            self.log_result("Basic Backend Connectivity", False, f"Status: {alt_response.status}")
+                            return False
         except Exception as e:
-            self.log_result("Multi-Device Usage - Normal Scenario", False, f"Exception: {str(e)}")
+            self.log_result("Basic Backend Connectivity", False, f"Connection error: {str(e)}")
             return False
-
-    def test_track_multi_device_usage_suspicious_scenario(self):
-        """Test multi-device usage tracking with suspicious patterns"""
+            
+    async def test_admin_authentication(self):
+        """Test 2: Admin Authentication"""
         try:
-            # Suspicious multi-device usage scenario with impossible travel and concurrent access
-            session_data = {
-                "user_id": self.user_id,
-                "session_id": self.session_id + "_suspicious",
-                "active_sessions": [
-                    {
-                        "session_id": self.session_id + "_location1",
-                        "device_fingerprint": "fp_desktop_chrome_windows",
-                        "start_time": "2024-01-15T10:00:00Z",
-                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
-                        "ip_address": "192.168.1.100",
-                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                        "device_type": "desktop"
-                    },
-                    {
-                        "session_id": self.session_id + "_location2",
-                        "device_fingerprint": "fp_desktop_chrome_linux",
-                        "start_time": "2024-01-15T10:05:00Z",  # Only 5 minutes later
-                        "location": {"country": "JP", "city": "Tokyo", "lat": 35.6762, "lng": 139.6503},  # Impossible travel
-                        "ip_address": "203.0.113.1",
-                        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-                        "device_type": "desktop"
-                    },
-                    {
-                        "session_id": self.session_id + "_location3",
-                        "device_fingerprint": "fp_mobile_chrome_android",
-                        "start_time": "2024-01-15T10:10:00Z",  # Another 5 minutes later
-                        "location": {"country": "GB", "city": "London", "lat": 51.5074, "lng": -0.1278},  # Another impossible travel
-                        "ip_address": "198.51.100.1",
-                        "user_agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36",
-                        "device_type": "mobile"
-                    }
-                ],
-                "device_activity": [
-                    {
-                        "device_id": "desktop_001",
-                        "timestamp": "2024-01-15T10:00:00Z",
-                        "activity_type": "data_input",
-                        "action_type": "document_creation",
-                        "session_id": self.session_id + "_location1"
-                    },
-                    {
-                        "device_id": "desktop_002",
-                        "timestamp": "2024-01-15T10:05:30Z",  # Simultaneous activity
-                        "activity_type": "data_input",
-                        "action_type": "document_creation",
-                        "session_id": self.session_id + "_location2"
-                    },
-                    {
-                        "device_id": "mobile_001",
-                        "timestamp": "2024-01-15T10:10:15Z",  # More simultaneous activity
-                        "activity_type": "data_export",
-                        "action_type": "bulk_download",
-                        "session_id": self.session_id + "_location3"
-                    }
-                ],
-                "session_history": [
-                    {
-                        "session_id": self.session_id + "_location1",
-                        "device_fingerprint": "fp_desktop_chrome_windows",
-                        "timestamp": "2024-01-15T10:00:00Z",
-                        "duration": 600,
-                        "location": {"country": "US", "city": "New York"},
-                        "activities_count": 50,  # High activity
-                        "data_transferred": 5120000  # Large data transfer
-                    },
-                    {
-                        "session_id": self.session_id + "_location2",
-                        "device_fingerprint": "fp_desktop_chrome_linux",
-                        "timestamp": "2024-01-15T10:05:00Z",
-                        "duration": 300,
-                        "location": {"country": "JP", "city": "Tokyo"},
-                        "activities_count": 75,  # Very high activity
-                        "data_transferred": 10240000  # Very large data transfer
-                    },
-                    {
-                        "session_id": self.session_id + "_location3",
-                        "device_fingerprint": "fp_mobile_chrome_android",
-                        "timestamp": "2024-01-15T10:10:00Z",
-                        "duration": 180,
-                        "location": {"country": "GB", "city": "London"},
-                        "activities_count": 100,  # Extremely high activity
-                        "data_transferred": 20480000  # Extremely large data transfer
-                    }
-                ]
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_suspicious",
-                "user_id": self.user_id,
-                "session_data": session_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('multi_device_analysis', {})
-                    analysis_summary = analysis.get('analysis_summary', {})
-                    
-                    self.log_result(
-                        "Multi-Device Usage - Suspicious Scenario", 
-                        True, 
-                        f"Suspicious usage analysis completed. Risk Score: {analysis_summary.get('risk_score', 'N/A')}, Concurrent Sessions: {analysis_summary.get('concurrent_sessions_count', 'N/A')}, Impossible Travel: {analysis_summary.get('impossible_travel_detected', 'N/A')}"
-                    )
+            payload = {"password": ADMIN_PASSWORD}
+            async with self.session.post(f"{BACKEND_URL}/admin/login", 
+                                       json=payload, timeout=10) as response:
+                data = await response.json()
+                
+                if response.status == 200 and data.get("success"):
+                    self.admin_authenticated = True
+                    self.log_result("Admin Authentication", True, f"Successfully authenticated")
                     return True
                 else:
-                    self.log_result("Multi-Device Usage - Suspicious Scenario", False, f"Analysis failed: {data}")
+                    self.log_result("Admin Authentication", False, 
+                                  f"Status: {response.status}, Response: {data}")
                     return False
-            else:
-                self.log_result("Multi-Device Usage - Suspicious Scenario", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
         except Exception as e:
-            self.log_result("Multi-Device Usage - Suspicious Scenario", False, f"Exception: {str(e)}")
+            self.log_result("Admin Authentication", False, f"Error: {str(e)}")
             return False
-
-    def test_validate_session_authenticity_valid_session(self):
-        """Test session authenticity validation with valid credentials and consistent identity"""
+            
+    async def test_database_initialization(self):
+        """Test 3: Database Initialization & Verification"""
+        if not self.admin_authenticated:
+            self.log_result("Database Initialization", False, "Admin not authenticated")
+            return False
+            
         try:
-            # Valid session authenticity data
-            session_data = {
-                "session_id": self.session_id + "_valid_auth",
-                "user_id": self.user_id,
-                "authentication_data": {
-                    "method": "multi_factor",
-                    "expires_at": int((datetime.now() + timedelta(hours=2)).timestamp()),
-                    "credential_hash": "sha256:a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
-                    "mfa_verified": True,
-                    "last_auth_time": int(datetime.now().timestamp()),
-                    "auth_strength": "strong"
-                },
-                "claimed_identity": {
-                    "username": "john_doe_authenticated",
-                    "email": "john.doe@company.com",
-                    "phone_number": "+1234567890",
-                    "user_id": self.user_id,
-                    "account_created": "2023-01-15T10:00:00Z",
-                    "last_login": "2024-01-15T09:30:00Z"
-                },
-                "biometric_data": {
-                    "current_template": {
-                        "keystroke_dynamics": {
-                            "dwell_times": [120, 115, 125, 118, 122],
-                            "flight_times": [85, 92, 88, 90, 87],
-                            "typing_rhythm": 0.85,
-                            "pressure_patterns": [0.7, 0.8, 0.75, 0.82, 0.78]
-                        },
-                        "mouse_dynamics": {
-                            "movement_velocity": [150, 145, 155, 148, 152],
-                            "click_patterns": [0.95, 0.92, 0.97, 0.94, 0.96],
-                            "scroll_behavior": [2.1, 2.3, 2.0, 2.2, 2.1]
+            # Test database initialization
+            async with self.session.post(f"{BACKEND_URL}/admin/database/initialize-fingerprinting", 
+                                       timeout=15) as response:
+                data = await response.json()
+                
+                if response.status == 200 and data.get("success"):
+                    collections_created = data.get("collections_created", 0)
+                    indexes_created = data.get("indexes_created", 0)
+                    self.log_result("Database Initialization", True, 
+                                  f"Collections: {collections_created}, Indexes: {indexes_created}")
+                    return True
+                else:
+                    self.log_result("Database Initialization", False, 
+                                  f"Status: {response.status}, Response: {data}")
+                    return False
+        except Exception as e:
+            self.log_result("Database Initialization", False, f"Error: {str(e)}")
+            return False
+            
+    async def test_database_verification(self):
+        """Test 4: Database Verification"""
+        if not self.admin_authenticated:
+            self.log_result("Database Verification", False, "Admin not authenticated")
+            return False
+            
+        try:
+            async with self.session.get(f"{BACKEND_URL}/admin/database/verify-fingerprinting", 
+                                      timeout=10) as response:
+                data = await response.json()
+                
+                if response.status == 200 and data.get("success"):
+                    collections_verified = data.get("collections_verified", 0)
+                    self.log_result("Database Verification", True, 
+                                  f"Collections verified: {collections_verified}")
+                    return True
+                else:
+                    self.log_result("Database Verification", False, 
+                                  f"Status: {response.status}, Response: {data}")
+                    return False
+        except Exception as e:
+            self.log_result("Database Verification", False, f"Error: {str(e)}")
+            return False
+            
+    async def test_device_signature_generation(self):
+        """Test 5: Device Signature Generation Endpoint"""
+        try:
+            # Enhanced device fingerprint data matching the 150+ helper methods
+            device_data = {
+                "device_data": {
+                    # GPU Analysis (from helper methods)
+                    "gpu_characteristics": {
+                        "vendor": "NVIDIA Corporation",
+                        "renderer": "NVIDIA GeForce RTX 3080",
+                        "webgl_version": "WebGL 2.0",
+                        "extensions": ["WEBGL_debug_renderer_info", "OES_texture_float"],
+                        "max_texture_size": 16384,
+                        "max_viewport_dims": [16384, 16384]
+                    },
+                    # CPU Analysis (from helper methods)
+                    "cpu_characteristics": {
+                        "vendor": "Intel-like",
+                        "cores": 8,
+                        "architecture": "x64",
+                        "instruction_sets": ["SIMD", "WebAssembly", "BigInt"],
+                        "cache_analysis": {
+                            "l1_cache_score": 95.2,
+                            "l2_cache_score": 87.4,
+                            "l3_cache_score": 78.9
                         }
                     },
-                    "reference_template": {
-                        "keystroke_dynamics": {
-                            "dwell_times": [118, 122, 120, 116, 124],
-                            "flight_times": [88, 90, 85, 92, 89],
-                            "typing_rhythm": 0.87,
-                            "pressure_patterns": [0.72, 0.78, 0.76, 0.80, 0.77]
-                        },
-                        "mouse_dynamics": {
-                            "movement_velocity": [148, 152, 150, 146, 154],
-                            "click_patterns": [0.94, 0.96, 0.95, 0.93, 0.97],
-                            "scroll_behavior": [2.0, 2.2, 2.1, 2.3, 2.0]
+                    # Browser Engine Analysis (from helper methods)
+                    "browser_engine": {
+                        "rendering_engine": "Blink",
+                        "javascript_engine": "V8",
+                        "engine_version": "109.0.5414.74",
+                        "rendering_quirks": ["subpixel_rendering", "anti_aliasing"]
+                    },
+                    # Memory Analysis (from helper methods)
+                    "memory_analysis": {
+                        "js_heap_used": 45.2,
+                        "js_heap_total": 67.8,
+                        "js_heap_limit": 2048.0,
+                        "memory_health": "good",
+                        "allocation_patterns": ["normal_growth", "efficient_gc"]
+                    },
+                    # CSS Feature Detection (from helper methods)
+                    "css_features": {
+                        "transforms_3d": True,
+                        "animations": True,
+                        "filters": True,
+                        "blend_modes": True,
+                        "grid_layout": True,
+                        "flexbox": True
+                    },
+                    # Sensor Analysis (from helper methods)
+                    "sensor_data": {
+                        "accelerometer": {"available": True, "stability": 0.95},
+                        "gyroscope": {"available": True, "stability": 0.92},
+                        "magnetometer": {"available": False, "stability": 0.0},
+                        "ambient_light": {"available": True, "lux_level": 250},
+                        "proximity": {"available": False, "distance": None},
+                        "battery": {
+                            "available": True,
+                            "level": 0.85,
+                            "charging": False,
+                            "health_estimate": "good"
                         }
                     },
-                    "similarity_score": 0.92,
-                    "confidence_level": "high"
-                },
-                "auth_token_data": {
-                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-                    "refresh_token": "rt_1234567890abcdef",
-                    "session_token": "st_abcdef1234567890",
-                    "mfa_token": "mfa_0987654321fedcba",
-                    "oauth_token": "oauth_fedcba0987654321",
-                    "signature": "valid_signature_hash",
-                    "payload": {
-                        "user_id": self.user_id,
-                        "username": "john_doe_authenticated",
-                        "roles": ["user", "verified"],
-                        "permissions": ["read", "write"]
+                    # Network Information (from enhanced methods)
+                    "network_info": {
+                        "connection_type": "wifi",
+                        "effective_bandwidth": "4g",
+                        "rtt": 45,
+                        "downlink": 10.2,
+                        "webrtc_ips": ["192.168.1.100"],
+                        "dns_resolution_time": 12.5
                     },
-                    "expires_at": int((datetime.now() + timedelta(hours=2)).timestamp()),
-                    "issued_at": int(datetime.now().timestamp()),
-                    "token_type": "Bearer"
+                    # Environmental Data (from enhanced methods)
+                    "environmental_data": {
+                        "timezone": "America/New_York",
+                        "locale": "en-US",
+                        "dst_active": True,
+                        "device_orientation": {"alpha": 0, "beta": 0, "gamma": 0},
+                        "media_devices": {
+                            "audio_input": 1,
+                            "video_input": 1,
+                            "audio_output": 2
+                        }
+                    }
+                },
+                "session_id": str(uuid.uuid4()),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            async with self.session.post(f"{BACKEND_URL}/session-fingerprinting/generate-device-signature",
+                                       json=device_data, timeout=15) as response:
+                data = await response.json()
+                
+                if response.status == 200:
+                    device_signature = data.get("device_signature", {})
+                    confidence_score = device_signature.get("confidence_score", 0)
+                    self.log_result("Device Signature Generation", True, 
+                                  f"Confidence: {confidence_score}, Signature generated")
+                    return True
+                else:
+                    self.log_result("Device Signature Generation", False, 
+                                  f"Status: {response.status}, Response: {data}")
+                    return False
+        except Exception as e:
+            self.log_result("Device Signature Generation", False, f"Error: {str(e)}")
+            return False
+            
+    async def test_browser_fingerprint_analysis(self):
+        """Test 6: Browser Fingerprint Analysis"""
+        try:
+            # Enhanced browser fingerprint data
+            browser_data = {
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+                "browser_characteristics": {
+                    # Enhanced browser identification (from helper methods)
+                    "browser_name": "Chrome",
+                    "browser_version": "109.0.0.0",
+                    "engine_name": "Blink",
+                    "engine_version": "109.0.5414.74",
+                    "build_info": {
+                        "build_number": "5414.74",
+                        "branch": "stable",
+                        "architecture": "x64"
+                    },
+                    # JavaScript engine profiling (from helper methods)
+                    "js_engine": {
+                        "name": "V8",
+                        "version": "10.9.194.4",
+                        "features": ["BigInt", "WebAssembly", "SharedArrayBuffer"],
+                        "performance_characteristics": {
+                            "integer_ops_score": 95.2,
+                            "float_ops_score": 87.4,
+                            "memory_management": "efficient"
+                        }
+                    },
+                    # Rendering engine analysis (from helper methods)
+                    "rendering_engine": {
+                        "layout_engine": "Blink",
+                        "css_feature_matrix": {
+                            "grid": True,
+                            "flexbox": True,
+                            "transforms_3d": True,
+                            "filters": True
+                        },
+                        "rendering_quirks": ["subpixel_rendering"],
+                        "graphics_acceleration": True
+                    }
+                },
+                "plugins": [],
+                "screen_info": {
+                    "width": 1920,
+                    "height": 1080,
+                    "color_depth": 24,
+                    "pixel_ratio": 1
+                },
+                "timezone": "America/New_York",
+                "language": "en-US",
+                "session_id": str(uuid.uuid4())
+            }
+            
+            async with self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
+                                       json=browser_data, timeout=15) as response:
+                data = await response.json()
+                
+                if response.status == 200:
+                    analysis = data.get("browser_analysis", {})
+                    fingerprint_entropy = analysis.get("fingerprint_entropy", 0)
+                    self.log_result("Browser Fingerprint Analysis", True, 
+                                  f"Entropy: {fingerprint_entropy}, Analysis completed")
+                    return True
+                else:
+                    self.log_result("Browser Fingerprint Analysis", False, 
+                                  f"Status: {response.status}, Response: {data}")
+                    return False
+        except Exception as e:
+            self.log_result("Browser Fingerprint Analysis", False, f"Error: {str(e)}")
+            return False
+            
+    async def test_hardware_analysis(self):
+        """Test 7: Hardware Analysis Endpoint"""
+        try:
+            # Enhanced hardware data from the 150+ helper methods
+            hardware_data = {
+                "device_data": {
+                    # WebGL Hardware Analysis (from Phase 1.1 methods)
+                    "webgl_hardware": {
+                        "gpu_vendor": "NVIDIA Corporation",
+                        "gpu_renderer": "NVIDIA GeForce RTX 3080",
+                        "webgl_capabilities": {
+                            "max_texture_size": 16384,
+                            "max_viewport_dims": [16384, 16384],
+                            "max_vertex_attribs": 16,
+                            "max_uniform_vectors": 1024
+                        },
+                        "rendering_performance": {
+                            "shader_compilation_time": 2.5,
+                            "draw_call_performance": 95.2,
+                            "fps_benchmark": 144.0
+                        },
+                        "gpu_memory_estimate": {
+                            "total_memory_mb": 10240,
+                            "available_memory_mb": 8192,
+                            "memory_bandwidth_gbps": 760.0
+                        }
+                    },
+                    # CPU Performance Analysis (from Phase 1.1 methods)
+                    "cpu_analysis": {
+                        "architecture_detection": {
+                            "vendor": "Intel-like",
+                            "family": "x64",
+                            "instruction_sets": ["SSE4.2", "AVX2", "AES-NI"],
+                            "core_count_estimate": 8
+                        },
+                        "performance_benchmarks": {
+                            "integer_performance": 95.2,
+                            "floating_point_performance": 87.4,
+                            "vector_operations": 92.1,
+                            "cache_performance": 85.6
+                        },
+                        "thermal_analysis": {
+                            "throttling_detected": False,
+                            "performance_consistency": 0.98,
+                            "sustained_performance": 94.1
+                        }
+                    },
+                    # Memory and Storage Analysis (from Phase 1.1 methods)
+                    "memory_storage": {
+                        "system_memory_estimate": {
+                            "total_memory_gb": 16.0,
+                            "available_memory_gb": 12.4,
+                            "memory_bandwidth_gbps": 51.2
+                        },
+                        "storage_performance": {
+                            "sequential_read_mbps": 3500.0,
+                            "sequential_write_mbps": 3000.0,
+                            "random_read_iops": 500000,
+                            "storage_type": "NVMe SSD"
+                        },
+                        "cache_hierarchy": {
+                            "l1_cache_kb": 32,
+                            "l2_cache_kb": 256,
+                            "l3_cache_mb": 16
+                        }
+                    },
+                    # Screen Analysis (from Phase 1.1 methods)
+                    "display_analysis": {
+                        "color_profile": {
+                            "color_gamut": "sRGB",
+                            "hdr_support": False,
+                            "wide_gamut": False,
+                            "bit_depth": 8
+                        },
+                        "display_capabilities": {
+                            "refresh_rate": 144,
+                            "variable_refresh": True,
+                            "display_technology": "LCD",
+                            "pixel_density": 91.79
+                        },
+                        "multi_monitor": {
+                            "screen_count": 1,
+                            "primary_display": True,
+                            "extended_desktop": False
+                        }
+                    }
+                },
+                "session_id": str(uuid.uuid4())
+            }
+            
+            async with self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-hardware",
+                                       json=hardware_data, timeout=15) as response:
+                data = await response.json()
+                
+                if response.status == 200:
+                    analysis = data.get("hardware_analysis", {})
+                    confidence_score = analysis.get("confidence_score", 0)
+                    self.log_result("Hardware Analysis", True, 
+                                  f"Confidence: {confidence_score}, Hardware analyzed")
+                    return True
+                else:
+                    self.log_result("Hardware Analysis", False, 
+                                  f"Status: {response.status}, Response: {data}")
+                    return False
+        except Exception as e:
+            self.log_result("Hardware Analysis", False, f"Error: {str(e)}")
+            return False
+            
+    async def test_device_analytics_retrieval(self):
+        """Test 8: Device Analytics Retrieval"""
+        try:
+            session_id = str(uuid.uuid4())
+            async with self.session.get(f"{BACKEND_URL}/session-fingerprinting/device-analytics/{session_id}",
+                                      timeout=10) as response:
+                data = await response.json()
+                
+                if response.status == 200:
+                    analytics = data.get("device_analytics", {})
+                    self.log_result("Device Analytics Retrieval", True, 
+                                  f"Analytics retrieved for session: {session_id}")
+                    return True
+                else:
+                    self.log_result("Device Analytics Retrieval", False, 
+                                  f"Status: {response.status}, Response: {data}")
+                    return False
+        except Exception as e:
+            self.log_result("Device Analytics Retrieval", False, f"Error: {str(e)}")
+            return False
+            
+    async def test_ml_fingerprint_clustering(self):
+        """Test 9: ML Fingerprint Clustering Integration"""
+        try:
+            # Test comprehensive ML analysis with enhanced fingerprint data
+            analysis_data = {
+                "device_fingerprint": {
+                    "hardware_signature": "enhanced_gpu_cpu_memory_analysis",
+                    "browser_characteristics": "enhanced_browser_engine_analysis",
+                    "sensor_data": "comprehensive_sensor_analysis",
+                    "network_characteristics": "enhanced_network_analysis"
+                },
+                "user_interactions": [
+                    {"type": "mouse_move", "timestamp": time.time(), "x": 100, "y": 200},
+                    {"type": "key_press", "timestamp": time.time(), "key": "a", "duration": 120}
+                ],
+                "session_data": {
+                    "session_id": str(uuid.uuid4()),
+                    "duration": 300,
+                    "activity_level": "high"
                 }
             }
             
-            payload = {
-                "session_id": self.session_id + "_valid_auth",
-                "session_data": session_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/validate-session-authenticity",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('authenticity_analysis', {})
-                    analysis_summary = analysis.get('analysis_summary', {})
-                    
-                    self.log_result(
-                        "Session Authenticity - Valid Session", 
-                        True, 
-                        f"Valid session analysis completed. Authentic: {analysis_summary.get('session_authentic', 'N/A')}, Confidence: {analysis_summary.get('authenticity_confidence', 'N/A')}, Biometric Match: {analysis_summary.get('biometric_match_score', 'N/A')}"
-                    )
+            async with self.session.post(f"{BACKEND_URL}/ml-fingerprint-clustering/comprehensive-analysis",
+                                       json=analysis_data, timeout=15) as response:
+                data = await response.json()
+                
+                if response.status == 200:
+                    ml_analysis = data.get("comprehensive_analysis", {})
+                    fraud_risk = ml_analysis.get("fraud_risk_score", 0)
+                    self.log_result("ML Fingerprint Clustering", True, 
+                                  f"Fraud risk: {fraud_risk}, ML analysis completed")
                     return True
                 else:
-                    self.log_result("Session Authenticity - Valid Session", False, f"Analysis failed: {data}")
+                    self.log_result("ML Fingerprint Clustering", False, 
+                                  f"Status: {response.status}, Response: {data}")
                     return False
-            else:
-                self.log_result("Session Authenticity - Valid Session", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
         except Exception as e:
-            self.log_result("Session Authenticity - Valid Session", False, f"Exception: {str(e)}")
+            self.log_result("ML Fingerprint Clustering", False, f"Error: {str(e)}")
             return False
-
-    def test_validate_session_authenticity_invalid_session(self):
-        """Test session authenticity validation with invalid credentials and inconsistent identity"""
+            
+    async def test_virtual_machine_detection(self):
+        """Test 10: Virtual Machine Detection"""
         try:
-            # Invalid session authenticity data with multiple red flags
-            session_data = {
-                "session_id": self.session_id + "_invalid_auth",
-                "user_id": self.user_id,
-                "authentication_data": {
-                    "method": "password",
-                    "expires_at": int((datetime.now() - timedelta(hours=1)).timestamp()),  # Expired
-                    "credential_hash": "invalid_hash_format",  # Invalid hash
-                    "mfa_verified": False,
-                    "last_auth_time": int((datetime.now() - timedelta(days=30)).timestamp()),  # Very old
-                    "auth_strength": "weak"
-                },
-                "claimed_identity": {
-                    "username": "suspicious_user",
-                    "email": "fake@suspicious.com",
-                    "phone_number": "+0000000000",  # Suspicious phone
-                    "user_id": "different_user_id",  # Mismatched user ID
-                    "account_created": "2024-01-15T10:00:00Z",  # Very new account
-                    "last_login": "1970-01-01T00:00:00Z"  # Suspicious timestamp
-                },
-                "biometric_data": {
-                    "current_template": {
-                        "keystroke_dynamics": {
-                            "dwell_times": [50, 45, 55, 48, 52],  # Very different from reference
-                            "flight_times": [200, 195, 205, 198, 202],  # Very different
-                            "typing_rhythm": 0.3,  # Very different
-                            "pressure_patterns": [0.1, 0.2, 0.15, 0.12, 0.18]  # Very different
-                        },
-                        "mouse_dynamics": {
-                            "movement_velocity": [300, 295, 305, 298, 302],  # Very different
-                            "click_patterns": [0.1, 0.2, 0.15, 0.18, 0.12],  # Very different
-                            "scroll_behavior": [10.1, 10.3, 10.0, 10.2, 10.1]  # Very different
+            vm_data = {
+                "device_data": {
+                    "hardware_indicators": {
+                        "cpu_vendor": "GenuineIntel",
+                        "gpu_vendor": "NVIDIA Corporation",
+                        "system_manufacturer": "Dell Inc.",
+                        "bios_vendor": "Dell Inc."
+                    },
+                    "hypervisor_detection": {
+                        "hypervisor_present": False,
+                        "vm_artifacts": [],
+                        "performance_indicators": {
+                            "cpu_performance_ratio": 0.98,
+                            "memory_access_latency": 12.5,
+                            "disk_io_performance": 0.95
                         }
-                    },
-                    "reference_template": {
-                        "keystroke_dynamics": {
-                            "dwell_times": [118, 122, 120, 116, 124],
-                            "flight_times": [88, 90, 85, 92, 89],
-                            "typing_rhythm": 0.87,
-                            "pressure_patterns": [0.72, 0.78, 0.76, 0.80, 0.77]
-                        },
-                        "mouse_dynamics": {
-                            "movement_velocity": [148, 152, 150, 146, 154],
-                            "click_patterns": [0.94, 0.96, 0.95, 0.93, 0.97],
-                            "scroll_behavior": [2.0, 2.2, 2.1, 2.3, 2.0]
-                        }
-                    },
-                    "similarity_score": 0.15,  # Very low similarity
-                    "confidence_level": "very_low"
+                    }
                 },
-                "auth_token_data": {
-                    "access_token": "invalid.token.format",  # Invalid JWT format
-                    "refresh_token": "expired_refresh_token",
-                    "session_token": "invalid_session_token",
-                    "mfa_token": "",  # Empty MFA token
-                    "oauth_token": "revoked_oauth_token",
-                    "signature": "invalid_signature",
-                    "payload": {
-                        "user_id": "different_user_again",  # Another mismatch
-                        "username": "another_suspicious_user",
-                        "roles": ["admin"],  # Suspicious elevated privileges
-                        "permissions": ["read", "write", "delete", "admin"]  # Too many permissions
-                    },
-                    "expires_at": int((datetime.now() - timedelta(hours=5)).timestamp()),  # Expired
-                    "issued_at": int((datetime.now() + timedelta(hours=1)).timestamp()),  # Future issue time (impossible)
-                    "token_type": "Invalid"
-                }
+                "confidence_level": 0.95,
+                "session_id": str(uuid.uuid4())
             }
             
-            payload = {
-                "session_id": self.session_id + "_invalid_auth",
-                "session_data": session_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/validate-session-authenticity",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('authenticity_analysis', {})
-                    analysis_summary = analysis.get('analysis_summary', {})
-                    
-                    self.log_result(
-                        "Session Authenticity - Invalid Session", 
-                        True, 
-                        f"Invalid session analysis completed. Authentic: {analysis_summary.get('session_authentic', 'N/A')}, Confidence: {analysis_summary.get('authenticity_confidence', 'N/A')}, Biometric Match: {analysis_summary.get('biometric_match_score', 'N/A')}"
-                    )
+            async with self.session.post(f"{BACKEND_URL}/session-fingerprinting/detect-virtual-machines",
+                                       json=vm_data, timeout=15) as response:
+                data = await response.json()
+                
+                if response.status == 200:
+                    vm_analysis = data.get("vm_detection", {})
+                    is_vm = vm_analysis.get("is_virtual_machine", False)
+                    confidence = vm_analysis.get("confidence_score", 0)
+                    self.log_result("Virtual Machine Detection", True, 
+                                  f"VM detected: {is_vm}, Confidence: {confidence}")
                     return True
                 else:
-                    self.log_result("Session Authenticity - Invalid Session", False, f"Analysis failed: {data}")
+                    self.log_result("Virtual Machine Detection", False, 
+                                  f"Status: {response.status}, Response: {data}")
                     return False
-            else:
-                self.log_result("Session Authenticity - Invalid Session", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
         except Exception as e:
-            self.log_result("Session Authenticity - Invalid Session", False, f"Exception: {str(e)}")
+            self.log_result("Virtual Machine Detection", False, f"Error: {str(e)}")
             return False
-
-    def test_multi_device_collaboration_indicators(self):
-        """Test detection of multi-device collaboration patterns"""
+            
+    async def run_all_tests(self):
+        """Run all enhanced fingerprinting backend tests"""
+        print("🧪 Enhanced Fingerprinting Backend Integration Test")
+        print("=" * 60)
+        print(f"Backend URL: {BACKEND_URL}")
+        print(f"Test started at: {datetime.now().isoformat()}")
+        print()
+        
+        await self.setup()
+        
         try:
-            # Collaboration scenario with coordinated activities across devices
-            session_data = {
-                "user_id": self.user_id,
-                "session_id": self.session_id + "_collaboration",
-                "active_sessions": [
-                    {
-                        "session_id": self.session_id + "_device1",
-                        "device_fingerprint": "fp_desktop_chrome_windows",
-                        "start_time": "2024-01-15T10:00:00Z",
-                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
-                        "ip_address": "192.168.1.100",
-                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                        "device_type": "desktop"
-                    },
-                    {
-                        "session_id": self.session_id + "_device2",
-                        "device_fingerprint": "fp_laptop_firefox_macos",
-                        "start_time": "2024-01-15T10:02:00Z",
-                        "location": {"country": "US", "city": "New York", "lat": 40.7589, "lng": -73.9851},
-                        "ip_address": "192.168.1.102",
-                        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0",
-                        "device_type": "laptop"
-                    }
-                ],
-                "device_activity": [
-                    # Coordinated activities suggesting collaboration
-                    {
-                        "device_id": "desktop_001",
-                        "timestamp": "2024-01-15T10:05:00Z",
-                        "activity_type": "data_input",
-                        "action_type": "question_answer",
-                        "session_id": self.session_id + "_device1",
-                        "content_type": "text_input",
-                        "response_time": 2.5
-                    },
-                    {
-                        "device_id": "laptop_001",
-                        "timestamp": "2024-01-15T10:05:05Z",  # 5 seconds later
-                        "activity_type": "data_search",
-                        "action_type": "web_search",
-                        "session_id": self.session_id + "_device2",
-                        "content_type": "search_query",
-                        "response_time": 0.8  # Very fast response
-                    },
-                    {
-                        "device_id": "desktop_001",
-                        "timestamp": "2024-01-15T10:05:15Z",  # 10 seconds after search
-                        "activity_type": "data_input",
-                        "action_type": "answer_update",
-                        "session_id": self.session_id + "_device1",
-                        "content_type": "text_modification",
-                        "response_time": 1.2  # Suspiciously fast for complex answer
-                    }
-                ],
-                "session_history": [
-                    {
-                        "session_id": self.session_id + "_device1",
-                        "device_fingerprint": "fp_desktop_chrome_windows",
-                        "timestamp": "2024-01-15T10:00:00Z",
-                        "duration": 1800,
-                        "location": {"country": "US", "city": "New York"},
-                        "activities_count": 45,
-                        "data_transferred": 2048000,
-                        "activity_pattern": "answer_focused"
-                    },
-                    {
-                        "session_id": self.session_id + "_device2",
-                        "device_fingerprint": "fp_laptop_firefox_macos",
-                        "timestamp": "2024-01-15T10:02:00Z",
-                        "duration": 1680,
-                        "location": {"country": "US", "city": "New York"},
-                        "activities_count": 120,  # High search activity
-                        "data_transferred": 5120000,  # High data usage for searches
-                        "activity_pattern": "search_focused"
-                    }
-                ]
-            }
+            # Core connectivity and authentication tests
+            await self.test_basic_connectivity()
+            await self.test_admin_authentication()
             
-            payload = {
-                "session_id": self.session_id + "_collaboration",
-                "user_id": self.user_id,
-                "session_data": session_data
-            }
+            # Database integration tests
+            await self.test_database_initialization()
+            await self.test_database_verification()
             
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
-                json=payload
-            )
+            # Enhanced fingerprinting endpoint tests
+            await self.test_device_signature_generation()
+            await self.test_browser_fingerprint_analysis()
+            await self.test_hardware_analysis()
+            await self.test_device_analytics_retrieval()
+            await self.test_ml_fingerprint_clustering()
+            await self.test_virtual_machine_detection()
             
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('multi_device_analysis', {})
-                    analysis_summary = analysis.get('analysis_summary', {})
-                    
-                    self.log_result(
-                        "Multi-Device Collaboration Indicators", 
-                        True, 
-                        f"Collaboration analysis completed. Risk Score: {analysis_summary.get('risk_score', 'N/A')}, Collaboration Detected: {analysis_summary.get('collaboration_indicators', 'N/A')}"
-                    )
-                    return True
-                else:
-                    self.log_result("Multi-Device Collaboration Indicators", False, f"Analysis failed: {data}")
-                    return False
-            else:
-                self.log_result("Multi-Device Collaboration Indicators", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Multi-Device Collaboration Indicators", False, f"Exception: {str(e)}")
-            return False
-
-    def test_session_migration_validation(self):
-        """Test session migration validation across devices"""
-        try:
-            # Session migration scenario
-            session_data = {
-                "user_id": self.user_id,
-                "session_id": self.session_id + "_migration",
-                "active_sessions": [
-                    {
-                        "session_id": self.session_id + "_original",
-                        "device_fingerprint": "fp_desktop_chrome_windows",
-                        "start_time": "2024-01-15T10:00:00Z",
-                        "end_time": "2024-01-15T10:30:00Z",  # Session ended
-                        "location": {"country": "US", "city": "New York", "lat": 40.7128, "lng": -74.0060},
-                        "ip_address": "192.168.1.100",
-                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                        "device_type": "desktop",
-                        "status": "migrated"
-                    },
-                    {
-                        "session_id": self.session_id + "_migrated",
-                        "device_fingerprint": "fp_mobile_safari_ios",
-                        "start_time": "2024-01-15T10:32:00Z",  # Started 2 minutes after original ended
-                        "location": {"country": "US", "city": "New York", "lat": 40.7589, "lng": -73.9851},
-                        "ip_address": "192.168.1.101",  # Different IP but same network
-                        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-                        "device_type": "mobile",
-                        "status": "active",
-                        "migration_data": {
-                            "previous_session_id": self.session_id + "_original",
-                            "migration_timestamp": "2024-01-15T10:30:30Z",
-                            "state_transferred": True,
-                            "authentication_carried_over": True
-                        }
-                    }
-                ],
-                "device_activity": [
-                    {
-                        "device_id": "desktop_001",
-                        "timestamp": "2024-01-15T10:29:00Z",
-                        "activity_type": "session_save",
-                        "action_type": "state_preservation",
-                        "session_id": self.session_id + "_original"
-                    },
-                    {
-                        "device_id": "mobile_001",
-                        "timestamp": "2024-01-15T10:32:30Z",
-                        "activity_type": "session_restore",
-                        "action_type": "state_restoration",
-                        "session_id": self.session_id + "_migrated"
-                    }
-                ],
-                "session_history": [
-                    {
-                        "session_id": self.session_id + "_original",
-                        "device_fingerprint": "fp_desktop_chrome_windows",
-                        "timestamp": "2024-01-15T10:00:00Z",
-                        "duration": 1800,
-                        "location": {"country": "US", "city": "New York"},
-                        "activities_count": 35,
-                        "data_transferred": 1536000,
-                        "migration_prepared": True
-                    },
-                    {
-                        "session_id": self.session_id + "_migrated",
-                        "device_fingerprint": "fp_mobile_safari_ios",
-                        "timestamp": "2024-01-15T10:32:00Z",
-                        "duration": 900,
-                        "location": {"country": "US", "city": "New York"},
-                        "activities_count": 18,
-                        "data_transferred": 768000,
-                        "migration_restored": True
-                    }
-                ]
-            }
+        finally:
+            await self.cleanup()
             
-            payload = {
-                "session_id": self.session_id + "_migration",
-                "user_id": self.user_id,
-                "session_data": session_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('multi_device_analysis', {})
-                    analysis_summary = analysis.get('analysis_summary', {})
-                    
-                    self.log_result(
-                        "Session Migration Validation", 
-                        True, 
-                        f"Migration analysis completed. Risk Score: {analysis_summary.get('risk_score', 'N/A')}, Migration Valid: {analysis_summary.get('migration_valid', 'N/A')}"
-                    )
-                    return True
-                else:
-                    self.log_result("Session Migration Validation", False, f"Analysis failed: {data}")
-                    return False
-            else:
-                self.log_result("Session Migration Validation", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Session Migration Validation", False, f"Exception: {str(e)}")
-            return False
-
-    def test_comprehensive_token_verification(self):
-        """Test comprehensive authentication token verification"""
-        try:
-            # Comprehensive token verification scenario
-            session_data = {
-                "session_id": self.session_id + "_token_verification",
-                "user_id": self.user_id,
-                "authentication_data": {
-                    "method": "multi_factor",
-                    "expires_at": int((datetime.now() + timedelta(hours=4)).timestamp()),
-                    "credential_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                    "mfa_verified": True,
-                    "last_auth_time": int(datetime.now().timestamp()),
-                    "auth_strength": "very_strong"
-                },
-                "claimed_identity": {
-                    "username": "verified_user_tokens",
-                    "email": "verified.user@company.com",
-                    "phone_number": "+1234567890",
-                    "user_id": self.user_id,
-                    "account_created": "2022-06-15T10:00:00Z",
-                    "last_login": "2024-01-15T09:45:00Z"
-                },
-                "biometric_data": {
-                    "current_template": {
-                        "keystroke_dynamics": {
-                            "dwell_times": [119, 121, 118, 120, 122],
-                            "flight_times": [87, 89, 86, 88, 90],
-                            "typing_rhythm": 0.88,
-                            "pressure_patterns": [0.73, 0.79, 0.75, 0.81, 0.77]
-                        }
-                    },
-                    "reference_template": {
-                        "keystroke_dynamics": {
-                            "dwell_times": [118, 122, 120, 116, 124],
-                            "flight_times": [88, 90, 85, 92, 89],
-                            "typing_rhythm": 0.87,
-                            "pressure_patterns": [0.72, 0.78, 0.76, 0.80, 0.77]
-                        }
-                    },
-                    "similarity_score": 0.94,
-                    "confidence_level": "very_high"
-                },
-                "auth_token_data": {
-                    # Access Token (JWT)
-                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2ZXJpZmllZF91c2VyX3Rva2VucyIsIm5hbWUiOiJWZXJpZmllZCBVc2VyIiwiaWF0IjoxNzA0MDY3MjAwLCJleHAiOjE3MDQwODUyMDB9.signature",
-                    "access_token_valid": True,
-                    "access_token_expires_at": int((datetime.now() + timedelta(hours=4)).timestamp()),
-                    
-                    # Refresh Token
-                    "refresh_token": "rt_secure_refresh_token_1234567890abcdef",
-                    "refresh_token_valid": True,
-                    "refresh_token_expires_at": int((datetime.now() + timedelta(days=30)).timestamp()),
-                    
-                    # Session Token
-                    "session_token": "st_secure_session_token_abcdef1234567890",
-                    "session_token_valid": True,
-                    "session_token_expires_at": int((datetime.now() + timedelta(hours=8)).timestamp()),
-                    
-                    # MFA Token
-                    "mfa_token": "mfa_verified_token_0987654321fedcba",
-                    "mfa_token_valid": True,
-                    "mfa_token_expires_at": int((datetime.now() + timedelta(minutes=30)).timestamp()),
-                    
-                    # OAuth Token
-                    "oauth_token": "oauth_provider_token_fedcba0987654321",
-                    "oauth_token_valid": True,
-                    "oauth_token_expires_at": int((datetime.now() + timedelta(hours=2)).timestamp()),
-                    
-                    "signature": "valid_hmac_sha256_signature",
-                    "payload": {
-                        "user_id": self.user_id,
-                        "username": "verified_user_tokens",
-                        "roles": ["user", "verified", "premium"],
-                        "permissions": ["read", "write", "profile_edit"],
-                        "token_version": "v2.1",
-                        "security_level": "high"
-                    },
-                    "expires_at": int((datetime.now() + timedelta(hours=4)).timestamp()),
-                    "issued_at": int((datetime.now() - timedelta(minutes=5)).timestamp()),
-                    "token_type": "Bearer",
-                    "token_integrity_verified": True
-                }
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_token_verification",
-                "session_data": session_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/validate-session-authenticity",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success'):
-                    analysis = data.get('authenticity_analysis', {})
-                    analysis_summary = analysis.get('analysis_summary', {})
-                    
-                    self.log_result(
-                        "Comprehensive Token Verification", 
-                        True, 
-                        f"Token verification completed. Authentic: {analysis_summary.get('session_authentic', 'N/A')}, Token Integrity: {analysis_summary.get('token_integrity_score', 'N/A')}, All Tokens Valid: {analysis_summary.get('all_tokens_valid', 'N/A')}"
-                    )
-                    return True
-                else:
-                    self.log_result("Comprehensive Token Verification", False, f"Analysis failed: {data}")
-                    return False
-            else:
-                self.log_result("Comprehensive Token Verification", False, f"HTTP {response.status_code}: {response.text}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Comprehensive Token Verification", False, f"Exception: {str(e)}")
-            return False
-
-    def test_edge_cases_malformed_data(self):
-        """Test edge cases with malformed data"""
-        try:
-            # Malformed multi-device usage data
-            session_data = {
-                "user_id": None,  # Null user ID
-                "session_id": "",  # Empty session ID
-                "active_sessions": "not_an_array",  # Wrong type
-                "device_activity": [],  # Empty array
-                "session_history": None  # Null history
-            }
-            
-            payload = {
-                "session_id": self.session_id + "_edge_case",
-                "user_id": "edge_case_user",
-                "session_data": session_data
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/session-fingerprinting/track-multi-device-usage",
-                json=payload
-            )
-            
-            # Should handle gracefully (either 200 with error handling or 500 with proper error)
-            if response.status_code in [200, 500]:
-                self.log_result(
-                    "Edge Cases - Malformed Multi-Device Data", 
-                    True, 
-                    f"Malformed data handled gracefully (Status: {response.status_code})"
-                )
-                return True
-            else:
-                self.log_result("Edge Cases - Malformed Multi-Device Data", False, f"Unexpected status: {response.status_code}")
-                return False
-                
-        except Exception as e:
-            self.log_result("Edge Cases - Malformed Multi-Device Data", False, f"Exception: {str(e)}")
-            return False
-
-    def run_all_tests(self):
-        """Run all Phase 3.3 Session Integrity Monitoring tests"""
-        print("🎯 STARTING PHASE 3.3: SESSION INTEGRITY MONITORING TESTING")
-        print("=" * 80)
-        
-        # Authenticate first
-        if not self.authenticate_admin():
-            print("❌ Authentication failed. Cannot proceed with tests.")
-            return 0, 0
-        
-        # Run all tests
-        tests = [
-            self.test_track_multi_device_usage_normal_scenario,
-            self.test_track_multi_device_usage_suspicious_scenario,
-            self.test_validate_session_authenticity_valid_session,
-            self.test_validate_session_authenticity_invalid_session,
-            self.test_multi_device_collaboration_indicators,
-            self.test_session_migration_validation,
-            self.test_comprehensive_token_verification,
-            self.test_edge_cases_malformed_data
-        ]
-        
-        passed = 0
-        total = len(tests)
-        
-        for test in tests:
-            if test():
-                passed += 1
-            time.sleep(1)  # Brief pause between tests
-        
         # Print summary
-        print("\n" + "=" * 80)
-        print("🎯 PHASE 3.3 SESSION INTEGRITY MONITORING TESTING SUMMARY")
-        print("=" * 80)
-        print(f"Total Tests: {total}")
-        print(f"Passed: {passed}")
-        print(f"Failed: {total - passed}")
-        print(f"Success Rate: {(passed/total)*100:.1f}%")
+        print("\n" + "=" * 60)
+        print("📊 TEST SUMMARY")
+        print("=" * 60)
         
-        # Print detailed results
-        print("\n📊 DETAILED TEST RESULTS:")
-        for result in self.test_results:
-            status = "✅" if result['success'] else "❌"
-            print(f"{status} {result['test']}: {result['details']}")
+        total_tests = len(self.test_results)
+        passed_tests = sum(1 for result in self.test_results if result["success"])
+        failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
-        return passed, total
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed: {passed_tests}")
+        print(f"Failed: {failed_tests}")
+        print(f"Success Rate: {success_rate:.1f}%")
+        
+        if failed_tests > 0:
+            print("\n❌ FAILED TESTS:")
+            for result in self.test_results:
+                if not result["success"]:
+                    print(f"  - {result['test']}: {result['details']}")
+        
+        print(f"\nTest completed at: {datetime.now().isoformat()}")
+        
+        return success_rate >= 70.0  # Consider 70%+ success rate as acceptable
+
+async def main():
+    """Main test execution"""
+    test_runner = EnhancedFingerprintingBackendTest()
+    success = await test_runner.run_all_tests()
+    
+    if success:
+        print("\n🎉 Enhanced Fingerprinting Backend Integration Test PASSED")
+        sys.exit(0)
+    else:
+        print("\n💥 Enhanced Fingerprinting Backend Integration Test FAILED")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    tester = Phase33SessionIntegrityTester()
-    passed, total = tester.run_all_tests()
-    
-    if passed == total:
-        print(f"\n🎉 ALL TESTS PASSED! Phase 3.3 Session Integrity Monitoring functionality is working perfectly.")
-    else:
-        print(f"\n⚠️  {total - passed} test(s) failed. Please review the results above.")
+    asyncio.run(main())
