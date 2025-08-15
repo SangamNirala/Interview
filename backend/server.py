@@ -18474,7 +18474,7 @@ async def root():
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["https://browser-fingerprint-1.preview.emergentagent.com", "http://localhost:3000", "*"],
+    allow_origins=["https://session-tracker-7.preview.emergentagent.com", "http://localhost:3000", "*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

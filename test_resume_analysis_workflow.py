@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://browser-fingerprint-1.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://session-tracker-7.preview.emergentagent.com')
 
 def test_resume_analysis_workflow():
     """Test the resume analysis workflow"""
