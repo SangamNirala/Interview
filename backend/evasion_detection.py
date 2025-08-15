@@ -249,10 +249,10 @@ class EvasionDetectionEngine:
                 most_common_type = max(type_counts.items(), key=lambda x: x[1])[0]
             
             detection_results.update({
-                'virtualization_detected': virtualization_detected,
+                'virtualization_detected': bool(virtualization_detected),
                 'virtualization_type': most_common_type if virtualization_detected else 'none',
-                'confidence_level': round(overall_confidence, 3),
-                'detection_indicators': list(set(all_indicators)),
+                'confidence_level': round(float(overall_confidence), 3),
+                'virtualization_indicators': list(set(all_indicators)),
                 'detection_breakdown': {
                     'hardware_indicators': len([t for t in detection_tests if t.get('category') == 'hardware' and t.get('virtualization_score', 0) > 0]),
                     'software_indicators': len([t for t in detection_tests if t.get('category') == 'software' and t.get('virtualization_score', 0) > 0]),
