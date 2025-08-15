@@ -21478,6 +21478,13 @@ async def track_device_consistency(request: DeviceTrackingRequest):
     try:
         logging.info(f"Tracking device consistency for device: {request.device_id}")
         
+        # Validate required fields
+        if not request.device_id:
+            raise HTTPException(status_code=400, detail="device_id is required and cannot be empty")
+        
+        if request.current_signature is None:
+            raise HTTPException(status_code=400, detail="current_signature is required and cannot be None")
+        
         # Perform device consistency tracking using the engine
         result = device_fingerprinting_engine.track_device_consistency(
             request.device_id, 
