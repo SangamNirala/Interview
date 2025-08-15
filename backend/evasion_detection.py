@@ -165,7 +165,7 @@ class EvasionDetectionEngine:
                     all_indicators.extend(test.get('indicators', []))
             
             # Calculate overall evasion score
-            overall_score = np.mean(evasion_scores) if evasion_scores else 0.0
+            overall_score = float(np.mean(evasion_scores)) if evasion_scores else 0.0
             analysis_results.update({
                 'evasion_patterns': [self._pattern_to_dict(pattern) for pattern in detected_patterns],
                 'overall_evasion_score': round(overall_score, 3),
