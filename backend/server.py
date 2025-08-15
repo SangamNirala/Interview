@@ -21135,7 +21135,7 @@ async def validate_session_authenticity(request: SessionAuthenticityRequest):
             # Store session authenticity analysis results in MongoDB
             authenticity_analysis_doc = {
                 "session_id": request.session_id,
-                "authenticity_analysis": convert_numeric_keys_to_strings(result['authenticity_analysis']),
+                "authenticity_analysis": convert_numeric_keys_to_strings(result['session_authenticity_analysis']),
                 "analysis_summary": result['analysis_summary'],
                 "created_at": datetime.utcnow()
             }
