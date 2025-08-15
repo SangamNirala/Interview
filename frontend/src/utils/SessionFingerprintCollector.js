@@ -2348,6 +2348,313 @@ class SessionFingerprintCollector {
         }
     }
     
+    // ===== PHASE 1.1: MEMORY & STORAGE ANALYSIS METHODS =====
+    
+    /**
+     * Estimate system memory through performance testing
+     */
+    async estimateSystemMemory() {
+        try {
+            const memoryAnalysis = {
+                // Navigator API memory info
+                device_memory_gb: navigator.deviceMemory || 0,
+                
+                // Performance-based memory estimation
+                performance_memory_estimate: await this.estimateMemoryViaPerformance(),
+                
+                // Memory pressure detection
+                memory_pressure_indicators: await this.detectMemoryPressure(),
+                
+                // Available memory estimation
+                available_memory_estimate: await this.estimateAvailableMemory(),
+                
+                // Memory allocation patterns
+                allocation_patterns: await this.analyzeMemoryAllocationPatterns(),
+                
+                // Garbage collection analysis
+                gc_analysis: await this.analyzeGarbageCollection(),
+                
+                // Memory bandwidth estimation
+                memory_bandwidth_estimate: await this.estimateMemoryBandwidth(),
+                
+                // Virtual memory indicators
+                virtual_memory_indicators: this.detectVirtualMemoryIndicators()
+            };
+            
+            return memoryAnalysis;
+            
+        } catch (error) {
+            return { error: error.message, device_memory_gb: navigator.deviceMemory || 0 };
+        }
+    }
+    
+    /**
+     * Profile storage performance
+     */
+    async profileStoragePerformance() {
+        try {
+            const storageProfile = {
+                // localStorage performance
+                local_storage_performance: await this.benchmarkLocalStoragePerformance(),
+                
+                // sessionStorage performance  
+                session_storage_performance: await this.benchmarkSessionStoragePerformance(),
+                
+                // IndexedDB performance
+                indexed_db_performance: await this.benchmarkIndexedDBPerformance(),
+                
+                // Cache API performance
+                cache_api_performance: await this.benchmarkCacheAPIPerformance(),
+                
+                // File system access performance
+                file_system_performance: await this.benchmarkFileSystemPerformance(),
+                
+                // Storage capacity analysis
+                storage_capacity_analysis: await this.analyzeStorageCapacity(),
+                
+                // Storage technology detection
+                storage_technology_hints: this.detectStorageTechnologyHints(),
+                
+                // I/O performance characteristics
+                io_performance_characteristics: await this.analyzeIOPerformance()
+            };
+            
+            return storageProfile;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Analyze CPU cache hierarchy
+     */
+    async analyzeCacheHierarchy() {
+        try {
+            const cacheAnalysis = {
+                // L1 cache analysis
+                l1_cache_analysis: await this.analyzeL1Cache(),
+                
+                // L2 cache analysis
+                l2_cache_analysis: await this.analyzeL2Cache(),
+                
+                // L3 cache analysis
+                l3_cache_analysis: await this.analyzeL3Cache(),
+                
+                // Cache line size detection
+                cache_line_size: await this.detectCacheLineSize(),
+                
+                // Cache associativity analysis
+                cache_associativity: await this.analyzeCacheAssociativity(),
+                
+                // Cache coherency characteristics
+                cache_coherency: await this.analyzeCacheCoherency(),
+                
+                // Memory hierarchy performance
+                memory_hierarchy_performance: await this.benchmarkMemoryHierarchy()
+            };
+            
+            return cacheAnalysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Detect virtual memory usage patterns
+     */
+    async detectVirtualMemoryUsage() {
+        try {
+            const virtualMemoryAnalysis = {
+                // Virtual memory indicators
+                vm_indicators: this.detectVirtualMemoryIndicators(),
+                
+                // Memory pressure analysis
+                memory_pressure: await this.analyzeMemoryPressurePatterns(),
+                
+                // Paging activity detection
+                paging_activity: await this.detectPagingActivity(),
+                
+                // Memory fragmentation analysis
+                memory_fragmentation: await this.analyzeMemoryFragmentation(),
+                
+                // Swap usage indicators
+                swap_usage_indicators: this.detectSwapUsageIndicators(),
+                
+                // Memory mapping analysis
+                memory_mapping_analysis: await this.analyzeMemoryMapping()
+            };
+            
+            return virtualMemoryAnalysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // ===== PHASE 1.1: DEVICE SENSOR ENUMERATION METHODS =====
+    
+    /**
+     * Enumerate motion sensors
+     */
+    async enumerateMotionSensors() {
+        try {
+            const motionSensors = {
+                // DeviceMotion API
+                device_motion_support: 'DeviceMotionEvent' in window,
+                device_motion_permission: await this.checkDeviceMotionPermission(),
+                
+                // DeviceOrientation API
+                device_orientation_support: 'DeviceOrientationEvent' in window,
+                device_orientation_permission: await this.checkDeviceOrientationPermission(),
+                
+                // Generic Sensor API
+                accelerometer_support: 'Accelerometer' in window,
+                gyroscope_support: 'Gyroscope' in window,
+                magnetometer_support: 'Magnetometer' in window,
+                
+                // Sensor readings
+                current_motion_data: await this.getCurrentMotionSensorData(),
+                current_orientation_data: await this.getCurrentOrientationData(),
+                
+                // Motion sensor capabilities
+                motion_sensor_capabilities: await this.analyzeMotionSensorCapabilities(),
+                
+                // Sensor accuracy analysis
+                sensor_accuracy_analysis: await this.analyzeSensorAccuracy()
+            };
+            
+            return motionSensors;
+            
+        } catch (error) {
+            return { error: error.message, device_motion_support: 'DeviceMotionEvent' in window };
+        }
+    }
+    
+    /**
+     * Enumerate environmental sensors
+     */
+    async enumerateEnvironmentalSensors() {
+        try {
+            const environmentalSensors = {
+                // Ambient Light Sensor
+                ambient_light_support: 'AmbientLightSensor' in window,
+                ambient_light_reading: await this.getAmbientLightReading(),
+                
+                // Proximity Sensor
+                proximity_sensor_support: 'ProximitySensor' in window,
+                proximity_reading: await this.getProximityReading(),
+                
+                // Temperature sensors
+                temperature_sensor_support: 'TemperatureSensor' in window,
+                
+                // Humidity sensors
+                humidity_sensor_support: 'HumiditySensor' in window,
+                
+                // Pressure sensors
+                pressure_sensor_support: 'PressureSensor' in window,
+                
+                // UV sensors
+                uv_sensor_support: 'UVSensor' in window,
+                
+                // Air quality sensors
+                air_quality_sensor_support: 'AirQualitySensor' in window,
+                
+                // Environmental context analysis
+                environmental_context: await this.analyzeEnvironmentalContext()
+            };
+            
+            return environmentalSensors;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Enumerate biometric sensors
+     */
+    async enumerateBiometricSensors() {
+        try {
+            const biometricSensors = {
+                // WebAuthn API
+                webauthn_support: 'PublicKeyCredential' in window,
+                webauthn_capabilities: await this.analyzeWebAuthnCapabilities(),
+                
+                // Face detection
+                face_detection_support: 'FaceDetector' in window,
+                
+                // Fingerprint sensors
+                fingerprint_sensor_hints: await this.detectFingerprintSensorHints(),
+                
+                // Heart rate sensors
+                heart_rate_sensor_support: 'HeartRateSensor' in window,
+                
+                // Biometric authentication availability
+                biometric_auth_availability: await this.analyzeBiometricAuthAvailability(),
+                
+                // Touch ID / Face ID hints
+                platform_biometrics: await this.detectPlatformBiometrics(),
+                
+                // Behavioral biometrics capabilities
+                behavioral_biometrics: await this.analyzeBehavioralBiometrics()
+            };
+            
+            return biometricSensors;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Enumerate connectivity sensors
+     */
+    async enumerateConnectivitySensors() {
+        try {
+            const connectivitySensors = {
+                // Network Information API
+                network_info_support: 'connection' in navigator,
+                network_capabilities: await this.analyzeNetworkCapabilities(),
+                
+                // Bluetooth API
+                bluetooth_support: 'bluetooth' in navigator,
+                bluetooth_capabilities: await this.analyzeBluetoothCapabilities(),
+                
+                // USB API
+                usb_support: 'usb' in navigator,
+                
+                // Serial API
+                serial_support: 'serial' in navigator,
+                
+                // HID API
+                hid_support: 'hid' in navigator,
+                
+                // NFC API
+                nfc_support: 'nfc' in navigator,
+                
+                // Geolocation API
+                geolocation_support: 'geolocation' in navigator,
+                geolocation_capabilities: await this.analyzeGeolocationCapabilities(),
+                
+                // Presentation API
+                presentation_support: 'presentation' in navigator,
+                
+                // Wake Lock API
+                wake_lock_support: 'wakeLock' in navigator,
+                
+                // Connectivity analysis
+                connectivity_analysis: await this.analyzeConnectivityPatterns()
+            };
+            
+            return connectivitySensors;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
     // ===== ENHANCED BROWSER CHARACTERISTICS METHODS =====
     
     /**
