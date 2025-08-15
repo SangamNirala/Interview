@@ -745,6 +745,9 @@ app = FastAPI()
 # Import WebSocket manager
 from websocket_manager import websocket_manager, FingerprintingWebSocketManager
 
+# Import database setup
+from database_setup import initialize_fingerprinting_collections, verify_collections_integrity, get_collections_stats
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
