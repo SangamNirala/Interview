@@ -6865,6 +6865,115 @@ async def admin_login(request: AdminLoginRequest):
         raise HTTPException(status_code=401, detail="Invalid password")
     return {"success": True, "message": "Admin authenticated successfully"}
 
+
+# Database Management Endpoints
+@api_router.post("/admin/database/initialize-fingerprinting")
+async def initialize_fingerprinting_database():
+    """
+    Initialize all fingerprinting collections with proper indexes and validation
+    
+    Admin endpoint to set up or reinitialize the fingerprinting database collections.
+    Creates 6 collections: device_fingerprints, browser_fingerprints, 
+    session_integrity_profiles, fingerprint_violations, device_reputation_scores, 
+    fingerprint_analytics
+    
+    Returns:
+        Dict: Initialization status and detailed results
+    """
+    try:
+        logging.info("Admin triggered fingerprinting database initialization")
+        result = await initialize_fingerprinting_collections()
+        
+        return {
+            "success": result['success'],
+            "message": "Fingerprinting database initialization completed",
+            "details": {
+                "collections_created": result['collections_created'],
+                "indexes_created": result['indexes_created'],
+                "database": result['database'],
+                "timestamp": result['timestamp'],
+                "collections_status": result['collections_status']
+            },
+            "errors": result.get('errors', [])
+        }
+        
+    except Exception as e:
+        logging.error(f"Database initialization error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to initialize fingerprinting database: {str(e)}"
+        )
+
+@api_router.get("/admin/database/verify-fingerprinting")
+async def verify_fingerprinting_database():
+    """
+    Verify integrity of all fingerprinting collections
+    
+    Admin endpoint to check that all required fingerprinting collections exist
+    and have proper indexes configured.
+    
+    Returns:
+        Dict: Verification status and collection details
+    """
+    try:
+        logging.info("Admin triggered fingerprinting database verification")
+        result = await verify_collections_integrity()
+        
+        return {
+            "success": result['success'],
+            "message": "Fingerprinting database verification completed",
+            "details": {
+                "collections_verified": result['collections_verified'],
+                "collections_missing": result.get('collections_missing', []),
+                "index_status": result.get('index_status', {}),
+                "database": result['database'],
+                "timestamp": result['timestamp']
+            },
+            "errors": result.get('errors', [])
+        }
+        
+    except Exception as e:
+        logging.error(f"Database verification error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to verify fingerprinting database: {str(e)}"
+        )
+
+@api_router.get("/admin/database/fingerprinting-stats")
+async def get_fingerprinting_database_stats():
+    """
+    Get comprehensive statistics for fingerprinting collections
+    
+    Admin endpoint to retrieve document counts, storage sizes, and other
+    statistics for all fingerprinting collections.
+    
+    Returns:
+        Dict: Collection statistics and storage information
+    """
+    try:
+        logging.info("Admin requested fingerprinting database statistics")
+        result = await get_collections_stats()
+        
+        return {
+            "success": result['success'],
+            "message": "Fingerprinting database statistics retrieved",
+            "details": {
+                "total_documents": result['total_documents'],
+                "database": result['database'],
+                "collection_stats": result['collection_stats'],
+                "timestamp": result['timestamp']
+            },
+            "errors": result.get('errors', [])
+        }
+        
+    except Exception as e:
+        logging.error(f"Database stats error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to get fingerprinting database stats: {str(e)}"
+        )
+
+
 # Placement Preparation Dedicated Endpoints
 
 # ===== Aptitude: Core API Endpoints (Phase 1 - Part 4) =====
