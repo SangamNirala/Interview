@@ -2080,7 +2080,7 @@ class SessionFingerprintCollector {
     /**
      * Get display capability analysis
      */
-    getDisplayCapabilityAnalysis() {
+    async getDisplayCapabilityAnalysis() {
         try {
             const displayCapabilities = {
                 // Resolution information
