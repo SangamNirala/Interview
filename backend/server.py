@@ -890,6 +890,21 @@ async def startup_websocket_manager():
         logging.error(f"❌ Failed to initialize fingerprinting collections: {e}")
         # Continue startup even if fingerprinting init fails
     
+    try:
+        # Initialize Real-Time Alert System
+        print("🚨 Initializing Real-Time Alert System...")
+        logging.info("🚨 Initializing Real-Time Alert System...")
+        
+        await real_time_alert_system.initialize_database_connections(client)
+        
+        print("✅ Real-Time Alert System initialized successfully")
+        logging.info("✅ Real-Time Alert System initialized successfully")
+        
+    except Exception as e:
+        print(f"⚠️  Real-Time Alert System initialization failed: {e}")
+        logging.error(f"⚠️  Real-Time Alert System initialization failed: {e}")
+        # Continue startup even if alert system fails
+    
     print("🎉 Application startup sequence completed!")
     logging.info("🎉 Application startup sequence completed!")
 
