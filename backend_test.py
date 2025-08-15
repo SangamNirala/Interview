@@ -20,8 +20,8 @@ from datetime import datetime
 import sys
 import os
 
-# Backend URL from environment
-BACKEND_URL = "https://session-tracker-7.preview.emergentagent.com/api"
+# Backend URL from environment - use local for testing
+BACKEND_URL = "http://localhost:8001/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class EnhancedFingerprintingBackendTest:
