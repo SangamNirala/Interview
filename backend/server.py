@@ -237,6 +237,30 @@ except Exception as e:
     privacy_manager = BiometricDataPrivacyManager()
     intervention_system = RealTimeInterventionSystem()
 
+# TASK 4.2: Advanced Behavioral Biometrics Integration Import
+try:
+    from advanced_behavioral_biometrics import (
+        AdvancedBehavioralBiometricsEngine,
+        KeystrokeDynamicsAnalyzer as AdvancedKeystrokeDynamicsAnalyzer,
+        MouseMovementAnalyzer,
+        TouchBehaviorAnalyzer,
+        ScrollingPatternAnalyzer,
+        InteractionTimingAnalyzer,
+        advanced_biometrics_engine
+    )
+    print("✅ Advanced Behavioral Biometrics Engine loaded successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Could not load Advanced Behavioral Biometrics Engine - {e}")
+    # Create stub class
+    class AdvancedBehavioralBiometricsEngine:
+        def __init__(self): pass
+        async def analyze_keystroke_dynamics(self, *args, **kwargs): return {"error": "Module not loaded"}
+        async def profile_mouse_behavior(self, *args, **kwargs): return {"error": "Module not loaded"}
+        async def analyze_touch_patterns(self, *args, **kwargs): return {"error": "Module not loaded"}
+        async def detect_automation_via_behavior(self, *args, **kwargs): return {"error": "Module not loaded"}
+    
+    advanced_biometrics_engine = AdvancedBehavioralBiometricsEngine()
+
 # MODULE 2: Statistical Anomaly Detection System Import
 try:
     from anomaly_detection_engine import (
