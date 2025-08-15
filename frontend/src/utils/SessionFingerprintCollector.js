@@ -8684,6 +8684,331 @@ class SessionFingerprintCollector {
             indicators: reduction > 10 ? ['sustained_performance_reduction'] : []
         };
     }
+    
+    // ===== PHASE 1.2: ENHANCED BROWSER CHARACTERISTICS HELPER METHODS =====
+    
+    /**
+     * Enhanced Browser Identification Methods
+     */
+    parseDetailedUserAgent() {
+        try {
+            const ua = navigator.userAgent;
+            const analysis = {
+                raw_user_agent: ua,
+                user_agent_length: ua.length,
+                parsed_components: {},
+                browser_detection: {},
+                os_detection: {},
+                device_detection: {},
+                suspicious_patterns: []
+            };
+            
+            // Parse major browser patterns
+            const browserPatterns = [
+                { name: 'Chrome', pattern: /Chrome\/([0-9.]+)/, engine: 'Blink' },
+                { name: 'Firefox', pattern: /Firefox\/([0-9.]+)/, engine: 'Gecko' },
+                { name: 'Safari', pattern: /Version\/([0-9.]+).*Safari/, engine: 'WebKit' },
+                { name: 'Edge', pattern: /Edg\/([0-9.]+)/, engine: 'Blink' },
+                { name: 'Opera', pattern: /OPR\/([0-9.]+)/, engine: 'Blink' },
+                { name: 'Internet Explorer', pattern: /MSIE ([0-9.]+)|Trident.*rv:([0-9.]+)/, engine: 'Trident' }
+            ];
+            
+            for (const browser of browserPatterns) {
+                const match = ua.match(browser.pattern);
+                if (match) {
+                    analysis.browser_detection = {
+                        name: browser.name,
+                        version: match[1] || match[2] || 'unknown',
+                        engine: browser.engine,
+                        match_pattern: browser.pattern.toString()
+                    };
+                    break;
+                }
+            }
+            
+            // Parse OS patterns
+            const osPatterns = [
+                { name: 'Windows', pattern: /Windows NT ([0-9.]+)/ },
+                { name: 'macOS', pattern: /Mac OS X ([0-9_.]+)/ },
+                { name: 'Linux', pattern: /Linux/ },
+                { name: 'Android', pattern: /Android ([0-9.]+)/ },
+                { name: 'iOS', pattern: /OS ([0-9_]+) like Mac OS X/ }
+            ];
+            
+            for (const os of osPatterns) {
+                const match = ua.match(os.pattern);
+                if (match) {
+                    analysis.os_detection = {
+                        name: os.name,
+                        version: match[1] ? match[1].replace(/_/g, '.') : 'unknown',
+                        match_pattern: os.pattern.toString()
+                    };
+                    break;
+                }
+            }
+            
+            // Device detection
+            if (ua.includes('Mobile')) analysis.device_detection.mobile = true;
+            if (ua.includes('Tablet')) analysis.device_detection.tablet = true;
+            if (ua.match(/iPhone|iPad|iPod/)) analysis.device_detection.apple_device = true;
+            
+            // Detect suspicious patterns
+            const suspiciousPatterns = [
+                { name: 'headless_chrome', pattern: /HeadlessChrome/ },
+                { name: 'phantom_js', pattern: /PhantomJS/ },
+                { name: 'selenium', pattern: /selenium/i },
+                { name: 'webdriver', pattern: /webdriver/i },
+                { name: 'bot_pattern', pattern: /bot|crawler|spider/i },
+                { name: 'unusual_length', test: () => ua.length > 500 || ua.length < 50 },
+                { name: 'missing_version', test: () => !ua.match(/[0-9]+\.[0-9]+/) }
+            ];
+            
+            for (const suspicious of suspiciousPatterns) {
+                if (suspicious.pattern && ua.match(suspicious.pattern)) {
+                    analysis.suspicious_patterns.push(suspicious.name);
+                } else if (suspicious.test && suspicious.test()) {
+                    analysis.suspicious_patterns.push(suspicious.name);
+                }
+            }
+            
+            // Parse detailed components
+            const componentPatterns = [
+                { name: 'webkit_version', pattern: /WebKit\/([0-9.]+)/ },
+                { name: 'gecko_version', pattern: /Gecko\/([0-9]+)/ },
+                { name: 'chrome_version', pattern: /Chrome\/([0-9.]+)/ },
+                { name: 'safari_version', pattern: /Safari\/([0-9.]+)/ }
+            ];
+            
+            for (const component of componentPatterns) {
+                const match = ua.match(component.pattern);
+                if (match) {
+                    analysis.parsed_components[component.name] = match[1];
+                }
+            }
+            
+            return analysis;
+            
+        } catch (error) {
+            return { error: error.message, raw_user_agent: navigator.userAgent };
+        }
+    }
+    
+    async detectBrowserBuild() {
+        try {
+            const buildInfo = {
+                build_id: 'unknown',
+                build_date: null,
+                version_details: {},
+                browser_specific: {}
+            };
+            
+            // Chrome-specific build detection
+            if (window.chrome) {
+                buildInfo.browser_specific.chrome = {
+                    runtime_version: window.chrome.runtime ? 'present' : 'absent',
+                    csi_info: window.chrome.csi ? await this.analyzeChromeCSI() : null,
+                    load_times: window.chrome.loadTimes ? window.chrome.loadTimes() : null
+                };
+            }
+            
+            // Firefox-specific build detection
+            if (navigator.userAgent.includes('Firefox')) {
+                buildInfo.browser_specific.firefox = {
+                    build_id: navigator.buildID || 'unknown',
+                    oscpu: navigator.oscpu || 'unknown',
+                    product_sub: navigator.productSub || 'unknown'
+                };
+            }
+            
+            // Safari-specific build detection
+            if (navigator.userAgent.includes('Safari')) {
+                buildInfo.browser_specific.safari = {
+                    webkit_version: this.extractWebKitVersion(),
+                    safari_version: this.extractSafariVersion(),
+                    apple_specific: 'ApplePaySession' in window
+                };
+            }
+            
+            // Edge-specific build detection
+            if (navigator.userAgent.includes('Edg')) {
+                buildInfo.browser_specific.edge = {
+                    edge_html_version: navigator.userAgent.match(/Edge\/([0-9.]+)/),
+                    chromium_based: navigator.userAgent.includes('Edg/'),
+                    webview: 'Windows' in window
+                };
+            }
+            
+            // General version detection through feature support
+            buildInfo.version_details = {
+                es6_support: this.detectES6Support(),
+                webgl_version: this.getWebGLVersion(),
+                canvas_api_level: this.getCanvasAPILevel(),
+                fetch_api: 'fetch' in window,
+                promise_support: 'Promise' in window,
+                async_await: this.detectAsyncAwaitSupport()
+            };
+            
+            return buildInfo;
+            
+        } catch (error) {
+            return { error: error.message, build_id: 'detection_failed' };
+        }
+    }
+    
+    async fingerprintJSEngine() {
+        try {
+            const engineFingerprint = {
+                engine_type: 'unknown',
+                version_indicators: {},
+                performance_characteristics: {},
+                memory_behavior: {},
+                compilation_features: {}
+            };
+            
+            // V8 detection (Chrome, Edge, Node.js)
+            if (this.detectV8Engine()) {
+                engineFingerprint.engine_type = 'V8';
+                engineFingerprint.version_indicators = await this.getV8VersionIndicators();
+            }
+            // SpiderMonkey detection (Firefox)
+            else if (this.detectSpiderMonkeyEngine()) {
+                engineFingerprint.engine_type = 'SpiderMonkey';
+                engineFingerprint.version_indicators = await this.getSpiderMonkeyVersionIndicators();
+            }
+            // JavaScriptCore detection (Safari, WebKit)
+            else if (this.detectJavaScriptCoreEngine()) {
+                engineFingerprint.engine_type = 'JavaScriptCore';
+                engineFingerprint.version_indicators = await this.getJavaScriptCoreVersionIndicators();
+            }
+            
+            // Performance characteristics testing
+            engineFingerprint.performance_characteristics = {
+                function_call_overhead: await this.measureFunctionCallOverhead(),
+                object_creation_speed: await this.measureObjectCreationSpeed(),
+                array_operations_speed: await this.measureArrayOperationsSpeed(),
+                string_operations_speed: await this.measureStringOperationsSpeed(),
+                math_operations_speed: await this.measureMathOperationsSpeed()
+            };
+            
+            // Memory behavior analysis
+            engineFingerprint.memory_behavior = {
+                garbage_collection_patterns: await this.analyzeGCPatterns(),
+                memory_allocation_behavior: await this.analyzeMemoryAllocation(),
+                weak_references_support: 'WeakRef' in window,
+                finalization_registry_support: 'FinalizationRegistry' in window
+            };
+            
+            // Compilation features
+            engineFingerprint.compilation_features = {
+                jit_compilation_indicators: this.detectJITCompilation(),
+                optimization_tier_detection: this.detectOptimizationTiers(),
+                webassembly_support: 'WebAssembly' in window,
+                shared_array_buffer: 'SharedArrayBuffer' in window,
+                atomics_support: 'Atomics' in window
+            };
+            
+            return engineFingerprint;
+            
+        } catch (error) {
+            return { error: error.message, engine_type: 'detection_failed' };
+        }
+    }
+    
+    async detectHeadlessBrowser() {
+        try {
+            const headlessIndicators = {
+                is_headless: false,
+                confidence_score: 0,
+                detected_indicators: [],
+                phantom_js_indicators: [],
+                selenium_indicators: [],
+                puppeteer_indicators: []
+            };
+            
+            let suspicionCount = 0;
+            
+            // PhantomJS indicators
+            if (window.phantom) {
+                headlessIndicators.phantom_js_indicators.push('phantom_global_object');
+                suspicionCount += 3;
+            }
+            
+            if (window.callPhantom) {
+                headlessIndicators.phantom_js_indicators.push('call_phantom_function');
+                suspicionCount += 3;
+            }
+            
+            // Selenium indicators
+            if (window.webdriver || navigator.webdriver) {
+                headlessIndicators.selenium_indicators.push('webdriver_property');
+                suspicionCount += 3;
+            }
+            
+            if (window.__webdriver_script_fn || document.__webdriver_script_fn) {
+                headlessIndicators.selenium_indicators.push('webdriver_script_function');
+                suspicionCount += 2;
+            }
+            
+            // Puppeteer indicators
+            if (window.outerHeight === 0 && window.outerWidth === 0) {
+                headlessIndicators.puppeteer_indicators.push('zero_outer_dimensions');
+                suspicionCount += 2;
+            }
+            
+            if (navigator.languages.length === 0) {
+                headlessIndicators.puppeteer_indicators.push('no_languages');
+                suspicionCount += 1;
+            }
+            
+            // Chrome headless specific
+            if (navigator.userAgent.includes('HeadlessChrome')) {
+                headlessIndicators.detected_indicators.push('headless_chrome_user_agent');
+                suspicionCount += 4;
+            }
+            
+            // General headless indicators
+            if (!window.chrome && navigator.userAgent.includes('Chrome')) {
+                headlessIndicators.detected_indicators.push('missing_chrome_object');
+                suspicionCount += 1;
+            }
+            
+            if (navigator.plugins.length === 0) {
+                headlessIndicators.detected_indicators.push('no_plugins');
+                suspicionCount += 1;
+            }
+            
+            // Permission API anomalies
+            try {
+                const permissions = await navigator.permissions.query({ name: 'notifications' });
+                if (permissions.state === 'denied' && !('Notification' in window)) {
+                    headlessIndicators.detected_indicators.push('permission_notification_anomaly');
+                    suspicionCount += 1;
+                }
+            } catch (e) {
+                // Permission API not available
+            }
+            
+            // WebGL context anomalies
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl');
+            if (gl) {
+                const renderer = gl.getParameter(gl.RENDERER);
+                if (renderer.includes('SwiftShader') || renderer.includes('Software')) {
+                    headlessIndicators.detected_indicators.push('software_webgl_renderer');
+                    suspicionCount += 2;
+                }
+            }
+            
+            // Calculate confidence score
+            headlessIndicators.confidence_score = Math.min(suspicionCount / 10, 1);
+            headlessIndicators.is_headless = headlessIndicators.confidence_score > 0.5;
+            
+            return headlessIndicators;
+            
+        } catch (error) {
+            return { error: error.message, is_headless: false, confidence_score: 0 };
+        }
+    }
 }
 
 // Export the class
