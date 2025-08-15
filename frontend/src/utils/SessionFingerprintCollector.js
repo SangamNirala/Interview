@@ -2187,64 +2187,50 @@ class SessionFingerprintCollector {
     // ===== PHASE 1.1: HARDWARE ENUMERATION METHODS =====
     
     /**
-     * Get advanced WebGL hardware information
+     * PHASE 1.1.1: Advanced WebGL Hardware Analysis Methods
+     * Get advanced WebGL hardware information beyond basic renderer detection
      */
     async getAdvancedWebGLHardwareInfo() {
         try {
             const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
             
             if (!gl) {
-                return { webgl_supported: false, error: 'WebGL not supported' };
+                return { error: 'WebGL not available', fallback_data: this.getBasicGPUFallback() };
             }
             
-            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-            const extensions = gl.getSupportedExtensions() || [];
-            
             const hardwareInfo = {
-                webgl_version: gl.getParameter(gl.VERSION),
-                shading_language_version: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
-                vendor: gl.getParameter(gl.VENDOR),
-                renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Unknown',
-                unmasked_vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Unknown',
+                // GPU Vendor and Model Analysis
+                gpu_analysis: await this.analyzeGPUCharacteristics(gl),
                 
-                // WebGL capabilities
-                max_texture_size: gl.getParameter(gl.MAX_TEXTURE_SIZE),
-                max_viewport_dims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
-                max_vertex_attribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
-                max_vertex_uniform_vectors: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
-                max_fragment_uniform_vectors: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
-                max_varying_vectors: gl.getParameter(gl.MAX_VARYING_VECTORS),
-                max_combined_texture_image_units: gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
-                max_vertex_texture_image_units: gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS),
-                max_texture_image_units: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
-                max_renderbuffer_size: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
-                max_cube_map_texture_size: gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE),
+                // WebGL Capabilities Matrix
+                webgl_capabilities: this.getWebGLCapabilitiesMatrix(gl),
                 
-                // Extensions analysis
-                supported_extensions: extensions,
-                extension_count: extensions.length,
-                anisotropic_filtering: extensions.includes('EXT_texture_filter_anisotropic'),
-                depth_texture_support: extensions.includes('WEBGL_depth_texture'),
-                float_textures: extensions.includes('OES_texture_float'),
-                half_float_textures: extensions.includes('OES_texture_half_float'),
+                // Performance Profiling
+                rendering_performance: await this.profileWebGLPerformance(gl),
                 
-                // Precision analysis
-                vertex_shader_precision: this.analyzeShaderPrecision(gl, gl.VERTEX_SHADER),
-                fragment_shader_precision: this.analyzeShaderPrecision(gl, gl.FRAGMENT_SHADER),
+                // Memory Analysis
+                gpu_memory_analysis: await this.analyzeGPUMemory(gl),
                 
-                // Context attributes
-                context_attributes: gl.getContextAttributes(),
+                // Extension Analysis
+                extension_analysis: this.analyzeWebGLExtensions(gl),
                 
-                // Advanced GPU detection
-                gpu_architecture: this.detectGPUArchitecture(gl, debugInfo),
-                gpu_generation: this.detectGPUGeneration(gl, debugInfo)
+                // Shader Capabilities
+                shader_analysis: await this.analyzeShaderCapabilities(gl),
+                
+                // Texture and Buffer Limits
+                resource_limits: this.getWebGLResourceLimits(gl),
+                
+                // Precision and Float Support
+                precision_analysis: this.analyzeWebGLPrecision(gl)
             };
             
+            canvas.remove();
             return hardwareInfo;
             
         } catch (error) {
-            return { error: error.message, webgl_supported: false };
+            this.logger.error("Error in advanced WebGL analysis:", error);
+            return { error: error.message, fallback_data: this.getBasicGPUFallback() };
         }
     }
     
