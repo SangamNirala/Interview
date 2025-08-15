@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://deviceprint.preview.emergentagent.com/api"
+BASE_URL = "https://browser-fingerprint-1.preview.emergentagent.com/api"
 
 class Phase4AnalyticsTester:
     def __init__(self):

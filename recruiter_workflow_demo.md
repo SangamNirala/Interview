@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://deviceprint.preview.emergentagent.com
+URL: https://browser-fingerprint-1.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

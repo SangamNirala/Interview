@@ -12,7 +12,7 @@ import random
 import time
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://deviceprint.preview.emergentagent.com/api"
+BACKEND_URL = "https://browser-fingerprint-1.preview.emergentagent.com/api"
 
 def create_comprehensive_session_data(scenario="normal"):
     """Create comprehensive realistic mock session data for different scenarios"""

@@ -7,7 +7,7 @@ import requests
 import json
 import re
 
-BACKEND_URL = "https://deviceprint.preview.emergentagent.com"
+BACKEND_URL = "https://browser-fingerprint-1.preview.emergentagent.com"
 ATS_ENDPOINT = f"{BACKEND_URL}/api/placement-preparation/ats-score-calculate"
 
 def test_pdf_content():

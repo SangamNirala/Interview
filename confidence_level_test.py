@@ -8,7 +8,7 @@ import json
 import uuid
 
 # Configuration
-BACKEND_URL = "https://deviceprint.preview.emergentagent.com/api"
+BACKEND_URL = "https://browser-fingerprint-1.preview.emergentagent.com/api"
 
 class ConfidenceLevelTester:
     def __init__(self):
