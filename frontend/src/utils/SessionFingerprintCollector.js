@@ -12944,7 +12944,7 @@ class SessionFingerprintCollector {
     async detectJavaScriptEngine() {
         try {
             const features = {
-                v8: typeof chrome !== 'undefined' && typeof chrome.runtime !== 'undefined',
+                v8: typeof window !== 'undefined' && typeof window.chrome !== 'undefined' && typeof window.chrome.runtime !== 'undefined',
                 spiderMonkey: typeof InstallTrigger !== 'undefined',
                 javascriptCore: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
                 chakra: /Edge\//.test(navigator.userAgent) && !(/Chrome/.test(navigator.userAgent)),
