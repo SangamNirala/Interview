@@ -4224,12 +4224,354 @@ class SessionFingerprintCollector {
         }
     }
     
-    // Thermal and Performance Analysis Stubs
-    async detectClockSpeedVariation() { return { variation_detected: false }; }
-    async detectThrottlingIndicators() { return { indicators: [] }; }
-    async detectPerformanceDegradation() { return { degradation_detected: false }; }
-    async analyzeSystemResponsiveness() { return { responsiveness_score: 0.8 }; }
-    async analyzeBatteryImpactOnPerformance() { return { impact_level: 'unknown' }; }
+    // Thermal and Performance Analysis - Enhanced Implementation
+    async detectClockSpeedVariation() {
+        try {
+            const measurements = [];
+            const testDuration = 2000; // 2 seconds
+            const measurementInterval = 100; // 100ms intervals
+            const iterations = testDuration / measurementInterval;
+            
+            // Perform CPU-intensive operations and measure timing consistency
+            for (let i = 0; i < iterations; i++) {
+                const startTime = performance.now();
+                
+                // Standardized CPU work (mathematical operations)
+                let sum = 0;
+                for (let j = 0; j < 10000; j++) {
+                    sum += Math.sin(j) * Math.cos(j) + Math.sqrt(j);
+                }
+                
+                const endTime = performance.now();
+                const executionTime = endTime - startTime;
+                
+                measurements.push({
+                    iteration: i,
+                    execution_time: executionTime,
+                    timestamp: startTime
+                });
+                
+                // Wait for next interval
+                await new Promise(resolve => setTimeout(resolve, measurementInterval - executionTime));
+            }
+            
+            // Analyze timing variations
+            const executionTimes = measurements.map(m => m.execution_time);
+            const avgTime = executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length;
+            const variance = executionTimes.reduce((sum, time) => sum + Math.pow(time - avgTime, 2), 0) / executionTimes.length;
+            const standardDeviation = Math.sqrt(variance);
+            const coefficientOfVariation = (standardDeviation / avgTime) * 100;
+            
+            // Detect trends indicating thermal throttling
+            let throttlingIndicators = [];
+            
+            // Check for increasing execution times (warming up)
+            const firstHalf = executionTimes.slice(0, Math.floor(executionTimes.length / 2));
+            const secondHalf = executionTimes.slice(Math.floor(executionTimes.length / 2));
+            const firstHalfAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+            const secondHalfAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+            
+            if (secondHalfAvg > firstHalfAvg * 1.1) {
+                throttlingIndicators.push('execution_time_degradation');
+            }
+            
+            // Check for periodic variations
+            const periodicVariation = this.detectPeriodicPatterns(executionTimes);
+            if (periodicVariation.detected) {
+                throttlingIndicators.push('periodic_performance_variation');
+            }
+            
+            return {
+                variation_detected: coefficientOfVariation > 15, // >15% variation suggests throttling
+                coefficient_of_variation: coefficientOfVariation,
+                avg_execution_time: avgTime,
+                standard_deviation: standardDeviation,
+                performance_degradation: secondHalfAvg > firstHalfAvg * 1.1,
+                throttling_indicators: throttlingIndicators,
+                measurement_count: measurements.length,
+                periodic_patterns: periodicVariation
+            };
+            
+        } catch (error) {
+            return { variation_detected: false, error: error.message };
+        }
+    }
+    
+    async detectThrottlingIndicators() {
+        try {
+            const indicators = [];
+            const testResults = {};
+            
+            // Test 1: CPU frequency stability through timing consistency
+            const cpuStabilityTest = await this.testCPUStability();
+            if (cpuStabilityTest.unstable) {
+                indicators.push({
+                    type: 'cpu_frequency_instability',
+                    severity: cpuStabilityTest.severity,
+                    details: cpuStabilityTest.details
+                });
+            }
+            testResults.cpu_stability = cpuStabilityTest;
+            
+            // Test 2: Memory bandwidth consistency
+            const memoryTest = await this.testMemoryBandwidth();
+            if (memoryTest.degraded) {
+                indicators.push({
+                    type: 'memory_bandwidth_degradation',
+                    severity: memoryTest.severity,
+                    details: memoryTest.details
+                });
+            }
+            testResults.memory_bandwidth = memoryTest;
+            
+            // Test 3: GPU performance consistency
+            const gpuTest = await this.testGPUThrottling();
+            if (gpuTest.throttled) {
+                indicators.push({
+                    type: 'gpu_thermal_throttling',
+                    severity: gpuTest.severity,
+                    details: gpuTest.details
+                });
+            }
+            testResults.gpu_performance = gpuTest;
+            
+            // Test 4: Battery impact analysis
+            const batteryTest = await this.analyzeBatteryPerformanceImpact();
+            if (batteryTest.impacted) {
+                indicators.push({
+                    type: 'battery_performance_limitation',
+                    severity: batteryTest.severity,
+                    details: batteryTest.details
+                });
+            }
+            testResults.battery_impact = batteryTest;
+            
+            // Test 5: System responsiveness
+            const responsivenessTest = await this.testSystemResponsiveness();
+            if (responsivenessTest.degraded) {
+                indicators.push({
+                    type: 'system_responsiveness_degradation',
+                    severity: responsivenessTest.severity,
+                    details: responsivenessTest.details
+                });
+            }
+            testResults.system_responsiveness = responsivenessTest;
+            
+            return {
+                indicators: indicators,
+                indicator_count: indicators.length,
+                overall_throttling_detected: indicators.length > 0,
+                severity_level: this.calculateOverallSeverity(indicators),
+                detailed_test_results: testResults
+            };
+            
+        } catch (error) {
+            return { indicators: [], error: error.message };
+        }
+    }
+    
+    async detectPerformanceDegradation() {
+        try {
+            const degradationTests = [];
+            const testDuration = 5000; // 5 seconds of testing
+            const testInterval = 500; // Test every 500ms
+            
+            const baselineTests = [
+                { name: 'cpu_arithmetic', fn: this.testCPUArithmetic },
+                { name: 'memory_access', fn: this.testMemoryAccess },
+                { name: 'dom_manipulation', fn: this.testDOMManipulation },
+                { name: 'canvas_rendering', fn: this.testCanvasRendering }
+            ];
+            
+            for (let test of baselineTests) {
+                const testResults = [];
+                const testCount = Math.floor(testDuration / testInterval);
+                
+                for (let i = 0; i < testCount; i++) {
+                    const startTime = performance.now();
+                    await test.fn.call(this);
+                    const endTime = performance.now();
+                    
+                    testResults.push({
+                        iteration: i,
+                        time: endTime - startTime,
+                        timestamp: startTime
+                    });
+                    
+                    // Wait for next test interval
+                    await new Promise(resolve => setTimeout(resolve, testInterval));
+                }
+                
+                // Analyze performance trend
+                const times = testResults.map(r => r.time);
+                const trend = this.calculatePerformanceTrend(times);
+                
+                degradationTests.push({
+                    test_name: test.name,
+                    results: testResults,
+                    avg_time: times.reduce((a, b) => a + b, 0) / times.length,
+                    performance_trend: trend,
+                    degradation_detected: trend.slope > 0.1, // Positive slope indicates degradation
+                    degradation_percentage: trend.degradation_percent
+                });
+            }
+            
+            // Overall degradation analysis
+            const degradedTests = degradationTests.filter(t => t.degradation_detected);
+            const overallDegradation = degradedTests.length > 0;
+            const avgDegradationPercent = degradedTests.length > 0 ? 
+                degradedTests.reduce((sum, t) => sum + t.degradation_percentage, 0) / degradedTests.length : 0;
+            
+            return {
+                degradation_detected: overallDegradation,
+                affected_test_count: degradedTests.length,
+                total_tests: degradationTests.length,
+                average_degradation_percent: avgDegradationPercent,
+                degradation_severity: this.categorizeDegradationSeverity(avgDegradationPercent),
+                detailed_test_results: degradationTests,
+                likely_causes: this.identifyDegradationCauses(degradationTests)
+            };
+            
+        } catch (error) {
+            return { degradation_detected: false, error: error.message };
+        }
+    }
+    
+    async analyzeSystemResponsiveness() {
+        try {
+            const responsivenessMetrics = {
+                event_response_times: [],
+                animation_frame_times: [],
+                dom_update_times: [],
+                user_interaction_latency: []
+            };
+            
+            // Test 1: Event handling responsiveness
+            const eventTest = await this.measureEventResponseTime();
+            responsivenessMetrics.event_response_times = eventTest.response_times;
+            
+            // Test 2: Animation frame consistency
+            const animationTest = await this.measureAnimationFrameConsistency();
+            responsivenessMetrics.animation_frame_times = animationTest.frame_times;
+            
+            // Test 3: DOM update performance
+            const domTest = await this.measureDOMUpdatePerformance();
+            responsivenessMetrics.dom_update_times = domTest.update_times;
+            
+            // Test 4: Simulated user interaction latency
+            const interactionTest = await this.measureInteractionLatency();
+            responsivenessMetrics.user_interaction_latency = interactionTest.latencies;
+            
+            // Calculate overall responsiveness score
+            const avgEventTime = this.calculateAverage(responsivenessMetrics.event_response_times);
+            const avgFrameTime = this.calculateAverage(responsivenessMetrics.animation_frame_times);
+            const avgDOMTime = this.calculateAverage(responsivenessMetrics.dom_update_times);
+            const avgInteractionTime = this.calculateAverage(responsivenessMetrics.user_interaction_latency);
+            
+            // Normalize scores (lower times = higher scores)
+            const eventScore = Math.max(0, 100 - (avgEventTime * 10));
+            const animationScore = Math.max(0, 100 - (avgFrameTime - 16.67) * 5); // 60fps target
+            const domScore = Math.max(0, 100 - (avgDOMTime * 2));
+            const interactionScore = Math.max(0, 100 - (avgInteractionTime * 5));
+            
+            const overallScore = (eventScore + animationScore + domScore + interactionScore) / 4;
+            
+            return {
+                responsiveness_score: overallScore,
+                performance_category: this.categorizeResponsiveness(overallScore),
+                detailed_metrics: responsivenessMetrics,
+                average_times: {
+                    event_response_ms: avgEventTime,
+                    animation_frame_ms: avgFrameTime,
+                    dom_update_ms: avgDOMTime,
+                    interaction_latency_ms: avgInteractionTime
+                },
+                individual_scores: {
+                    event_handling: eventScore,
+                    animation_performance: animationScore,
+                    dom_performance: domScore,
+                    interaction_responsiveness: interactionScore
+                }
+            };
+            
+        } catch (error) {
+            return { responsiveness_score: 0.8, error: error.message };
+        }
+    }
+    
+    async analyzeBatteryImpactOnPerformance() {
+        try {
+            let batteryInfo = { level: null, charging: null };
+            
+            // Try to get battery information
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    batteryInfo = {
+                        level: battery.level,
+                        charging: battery.charging,
+                        charging_time: battery.chargingTime,
+                        discharging_time: battery.dischargingTime
+                    };
+                } catch (e) {
+                    // Battery API not available or blocked
+                }
+            }
+            
+            // Perform performance tests to correlate with battery status
+            const performanceBaseline = await this.establishPerformanceBaseline();
+            
+            let impactAnalysis = {
+                impact_level: 'unknown',
+                performance_reduction: 0,
+                battery_saving_mode_detected: false,
+                power_throttling_indicators: []
+            };
+            
+            if (batteryInfo.level !== null) {
+                // Analyze performance correlation with battery level
+                if (batteryInfo.level < 0.2 && !batteryInfo.charging) {
+                    // Low battery - check for power saving throttling
+                    const lowBatteryPerformance = await this.measureThrottledPerformance();
+                    const performanceReduction = ((performanceBaseline.score - lowBatteryPerformance.score) / performanceBaseline.score) * 100;
+                    
+                    impactAnalysis = {
+                        impact_level: performanceReduction > 10 ? 'high' : performanceReduction > 5 ? 'medium' : 'low',
+                        performance_reduction: performanceReduction,
+                        battery_saving_mode_detected: performanceReduction > 15,
+                        power_throttling_indicators: this.identifyPowerThrottling(performanceBaseline, lowBatteryPerformance),
+                        battery_level: batteryInfo.level,
+                        charging_status: batteryInfo.charging
+                    };
+                } else {
+                    // Normal battery conditions
+                    impactAnalysis = {
+                        impact_level: 'minimal',
+                        performance_reduction: 0,
+                        battery_saving_mode_detected: false,
+                        power_throttling_indicators: [],
+                        battery_level: batteryInfo.level,
+                        charging_status: batteryInfo.charging
+                    };
+                }
+            } else {
+                // Battery info unavailable - analyze for desktop power management
+                const desktopThrottling = await this.detectDesktopPowerThrottling();
+                impactAnalysis = {
+                    impact_level: desktopThrottling.detected ? 'medium' : 'unknown',
+                    performance_reduction: desktopThrottling.estimated_reduction || 0,
+                    battery_saving_mode_detected: false,
+                    power_throttling_indicators: desktopThrottling.indicators || [],
+                    device_type: 'desktop_or_battery_unavailable'
+                };
+            }
+            
+            return impactAnalysis;
+            
+        } catch (error) {
+            return { impact_level: 'unknown', error: error.message };
+        }
+    }
     
     // Advanced Detection Methods Stubs
     detectJITCompilation() { return { jit_detected: true }; }
