@@ -8995,5 +8995,7 @@ __all__ = [
     'DeviceTrackingRecord',
     'device_fingerprinting_engine',
     'EnvironmentAnalyzer',
-    'environment_analyzer'
+    'environment_analyzer',
+    'SessionIntegrityMonitor',
+    'session_integrity_monitor'
 ]
