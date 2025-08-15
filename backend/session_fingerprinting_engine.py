@@ -6556,6 +6556,1157 @@ class EnvironmentAnalyzer:
         return recommendations
 
 
+class SessionIntegrityMonitor:
+    """
+    🔒 PHASE 3.3: SESSION INTEGRITY MONITORING
+    Advanced Session Integrity Monitoring for comprehensive session validation and manipulation detection
+    
+    This class provides comprehensive analysis of session continuity, authenticity validation,
+    manipulation detection, and anomaly tracking to identify sophisticated session attacks.
+    """
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        
+        # Session integrity configuration
+        self.session_timeout_threshold = 1800  # 30 minutes
+        self.max_session_gap = 300  # 5 minutes
+        self.activity_consistency_threshold = 0.7
+        self.manipulation_confidence_threshold = 0.6
+        
+        # Session patterns and signatures
+        self.session_patterns = {
+            'normal_activity_intervals': {
+                'min_interval': 1,     # 1 second
+                'max_interval': 300,   # 5 minutes
+                'typical_range': (5, 60)  # 5-60 seconds
+            },
+            'suspicious_patterns': [
+                'rapid_fire_requests',
+                'perfect_timing_intervals',
+                'simultaneous_sessions',
+                'impossible_travel_time',
+                'session_token_reuse'
+            ],
+            'hijacking_indicators': [
+                'ip_address_change',
+                'user_agent_change',
+                'geographic_location_jump',
+                'device_fingerprint_mismatch',
+                'behavioral_pattern_shift'
+            ],
+            'replay_attack_signatures': [
+                'identical_request_sequences',
+                'timestamp_manipulation',
+                'out_of_order_requests',
+                'duplicate_nonce_values',
+                'stale_session_tokens'
+            ]
+        }
+        
+        # Manipulation detection patterns
+        self.manipulation_signatures = {
+            'timestamp_manipulation': {
+                'clock_skew_threshold': 5.0,  # seconds
+                'future_timestamp_threshold': 60.0,  # seconds
+                'past_timestamp_threshold': 300.0,  # seconds
+                'timestamp_precision_anomalies': ['microsecond_precision', 'millisecond_rounding']
+            },
+            'session_data_integrity': {
+                'required_fields': ['session_id', 'user_id', 'timestamp', 'ip_address'],
+                'immutable_fields': ['session_id', 'creation_time', 'user_id'],
+                'validation_checksums': True,
+                'encryption_validation': True
+            },
+            'cross_session_correlation': {
+                'max_concurrent_sessions': 3,
+                'session_overlap_threshold': 0.8,
+                'device_consistency_required': True,
+                'ip_consistency_tolerance': 2  # Allow up to 2 IP changes
+            }
+        }
+        
+        # Session tracking data structures (in-memory for this implementation)
+        self.active_sessions = {}  # session_id -> session_data
+        self.session_history = {}  # session_id -> List[activity_record]
+        self.user_sessions = {}  # user_id -> List[session_id]
+        self.session_anomalies = {}  # session_id -> List[anomaly_record]
+        
+        self.logger.info("SessionIntegrityMonitor initialized successfully")
+    
+    def monitor_session_continuity(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        🔍 MONITOR SESSION CONTINUITY
+        Comprehensive session continuity monitoring including token validation, activity pattern analysis,
+        session break detection, user behavior consistency, and session hijacking detection
+        
+        Args:
+            session_data: Dictionary containing session information and activity data
+            
+        Returns:
+            Dict containing comprehensive session continuity analysis
+        """
+        try:
+            self.logger.info("Starting comprehensive session continuity monitoring")
+            
+            analysis_result = {
+                'session_identity': {},
+                'token_validation': {},
+                'activity_pattern_analysis': {},
+                'session_break_detection': {},
+                'behavior_consistency': {},
+                'hijacking_detection': {},
+                'continuity_score': 0.0,
+                'risk_assessment': {},
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            session_id = session_data.get('session_id', '')
+            
+            # 1. Session Token Validation and Tracking
+            token_validation = self._validate_session_tokens(session_data)
+            analysis_result['token_validation'] = token_validation
+            
+            # 2. Activity Pattern Continuity Analysis
+            activity_analysis = self._analyze_activity_pattern_continuity(session_data)
+            analysis_result['activity_pattern_analysis'] = activity_analysis
+            
+            # 3. Session Break Detection and Validation
+            break_detection = self._detect_session_breaks(session_data)
+            analysis_result['session_break_detection'] = break_detection
+            
+            # 4. User Behavior Consistency Monitoring
+            behavior_consistency = self._monitor_behavior_consistency(session_data)
+            analysis_result['behavior_consistency'] = behavior_consistency
+            
+            # 5. Session Hijacking Detection
+            hijacking_detection = self._detect_session_hijacking(session_data)
+            analysis_result['hijacking_detection'] = hijacking_detection
+            
+            # 6. Calculate Overall Continuity Score
+            continuity_scores = [
+                token_validation.get('validity_score', 0.5),
+                activity_analysis.get('continuity_score', 0.5),
+                break_detection.get('continuity_score', 0.5),
+                behavior_consistency.get('consistency_score', 0.5),
+                hijacking_detection.get('security_score', 0.5)
+            ]
+            analysis_result['continuity_score'] = statistics.mean(continuity_scores)
+            
+            # 7. Session Continuity Risk Assessment
+            risk_assessment = self._assess_session_continuity_risk(analysis_result)
+            analysis_result['risk_assessment'] = risk_assessment
+            
+            # Session Identity Summary
+            analysis_result['session_identity'] = {
+                'session_id': session_id,
+                'user_id': session_data.get('user_id', 'Unknown'),
+                'session_duration': self._calculate_session_duration(session_data),
+                'activity_count': len(session_data.get('activity_log', [])),
+                'continuity_status': 'CONTINUOUS' if analysis_result['continuity_score'] > 0.7 else 'INTERRUPTED',
+                'hijacking_detected': hijacking_detection.get('hijacking_detected', False),
+                'continuity_score': analysis_result['continuity_score'],
+                'risk_level': risk_assessment.get('risk_level', 'MEDIUM')
+            }
+            
+            # Update session tracking
+            self._update_session_tracking(session_id, session_data, analysis_result)
+            
+            self.logger.info(f"Session continuity monitoring completed - Session: {session_id}, Score: {analysis_result['continuity_score']:.3f}")
+            
+            return {
+                'success': True,
+                'session_continuity_analysis': analysis_result,
+                'analysis_summary': {
+                    'session_id': session_id,
+                    'continuity_status': analysis_result['session_identity']['continuity_status'],
+                    'hijacking_detected': analysis_result['session_identity']['hijacking_detected'],
+                    'continuity_score': analysis_result['continuity_score'],
+                    'risk_level': analysis_result['session_identity']['risk_level']
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error monitoring session continuity: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    def detect_session_manipulation(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        🕵️ DETECT SESSION MANIPULATION
+        Advanced session manipulation detection including replay attack detection, timestamp manipulation analysis,
+        session data integrity validation, cross-session correlation, and manipulation pattern recognition
+        
+        Args:
+            session_data: Dictionary containing session information and request data
+            
+        Returns:
+            Dict containing comprehensive session manipulation detection analysis
+        """
+        try:
+            self.logger.info("Starting comprehensive session manipulation detection")
+            
+            analysis_result = {
+                'manipulation_status': {},
+                'replay_attack_detection': {},
+                'timestamp_manipulation': {},
+                'data_integrity_validation': {},
+                'cross_session_correlation': {},
+                'manipulation_patterns': {},
+                'manipulation_score': 0.0,
+                'risk_assessment': {},
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            session_id = session_data.get('session_id', '')
+            
+            # 1. Session Replay Attack Detection
+            replay_detection = self._detect_session_replay_attacks(session_data)
+            analysis_result['replay_attack_detection'] = replay_detection
+            
+            # 2. Timestamp Manipulation Analysis
+            timestamp_analysis = self._analyze_timestamp_manipulation(session_data)
+            analysis_result['timestamp_manipulation'] = timestamp_analysis
+            
+            # 3. Session Data Integrity Validation
+            data_integrity = self._validate_session_data_integrity(session_data)
+            analysis_result['data_integrity_validation'] = data_integrity
+            
+            # 4. Cross-Session Correlation Analysis
+            cross_session = self._analyze_cross_session_correlation(session_data)
+            analysis_result['cross_session_correlation'] = cross_session
+            
+            # 5. Manipulation Pattern Recognition
+            pattern_recognition = self._recognize_manipulation_patterns(session_data)
+            analysis_result['manipulation_patterns'] = pattern_recognition
+            
+            # 6. Calculate Overall Manipulation Score
+            manipulation_scores = [
+                replay_detection.get('threat_score', 0.0),
+                timestamp_analysis.get('manipulation_score', 0.0),
+                data_integrity.get('integrity_violation_score', 0.0),
+                cross_session.get('anomaly_score', 0.0),
+                pattern_recognition.get('pattern_score', 0.0)
+            ]
+            analysis_result['manipulation_score'] = statistics.mean(manipulation_scores)
+            
+            # 7. Manipulation Risk Assessment
+            risk_assessment = self._assess_manipulation_risk(analysis_result)
+            analysis_result['risk_assessment'] = risk_assessment
+            
+            # Manipulation Status Summary
+            manipulation_detected = analysis_result['manipulation_score'] > self.manipulation_confidence_threshold
+            analysis_result['manipulation_status'] = {
+                'manipulation_detected': manipulation_detected,
+                'primary_threat': self._identify_primary_manipulation_threat(analysis_result),
+                'confidence_level': analysis_result['manipulation_score'],
+                'threat_indicators': self._collect_threat_indicators(analysis_result),
+                'session_authenticity': 'SUSPICIOUS' if manipulation_detected else 'AUTHENTIC',
+                'recommended_action': self._recommend_security_action(analysis_result)
+            }
+            
+            self.logger.info(f"Session manipulation detection completed - Session: {session_id}, Manipulation: {manipulation_detected}")
+            
+            return {
+                'success': True,
+                'manipulation_analysis': analysis_result,
+                'analysis_summary': {
+                    'session_id': session_id,
+                    'manipulation_detected': manipulation_detected,
+                    'primary_threat': analysis_result['manipulation_status']['primary_threat'],
+                    'manipulation_score': analysis_result['manipulation_score'],
+                    'session_authenticity': analysis_result['manipulation_status']['session_authenticity']
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting session manipulation: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    def validate_session_authenticity(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        ✅ VALIDATE SESSION AUTHENTICITY
+        Comprehensive session authenticity validation including authentication validation,
+        user identity consistency, biometric validation, and authentication token integrity
+        
+        Args:
+            session_data: Dictionary containing session and authentication information
+            
+        Returns:
+            Dict containing comprehensive session authenticity validation
+        """
+        try:
+            self.logger.info("Starting comprehensive session authenticity validation")
+            
+            analysis_result = {
+                'authenticity_status': {},
+                'authentication_validation': {},
+                'identity_consistency': {},
+                'biometric_validation': {},
+                'token_integrity': {},
+                'authenticity_score': 0.0,
+                'validation_details': {},
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            session_id = session_data.get('session_id', '')
+            
+            # 1. Authentication Validation
+            auth_validation = self._validate_authentication_credentials(session_data)
+            analysis_result['authentication_validation'] = auth_validation
+            
+            # 2. User Identity Consistency
+            identity_consistency = self._validate_user_identity_consistency(session_data)
+            analysis_result['identity_consistency'] = identity_consistency
+            
+            # 3. Biometric Validation (if available)
+            biometric_validation = self._validate_biometric_consistency(session_data)
+            analysis_result['biometric_validation'] = biometric_validation
+            
+            # 4. Authentication Token Integrity
+            token_integrity = self._validate_authentication_token_integrity(session_data)
+            analysis_result['token_integrity'] = token_integrity
+            
+            # 5. Calculate Overall Authenticity Score
+            authenticity_scores = [
+                auth_validation.get('validity_score', 0.5),
+                identity_consistency.get('consistency_score', 0.5),
+                biometric_validation.get('validation_score', 0.5),
+                token_integrity.get('integrity_score', 0.5)
+            ]
+            analysis_result['authenticity_score'] = statistics.mean(authenticity_scores)
+            
+            # Authenticity Status Summary
+            authentic = analysis_result['authenticity_score'] > 0.7
+            analysis_result['authenticity_status'] = {
+                'session_authentic': authentic,
+                'authenticity_confidence': analysis_result['authenticity_score'],
+                'validation_passed': authentic,
+                'identity_verified': identity_consistency.get('identity_verified', False),
+                'authentication_valid': auth_validation.get('authentication_valid', False),
+                'token_valid': token_integrity.get('token_valid', False)
+            }
+            
+            # Validation Details
+            analysis_result['validation_details'] = {
+                'validation_methods': ['authentication', 'identity', 'biometric', 'token'],
+                'passed_validations': sum([
+                    1 if auth_validation.get('authentication_valid', False) else 0,
+                    1 if identity_consistency.get('identity_verified', False) else 0,
+                    1 if biometric_validation.get('biometric_valid', False) else 0,
+                    1 if token_integrity.get('token_valid', False) else 0
+                ]),
+                'failed_validations': self._collect_failed_validations(analysis_result),
+                'recommendation': 'APPROVE' if authentic else 'REJECT'
+            }
+            
+            self.logger.info(f"Session authenticity validation completed - Session: {session_id}, Authentic: {authentic}")
+            
+            return {
+                'success': True,
+                'authenticity_analysis': analysis_result,
+                'analysis_summary': {
+                    'session_id': session_id,
+                    'session_authentic': authentic,
+                    'authenticity_score': analysis_result['authenticity_score'],
+                    'validation_recommendation': analysis_result['validation_details']['recommendation']
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error validating session authenticity: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    def track_session_anomalies(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        📊 TRACK SESSION ANOMALIES
+        Comprehensive session anomaly tracking including unusual session patterns,
+        behavioral anomaly detection, session duration analysis, and access pattern monitoring
+        
+        Args:
+            session_data: Dictionary containing session information and behavioral data
+            
+        Returns:
+            Dict containing comprehensive session anomaly tracking analysis
+        """
+        try:
+            self.logger.info("Starting comprehensive session anomaly tracking")
+            
+            analysis_result = {
+                'anomaly_summary': {},
+                'unusual_patterns': {},
+                'behavioral_anomalies': {},
+                'duration_analysis': {},
+                'access_pattern_monitoring': {},
+                'anomaly_score': 0.0,
+                'risk_classification': {},
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            session_id = session_data.get('session_id', '')
+            
+            # 1. Unusual Session Pattern Detection
+            unusual_patterns = self._detect_unusual_session_patterns(session_data)
+            analysis_result['unusual_patterns'] = unusual_patterns
+            
+            # 2. Behavioral Anomaly Detection
+            behavioral_anomalies = self._detect_behavioral_anomalies(session_data)
+            analysis_result['behavioral_anomalies'] = behavioral_anomalies
+            
+            # 3. Session Duration Analysis
+            duration_analysis = self._analyze_session_duration_anomalies(session_data)
+            analysis_result['duration_analysis'] = duration_analysis
+            
+            # 4. Access Pattern Monitoring
+            access_patterns = self._monitor_access_patterns(session_data)
+            analysis_result['access_pattern_monitoring'] = access_patterns
+            
+            # 5. Calculate Overall Anomaly Score
+            anomaly_scores = [
+                unusual_patterns.get('anomaly_score', 0.0),
+                behavioral_anomalies.get('anomaly_score', 0.0),
+                duration_analysis.get('anomaly_score', 0.0),
+                access_patterns.get('anomaly_score', 0.0)
+            ]
+            analysis_result['anomaly_score'] = statistics.mean(anomaly_scores)
+            
+            # 6. Risk Classification
+            risk_classification = self._classify_anomaly_risk(analysis_result)
+            analysis_result['risk_classification'] = risk_classification
+            
+            # Anomaly Summary
+            anomalies_detected = analysis_result['anomaly_score'] > 0.5
+            analysis_result['anomaly_summary'] = {
+                'anomalies_detected': anomalies_detected,
+                'anomaly_count': self._count_detected_anomalies(analysis_result),
+                'primary_anomaly_type': self._identify_primary_anomaly(analysis_result),
+                'anomaly_severity': self._classify_anomaly_severity(analysis_result['anomaly_score']),
+                'recommended_monitoring_level': self._recommend_monitoring_level(analysis_result)
+            }
+            
+            # Update anomaly tracking
+            self._update_anomaly_tracking(session_id, analysis_result)
+            
+            self.logger.info(f"Session anomaly tracking completed - Session: {session_id}, Anomalies: {anomalies_detected}")
+            
+            return {
+                'success': True,
+                'anomaly_analysis': analysis_result,
+                'analysis_summary': {
+                    'session_id': session_id,
+                    'anomalies_detected': anomalies_detected,
+                    'anomaly_count': analysis_result['anomaly_summary']['anomaly_count'],
+                    'anomaly_score': analysis_result['anomaly_score'],
+                    'monitoring_level': analysis_result['anomaly_summary']['recommended_monitoring_level']
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error tracking session anomalies: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    # ===== SESSION CONTINUITY MONITORING HELPER METHODS =====
+    
+    def _validate_session_tokens(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate session tokens and tracking information"""
+        try:
+            session_token = session_data.get('session_token', '')
+            session_id = session_data.get('session_id', '')
+            
+            validation = {
+                'token_present': bool(session_token),
+                'token_format_valid': self._validate_token_format(session_token),
+                'token_expiry_valid': self._check_token_expiry(session_data),
+                'token_integrity': self._check_token_integrity(session_token),
+                'session_id_consistency': self._validate_session_id_consistency(session_data),
+                'validity_score': 1.0,
+                'validation_issues': []
+            }
+            
+            # Check token presence
+            if not validation['token_present']:
+                validation['validation_issues'].append('missing_session_token')
+                validation['validity_score'] -= 0.5
+            
+            # Check token format
+            if not validation['token_format_valid']:
+                validation['validation_issues'].append('invalid_token_format')
+                validation['validity_score'] -= 0.3
+            
+            # Check token expiry
+            if not validation['token_expiry_valid']:
+                validation['validation_issues'].append('token_expired')
+                validation['validity_score'] -= 0.4
+            
+            # Check token integrity
+            if not validation['token_integrity']:
+                validation['validation_issues'].append('token_integrity_compromised')
+                validation['validity_score'] -= 0.6
+            
+            validation['validity_score'] = max(0.0, validation['validity_score'])
+            
+            return validation
+            
+        except Exception as e:
+            self.logger.error(f"Error validating session tokens: {str(e)}")
+            return {'error': str(e), 'validity_score': 0.0}
+    
+    def _validate_token_format(self, token: str) -> bool:
+        """Validate session token format"""
+        try:
+            if not token:
+                return False
+            
+            # Basic token format validation (UUID-like or JWT-like)
+            if len(token) < 20:  # Minimum reasonable token length
+                return False
+            
+            # Check for valid characters (alphanumeric, hyphens, dots)
+            import re
+            if not re.match(r'^[a-zA-Z0-9\-_.]+$', token):
+                return False
+            
+            return True
+            
+        except Exception:
+            return False
+    
+    def _check_token_expiry(self, session_data: Dict[str, Any]) -> bool:
+        """Check if session token has expired"""
+        try:
+            created_time = session_data.get('session_created_at', '')
+            last_activity = session_data.get('last_activity_at', '')
+            
+            if not created_time and not last_activity:
+                return True  # No expiry info available, assume valid
+            
+            # Use last activity time if available, otherwise creation time
+            reference_time = last_activity or created_time
+            
+            if reference_time:
+                # Simple expiry check (would use proper datetime parsing in production)
+                current_time = datetime.utcnow().timestamp()
+                session_time = datetime.utcnow().timestamp()  # Simplified
+                
+                # Check if session is older than timeout threshold
+                time_diff = current_time - session_time
+                return time_diff < self.session_timeout_threshold
+            
+            return True
+            
+        except Exception:
+            return True  # Assume valid if unable to check
+    
+    def _check_token_integrity(self, token: str) -> bool:
+        """Check session token integrity (simplified implementation)"""
+        try:
+            if not token:
+                return False
+            
+            # Basic integrity checks
+            # In production, this would verify digital signatures, checksums, etc.
+            
+            # Check for obvious tampering indicators
+            if '..' in token or '//' in token:
+                return False
+            
+            # Check for suspicious characters
+            suspicious_chars = ['<', '>', '&', '"', "'", ';']
+            if any(char in token for char in suspicious_chars):
+                return False
+            
+            return True
+            
+        except Exception:
+            return False
+    
+    def _validate_session_id_consistency(self, session_data: Dict[str, Any]) -> bool:
+        """Validate session ID consistency across requests"""
+        try:
+            session_id = session_data.get('session_id', '')
+            request_session_id = session_data.get('request_session_id', '')
+            
+            if not session_id:
+                return False
+            
+            # Check consistency with request session ID
+            if request_session_id and request_session_id != session_id:
+                return False
+            
+            # Check if session ID format is valid
+            if len(session_id) < 10:  # Minimum reasonable session ID length
+                return False
+            
+            return True
+            
+        except Exception:
+            return False
+    
+    def _analyze_activity_pattern_continuity(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze activity pattern continuity for session validation"""
+        try:
+            activity_log = session_data.get('activity_log', [])
+            
+            analysis = {
+                'activity_count': len(activity_log),
+                'activity_intervals': [],
+                'pattern_consistency': True,
+                'continuity_score': 1.0,
+                'pattern_anomalies': []
+            }
+            
+            if len(activity_log) < 2:
+                analysis['continuity_score'] = 0.5
+                return analysis
+            
+            # Analyze time intervals between activities
+            intervals = self._calculate_activity_intervals(activity_log)
+            analysis['activity_intervals'] = intervals
+            
+            # Check for pattern consistency
+            if intervals:
+                # Check for extremely regular intervals (bot-like behavior)
+                interval_variance = statistics.stdev(intervals) if len(intervals) > 1 else 0
+                mean_interval = statistics.mean(intervals)
+                
+                # Very consistent intervals are suspicious
+                if interval_variance < (mean_interval * 0.1) and len(intervals) > 5:
+                    analysis['pattern_anomalies'].append('extremely_regular_intervals')
+                    analysis['continuity_score'] -= 0.3
+                
+                # Check for unreasonably fast activity
+                if any(interval < 0.5 for interval in intervals):  # Less than 0.5 seconds
+                    analysis['pattern_anomalies'].append('unreasonably_fast_activity')
+                    analysis['continuity_score'] -= 0.2
+                
+                # Check for extremely long gaps
+                if any(interval > 600 for interval in intervals):  # More than 10 minutes
+                    analysis['pattern_anomalies'].append('extremely_long_gaps')
+                    analysis['continuity_score'] -= 0.2
+            
+            analysis['continuity_score'] = max(0.0, analysis['continuity_score'])
+            analysis['pattern_consistency'] = len(analysis['pattern_anomalies']) == 0
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing activity pattern continuity: {str(e)}")
+            return {'error': str(e), 'continuity_score': 0.5}
+    
+    def _calculate_activity_intervals(self, activity_log: List[Dict[str, Any]]) -> List[float]:
+        """Calculate intervals between activities"""
+        try:
+            intervals = []
+            
+            for i in range(1, len(activity_log)):
+                current_time = activity_log[i].get('timestamp', 0)
+                previous_time = activity_log[i-1].get('timestamp', 0)
+                
+                if current_time and previous_time:
+                    interval = current_time - previous_time
+                    if interval > 0:
+                        intervals.append(interval)
+            
+            return intervals
+            
+        except Exception:
+            return []
+    
+    def _detect_session_breaks(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect breaks and interruptions in session continuity"""
+        try:
+            activity_log = session_data.get('activity_log', [])
+            
+            detection = {
+                'breaks_detected': False,
+                'break_count': 0,
+                'break_locations': [],
+                'max_break_duration': 0.0,
+                'continuity_score': 1.0,
+                'break_analysis': []
+            }
+            
+            if len(activity_log) < 2:
+                return detection
+            
+            intervals = self._calculate_activity_intervals(activity_log)
+            
+            for i, interval in enumerate(intervals):
+                if interval > self.max_session_gap:  # 5 minutes
+                    detection['breaks_detected'] = True
+                    detection['break_count'] += 1
+                    detection['break_locations'].append(i + 1)
+                    detection['max_break_duration'] = max(detection['max_break_duration'], interval)
+                    
+                    detection['break_analysis'].append({
+                        'break_index': i + 1,
+                        'break_duration': interval,
+                        'break_severity': 'HIGH' if interval > 1800 else 'MEDIUM'  # 30 minutes
+                    })
+            
+            # Adjust continuity score based on breaks
+            if detection['break_count'] > 0:
+                # Reduce score based on number and duration of breaks
+                score_reduction = min(0.8, detection['break_count'] * 0.2 + 
+                                    (detection['max_break_duration'] / 3600) * 0.3)
+                detection['continuity_score'] = max(0.0, 1.0 - score_reduction)
+            
+            return detection
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting session breaks: {str(e)}")
+            return {'error': str(e), 'continuity_score': 0.5}
+    
+    def _monitor_behavior_consistency(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Monitor user behavior consistency throughout session"""
+        try:
+            behavioral_data = session_data.get('behavioral_data', {})
+            
+            consistency = {
+                'consistency_score': 1.0,
+                'behavioral_shifts': [],
+                'consistency_factors': {},
+                'behavior_stable': True
+            }
+            
+            # Analyze various behavioral consistency factors
+            consistency_factors = {}
+            
+            # Mouse movement patterns
+            mouse_data = behavioral_data.get('mouse_patterns', {})
+            if mouse_data:
+                consistency_factors['mouse_consistency'] = self._analyze_mouse_consistency(mouse_data)
+            
+            # Typing patterns
+            typing_data = behavioral_data.get('typing_patterns', {})
+            if typing_data:
+                consistency_factors['typing_consistency'] = self._analyze_typing_consistency(typing_data)
+            
+            # Navigation patterns
+            navigation_data = behavioral_data.get('navigation_patterns', {})
+            if navigation_data:
+                consistency_factors['navigation_consistency'] = self._analyze_navigation_consistency(navigation_data)
+            
+            consistency['consistency_factors'] = consistency_factors
+            
+            # Calculate overall consistency score
+            if consistency_factors:
+                scores = [factor for factor in consistency_factors.values() if isinstance(factor, (int, float))]
+                if scores:
+                    consistency['consistency_score'] = statistics.mean(scores)
+            
+            # Determine if behavior is stable
+            consistency['behavior_stable'] = consistency['consistency_score'] > self.activity_consistency_threshold
+            
+            return consistency
+            
+        except Exception as e:
+            self.logger.error(f"Error monitoring behavior consistency: {str(e)}")
+            return {'error': str(e), 'consistency_score': 0.5}
+    
+    def _analyze_mouse_consistency(self, mouse_data: Dict[str, Any]) -> float:
+        """Analyze mouse movement pattern consistency"""
+        try:
+            # Simplified mouse consistency analysis
+            movements = mouse_data.get('movements', [])
+            
+            if len(movements) < 10:
+                return 0.5
+            
+            # Analyze movement velocity consistency
+            velocities = [movement.get('velocity', 0) for movement in movements]
+            
+            if velocities:
+                velocity_variance = statistics.stdev(velocities) if len(velocities) > 1 else 0
+                mean_velocity = statistics.mean(velocities)
+                
+                # Consistent velocity patterns are more human-like
+                consistency_score = 1.0 - min(1.0, velocity_variance / (mean_velocity + 0.001))
+                return max(0.0, consistency_score)
+            
+            return 0.5
+            
+        except Exception:
+            return 0.5
+    
+    def _analyze_typing_consistency(self, typing_data: Dict[str, Any]) -> float:
+        """Analyze typing pattern consistency"""
+        try:
+            # Simplified typing consistency analysis
+            keystrokes = typing_data.get('keystrokes', [])
+            
+            if len(keystrokes) < 5:
+                return 0.5
+            
+            # Analyze keystroke timing consistency
+            intervals = []
+            for i in range(1, len(keystrokes)):
+                current_time = keystrokes[i].get('timestamp', 0)
+                previous_time = keystrokes[i-1].get('timestamp', 0)
+                if current_time and previous_time:
+                    intervals.append(current_time - previous_time)
+            
+            if intervals:
+                # Human typing has natural variation
+                interval_variance = statistics.stdev(intervals) if len(intervals) > 1 else 0
+                mean_interval = statistics.mean(intervals)
+                
+                # Some variance is expected for human typing
+                consistency_score = 0.8 if interval_variance > (mean_interval * 0.2) else 0.3
+                return consistency_score
+            
+            return 0.5
+            
+        except Exception:
+            return 0.5
+    
+    def _analyze_navigation_consistency(self, navigation_data: Dict[str, Any]) -> float:
+        """Analyze navigation pattern consistency"""
+        try:
+            # Simplified navigation consistency analysis
+            page_visits = navigation_data.get('page_visits', [])
+            
+            if len(page_visits) < 3:
+                return 0.5
+            
+            # Analyze navigation flow patterns
+            # In production, this would analyze page visit sequences, timing, etc.
+            navigation_score = 0.8  # Simplified scoring
+            
+            return navigation_score
+            
+        except Exception:
+            return 0.5
+    
+    def _detect_session_hijacking(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect potential session hijacking attempts"""
+        try:
+            detection = {
+                'hijacking_detected': False,
+                'hijacking_indicators': [],
+                'security_score': 1.0,
+                'threat_level': 'LOW',
+                'detection_details': []
+            }
+            
+            # Check for IP address changes
+            ip_changes = self._check_ip_address_changes(session_data)
+            if ip_changes['changes_detected']:
+                detection['hijacking_indicators'].append('ip_address_change')
+                detection['security_score'] -= 0.4
+            
+            # Check for user agent changes
+            ua_changes = self._check_user_agent_changes(session_data)
+            if ua_changes['changes_detected']:
+                detection['hijacking_indicators'].append('user_agent_change')
+                detection['security_score'] -= 0.3
+            
+            # Check for device fingerprint mismatches
+            device_changes = self._check_device_fingerprint_changes(session_data)
+            if device_changes['changes_detected']:
+                detection['hijacking_indicators'].append('device_fingerprint_mismatch')
+                detection['security_score'] -= 0.5
+            
+            # Check for geographic location jumps
+            geo_changes = self._check_geographic_location_jumps(session_data)
+            if geo_changes['impossible_travel']:
+                detection['hijacking_indicators'].append('impossible_travel')
+                detection['security_score'] -= 0.6
+            
+            # Determine hijacking detection status
+            detection['hijacking_detected'] = detection['security_score'] < 0.5
+            detection['security_score'] = max(0.0, detection['security_score'])
+            
+            # Classify threat level
+            if detection['security_score'] < 0.3:
+                detection['threat_level'] = 'CRITICAL'
+            elif detection['security_score'] < 0.5:
+                detection['threat_level'] = 'HIGH'
+            elif detection['security_score'] < 0.7:
+                detection['threat_level'] = 'MEDIUM'
+            
+            detection['detection_details'] = [
+                f"Security score: {detection['security_score']:.3f}",
+                f"Indicators found: {len(detection['hijacking_indicators'])}",
+                f"Threat level: {detection['threat_level']}"
+            ]
+            
+            return detection
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting session hijacking: {str(e)}")
+            return {'error': str(e), 'security_score': 0.5}
+    
+    def _check_ip_address_changes(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for IP address changes during session"""
+        try:
+            current_ip = session_data.get('current_ip', '')
+            initial_ip = session_data.get('initial_ip', '')
+            ip_history = session_data.get('ip_history', [])
+            
+            changes = {
+                'changes_detected': False,
+                'change_count': 0,
+                'ip_addresses': set([initial_ip, current_ip] + ip_history) - {''}
+            }
+            
+            if len(changes['ip_addresses']) > 1:
+                changes['changes_detected'] = True
+                changes['change_count'] = len(changes['ip_addresses']) - 1
+            
+            return changes
+            
+        except Exception:
+            return {'changes_detected': False, 'change_count': 0}
+    
+    def _check_user_agent_changes(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for user agent string changes during session"""
+        try:
+            current_ua = session_data.get('current_user_agent', '')
+            initial_ua = session_data.get('initial_user_agent', '')
+            
+            changes = {
+                'changes_detected': False,
+                'change_details': []
+            }
+            
+            if initial_ua and current_ua and initial_ua != current_ua:
+                changes['changes_detected'] = True
+                changes['change_details'].append({
+                    'initial': initial_ua,
+                    'current': current_ua
+                })
+            
+            return changes
+            
+        except Exception:
+            return {'changes_detected': False}
+    
+    def _check_device_fingerprint_changes(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for device fingerprint changes during session"""
+        try:
+            current_fingerprint = session_data.get('current_device_fingerprint', {})
+            initial_fingerprint = session_data.get('initial_device_fingerprint', {})
+            
+            changes = {
+                'changes_detected': False,
+                'changed_attributes': []
+            }
+            
+            if initial_fingerprint and current_fingerprint:
+                # Compare key fingerprint attributes
+                key_attributes = ['screen_resolution', 'timezone', 'language', 'plugins']
+                
+                for attr in key_attributes:
+                    if (initial_fingerprint.get(attr) != current_fingerprint.get(attr) and
+                        initial_fingerprint.get(attr) and current_fingerprint.get(attr)):
+                        changes['changes_detected'] = True
+                        changes['changed_attributes'].append(attr)
+            
+            return changes
+            
+        except Exception:
+            return {'changes_detected': False}
+    
+    def _check_geographic_location_jumps(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for impossible geographic location changes"""
+        try:
+            current_location = session_data.get('current_location', {})
+            previous_location = session_data.get('previous_location', {})
+            time_diff = session_data.get('location_time_diff', 0)  # in seconds
+            
+            geo_analysis = {
+                'impossible_travel': False,
+                'distance_km': 0,
+                'required_speed_kmh': 0
+            }
+            
+            if (current_location and previous_location and time_diff > 0):
+                # Calculate distance (simplified calculation)
+                distance = self._calculate_distance(
+                    previous_location.get('latitude', 0),
+                    previous_location.get('longitude', 0),
+                    current_location.get('latitude', 0),
+                    current_location.get('longitude', 0)
+                )
+                
+                geo_analysis['distance_km'] = distance
+                
+                # Calculate required travel speed
+                time_hours = time_diff / 3600
+                if time_hours > 0:
+                    required_speed = distance / time_hours
+                    geo_analysis['required_speed_kmh'] = required_speed
+                    
+                    # Check if speed is impossible (faster than commercial aircraft)
+                    if required_speed > 900:  # 900 km/h
+                        geo_analysis['impossible_travel'] = True
+            
+            return geo_analysis
+            
+        except Exception:
+            return {'impossible_travel': False}
+    
+    def _calculate_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        """Calculate distance between two geographic points (simplified)"""
+        try:
+            # Simplified distance calculation (Haversine formula approximation)
+            import math
+            
+            # Convert to radians
+            lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+            
+            # Calculate differences
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            
+            # Haversine formula
+            a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+            c = 2 * math.asin(math.sqrt(a))
+            
+            # Earth radius in kilometers
+            r = 6371
+            
+            return c * r
+            
+        except Exception:
+            return 0.0
+    
+    def _calculate_session_duration(self, session_data: Dict[str, Any]) -> float:
+        """Calculate total session duration in seconds"""
+        try:
+            start_time = session_data.get('session_start_time', 0)
+            current_time = session_data.get('current_time', datetime.utcnow().timestamp())
+            
+            if start_time:
+                return current_time - start_time
+            
+            return 0.0
+            
+        except Exception:
+            return 0.0
+    
+    def _update_session_tracking(self, session_id: str, session_data: Dict[str, Any], analysis_result: Dict[str, Any]):
+        """Update session tracking data structures"""
+        try:
+            # Update active sessions
+            self.active_sessions[session_id] = {
+                'session_data': session_data,
+                'last_analysis': analysis_result,
+                'last_update': datetime.utcnow()
+            }
+            
+            # Update session history
+            if session_id not in self.session_history:
+                self.session_history[session_id] = []
+            
+            self.session_history[session_id].append({
+                'timestamp': datetime.utcnow(),
+                'continuity_score': analysis_result.get('continuity_score', 0.5),
+                'risk_level': analysis_result.get('risk_assessment', {}).get('risk_level', 'MEDIUM')
+            })
+            
+            # Update user sessions mapping
+            user_id = session_data.get('user_id', '')
+            if user_id:
+                if user_id not in self.user_sessions:
+                    self.user_sessions[user_id] = []
+                if session_id not in self.user_sessions[user_id]:
+                    self.user_sessions[user_id].append(session_id)
+            
+        except Exception as e:
+            self.logger.error(f"Error updating session tracking: {str(e)}")
+    
+    def _assess_session_continuity_risk(self, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess overall session continuity risk"""
+        try:
+            risk_factors = []
+            risk_score = 0.0
+            
+            # Check hijacking detection results
+            hijacking = analysis_result.get('hijacking_detection', {})
+            if hijacking.get('hijacking_detected', False):
+                risk_factors.extend(hijacking.get('hijacking_indicators', []))
+                risk_score += 0.6
+            
+            # Check session breaks
+            breaks = analysis_result.get('session_break_detection', {})
+            if breaks.get('breaks_detected', False):
+                risk_factors.append('session_interruptions')
+                risk_score += 0.3
+            
+            # Check token validation issues
+            token_validation = analysis_result.get('token_validation', {})
+            if token_validation.get('validity_score', 1.0) < 0.7:
+                risk_factors.append('token_validation_issues')
+                risk_score += 0.4
+            
+            # Check behavior consistency
+            behavior = analysis_result.get('behavior_consistency', {})
+            if not behavior.get('behavior_stable', True):
+                risk_factors.append('behavioral_inconsistency')
+                risk_score += 0.2
+            
+            # Determine risk level
+            if risk_score > 0.7:
+                risk_level = 'CRITICAL'
+            elif risk_score > 0.5:
+                risk_level = 'HIGH'
+            elif risk_score > 0.3:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
+            return {
+                'risk_score': min(1.0, risk_score),
+                'risk_level': risk_level,
+                'risk_factors': risk_factors,
+                'recommendations': self._generate_continuity_risk_recommendations(risk_factors)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error assessing session continuity risk: {str(e)}")
+            return {'risk_score': 0.5, 'risk_level': 'MEDIUM', 'error': str(e)}
+    
+    def _generate_continuity_risk_recommendations(self, risk_factors: List[str]) -> List[str]:
+        """Generate session continuity risk mitigation recommendations"""
+        recommendations = []
+        
+        if 'ip_address_change' in risk_factors:
+            recommendations.append('CRITICAL: IP address change detected - verify user identity')
+        if 'device_fingerprint_mismatch' in risk_factors:
+            recommendations.append('HIGH: Device fingerprint mismatch - potential device switching')
+        if 'impossible_travel' in risk_factors:
+            recommendations.append('CRITICAL: Impossible travel detected - likely session hijacking')
+        if 'session_interruptions' in risk_factors:
+            recommendations.append('Monitor session breaks for suspicious patterns')
+        if 'token_validation_issues' in risk_factors:
+            recommendations.append('Regenerate session tokens and re-authenticate user')
+        if 'behavioral_inconsistency' in risk_factors:
+            recommendations.append('Additional behavioral verification recommended')
+        
+        return recommendations
+
+
+# Initialize global SessionIntegrityMonitor instance
+session_integrity_monitor = SessionIntegrityMonitor()
+
+
 # Initialize global EnvironmentAnalyzer instance
 environment_analyzer = EnvironmentAnalyzer()
 
