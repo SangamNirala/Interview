@@ -186,8 +186,9 @@ class DatabaseOptimizationTester:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    ttl_indexes_created = data.get('ttl_indexes_created', 0)
-                    ttl_status = data.get('ttl_status', {})
+                    details = data.get('details', {})
+                    ttl_indexes_created = details.get('ttl_indexes_created', 0)
+                    ttl_status = details.get('ttl_status', {})
                     
                     # Verify expected TTL configurations
                     expected_collections = [
