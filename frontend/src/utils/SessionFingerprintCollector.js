@@ -2359,44 +2359,41 @@ class SessionFingerprintCollector {
     // ===== PHASE 1.1: ENHANCED SCREEN ANALYSIS METHODS =====
     
     /**
-     * Get color profile characteristics
+     * PHASE 1.1.2: Advanced color profile detection and analysis
      */
     getColorProfileCharacteristics() {
         try {
             const colorProfile = {
-                // Basic color information
-                color_depth: screen.colorDepth,
-                pixel_depth: screen.pixelDepth,
-                
-                // Color gamut detection
+                // Color Gamut Detection
                 color_gamut: this.detectColorGamut(),
                 
-                // HDR support
+                // HDR Support Detection
                 hdr_support: this.detectHDRSupport(),
                 
-                // Wide color gamut support
-                wide_color_gamut: this.detectWideColorGamut(),
+                // Wide Color Gamut Detection
+                wide_gamut: this.detectWideColorGamut(),
                 
-                // Color accuracy indicators
-                color_accuracy: this.analyzeColorAccuracy(),
+                // Color Space Analysis
+                color_space: this.analyzeColorSpace(),
                 
-                // Display P3 support
-                display_p3_support: this.detectDisplayP3Support(),
+                // Contrast Ratio Analysis
+                contrast_analysis: this.analyzeContrastCapabilities(),
                 
-                // Rec2020 support
-                rec2020_support: this.detectRec2020Support(),
+                // Brightness Range Detection
+                brightness_range: this.detectBrightnessRange(),
                 
-                // Color management
-                color_management: this.analyzeColorManagement(),
+                // Color Accuracy Testing
+                color_accuracy: this.testColorAccuracy(),
                 
-                // Gamma information
-                gamma_analysis: this.analyzeDisplayGamma()
+                // Gamma Characteristics
+                gamma_analysis: this.analyzeGammaCharacteristics()
             };
             
             return colorProfile;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error analyzing color profile:", error);
+            return { error: error.message, basic_color_info: this.getBasicColorInfo() };
         }
     }
     
