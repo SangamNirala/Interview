@@ -387,28 +387,31 @@ class EnhancedFingerprintingTester:
                     "device_id": str(uuid.uuid4()),
                     "browser_features": [0.1, 0.2, 0.3, 0.4, 0.5],
                     "hardware_features": [0.6, 0.7, 0.8, 0.9, 1.0],
-                    "behavioral_features": [0.15, 0.25, 0.35, 0.45, 0.55]
+                    "behavioral_features": [0.15, 0.25, 0.35, 0.45, 0.55],
+                    "session_id": self.session_id,
+                    "timestamp": datetime.now().isoformat()
                 },
                 "clustering_params": {
                     "algorithm": "kmeans",
                     "n_clusters": 5,
                     "feature_weights": {"browser": 0.4, "hardware": 0.4, "behavioral": 0.2}
-                }
+                },
+                "analysis_type": "comprehensive"
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/ml-clustering/cluster-fingerprint",
+                f"{BACKEND_URL}/ml-fingerprint-clustering/comprehensive-analysis",
                 json=clustering_data
             )
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    cluster_info = data.get('cluster_info', {})
+                    analysis = data.get('analysis', {})
                     self.log_result(
                         "ML Fingerprint Clustering", 
                         True, 
-                        f"Fingerprint clustered successfully. Cluster ID: {cluster_info.get('cluster_id', 'N/A')}, Confidence: {cluster_info.get('confidence', 'N/A')}"
+                        f"Fingerprint clustered successfully. Cluster ID: {analysis.get('cluster_id', 'N/A')}, Confidence: {analysis.get('confidence', 'N/A')}"
                     )
                     return True
                 else:
