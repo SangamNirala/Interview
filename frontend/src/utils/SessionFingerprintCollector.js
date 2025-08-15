@@ -2747,30 +2747,9 @@ class SessionFingerprintCollector {
             return { error: error.message, storage_performance: "unknown" };
         }
     }
-                cache_api_performance: await this.benchmarkCacheAPIPerformance(),
-                
-                // File system access performance
-                file_system_performance: await this.benchmarkFileSystemPerformance(),
-                
-                // Storage capacity analysis
-                storage_capacity_analysis: await this.analyzeStorageCapacity(),
-                
-                // Storage technology detection
-                storage_technology_hints: this.detectStorageTechnologyHints(),
-                
-                // I/O performance characteristics
-                io_performance_characteristics: await this.analyzeIOPerformance()
-            };
-            
-            return storageProfile;
-            
-        } catch (error) {
-            return { error: error.message };
-        }
-    }
-    
+
     /**
-     * Analyze CPU cache hierarchy
+     * PHASE 1.1.4: Cache hierarchy analysis through performance testing
      */
     async analyzeCacheHierarchy() {
         try {
