@@ -11,8 +11,7 @@ Focus Areas:
 5. API Response Validation
 """
 
-import asyncio
-import aiohttp
+import requests
 import json
 import time
 import uuid
@@ -26,19 +25,10 @@ ADMIN_PASSWORD = "Game@1234"
 
 class EnhancedFingerprintingBackendTest:
     def __init__(self):
-        self.session = None
+        self.session = requests.Session()
         self.test_results = []
         self.admin_authenticated = False
         
-    async def setup(self):
-        """Initialize HTTP session"""
-        self.session = aiohttp.ClientSession()
-        
-    async def cleanup(self):
-        """Cleanup HTTP session"""
-        if self.session:
-            await self.session.close()
-            
     def log_result(self, test_name, success, details="", response_data=None):
         """Log test result"""
         status = "✅ PASS" if success else "❌ FAIL"
@@ -55,97 +45,96 @@ class EnhancedFingerprintingBackendTest:
             "timestamp": datetime.now().isoformat()
         })
         
-    async def test_basic_connectivity(self):
+    def test_basic_connectivity(self):
         """Test 1: Basic Backend Connectivity"""
         try:
-            async with self.session.get(f"{BACKEND_URL}/health", timeout=10) as response:
-                if response.status == 200:
-                    self.log_result("Basic Backend Connectivity", True, f"Status: {response.status}")
-                    return True
-                else:
-                    # Try alternative endpoint if health doesn't exist
-                    async with self.session.get(f"{BACKEND_URL}/languages", timeout=10) as alt_response:
-                        if alt_response.status == 200:
-                            self.log_result("Basic Backend Connectivity", True, f"Status: {alt_response.status} (via /languages)")
-                            return True
-                        else:
-                            self.log_result("Basic Backend Connectivity", False, f"Status: {alt_response.status}")
-                            return False
+            response = self.session.get(f"{BACKEND_URL}/languages", timeout=10)
+            if response.status_code == 200:
+                self.log_result("Basic Backend Connectivity", True, f"Status: {response.status_code}")
+                return True
+            else:
+                self.log_result("Basic Backend Connectivity", False, f"Status: {response.status_code}")
+                return False
         except Exception as e:
             self.log_result("Basic Backend Connectivity", False, f"Connection error: {str(e)}")
             return False
             
-    async def test_admin_authentication(self):
+    def test_admin_authentication(self):
         """Test 2: Admin Authentication"""
         try:
             payload = {"password": ADMIN_PASSWORD}
-            async with self.session.post(f"{BACKEND_URL}/admin/login", 
-                                       json=payload, timeout=10) as response:
-                data = await response.json()
-                
-                if response.status == 200 and data.get("success"):
+            response = self.session.post(f"{BACKEND_URL}/admin/login", json=payload, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success"):
                     self.admin_authenticated = True
                     self.log_result("Admin Authentication", True, f"Successfully authenticated")
                     return True
                 else:
-                    self.log_result("Admin Authentication", False, 
-                                  f"Status: {response.status}, Response: {data}")
+                    self.log_result("Admin Authentication", False, f"Auth failed: {data}")
                     return False
+            else:
+                self.log_result("Admin Authentication", False, f"Status: {response.status_code}")
+                return False
         except Exception as e:
             self.log_result("Admin Authentication", False, f"Error: {str(e)}")
             return False
             
-    async def test_database_initialization(self):
+    def test_database_initialization(self):
         """Test 3: Database Initialization & Verification"""
         if not self.admin_authenticated:
             self.log_result("Database Initialization", False, "Admin not authenticated")
             return False
             
         try:
-            # Test database initialization
-            async with self.session.post(f"{BACKEND_URL}/admin/database/initialize-fingerprinting", 
-                                       timeout=15) as response:
-                data = await response.json()
-                
-                if response.status == 200 and data.get("success"):
+            response = self.session.post(f"{BACKEND_URL}/admin/database/initialize-fingerprinting", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success"):
                     collections_created = data.get("collections_created", 0)
                     indexes_created = data.get("indexes_created", 0)
                     self.log_result("Database Initialization", True, 
                                   f"Collections: {collections_created}, Indexes: {indexes_created}")
                     return True
                 else:
-                    self.log_result("Database Initialization", False, 
-                                  f"Status: {response.status}, Response: {data}")
+                    self.log_result("Database Initialization", False, f"Response: {data}")
                     return False
+            else:
+                self.log_result("Database Initialization", False, f"Status: {response.status_code}")
+                return False
         except Exception as e:
             self.log_result("Database Initialization", False, f"Error: {str(e)}")
             return False
             
-    async def test_database_verification(self):
+    def test_database_verification(self):
         """Test 4: Database Verification"""
         if not self.admin_authenticated:
             self.log_result("Database Verification", False, "Admin not authenticated")
             return False
             
         try:
-            async with self.session.get(f"{BACKEND_URL}/admin/database/verify-fingerprinting", 
-                                      timeout=10) as response:
-                data = await response.json()
-                
-                if response.status == 200 and data.get("success"):
+            response = self.session.get(f"{BACKEND_URL}/admin/database/verify-fingerprinting", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success"):
                     collections_verified = data.get("collections_verified", 0)
                     self.log_result("Database Verification", True, 
                                   f"Collections verified: {collections_verified}")
                     return True
                 else:
-                    self.log_result("Database Verification", False, 
-                                  f"Status: {response.status}, Response: {data}")
+                    self.log_result("Database Verification", False, f"Response: {data}")
                     return False
+            else:
+                self.log_result("Database Verification", False, f"Status: {response.status_code}")
+                return False
         except Exception as e:
             self.log_result("Database Verification", False, f"Error: {str(e)}")
             return False
             
-    async def test_device_signature_generation(self):
+    def test_device_signature_generation(self):
         """Test 5: Device Signature Generation Endpoint"""
         try:
             # Enhanced device fingerprint data matching the 150+ helper methods
@@ -236,25 +225,25 @@ class EnhancedFingerprintingBackendTest:
                 "timestamp": datetime.now().isoformat()
             }
             
-            async with self.session.post(f"{BACKEND_URL}/session-fingerprinting/generate-device-signature",
-                                       json=device_data, timeout=15) as response:
-                data = await response.json()
-                
-                if response.status == 200:
-                    device_signature = data.get("device_signature", {})
-                    confidence_score = device_signature.get("confidence_score", 0)
-                    self.log_result("Device Signature Generation", True, 
-                                  f"Confidence: {confidence_score}, Signature generated")
-                    return True
-                else:
-                    self.log_result("Device Signature Generation", False, 
-                                  f"Status: {response.status}, Response: {data}")
-                    return False
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/generate-device-signature",
+                                       json=device_data, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                device_signature = data.get("device_signature", {})
+                confidence_score = device_signature.get("confidence_score", 0)
+                self.log_result("Device Signature Generation", True, 
+                              f"Confidence: {confidence_score}, Signature generated")
+                return True
+            else:
+                self.log_result("Device Signature Generation", False, 
+                              f"Status: {response.status_code}, Response: {response.text[:200]}")
+                return False
         except Exception as e:
             self.log_result("Device Signature Generation", False, f"Error: {str(e)}")
             return False
             
-    async def test_browser_fingerprint_analysis(self):
+    def test_browser_fingerprint_analysis(self):
         """Test 6: Browser Fingerprint Analysis"""
         try:
             # Enhanced browser fingerprint data
@@ -307,25 +296,25 @@ class EnhancedFingerprintingBackendTest:
                 "session_id": str(uuid.uuid4())
             }
             
-            async with self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
-                                       json=browser_data, timeout=15) as response:
-                data = await response.json()
-                
-                if response.status == 200:
-                    analysis = data.get("browser_analysis", {})
-                    fingerprint_entropy = analysis.get("fingerprint_entropy", 0)
-                    self.log_result("Browser Fingerprint Analysis", True, 
-                                  f"Entropy: {fingerprint_entropy}, Analysis completed")
-                    return True
-                else:
-                    self.log_result("Browser Fingerprint Analysis", False, 
-                                  f"Status: {response.status}, Response: {data}")
-                    return False
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
+                                       json=browser_data, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                analysis = data.get("browser_analysis", {})
+                fingerprint_entropy = analysis.get("fingerprint_entropy", 0)
+                self.log_result("Browser Fingerprint Analysis", True, 
+                              f"Entropy: {fingerprint_entropy}, Analysis completed")
+                return True
+            else:
+                self.log_result("Browser Fingerprint Analysis", False, 
+                              f"Status: {response.status_code}, Response: {response.text[:200]}")
+                return False
         except Exception as e:
             self.log_result("Browser Fingerprint Analysis", False, f"Error: {str(e)}")
             return False
             
-    async def test_hardware_analysis(self):
+    def test_hardware_analysis(self):
         """Test 7: Hardware Analysis Endpoint"""
         try:
             # Enhanced hardware data from the 150+ helper methods
@@ -415,46 +404,46 @@ class EnhancedFingerprintingBackendTest:
                 "session_id": str(uuid.uuid4())
             }
             
-            async with self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-hardware",
-                                       json=hardware_data, timeout=15) as response:
-                data = await response.json()
-                
-                if response.status == 200:
-                    analysis = data.get("hardware_analysis", {})
-                    confidence_score = analysis.get("confidence_score", 0)
-                    self.log_result("Hardware Analysis", True, 
-                                  f"Confidence: {confidence_score}, Hardware analyzed")
-                    return True
-                else:
-                    self.log_result("Hardware Analysis", False, 
-                                  f"Status: {response.status}, Response: {data}")
-                    return False
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-hardware",
+                                       json=hardware_data, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                analysis = data.get("hardware_analysis", {})
+                confidence_score = analysis.get("confidence_score", 0)
+                self.log_result("Hardware Analysis", True, 
+                              f"Confidence: {confidence_score}, Hardware analyzed")
+                return True
+            else:
+                self.log_result("Hardware Analysis", False, 
+                              f"Status: {response.status_code}, Response: {response.text[:200]}")
+                return False
         except Exception as e:
             self.log_result("Hardware Analysis", False, f"Error: {str(e)}")
             return False
             
-    async def test_device_analytics_retrieval(self):
+    def test_device_analytics_retrieval(self):
         """Test 8: Device Analytics Retrieval"""
         try:
             session_id = str(uuid.uuid4())
-            async with self.session.get(f"{BACKEND_URL}/session-fingerprinting/device-analytics/{session_id}",
-                                      timeout=10) as response:
-                data = await response.json()
-                
-                if response.status == 200:
-                    analytics = data.get("device_analytics", {})
-                    self.log_result("Device Analytics Retrieval", True, 
-                                  f"Analytics retrieved for session: {session_id}")
-                    return True
-                else:
-                    self.log_result("Device Analytics Retrieval", False, 
-                                  f"Status: {response.status}, Response: {data}")
-                    return False
+            response = self.session.get(f"{BACKEND_URL}/session-fingerprinting/device-analytics/{session_id}",
+                                      timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                analytics = data.get("device_analytics", {})
+                self.log_result("Device Analytics Retrieval", True, 
+                              f"Analytics retrieved for session: {session_id}")
+                return True
+            else:
+                self.log_result("Device Analytics Retrieval", False, 
+                              f"Status: {response.status_code}, Response: {response.text[:200]}")
+                return False
         except Exception as e:
             self.log_result("Device Analytics Retrieval", False, f"Error: {str(e)}")
             return False
             
-    async def test_ml_fingerprint_clustering(self):
+    def test_ml_fingerprint_clustering(self):
         """Test 9: ML Fingerprint Clustering Integration"""
         try:
             # Test comprehensive ML analysis with enhanced fingerprint data
@@ -476,25 +465,25 @@ class EnhancedFingerprintingBackendTest:
                 }
             }
             
-            async with self.session.post(f"{BACKEND_URL}/ml-fingerprint-clustering/comprehensive-analysis",
-                                       json=analysis_data, timeout=15) as response:
-                data = await response.json()
-                
-                if response.status == 200:
-                    ml_analysis = data.get("comprehensive_analysis", {})
-                    fraud_risk = ml_analysis.get("fraud_risk_score", 0)
-                    self.log_result("ML Fingerprint Clustering", True, 
-                                  f"Fraud risk: {fraud_risk}, ML analysis completed")
-                    return True
-                else:
-                    self.log_result("ML Fingerprint Clustering", False, 
-                                  f"Status: {response.status}, Response: {data}")
-                    return False
+            response = self.session.post(f"{BACKEND_URL}/ml-fingerprint-clustering/comprehensive-analysis",
+                                       json=analysis_data, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                ml_analysis = data.get("comprehensive_analysis", {})
+                fraud_risk = ml_analysis.get("fraud_risk_score", 0)
+                self.log_result("ML Fingerprint Clustering", True, 
+                              f"Fraud risk: {fraud_risk}, ML analysis completed")
+                return True
+            else:
+                self.log_result("ML Fingerprint Clustering", False, 
+                              f"Status: {response.status_code}, Response: {response.text[:200]}")
+                return False
         except Exception as e:
             self.log_result("ML Fingerprint Clustering", False, f"Error: {str(e)}")
             return False
             
-    async def test_virtual_machine_detection(self):
+    def test_virtual_machine_detection(self):
         """Test 10: Virtual Machine Detection"""
         try:
             vm_data = {
@@ -519,26 +508,26 @@ class EnhancedFingerprintingBackendTest:
                 "session_id": str(uuid.uuid4())
             }
             
-            async with self.session.post(f"{BACKEND_URL}/session-fingerprinting/detect-virtual-machines",
-                                       json=vm_data, timeout=15) as response:
-                data = await response.json()
-                
-                if response.status == 200:
-                    vm_analysis = data.get("vm_detection", {})
-                    is_vm = vm_analysis.get("is_virtual_machine", False)
-                    confidence = vm_analysis.get("confidence_score", 0)
-                    self.log_result("Virtual Machine Detection", True, 
-                                  f"VM detected: {is_vm}, Confidence: {confidence}")
-                    return True
-                else:
-                    self.log_result("Virtual Machine Detection", False, 
-                                  f"Status: {response.status}, Response: {data}")
-                    return False
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/detect-virtual-machines",
+                                       json=vm_data, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                vm_analysis = data.get("vm_detection", {})
+                is_vm = vm_analysis.get("is_virtual_machine", False)
+                confidence = vm_analysis.get("confidence_score", 0)
+                self.log_result("Virtual Machine Detection", True, 
+                              f"VM detected: {is_vm}, Confidence: {confidence}")
+                return True
+            else:
+                self.log_result("Virtual Machine Detection", False, 
+                              f"Status: {response.status_code}, Response: {response.text[:200]}")
+                return False
         except Exception as e:
             self.log_result("Virtual Machine Detection", False, f"Error: {str(e)}")
             return False
             
-    async def run_all_tests(self):
+    def run_all_tests(self):
         """Run all enhanced fingerprinting backend tests"""
         print("🧪 Enhanced Fingerprinting Backend Integration Test")
         print("=" * 60)
@@ -546,27 +535,21 @@ class EnhancedFingerprintingBackendTest:
         print(f"Test started at: {datetime.now().isoformat()}")
         print()
         
-        await self.setup()
+        # Core connectivity and authentication tests
+        self.test_basic_connectivity()
+        self.test_admin_authentication()
         
-        try:
-            # Core connectivity and authentication tests
-            await self.test_basic_connectivity()
-            await self.test_admin_authentication()
-            
-            # Database integration tests
-            await self.test_database_initialization()
-            await self.test_database_verification()
-            
-            # Enhanced fingerprinting endpoint tests
-            await self.test_device_signature_generation()
-            await self.test_browser_fingerprint_analysis()
-            await self.test_hardware_analysis()
-            await self.test_device_analytics_retrieval()
-            await self.test_ml_fingerprint_clustering()
-            await self.test_virtual_machine_detection()
-            
-        finally:
-            await self.cleanup()
+        # Database integration tests
+        self.test_database_initialization()
+        self.test_database_verification()
+        
+        # Enhanced fingerprinting endpoint tests
+        self.test_device_signature_generation()
+        self.test_browser_fingerprint_analysis()
+        self.test_hardware_analysis()
+        self.test_device_analytics_retrieval()
+        self.test_ml_fingerprint_clustering()
+        self.test_virtual_machine_detection()
             
         # Print summary
         print("\n" + "=" * 60)
@@ -593,17 +576,17 @@ class EnhancedFingerprintingBackendTest:
         
         return success_rate >= 70.0  # Consider 70%+ success rate as acceptable
 
-async def main():
+def main():
     """Main test execution"""
     test_runner = EnhancedFingerprintingBackendTest()
-    success = await test_runner.run_all_tests()
+    success = test_runner.run_all_tests()
     
     if success:
         print("\n🎉 Enhanced Fingerprinting Backend Integration Test PASSED")
-        sys.exit(0)
+        return 0
     else:
         print("\n💥 Enhanced Fingerprinting Backend Integration Test FAILED")
-        sys.exit(1)
+        return 1
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    sys.exit(main())
