@@ -4417,6 +4417,780 @@ class SessionFingerprintCollector {
             this.logger.info("Continuous fingerprint collection stopped");
         }
     }
+    
+    // ===== ADDITIONAL HELPER METHODS FOR ENHANCED FUNCTIONALITY =====
+    
+    /**
+     * Network timing and analysis helper methods
+     */
+    getNavigationTiming() {
+        if (!performance.timing) return null;
+        const timing = performance.timing;
+        return {
+            dns_lookup: timing.domainLookupEnd - timing.domainLookupStart,
+            tcp_connection: timing.connectEnd - timing.connectStart,
+            ssl_handshake: timing.secureConnectionStart ? timing.connectEnd - timing.secureConnectionStart : 0,
+            request_response: timing.responseEnd - timing.requestStart,
+            dom_loading: timing.domContentLoadedEventEnd - timing.domLoading
+        };
+    }
+    
+    async getResourceTiming() {
+        try {
+            const resources = performance.getEntriesByType('resource').slice(-10); // Last 10 resources
+            return resources.map(resource => ({
+                name: resource.name,
+                duration: resource.duration,
+                dns_lookup: resource.domainLookupEnd - resource.domainLookupStart,
+                tcp_connection: resource.connectEnd - resource.connectStart,
+                response_time: resource.responseEnd - resource.requestStart
+            }));
+        } catch (error) {
+            return [];
+        }
+    }
+    
+    async measureFetchTiming() {
+        try {
+            const testUrls = ['/favicon.ico', window.location.href];
+            const results = [];
+            
+            for (const url of testUrls) {
+                const startTime = performance.now();
+                try {
+                    await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+                    const endTime = performance.now();
+                    results.push({ url, latency: endTime - startTime, success: true });
+                } catch (error) {
+                    results.push({ url, error: error.message, success: false });
+                }
+            }
+            return results;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async measurePingTiming() {
+        // Simulated ping using image loading
+        try {
+            const startTime = performance.now();
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = img.onerror = () => {
+                    const endTime = performance.now();
+                    resolve({ ping_time: endTime - startTime });
+                };
+                img.src = '/favicon.ico?' + Date.now();
+            });
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async measureDNSTiming() {
+        try {
+            // DNS timing through navigation timing API
+            if (performance.timing) {
+                return {
+                    dns_lookup_time: performance.timing.domainLookupEnd - performance.timing.domainLookupStart,
+                    dns_cache_hit: performance.timing.domainLookupStart === performance.timing.domainLookupEnd
+                };
+            }
+            return { not_available: true };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async testDataChannelSupport() {
+        try {
+            const pc = new RTCPeerConnection();
+            const dc = pc.createDataChannel('test');
+            const supported = dc.readyState !== undefined;
+            pc.close();
+            return supported;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async detectComprehensiveIPs() {
+        try {
+            return new Promise((resolve) => {
+                const ips = { localIPs: [], publicIPs: [] };
+                const pc = new RTCPeerConnection({
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                });
+                
+                pc.createDataChannel('');
+                
+                pc.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        const candidate = event.candidate.candidate;
+                        const ipMatch = candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+                        if (ipMatch) {
+                            const ip = ipMatch[1];
+                            if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+                                ips.localIPs.push(ip);
+                            } else {
+                                ips.publicIPs.push(ip);
+                            }
+                        }
+                    }
+                };
+                
+                pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                
+                setTimeout(() => {
+                    pc.close();
+                    resolve(ips);
+                }, 2000);
+            });
+        } catch (error) {
+            return { localIPs: [], publicIPs: [], error: error.message };
+        }
+    }
+    
+    async testSTUNConnectivity() {
+        try {
+            return new Promise((resolve) => {
+                const pc = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+                
+                let connected = false;
+                pc.onicecandidate = (event) => {
+                    if (event.candidate && event.candidate.candidate.includes('stun')) {
+                        connected = true;
+                    }
+                };
+                
+                pc.createDataChannel('test');
+                pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                
+                setTimeout(() => {
+                    pc.close();
+                    resolve(connected);
+                }, 3000);
+            });
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async testPublicDNSResolution() {
+        try {
+            const testDomains = ['google.com', 'cloudflare.com'];
+            const results = [];
+            
+            for (const domain of testDomains) {
+                try {
+                    const startTime = performance.now();
+                    await fetch(`https://${domain}/favicon.ico`, { method: 'HEAD', mode: 'no-cors' });
+                    const endTime = performance.now();
+                    results.push({ domain, resolution_time: endTime - startTime, success: true });
+                } catch (error) {
+                    results.push({ domain, error: error.message, success: false });
+                }
+            }
+            return results;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async measureDNSResolutionTime() {
+        try {
+            const startTime = performance.now();
+            await fetch(window.location.origin + '/favicon.ico', { method: 'HEAD', cache: 'no-cache' });
+            return performance.now() - startTime;
+        } catch (error) {
+            return 0;
+        }
+    }
+    
+    async testDNSOverHTTPS() {
+        try {
+            // Test if DNS over HTTPS is supported by trying Cloudflare's DoH
+            const response = await fetch('https://1.1.1.1/dns-query?name=example.com&type=A', {
+                headers: { 'Accept': 'application/dns-json' },
+                mode: 'cors'
+            }).catch(() => null);
+            return response && response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async createNetworkLatencyProfile() {
+        const measurements = [];
+        for (let i = 0; i < 5; i++) {
+            const result = await this.measurePingTiming();
+            measurements.push(result.ping_time || 0);
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        return {
+            measurements,
+            average: measurements.reduce((a, b) => a + b, 0) / measurements.length,
+            min: Math.min(...measurements),
+            max: Math.max(...measurements),
+            jitter: this.calculateJitter(measurements)
+        };
+    }
+    
+    calculateJitter(measurements) {
+        if (measurements.length < 2) return 0;
+        const deltas = [];
+        for (let i = 1; i < measurements.length; i++) {
+            deltas.push(Math.abs(measurements[i] - measurements[i-1]));
+        }
+        return deltas.reduce((a, b) => a + b, 0) / deltas.length;
+    }
+    
+    async measureConnectionStability() {
+        try {
+            const measurements = [];
+            for (let i = 0; i < 3; i++) {
+                const result = await this.measureFetchTiming();
+                measurements.push(result);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            const successful = measurements.filter(m => m.some && m.some(r => r.success));
+            return {
+                stability_score: successful.length / measurements.length,
+                total_tests: measurements.length,
+                successful_tests: successful.length
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async estimateHopCount() {
+        // Estimate based on RTT - very rough approximation
+        const timing = this.getNavigationTiming();
+        if (timing && timing.tcp_connection > 0) {
+            return Math.max(1, Math.round(timing.tcp_connection / 30)); // ~30ms per hop estimate
+        }
+        return 0;
+    }
+    
+    async detectProxy() {
+        try {
+            // Simple proxy detection based on request headers and timing
+            const response = await fetch(window.location.href, { method: 'HEAD' });
+            const headers = response.headers;
+            
+            const proxyIndicators = [
+                'via', 'x-forwarded-for', 'x-real-ip', 'x-cluster-client-ip',
+                'x-forwarded-proto', 'x-forwarded-host', 'forwarded'
+            ];
+            
+            for (const indicator of proxyIndicators) {
+                if (headers.get(indicator)) return true;
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async detectVPNIndicators() {
+        const indicators = [];
+        
+        // Check for timing anomalies
+        const timing = await this.measureNetworkPerformance();
+        if (timing.average_latency > 200) {
+            indicators.push('high_latency');
+        }
+        
+        // Check for DNS inconsistencies
+        const dnsTest = await this.testPublicDNSResolution();
+        if (dnsTest.some && dnsTest.some(result => !result.success)) {
+            indicators.push('dns_blocking');
+        }
+        
+        return indicators;
+    }
+    
+    /**
+     * Environmental data helper methods
+     */
+    detectDaylightSavingTime() {
+        const january = new Date(new Date().getFullYear(), 0, 1);
+        const july = new Date(new Date().getFullYear(), 6, 1);
+        return january.getTimezoneOffset() !== july.getTimezoneOffset();
+    }
+    
+    detectTimeFormat() {
+        try {
+            const date = new Date();
+            const timeString = date.toLocaleTimeString();
+            return timeString.includes('AM') || timeString.includes('PM') ? '12-hour' : '24-hour';
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+    
+    detectCalendarSystem() {
+        try {
+            const calendar = Intl.DateTimeFormat().resolvedOptions().calendar;
+            return calendar || 'gregorian';
+        } catch (error) {
+            return 'gregorian';
+        }
+    }
+    
+    async detectCountryCode() {
+        try {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            // Extract country from timezone (rough approximation)
+            if (timezone.includes('/')) {
+                const parts = timezone.split('/');
+                return parts[0] === 'America' ? 'US' : 
+                       parts[0] === 'Europe' ? 'EU' :
+                       parts[0] === 'Asia' ? 'AS' : 'unknown';
+            }
+            return 'unknown';
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+    
+    async detectRegion() {
+        try {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            return timezone.split('/')[0] || 'unknown';
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+    
+    async detectCity() {
+        try {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const parts = timezone.split('/');
+            return parts[parts.length - 1] || 'unknown';
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+    
+    estimateBatteryHealth(battery) {
+        try {
+            const level = battery.level;
+            const charging = battery.charging;
+            const chargingTime = battery.chargingTime;
+            
+            // Simple battery health estimation
+            if (charging && chargingTime < Infinity) {
+                return chargingTime < 7200 ? 'good' : 'degraded'; // < 2 hours = good
+            }
+            
+            return level > 0.8 ? 'good' : level > 0.5 ? 'fair' : 'poor';
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+    
+    async getCurrentMotionReading() {
+        return new Promise((resolve) => {
+            if ('DeviceMotionEvent' in window) {
+                const handler = (event) => {
+                    window.removeEventListener('devicemotion', handler);
+                    resolve({
+                        acceleration: event.acceleration,
+                        rotation: event.rotationRate,
+                        interval: event.interval
+                    });
+                };
+                window.addEventListener('devicemotion', handler);
+                setTimeout(() => {
+                    window.removeEventListener('devicemotion', handler);
+                    resolve(null);
+                }, 1000);
+            } else {
+                resolve(null);
+            }
+        });
+    }
+    
+    async getCurrentOrientationReading() {
+        return new Promise((resolve) => {
+            if ('DeviceOrientationEvent' in window) {
+                const handler = (event) => {
+                    window.removeEventListener('deviceorientation', handler);
+                    resolve({
+                        alpha: event.alpha,
+                        beta: event.beta,
+                        gamma: event.gamma,
+                        absolute: event.absolute
+                    });
+                };
+                window.addEventListener('deviceorientation', handler);
+                setTimeout(() => {
+                    window.removeEventListener('deviceorientation', handler);
+                    resolve(null);
+                }, 1000);
+            } else {
+                resolve(null);
+            }
+        });
+    }
+    
+    analyzeMotionPatterns(motionReading) {
+        try {
+            const threshold = 0.1;
+            const acceleration = motionReading.acceleration;
+            const rotation = motionReading.rotation;
+            
+            const movementDetected = acceleration && 
+                (Math.abs(acceleration.x) > threshold || 
+                 Math.abs(acceleration.y) > threshold || 
+                 Math.abs(acceleration.z) > threshold);
+                 
+            const rotationDetected = rotation &&
+                (Math.abs(rotation.alpha) > threshold ||
+                 Math.abs(rotation.beta) > threshold ||
+                 Math.abs(rotation.gamma) > threshold);
+            
+            return {
+                device_stationary: !movementDetected && !rotationDetected,
+                movement_detected: movementDetected,
+                rotation_detected: rotationDetected
+            };
+        } catch (error) {
+            return { device_stationary: true, movement_detected: false, rotation_detected: false };
+        }
+    }
+    
+    async getAmbientLightReading() {
+        // Note: AmbientLightSensor is not widely supported, this is a placeholder
+        return new Promise((resolve) => {
+            try {
+                if ('AmbientLightSensor' in window) {
+                    const sensor = new AmbientLightSensor();
+                    sensor.onreading = () => {
+                        resolve({ lux: sensor.illuminance });
+                        sensor.stop();
+                    };
+                    sensor.onerror = () => resolve(null);
+                    sensor.start();
+                    setTimeout(() => resolve(null), 2000);
+                } else {
+                    resolve(null);
+                }
+            } catch (error) {
+                resolve(null);
+            }
+        });
+    }
+    
+    categorizeLightLevel(lux) {
+        if (lux < 10) return 'very_dark';
+        if (lux < 100) return 'dark';
+        if (lux < 1000) return 'dim';
+        if (lux < 10000) return 'bright';
+        return 'very_bright';
+    }
+    
+    estimateIndoorOutdoor(lux) {
+        return lux > 1000 ? 'likely_outdoor' : 'likely_indoor';
+    }
+    
+    async getProximityReading() {
+        // Note: ProximitySensor is not widely supported
+        return new Promise((resolve) => {
+            try {
+                if ('ProximitySensor' in window) {
+                    const sensor = new ProximitySensor();
+                    sensor.onreading = () => {
+                        resolve({ 
+                            distance: sensor.distance,
+                            near: sensor.near 
+                        });
+                        sensor.stop();
+                    };
+                    sensor.onerror = () => resolve(null);
+                    sensor.start();
+                    setTimeout(() => resolve(null), 2000);
+                } else {
+                    resolve(null);
+                }
+            } catch (error) {
+                resolve(null);
+            }
+        });
+    }
+    
+    detectBrightnessAdaptation() {
+        // Check if user has brightness adaptation enabled via media queries
+        if (window.matchMedia) {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark_adapted' : 'light_adapted';
+        }
+        return 'unknown';
+    }
+    
+    detectColorTemperaturePreference() {
+        // Estimate based on color scheme preference
+        const scheme = this.detectColorScheme();
+        return scheme === 'dark' ? 'warm' : 'cool';
+    }
+    
+    async estimateDisplayBrightness() {
+        // Rough estimation based on color scheme and time
+        const hour = new Date().getHours();
+        const isDark = this.detectColorScheme() === 'dark';
+        
+        if (isDark && (hour < 6 || hour > 20)) {
+            return 'low';
+        } else if (!isDark && hour > 6 && hour < 20) {
+            return 'high';
+        }
+        return 'medium';
+    }
+    
+    async getMediaStreamConstraints() {
+        try {
+            if ('mediaDevices' in navigator && navigator.mediaDevices.getSupportedConstraints) {
+                return navigator.mediaDevices.getSupportedConstraints();
+            }
+            return {};
+        } catch (error) {
+            return {};
+        }
+    }
+    
+    async testAdvancedAudioCapabilities() {
+        try {
+            const capabilities = {};
+            
+            // Test if we can get audio constraints
+            if ('mediaDevices' in navigator) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: { 
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        } 
+                    });
+                    
+                    const track = stream.getAudioTracks()[0];
+                    if (track) {
+                        const settings = track.getSettings();
+                        capabilities.echo_cancellation = settings.echoCancellation;
+                        capabilities.noise_suppression = settings.noiseSuppression;
+                        capabilities.auto_gain_control = settings.autoGainControl;
+                        track.stop();
+                    }
+                } catch (e) {
+                    // Permission denied or not available
+                }
+            }
+            
+            return capabilities;
+        } catch (error) {
+            return {};
+        }
+    }
+    
+    async testAdvancedVideoCapabilities() {
+        try {
+            const capabilities = {};
+            
+            if ('mediaDevices' in navigator) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const track = stream.getVideoTracks()[0];
+                    
+                    if (track) {
+                        const settings = track.getSettings();
+                        capabilities.max_resolution = {
+                            width: settings.width,
+                            height: settings.height
+                        };
+                        capabilities.frame_rate = settings.frameRate;
+                        track.stop();
+                    }
+                } catch (e) {
+                    // Permission denied or not available
+                }
+                
+                // Test screen capture
+                try {
+                    if (navigator.mediaDevices.getDisplayMedia) {
+                        capabilities.screen_capture_supported = true;
+                    }
+                } catch (e) {
+                    capabilities.screen_capture_supported = false;
+                }
+            }
+            
+            return capabilities;
+        } catch (error) {
+            return {};
+        }
+    }
+    
+    // Simplified implementations for other helper methods
+    hashString(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return hash.toString(16);
+    }
+    
+    detectTransparencyPreference() {
+        return window.matchMedia && window.matchMedia('(prefers-reduced-transparency: reduce)').matches ? 'reduced' : 'normal';
+    }
+    
+    detectSubpixelRendering() {
+        // Test if subpixel rendering is enabled
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext('2d');
+        ctx.fillText('test', 0.5, 0.5);
+        return ctx.getImageData(0, 0, 1, 1).data[3] > 0;
+    }
+    
+    detectFontSmoothing() {
+        return window.getComputedStyle(document.body).webkitFontSmoothing || 'unknown';
+    }
+    
+    async detectPreferredFonts() {
+        return this.detectAvailableFonts().slice(0, 10); // Top 10 fonts
+    }
+    
+    detectZoomLevel() {
+        return Math.round((window.outerWidth / window.innerWidth) * 100);
+    }
+    
+    detectTextSizePreference() {
+        const fontSize = parseInt(window.getComputedStyle(document.body).fontSize);
+        return fontSize > 16 ? 'large' : fontSize < 14 ? 'small' : 'normal';
+    }
+    
+    detectContrastPreference() {
+        return window.matchMedia && window.matchMedia('(prefers-contrast: high)').matches ? 'high' : 'normal';
+    }
+    
+    // Additional stub implementations for remaining methods
+    detectTouchPrecision() { return navigator.maxTouchPoints > 0 ? 'high' : 'none'; }
+    detectGestureSupport() { return 'ontouchstart' in window; }
+    detectFinePointer() { return window.matchMedia && window.matchMedia('(pointer: fine)').matches; }
+    detectHoverCapability() { return window.matchMedia && window.matchMedia('(hover: hover)').matches; }
+    detectPhysicalKeyboard() { return !('ontouchstart' in window); }
+    async detectKeyboardLayout() { return 'qwerty'; } // Simplified
+    detectSpecialKeys() { return { alt: true, ctrl: true, shift: true, meta: true }; }
+    detectHandwritingInput() { return false; }
+    detectEyeTracking() { return false; }
+    detectScreenReader() { return false; }
+    detectActiveScreenReader() { return false; }
+    detectScreenReaderType() { return 'none'; }
+    detectSwitchNavigation() { return false; }
+    detectStickyKeys() { return false; }
+    detectSlowKeys() { return false; }
+    detectLargeTextMode() { return false; }
+    detectMagnification() { return false; }
+    detectSimplifiedUI() { return false; }
+    detectFocusAssistance() { return false; }
+    detectAccessibilityAPI() { return false; }
+    detectAssistiveTechnology() { return false; }
+    
+    // Performance and system methods
+    detectMemoryPressure() { 
+        return performance.memory ? 
+            (performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) > 0.8 ? 'high' : 'normal' 
+            : 'unknown'; 
+    }
+    
+    async estimateCPUUtilization() {
+        const startTime = performance.now();
+        for (let i = 0; i < 100000; i++) { Math.random(); }
+        const endTime = performance.now();
+        return endTime - startTime > 10 ? 'high' : 'normal';
+    }
+    
+    detectBatteryImpact() { return 'unknown'; }
+    detectThermalState() { return 'unknown'; }
+    async calculatePowerEfficiency() { return 'unknown'; }
+    async measureSystemResponsiveness() { return 'good'; }
+    detectBackgroundProcessing() { return false; }
+    
+    // Privacy and security methods  
+    async detectThirdPartyCookies() { return document.cookie.length > 0; }
+    async checkGeolocationPermission() { return 'unknown'; }
+    async checkNotificationPermission() { return Notification ? Notification.permission : 'unknown'; }
+    async checkCameraPermission() { return 'unknown'; }
+    async checkMicrophonePermission() { return 'unknown'; }
+    async testCanvasFingerprintingBlocked() { return false; }
+    async testWebGLFingerprintingBlocked() { return false; }
+    async testAudioFingerprintingBlocked() { return false; }
+    async detectAdBlocker() { return false; }
+    async detectTrackingProtection() { return false; }
+    detectPrivateMode() { 
+        try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            return false;
+        } catch (e) {
+            return true;
+        }
+    }
+    
+    // Network helper methods
+    async testHSTSSupport() { return window.location.protocol === 'https:'; }
+    detectCSP() { return document.querySelector('meta[http-equiv="Content-Security-Policy"]') !== null; }
+    detectMixedContent() { return false; }
+    async testCertificateTransparency() { return false; }
+    
+    async measureBandwidthViaTiming() { return { bandwidth: 0, method: 'timing' }; }
+    async measureBandwidthViaResourceLoading() { return { bandwidth: 0, method: 'resource' }; }
+    async measureBandwidthViaNetworkAPI() { 
+        return navigator.connection ? { bandwidth: navigator.connection.downlink, method: 'api' } : { bandwidth: 0, method: 'api' }; 
+    }
+    
+    calculateAverageBandwidth(measurements) {
+        const values = measurements.filter(m => m.bandwidth > 0).map(m => m.bandwidth);
+        return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    }
+    
+    calculateConnectionQuality(measurements) {
+        const avgBandwidth = this.calculateAverageBandwidth(measurements);
+        return avgBandwidth > 10 ? 'excellent' : avgBandwidth > 5 ? 'good' : avgBandwidth > 1 ? 'fair' : 'poor';
+    }
+    
+    getPageLoadMetrics() {
+        if (performance.timing) {
+            return {
+                page_load_time: performance.timing.loadEventEnd - performance.timing.navigationStart,
+                dom_ready_time: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
+                first_byte_time: performance.timing.responseStart - performance.timing.navigationStart
+            };
+        }
+        return {};
+    }
+    
+    async getResourceLoadTimes() {
+        const resources = performance.getEntriesByType('resource').slice(-5);
+        return resources.map(r => ({ name: r.name, duration: r.duration }));
+    }
+    
+    async calculateNetworkEfficiency() { return 'unknown'; }
+    async measureConnectionReliability() { return 'unknown'; }
+    async measureLatencyJitter() { return 0; }
+}
 }
 
 // Export the class
