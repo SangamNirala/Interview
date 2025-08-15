@@ -2278,39 +2278,9 @@ class SessionFingerprintCollector {
             return { error: error.message, basic_canvas: this.getBasicCanvasInfo() };
         }
     }
-                font_rendering_analysis: await this.analyzeCanvasFontRendering(ctx, canvas),
-                
-                // Graphics acceleration detection
-                hardware_acceleration: await this.detectCanvasHardwareAcceleration(ctx, canvas),
-                
-                // Subpixel rendering detection
-                subpixel_rendering: this.detectSubpixelRendering(ctx, canvas),
-                
-                // Color space analysis
-                color_space_analysis: this.analyzeCanvasColorSpace(ctx, canvas),
-                
-                // Performance profiling
-                rendering_performance: await this.profileCanvasRenderingPerformance(ctx, canvas),
-                
-                // Hardware-specific rendering quirks
-                rendering_quirks: this.detectCanvasRenderingQuirks(ctx, canvas),
-                
-                // Text measurement precision
-                text_measurement_precision: this.analyzeTextMeasurementPrecision(ctx),
-                
-                // Canvas fingerprint hash
-                canvas_hash: this.generateCanvasHash(ctx, canvas)
-            };
-            
-            return hardwareInfo;
-            
-        } catch (error) {
-            return { error: error.message, canvas_supported: false };
-        }
-    }
-    
+
     /**
-     * Estimate GPU memory through various techniques
+     * PHASE 1.1.1: Advanced GPU memory estimation using multiple techniques
      */
     async estimateGPUMemory() {
         try {
