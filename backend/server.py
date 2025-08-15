@@ -20261,6 +20261,15 @@ class DeviceTrackingRequest(BaseModel):
     device_id: str
     current_signature: Dict[str, Any]
 
+class BrowserFingerprintRequest(BaseModel):
+    browser_data: Dict[str, Any]
+    session_id: str
+
+class AutomationDetectionRequest(BaseModel):
+    browser_data: Optional[Dict[str, Any]] = None
+    behavioral_data: Optional[Dict[str, Any]] = None
+    session_id: str
+
 @api_router.post("/session-fingerprinting/generate-device-signature")
 async def generate_device_signature(request: DeviceFingerprintRequest):
     """
