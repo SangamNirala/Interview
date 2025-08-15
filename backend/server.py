@@ -779,6 +779,27 @@ async def startup_websocket_manager():
         await websocket_manager.initialize_database()
         await websocket_manager.start_background_tasks()
         logging.info("WebSocket manager initialized successfully")
+        
+        # Initialize fingerprinting collections
+        logging.info("Initializing fingerprinting collections...")
+        fingerprint_result = await initialize_fingerprinting_collections()
+        
+        if fingerprint_result['success']:
+            logging.info(f"✅ Fingerprinting collections initialized successfully!")
+            logging.info(f"Collections created: {fingerprint_result['collections_created']}")
+            logging.info(f"Indexes created: {fingerprint_result['indexes_created']}")
+        else:
+            logging.warning(f"⚠️ Fingerprinting collections initialization completed with warnings:")
+            for error in fingerprint_result.get('errors', []):
+                logging.warning(f"  - {error}")
+        
+        # Verify collections integrity
+        verification_result = await verify_collections_integrity()
+        if verification_result['success']:
+            logging.info(f"✅ All {verification_result['collections_verified']} fingerprinting collections verified")
+        else:
+            logging.warning(f"⚠️ Collection verification issues: {verification_result.get('collections_missing', [])}")
+            
     except Exception as e:
         logging.error(f"Failed to initialize WebSocket manager: {e}")
 
