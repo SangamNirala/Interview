@@ -2435,35 +2435,9 @@ class SessionFingerprintCollector {
             return { error: error.message, basic_display_info: this.getBasicDisplayInfo() };
         }
     }
-                
-                // Refresh rate detection
-                refresh_rate: await this.detectRefreshRate(),
-                
-                // Display orientation
-                orientation_support: this.analyzeOrientationSupport(),
-                
-                // Touch capabilities
-                touch_capabilities: this.analyzeTouchCapabilities(),
-                
-                // Viewport analysis
-                viewport_analysis: this.analyzeViewportCapabilities(),
-                
-                // Display scaling
-                display_scaling: this.analyzeDisplayScaling(),
-                
-                // Visual viewport support
-                visual_viewport_support: 'visualViewport' in window
-            };
-            
-            return displayCapabilities;
-            
-        } catch (error) {
-            return { error: error.message };
-        }
-    }
-    
+
     /**
-     * Detect multi-monitor configuration
+     * PHASE 1.1.2: Multi-monitor setup detection and analysis
      */
     detectMultiMonitorConfiguration() {
         try {
