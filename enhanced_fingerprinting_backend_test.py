@@ -310,50 +310,73 @@ class EnhancedFingerprintingTester:
             return False
 
     def test_session_fingerprint_collection(self):
-        """Test session fingerprint collection endpoint"""
+        """Test hardware analysis endpoint"""
         try:
-            session_fingerprint_data = {
+            hardware_analysis_data = {
                 "session_id": self.session_id,
-                "device_id": str(uuid.uuid4()),
-                "browser_fingerprint": {
-                    "canvas_fingerprint": "canvas_hash_67890",
-                    "webgl_fingerprint": "webgl_hash_12345",
-                    "audio_fingerprint": "audio_hash_54321",
-                    "font_fingerprint": "font_hash_98765"
+                "device_data": {
+                    "hardware_specs": {
+                        "cpu_info": {
+                            "cores": 8,
+                            "threads": 16,
+                            "architecture": "x64",
+                            "vendor": "Intel",
+                            "model": "Core i7-12700K"
+                        },
+                        "memory_info": {
+                            "total_gb": 16,
+                            "available_gb": 12,
+                            "type": "DDR4",
+                            "speed_mhz": 3200
+                        },
+                        "gpu_info": {
+                            "vendor": "NVIDIA",
+                            "model": "GeForce RTX 4080",
+                            "memory_gb": 16,
+                            "driver_version": "537.13"
+                        },
+                        "display_info": {
+                            "resolution": "2560x1440",
+                            "color_depth": 24,
+                            "refresh_rate": 144,
+                            "hdr_support": True
+                        }
+                    },
+                    "performance_metrics": {
+                        "cpu_benchmark": 85.2,
+                        "gpu_benchmark": 92.7,
+                        "memory_bandwidth": 51200,
+                        "storage_speed": 3500
+                    }
                 },
-                "behavioral_data": {
-                    "mouse_movements": [{"x": 100, "y": 200, "timestamp": 1000}],
-                    "keystroke_dynamics": [{"key": "a", "dwell_time": 120, "flight_time": 85}],
-                    "scroll_patterns": [{"delta": 100, "timestamp": 2000}]
-                },
-                "device_consistency_score": 0.88,
-                "authenticity_confidence": 0.92,
-                "created_at": datetime.now().isoformat()
+                "analysis_depth": "comprehensive",
+                "include_benchmarks": True
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/fingerprinting/collect-session-fingerprint",
-                json=session_fingerprint_data
+                f"{BACKEND_URL}/session-fingerprinting/analyze-hardware",
+                json=hardware_analysis_data
             )
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
+                    analysis = data.get('hardware_analysis', {})
                     self.log_result(
-                        "Session Fingerprint Collection", 
+                        "Hardware Analysis", 
                         True, 
-                        f"Session fingerprint collected successfully. Profile ID: {data.get('profile_id', 'N/A')}"
+                        f"Hardware analysis completed successfully. Performance Score: {analysis.get('performance_score', 'N/A')}, Uniqueness: {analysis.get('uniqueness_score', 'N/A')}"
                     )
                     return True
                 else:
-                    self.log_result("Session Fingerprint Collection", False, f"Collection failed: {data}")
+                    self.log_result("Hardware Analysis", False, f"Analysis failed: {data}")
                     return False
             else:
-                self.log_result("Session Fingerprint Collection", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Hardware Analysis", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Session Fingerprint Collection", False, f"Exception: {str(e)}")
+            self.log_result("Hardware Analysis", False, f"Exception: {str(e)}")
             return False
 
     def test_ml_fingerprint_clustering(self):
