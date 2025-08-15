@@ -12250,6 +12250,227 @@ class SessionFingerprintCollector {
     async detectLoopInvariantMotion() { return false; }
     async detectVectorization() { return false; }
     async detectLoopPeeling() { return false; }
+    
+    // ===== PHASE 1.2: ENHANCED BROWSER CHARACTERISTICS HELPER METHODS =====
+    
+    // Helper methods for performance measurements
+    measureFunctionTime(func, iterations) {
+        const start = performance.now();
+        for (let i = 0; i < iterations; i++) {
+            func(i);
+        }
+        return performance.now() - start;
+    }
+    
+    // Helper methods for user agent analysis
+    detectBrowserEngine(userAgent) {
+        const engines = {
+            blink: { patterns: [/Blink/, /Chrome/], indicators: ['chrome', 'webkitURL'] },
+            gecko: { patterns: [/Gecko/, /Firefox/], indicators: ['mozInnerScreenX', 'mozRTCPeerConnection'] },
+            webkit: { patterns: [/WebKit/], indicators: ['webkitIndexedDB', 'webkitStorageInfo'] },
+            trident: { patterns: [/Trident/, /MSIE/], indicators: ['msCrypto', 'msDoNotTrack'] }
+        };
+        
+        for (const [name, engine] of Object.entries(engines)) {
+            if (engine.patterns.some(pattern => pattern.test(userAgent))) {
+                return {
+                    name: name,
+                    version: this.extractEngineVersion(userAgent, name),
+                    confidence: engine.indicators.filter(indicator => indicator in window).length / engine.indicators.length,
+                    features: this.detectEngineFeatures(name)
+                };
+            }
+        }
+        
+        return { name: 'unknown', version: null, confidence: 0, features: {} };
+    }
+    
+    analyzeBrowserFamily(userAgent) {
+        const families = {
+            chromium: { patterns: [/Chrome/, /Chromium/, /Edge/, /Opera/] },
+            mozilla: { patterns: [/Firefox/, /Gecko/] },
+            webkit: { patterns: [/Safari/, /WebKit/] },
+            internet_explorer: { patterns: [/MSIE/, /Trident/] }
+        };
+        
+        const analysis = {};
+        for (const [family, data] of Object.entries(families)) {
+            if (data.patterns.some(pattern => pattern.test(userAgent))) {
+                analysis.primary_family = family;
+                analysis.family_specific = this.getFrameworkSpecificDetails(family, userAgent);
+                break;
+            }
+        }
+        
+        return analysis;
+    }
+    
+    calculateUserAgentEntropy(userAgent) {
+        const chars = userAgent.split('');
+        const frequency = {};
+        chars.forEach(char => frequency[char] = (frequency[char] || 0) + 1);
+        
+        let entropy = 0;
+        const length = userAgent.length;
+        Object.values(frequency).forEach(count => {
+            const probability = count / length;
+            entropy -= probability * Math.log2(probability);
+        });
+        
+        return {
+            shannon_entropy: entropy,
+            uniqueness_score: this.calculateUniquenessScore(userAgent),
+            complexity_rating: this.rateComplexity(entropy)
+        };
+    }
+    
+    calculateUniquenessScore(userAgent) {
+        const uniqueChars = new Set(userAgent).size;
+        return uniqueChars / userAgent.length;
+    }
+    
+    rateComplexity(entropy) {
+        if (entropy > 4) return 'high';
+        if (entropy > 3) return 'medium';
+        return 'low';
+    }
+    
+    // Memory analysis helpers
+    async createMemoryPressure() {
+        const objects = [];
+        for (let i = 0; i < 10000; i++) {
+            objects.push({ data: new Array(100).fill(Math.random()) });
+        }
+        return objects; // Will be garbage collected when function exits
+    }
+    
+    async createControlledMemoryPressure() {
+        return this.createMemoryPressure();
+    }
+    
+    categorizeHeapEfficiency(utilization) {
+        if (utilization > 0.9) return 'very_high';
+        if (utilization > 0.7) return 'high';  
+        if (utilization > 0.5) return 'medium';
+        if (utilization > 0.3) return 'low';
+        return 'very_low';
+    }
+    
+    calculateGrowthRate(readings) {
+        if (readings.length < 2) return 0;
+        const first = readings[0];
+        const last = readings[readings.length - 1];
+        return (last - first) / first;
+    }
+    
+    categorizeGCEfficiency(memoryChange) {
+        if (memoryChange < 100000) return 'high';
+        if (memoryChange < 500000) return 'medium';
+        return 'low';
+    }
+    
+    async estimateGCFrequency() {
+        return Math.random() * 10; // Placeholder
+    }
+    
+    detectCircularReferences() {
+        return false; // Placeholder
+    }
+    
+    detectUncleanedListeners() {
+        return false; // Placeholder  
+    }
+    
+    categorizePressureResistance(recoveryTime) {
+        if (recoveryTime < 100) return 'high';
+        if (recoveryTime < 500) return 'medium';
+        return 'low';
+    }
+    
+    analyzeDegradationPattern(startMemory, endMemory) {
+        if (endMemory > startMemory * 1.2) return 'increasing';
+        if (endMemory < startMemory * 0.8) return 'decreasing';
+        return 'stable';
+    }
+    
+    calculateStabilityScore(recoveryTime) {
+        return Math.max(0, 100 - recoveryTime / 10);
+    }
+    
+    calculateVariance(readings) {
+        const mean = readings.reduce((a, b) => a + b, 0) / readings.length;
+        const variance = readings.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / readings.length;
+        return variance;
+    }
+    
+    analyzeAllocationPatterns(readings) {
+        return readings.length > 5 ? ['increasing', 'variable'] : ['stable'];
+    }
+    
+    async measureHeapGrowthRate() {
+        return 0.1; // Placeholder
+    }
+    
+    // Browser build detection helpers
+    async extractBuildNumber() {
+        const ua = navigator.userAgent;
+        const chromeMatch = ua.match(/Chrome\/([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)/);
+        if (chromeMatch) {
+            return {
+                browser: 'chrome',
+                major: chromeMatch[1],
+                minor: chromeMatch[2],  
+                build: chromeMatch[3],
+                patch: chromeMatch[4],
+                full_version: `${chromeMatch[1]}.${chromeMatch[2]}.${chromeMatch[3]}.${chromeMatch[4]}`
+            };
+        }
+        return { browser: 'unknown', extraction_method: 'user_agent_parsing' };
+    }
+    
+    // Additional placeholder methods for completeness
+    analyzeDetailedVersion(userAgent) { return {}; }
+    analyzePlatformDetails(userAgent) { return {}; }
+    detectUserAgentAnomalies(userAgent) { return { detected_anomalies: [], anomaly_count: 0, risk_level: 'low' }; }
+    detectUserAgentModification(userAgent) { return {}; }
+    analyzeUserAgentConsistency(userAgent) { return {}; }
+    async detectCompilationFlags() { return {}; }
+    async detectBuildType() { return {}; }
+    async detectReleaseChannel() { return {}; }
+    async detectCustomBuild() { return {}; }
+    async detectEnterpriseBuild() { return {}; }
+    async estimateBuildDate() { return {}; }
+    async detectJavaScriptEngine() { return { engine: 'unknown', confidence: 0 }; }
+    async detectEngineVersion() { return {}; }
+    async detectEngineFeatures() { return {}; }
+    async createEnginePerformanceSignature() { return {}; }
+    async analyzeEngineMemoryPatterns() { return {}; }
+    async analyzeGarbageCollection() { return {}; }
+    async analyzeJITCompilation() { return {}; }
+    async detectEngineSpecificAPIs() { return {}; }
+    
+    // Headless detection helpers
+    async detectHeadlessEnvironment() { return {}; }
+    async detectAutomationFrameworks() { return {}; }
+    async detectWebDriver() { return {}; }
+    async detectPhantomProperties() { return {}; }
+    async detectChromeHeadless() { return {}; }
+    async detectFirefoxHeadless() { return {}; }
+    async detectInteractionSimulation() { return {}; }
+    async analyzeHeadlessBehaviorPatterns() { return {}; }
+    assessHeadlessLikelihood(detectionData) { return false; }
+    calculateHeadlessConfidence(detectionData) { return 0; }
+    
+    // V8 feature detection helpers
+    async detectV8Version() { return {}; }
+    async detectV8APIs() { return {}; }
+    async detectV8Optimizations() { return {}; }
+    async analyzeV8MemoryManagement() { return {}; }
+    async analyzeV8JITCompilation() { return {}; }
+    async analyzeV8GarbageCollection() { return {}; }
+    async accessV8PerformanceCounters() { return {}; }
+    async detectV8Flags() { return {}; }
+}
 }
 
 // Export the class
