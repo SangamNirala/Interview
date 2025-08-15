@@ -501,47 +501,61 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Collect network information
+     * PHASE 3.4: ENHANCED NETWORK INFORMATION COLLECTION
+     * Collect comprehensive network information including:
+     * - Connection type and effective bandwidth
+     * - Network timing and latency measurements  
+     * - WebRTC IP leak detection
+     * - DNS resolution characteristics
+     * - Network routing and topology analysis
      */
     async collectNetworkInformation() {
         try {
+            this.logger.info("🌐 Starting enhanced network information collection");
+            
             const networkData = {
-                connection_type: 'unknown',
-                effective_type: 'unknown',
-                downlink: 0,
-                rtt: 0,
-                save_data: false
+                // Enhanced connection type and effective bandwidth
+                connection_characteristics: await this.getConnectionCharacteristics(),
+                
+                // Enhanced network timing and latency measurements
+                network_timing: await this.measureComprehensiveNetworkTiming(),
+                
+                // Enhanced WebRTC IP leak detection
+                webrtc_analysis: await this.performWebRTCAnalysis(),
+                
+                // Enhanced DNS resolution characteristics
+                dns_characteristics: await this.analyzeDNSCharacteristics(),
+                
+                // Enhanced network routing and topology analysis
+                network_topology: await this.analyzeNetworkTopology(),
+                
+                // Basic Network Information API (fallback)
+                basic_network_info: this.getBasicNetworkInfo(),
+                
+                // Network security and privacy features
+                network_security: await this.analyzeNetworkSecurity(),
+                
+                // Bandwidth estimation through multiple methods
+                bandwidth_analysis: await this.performBandwidthAnalysis(),
+                
+                // Network performance metrics
+                network_performance: await this.measureNetworkPerformance(),
+                
+                // Collection metadata
+                collection_metadata: {
+                    timestamp: new Date().toISOString(),
+                    collection_id: this.generateUniqueId(),
+                    fingerprint_version: "3.4_enhanced_network",
+                    collection_method: "comprehensive_network_analysis"
+                }
             };
             
-            // Network Information API
-            if ('connection' in navigator) {
-                const connection = navigator.connection;
-                networkData.connection_type = connection.type || connection.effectiveType || 'unknown';
-                networkData.effective_type = connection.effectiveType || 'unknown';
-                networkData.downlink = connection.downlink || 0;
-                networkData.rtt = connection.rtt || 0;
-                networkData.save_data = connection.saveData || false;
-            }
-            
-            // WebRTC IP detection (privacy-conscious)
-            try {
-                const ipInfo = await this.detectLocalIP();
-                networkData.local_ip_hash = await this.hashSensitiveData(ipInfo.ip);
-                networkData.ip_type = ipInfo.type;
-            } catch (e) {
-                this.logger.warn("IP detection failed (privacy settings may block)");
-            }
-            
-            // Network timing measurement
-            const networkTiming = await this.measureNetworkTiming();
-            networkData.latency_estimate = networkTiming.latency;
-            networkData.bandwidth_estimate = networkTiming.bandwidth;
-            
+            this.logger.info("✅ Network information collection completed successfully");
             return networkData;
             
         } catch (error) {
-            this.logger.error("Error collecting network information:", error);
-            return {};
+            this.logger.error("❌ Error collecting enhanced network information:", error);
+            return this.getFallbackNetworkInfo();
         }
     }
     
