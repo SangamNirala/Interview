@@ -515,59 +515,66 @@ class EnhancedFingerprintingTester:
             return False
 
     def test_comprehensive_fingerprint_analysis(self):
-        """Test comprehensive fingerprint analysis with all enhanced data"""
+        """Test device consistency tracking"""
         try:
-            comprehensive_data = {
+            consistency_data = {
                 "session_id": self.session_id,
-                "analysis_type": "comprehensive",
-                "fingerprint_components": {
-                    "enhanced_browser_characteristics": {
-                        "detailed_user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                        "browser_build_info": {"build": "6099.109", "channel": "stable"},
-                        "js_engine_profile": {"engine": "V8", "version": "12.0.267.8"},
-                        "headless_detection": {"is_headless": False, "confidence": 0.95}
-                    },
-                    "rendering_engine_data": {
-                        "layout_engine": "Blink",
-                        "css_features": ["flexbox", "grid", "custom-properties"],
-                        "graphics_acceleration": True,
-                        "webgl_capabilities": {"version": "2.0", "extensions": 45}
-                    },
-                    "performance_metrics": {
-                        "compilation_time": 12.5,
-                        "execution_time": 8.3,
-                        "memory_usage": 67.3,
-                        "gc_performance": 2.1
-                    }
+                "device_id": str(uuid.uuid4()),
+                "current_signature": {
+                    "hardware_hash": "hw_hash_12345",
+                    "browser_hash": "br_hash_67890",
+                    "network_hash": "nw_hash_54321",
+                    "behavioral_hash": "bh_hash_98765"
                 },
-                "analysis_depth": "deep",
-                "include_ml_analysis": True
+                "historical_signatures": [
+                    {
+                        "timestamp": "2024-01-15T10:00:00Z",
+                        "hardware_hash": "hw_hash_12345",
+                        "browser_hash": "br_hash_67890",
+                        "network_hash": "nw_hash_54321",
+                        "behavioral_hash": "bh_hash_98765",
+                        "consistency_score": 0.95
+                    },
+                    {
+                        "timestamp": "2024-01-15T09:30:00Z",
+                        "hardware_hash": "hw_hash_12345",
+                        "browser_hash": "br_hash_67890",
+                        "network_hash": "nw_hash_54322",  # Slight network change
+                        "behavioral_hash": "bh_hash_98766",  # Slight behavioral change
+                        "consistency_score": 0.88
+                    }
+                ],
+                "tracking_params": {
+                    "consistency_threshold": 0.8,
+                    "anomaly_sensitivity": "medium",
+                    "track_behavioral_changes": True
+                }
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/fingerprinting/comprehensive-analysis",
-                json=comprehensive_data
+                f"{BACKEND_URL}/session-fingerprinting/track-device-consistency",
+                json=consistency_data
             )
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    analysis = data.get('comprehensive_analysis', {})
+                    tracking = data.get('consistency_tracking', {})
                     self.log_result(
-                        "Comprehensive Fingerprint Analysis", 
+                        "Device Consistency Tracking", 
                         True, 
-                        f"Comprehensive analysis completed. Uniqueness: {analysis.get('uniqueness_score', 'N/A')}, Confidence: {analysis.get('analysis_confidence', 'N/A')}"
+                        f"Consistency tracking completed. Score: {tracking.get('consistency_score', 'N/A')}, Status: {tracking.get('consistency_status', 'N/A')}"
                     )
                     return True
                 else:
-                    self.log_result("Comprehensive Fingerprint Analysis", False, f"Analysis failed: {data}")
+                    self.log_result("Device Consistency Tracking", False, f"Tracking failed: {data}")
                     return False
             else:
-                self.log_result("Comprehensive Fingerprint Analysis", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Device Consistency Tracking", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Comprehensive Fingerprint Analysis", False, f"Exception: {str(e)}")
+            self.log_result("Device Consistency Tracking", False, f"Exception: {str(e)}")
             return False
 
     def run_all_tests(self):
