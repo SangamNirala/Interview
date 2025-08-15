@@ -634,7 +634,19 @@ class DatabaseOptimizationTester:
         # Authenticate first
         if not self.authenticate_admin():
             print("❌ Authentication failed - cannot proceed with tests")
-            return
+            return 0, len([
+                self.test_direct_database_optimization_script,
+                self.test_compound_index_creation,
+                self.test_ttl_index_setup,
+                self.test_aggregation_pipeline_creation,
+                self.test_connection_pool_optimization,
+                self.test_query_performance_monitoring,
+                self.test_comprehensive_optimization,
+                self.test_startup_optimization_integration,
+                self.test_performance_improvements_validation,
+                self.test_integration_with_fingerprinting_collections,
+                self.test_error_handling_and_graceful_degradation
+            ])
         
         # Run all tests
         tests = [
