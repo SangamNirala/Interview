@@ -2655,6 +2655,398 @@ class SessionFingerprintCollector {
         }
     }
     
+    // ===== PHASE 1.1: SUPPORTING HELPER METHODS =====
+    
+    /**
+     * Analyze shader precision for WebGL
+     */
+    analyzeShaderPrecision(gl, shaderType) {
+        try {
+            const precisionFormats = ['LOW_FLOAT', 'MEDIUM_FLOAT', 'HIGH_FLOAT', 'LOW_INT', 'MEDIUM_INT', 'HIGH_INT'];
+            const precision = {};
+            
+            precisionFormats.forEach(format => {
+                const precisionFormat = gl.getShaderPrecisionFormat(shaderType, gl[format]);
+                if (precisionFormat) {
+                    precision[format.toLowerCase()] = {
+                        precision: precisionFormat.precision,
+                        rangeMin: precisionFormat.rangeMin,
+                        rangeMax: precisionFormat.rangeMax
+                    };
+                }
+            });
+            
+            return precision;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Detect GPU architecture from WebGL context
+     */
+    detectGPUArchitecture(gl, debugInfo) {
+        try {
+            if (!debugInfo) return 'unknown';
+            
+            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '';
+            const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || '';
+            
+            // GPU architecture detection patterns
+            const architectures = {
+                nvidia: /GeForce|Quadro|Tesla|RTX|GTX/i,
+                amd: /Radeon|RX|Vega|RDNA/i,
+                intel: /Intel|HD Graphics|Iris|UHD/i,
+                apple: /Apple|M1|M2|A[0-9]+/i,
+                mali: /Mali/i,
+                adreno: /Adreno/i,
+                powerVR: /PowerVR/i
+            };
+            
+            for (const [arch, pattern] of Object.entries(architectures)) {
+                if (pattern.test(renderer) || pattern.test(vendor)) {
+                    return arch;
+                }
+            }
+            
+            return 'unknown';
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+    
+    /**
+     * Detect GPU generation
+     */
+    detectGPUGeneration(gl, debugInfo) {
+        try {
+            if (!debugInfo) return 'unknown';
+            
+            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '';
+            
+            // Generation detection patterns
+            const generations = {
+                'rtx_40_series': /RTX 40[0-9][0-9]/i,
+                'rtx_30_series': /RTX 30[0-9][0-9]/i,
+                'rtx_20_series': /RTX 20[0-9][0-9]/i,
+                'gtx_16_series': /GTX 16[0-9][0-9]/i,
+                'gtx_10_series': /GTX 10[0-9][0-9]/i,
+                'rx_7000_series': /RX 7[0-9][0-9][0-9]/i,
+                'rx_6000_series': /RX 6[0-9][0-9][0-9]/i,
+                'rx_5000_series': /RX 5[0-9][0-9][0-9]/i,
+                'apple_m2': /M2/i,
+                'apple_m1': /M1/i
+            };
+            
+            for (const [gen, pattern] of Object.entries(generations)) {
+                if (pattern.test(renderer)) {
+                    return gen;
+                }
+            }
+            
+            return 'unknown';
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+    
+    /**
+     * Get maximum canvas size
+     */
+    getMaxCanvasSize() {
+        try {
+            // Test progressively larger canvas sizes
+            const testSizes = [2048, 4096, 8192, 16384, 32768];
+            let maxSize = 0;
+            
+            for (const size of testSizes) {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = size;
+                    canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx && canvas.width === size && canvas.height === size) {
+                        maxSize = size;
+                    } else {
+                        break;
+                    }
+                } catch (e) {
+                    break;
+                }
+            }
+            
+            return maxSize;
+        } catch (error) {
+            return 0;
+        }
+    }
+    
+    /**
+     * Analyze canvas font rendering
+     */
+    async analyzeCanvasFontRendering(ctx, canvas) {
+        try {
+            const fontTests = [
+                { family: 'Arial', size: 16 },
+                { family: 'Times New Roman', size: 16 },
+                { family: 'Courier New', size: 16 },
+                { family: 'serif', size: 16 },
+                { family: 'sans-serif', size: 16 },
+                { family: 'monospace', size: 16 }
+            ];
+            
+            const results = {};
+            
+            fontTests.forEach(test => {
+                ctx.font = `${test.size}px ${test.family}`;
+                ctx.fillText('Test123', 10, 30);
+                
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const hash = this.simpleHash(imageData.data);
+                
+                results[test.family] = {
+                    hash,
+                    metrics: ctx.measureText('Test123')
+                };
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+            
+            return results;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Detect canvas hardware acceleration
+     */
+    async detectCanvasHardwareAcceleration(ctx, canvas) {
+        try {
+            const startTime = performance.now();
+            
+            // Perform intensive canvas operations
+            for (let i = 0; i < 1000; i++) {
+                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 10, 10);
+            }
+            
+            const renderTime = performance.now() - startTime;
+            
+            // Hardware acceleration typically results in faster rendering
+            return {
+                render_time_ms: renderTime,
+                likely_accelerated: renderTime < 50,
+                performance_class: renderTime < 20 ? 'high' : renderTime < 50 ? 'medium' : 'low'
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Generate canvas hash for fingerprinting
+     */
+    generateCanvasHash(ctx, canvas) {
+        try {
+            // Draw a complex pattern
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Canvas fingerprint test 🔒', 2, 2);
+            
+            ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+            ctx.fillRect(100, 5, 80, 20);
+            
+            // Get image data and generate hash
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            return this.simpleHash(imageData.data);
+        } catch (error) {
+            return 'error';
+        }
+    }
+    
+    /**
+     * Simple hash function for data arrays
+     */
+    simpleHash(data) {
+        let hash = 0;
+        for (let i = 0; i < data.length; i++) {
+            const char = data[i];
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return hash.toString(16);
+    }
+    
+    /**
+     * Detect color gamut
+     */
+    detectColorGamut() {
+        try {
+            if (window.matchMedia) {
+                if (window.matchMedia('(color-gamut: rec2020)').matches) return 'rec2020';
+                if (window.matchMedia('(color-gamut: p3)').matches) return 'p3';
+                if (window.matchMedia('(color-gamut: srgb)').matches) return 'srgb';
+            }
+            return 'unknown';
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+    
+    /**
+     * Detect HDR support
+     */
+    detectHDRSupport() {
+        try {
+            if (window.matchMedia) {
+                return window.matchMedia('(dynamic-range: high)').matches;
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    /**
+     * Detect wide color gamut
+     */
+    detectWideColorGamut() {
+        try {
+            if (window.matchMedia) {
+                return window.matchMedia('(color-gamut: p3)').matches || 
+                       window.matchMedia('(color-gamut: rec2020)').matches;
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    /**
+     * Analyze color accuracy
+     */
+    analyzeColorAccuracy() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) return { error: 'Canvas not supported' };
+            
+            // Test color reproduction accuracy
+            const testColors = [
+                '#FF0000', '#00FF00', '#0000FF',  // Primary colors
+                '#FFFF00', '#FF00FF', '#00FFFF',  // Secondary colors
+                '#808080', '#404040', '#C0C0C0'   // Grayscale
+            ];
+            
+            const results = {};
+            
+            testColors.forEach((color, index) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(index * 20, 0, 20, 20);
+                
+                const imageData = ctx.getImageData(index * 20, 10, 1, 1);
+                const [r, g, b] = imageData.data;
+                
+                results[color] = { r, g, b };
+            });
+            
+            return results;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Detect Display P3 support
+     */
+    detectDisplayP3Support() {
+        try {
+            if (window.matchMedia) {
+                return window.matchMedia('(color-gamut: p3)').matches;
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    /**
+     * Detect Rec2020 support
+     */
+    detectRec2020Support() {
+        try {
+            if (window.matchMedia) {
+                return window.matchMedia('(color-gamut: rec2020)').matches;
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    /**
+     * Analyze color management
+     */
+    analyzeColorManagement() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { colorSpace: 'display-p3' });
+            
+            return {
+                display_p3_context: ctx !== null,
+                color_space_support: 'colorSpace' in (canvas.getContext('2d', {}) || {}),
+                image_color_space: 'ImageData' in window && 'colorSpace' in new ImageData(1, 1)
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Analyze display gamma
+     */
+    analyzeDisplayGamma() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 1;
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) return { error: 'Canvas not supported' };
+            
+            // Create gamma test pattern
+            for (let i = 0; i < 256; i++) {
+                ctx.fillStyle = `rgb(${i},${i},${i})`;
+                ctx.fillRect(i, 0, 1, 1);
+            }
+            
+            const imageData = ctx.getImageData(0, 0, 256, 1);
+            const gammaAnalysis = {
+                linear_response: true,
+                gamma_curve_detected: false,
+                estimated_gamma: 2.2 // Default assumption
+            };
+            
+            // Analyze for non-linear response
+            for (let i = 1; i < 255; i++) {
+                const expected = i;
+                const actual = imageData.data[i * 4]; // Red channel
+                if (Math.abs(expected - actual) > 2) {
+                    gammaAnalysis.linear_response = false;
+                    gammaAnalysis.gamma_curve_detected = true;
+                    break;
+                }
+            }
+            
+            return gammaAnalysis;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
     // ===== ENHANCED BROWSER CHARACTERISTICS METHODS =====
     
     /**
