@@ -1432,6 +1432,24 @@ def extract_text_from_txt(file_content: bytes) -> str:
         logging.error(f"TXT parsing error: {str(e)}")
         return ""
 
+def convert_numeric_keys_to_strings(data):
+    """
+    Recursively convert numeric keys in dictionaries to strings to avoid MongoDB key errors.
+    MongoDB doesn't allow numeric keys in documents.
+    """
+    if isinstance(data, dict):
+        converted = {}
+        for key, value in data.items():
+            # Convert numeric keys to strings
+            str_key = str(key) if isinstance(key, (int, float)) else key
+            # Recursively convert nested structures
+            converted[str_key] = convert_numeric_keys_to_strings(value)
+        return converted
+    elif isinstance(data, list):
+        return [convert_numeric_keys_to_strings(item) for item in data]
+    else:
+        return data
+
 def parse_resume(file: UploadFile, content: bytes) -> str:
     filename = file.filename.lower()
     
