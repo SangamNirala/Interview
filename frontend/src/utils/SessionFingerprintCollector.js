@@ -2822,37 +2822,42 @@ class SessionFingerprintCollector {
     /**
      * Enumerate motion sensors
      */
+    /**
+     * PHASE 1.1.5: Comprehensive motion sensor enumeration and analysis
+     */
     async enumerateMotionSensors() {
         try {
             const motionSensors = {
-                // DeviceMotion API
-                device_motion_support: 'DeviceMotionEvent' in window,
-                device_motion_permission: await this.checkDeviceMotionPermission(),
+                // Accelerometer Detection and Analysis
+                accelerometer: await this.analyzeAccelerometer(),
                 
-                // DeviceOrientation API
-                device_orientation_support: 'DeviceOrientationEvent' in window,
-                device_orientation_permission: await this.checkDeviceOrientationPermission(),
+                // Gyroscope Detection and Analysis
+                gyroscope: await this.analyzeGyroscope(),
                 
-                // Generic Sensor API
-                accelerometer_support: 'Accelerometer' in window,
-                gyroscope_support: 'Gyroscope' in window,
-                magnetometer_support: 'Magnetometer' in window,
+                // Magnetometer Detection and Analysis
+                magnetometer: await this.analyzeMagnetometer(),
                 
-                // Sensor readings
-                current_motion_data: await this.getCurrentMotionSensorData(),
-                current_orientation_data: await this.getCurrentOrientationData(),
+                // Orientation Sensor Analysis
+                orientation: await this.analyzeOrientationSensor(),
                 
-                // Motion sensor capabilities
-                motion_sensor_capabilities: await this.analyzeMotionSensorCapabilities(),
+                // Gravity Sensor Detection
+                gravity: await this.analyzeGravitySensor(),
                 
-                // Sensor accuracy analysis
-                sensor_accuracy_analysis: await this.analyzeSensorAccuracy()
+                // Linear Acceleration Detection
+                linear_acceleration: await this.analyzeLinearAcceleration(),
+                
+                // Motion Sensor Fusion Analysis
+                sensor_fusion: await this.analyzeMotionSensorFusion(),
+                
+                // Motion Event Analysis
+                motion_events: await this.analyzeMotionEvents()
             };
             
             return motionSensors;
             
         } catch (error) {
-            return { error: error.message, device_motion_support: 'DeviceMotionEvent' in window };
+            this.logger.error("Error enumerating motion sensors:", error);
+            return { error: error.message, motion_sensors: "unknown" };
         }
     }
     
