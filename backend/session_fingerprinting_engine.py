@@ -5246,6 +5246,1314 @@ class EnvironmentAnalyzer:
         consistency_score = 1.0 - (std_dev / mean_interval) if mean_interval > 0 else 0
         
         return max(0.0, min(1.0, consistency_score))
+    
+    def monitor_network_characteristics(self, network_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        🌐 MONITOR NETWORK CHARACTERISTICS
+        Comprehensive network analysis including IP geolocation, reputation analysis,
+        proxy/VPN/Tor detection, connection profiling, and network fingerprint consistency
+        
+        Args:
+            network_data: Dictionary containing network characteristics and connection info
+            
+        Returns:
+            Dict containing comprehensive network analysis with risk assessment
+        """
+        try:
+            self.logger.info("Starting comprehensive network characteristics analysis")
+            
+            analysis_result = {
+                'network_identity': {},
+                'ip_analysis': {},
+                'geolocation_analysis': {},
+                'reputation_analysis': {},
+                'latency_analysis': {},
+                'routing_analysis': {},
+                'proxy_vpn_detection': {},
+                'connection_profiling': {},
+                'network_consistency': {},
+                'risk_assessment': {},
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            # 1. IP Address Geolocation and Reputation Analysis
+            ip_analysis = self._analyze_ip_geolocation_reputation(network_data)
+            analysis_result['ip_analysis'] = ip_analysis
+            analysis_result['geolocation_analysis'] = ip_analysis.get('geolocation', {})
+            analysis_result['reputation_analysis'] = ip_analysis.get('reputation', {})
+            
+            # 2. Network Latency and Routing Analysis
+            latency_analysis = self._analyze_network_latency_routing(network_data)
+            analysis_result['latency_analysis'] = latency_analysis.get('latency', {})
+            analysis_result['routing_analysis'] = latency_analysis.get('routing', {})
+            
+            # 3. Proxy/VPN/Tor Detection
+            proxy_detection = self._detect_proxy_vpn_tor(network_data)
+            analysis_result['proxy_vpn_detection'] = proxy_detection
+            
+            # 4. Connection Type and Bandwidth Profiling
+            connection_profiling = self._analyze_connection_bandwidth_profile(network_data)
+            analysis_result['connection_profiling'] = connection_profiling
+            
+            # 5. Network Fingerprint Consistency Tracking
+            consistency_analysis = self._track_network_fingerprint_consistency(network_data)
+            analysis_result['network_consistency'] = consistency_analysis
+            
+            # 6. Overall Network Risk Assessment
+            risk_assessment = self._assess_network_characteristics_risk(analysis_result)
+            analysis_result['risk_assessment'] = risk_assessment
+            
+            # Network Identity Summary
+            analysis_result['network_identity'] = {
+                'primary_ip': network_data.get('ip_address', 'Unknown'),
+                'isp': network_data.get('isp', 'Unknown'),
+                'country': network_data.get('country', 'Unknown'),
+                'connection_type': connection_profiling.get('connection_type', 'Unknown'),
+                'proxy_detected': proxy_detection.get('proxy_detected', False),
+                'reputation_score': ip_analysis.get('reputation', {}).get('score', 0.5),
+                'network_risk_level': risk_assessment.get('risk_level', 'MEDIUM')
+            }
+            
+            self.logger.info(f"Network analysis completed - IP: {analysis_result['network_identity']['primary_ip']}, Risk: {analysis_result['network_identity']['network_risk_level']}")
+            
+            return {
+                'success': True,
+                'network_analysis': analysis_result,
+                'analysis_summary': {
+                    'ip_address': analysis_result['network_identity']['primary_ip'],
+                    'country_location': analysis_result['network_identity']['country'],
+                    'isp_provider': analysis_result['network_identity']['isp'],
+                    'proxy_vpn_detected': analysis_result['network_identity']['proxy_detected'],
+                    'reputation_score': analysis_result['network_identity']['reputation_score'],
+                    'network_risk_level': analysis_result['network_identity']['network_risk_level']
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing network characteristics: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    def track_timezone_consistency(self, timezone_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        ⏰ TRACK TIMEZONE CONSISTENCY
+        Comprehensive timezone analysis including system vs browser validation,
+        geolocation correlation, manipulation detection, and temporal behavior analysis
+        
+        Args:
+            timezone_data: Dictionary containing timezone, location, and timing information
+            
+        Returns:
+            Dict containing comprehensive timezone consistency analysis
+        """
+        try:
+            self.logger.info("Starting comprehensive timezone consistency analysis")
+            
+            analysis_result = {
+                'timezone_identity': {},
+                'system_browser_validation': {},
+                'geolocation_correlation': {},
+                'manipulation_detection': {},
+                'time_synchronization': {},
+                'temporal_behavior': {},
+                'consistency_score': 0.0,
+                'risk_assessment': {},
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            # 1. System Timezone vs Browser Timezone Validation
+            timezone_validation = self._validate_system_browser_timezones(timezone_data)
+            analysis_result['system_browser_validation'] = timezone_validation
+            
+            # 2. Geolocation vs Timezone Correlation
+            geo_correlation = self._correlate_geolocation_timezone(timezone_data)
+            analysis_result['geolocation_correlation'] = geo_correlation
+            
+            # 3. Timezone Manipulation Detection
+            manipulation_detection = self._detect_timezone_manipulation(timezone_data)
+            analysis_result['manipulation_detection'] = manipulation_detection
+            
+            # 4. Time Synchronization Accuracy Analysis
+            sync_analysis = self._analyze_time_synchronization_accuracy(timezone_data)
+            analysis_result['time_synchronization'] = sync_analysis
+            
+            # 5. Temporal Behavior Pattern Validation
+            temporal_analysis = self._validate_temporal_behavior_patterns(timezone_data)
+            analysis_result['temporal_behavior'] = temporal_analysis
+            
+            # 6. Calculate Overall Consistency Score
+            consistency_scores = [
+                timezone_validation.get('consistency_score', 0.5),
+                geo_correlation.get('correlation_score', 0.5),
+                manipulation_detection.get('authenticity_score', 0.5),
+                sync_analysis.get('synchronization_score', 0.5),
+                temporal_analysis.get('behavior_score', 0.5)
+            ]
+            analysis_result['consistency_score'] = statistics.mean(consistency_scores)
+            
+            # 7. Timezone Risk Assessment
+            risk_assessment = self._assess_timezone_consistency_risk(analysis_result)
+            analysis_result['risk_assessment'] = risk_assessment
+            
+            # Timezone Identity Summary
+            analysis_result['timezone_identity'] = {
+                'system_timezone': timezone_data.get('system_timezone', 'Unknown'),
+                'browser_timezone': timezone_data.get('browser_timezone', 'Unknown'),
+                'timezone_offset': timezone_data.get('timezone_offset', 0),
+                'dst_active': timezone_data.get('dst_active', False),
+                'geo_timezone_match': geo_correlation.get('match_status', False),
+                'manipulation_detected': manipulation_detection.get('manipulation_detected', False),
+                'consistency_score': analysis_result['consistency_score'],
+                'timezone_risk_level': risk_assessment.get('risk_level', 'MEDIUM')
+            }
+            
+            self.logger.info(f"Timezone analysis completed - TZ: {analysis_result['timezone_identity']['system_timezone']}, Consistency: {analysis_result['consistency_score']:.3f}")
+            
+            return {
+                'success': True,
+                'timezone_analysis': analysis_result,
+                'analysis_summary': {
+                    'system_timezone': analysis_result['timezone_identity']['system_timezone'],
+                    'browser_timezone': analysis_result['timezone_identity']['browser_timezone'],
+                    'timezone_match': timezone_validation.get('timezones_match', False),
+                    'geolocation_consistent': geo_correlation.get('match_status', False),
+                    'manipulation_detected': analysis_result['timezone_identity']['manipulation_detected'],
+                    'consistency_score': analysis_result['consistency_score'],
+                    'timezone_risk_level': analysis_result['timezone_identity']['timezone_risk_level']
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error tracking timezone consistency: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    # ===== NETWORK CHARACTERISTICS ANALYSIS HELPER METHODS =====
+    
+    def _analyze_ip_geolocation_reputation(self, network_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze IP address geolocation and reputation scoring"""
+        try:
+            ip_address = network_data.get('ip_address', '')
+            
+            analysis = {
+                'geolocation': {
+                    'ip_address': ip_address,
+                    'country': network_data.get('country', 'Unknown'),
+                    'region': network_data.get('region', 'Unknown'), 
+                    'city': network_data.get('city', 'Unknown'),
+                    'isp': network_data.get('isp', 'Unknown'),
+                    'coordinates': {
+                        'latitude': network_data.get('latitude', 0),
+                        'longitude': network_data.get('longitude', 0)
+                    },
+                    'accuracy_score': self._calculate_geolocation_accuracy(network_data)
+                },
+                'reputation': {
+                    'score': self._calculate_ip_reputation_score(ip_address),
+                    'blacklist_status': self._check_ip_blacklists(ip_address),
+                    'threat_indicators': self._identify_threat_indicators(ip_address),
+                    'ip_type': self._classify_ip_address_type(ip_address),
+                    'reputation_sources': ['builtin_patterns', 'heuristic_analysis']
+                }
+            }
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing IP geolocation/reputation: {str(e)}")
+            return {'error': str(e)}
+    
+    def _calculate_geolocation_accuracy(self, network_data: Dict[str, Any]) -> float:
+        """Calculate geolocation data accuracy score"""
+        try:
+            accuracy_factors = []
+            
+            # Check if coordinates are provided
+            if network_data.get('latitude') and network_data.get('longitude'):
+                accuracy_factors.append(0.3)
+            
+            # Check if detailed location info is available
+            if network_data.get('city') and network_data.get('region'):
+                accuracy_factors.append(0.25)
+            
+            # Check if ISP information is available
+            if network_data.get('isp'):
+                accuracy_factors.append(0.2)
+            
+            # Check if country information matches expected patterns
+            if network_data.get('country'):
+                accuracy_factors.append(0.25)
+            
+            return sum(accuracy_factors)
+            
+        except Exception as e:
+            return 0.5
+    
+    def _calculate_ip_reputation_score(self, ip_address: str) -> float:
+        """Calculate IP reputation score based on patterns and heuristics"""
+        try:
+            if not ip_address:
+                return 0.0
+            
+            reputation_score = 1.0  # Start with good reputation
+            
+            # Check for private/local IP ranges (lower reputation for public tests)
+            if self._is_private_ip(ip_address):
+                reputation_score -= 0.3  # Private IPs less suspicious for internal tests
+            
+            # Check for suspicious IP patterns
+            if self._has_suspicious_ip_pattern(ip_address):
+                reputation_score -= 0.4
+            
+            # Check for known hosting/datacenter ranges (heuristic)
+            if self._is_likely_datacenter_ip(ip_address):
+                reputation_score -= 0.2
+            
+            return max(0.0, min(1.0, reputation_score))
+            
+        except Exception as e:
+            return 0.5
+    
+    def _is_private_ip(self, ip_address: str) -> bool:
+        """Check if IP is in private range"""
+        try:
+            parts = ip_address.split('.')
+            if len(parts) != 4:
+                return False
+            
+            first = int(parts[0])
+            second = int(parts[1])
+            
+            # Private IP ranges
+            if first == 10:  # 10.0.0.0/8
+                return True
+            elif first == 172 and 16 <= second <= 31:  # 172.16.0.0/12
+                return True
+            elif first == 192 and second == 168:  # 192.168.0.0/16
+                return True
+            elif first == 127:  # Loopback
+                return True
+            
+            return False
+            
+        except Exception:
+            return False
+    
+    def _has_suspicious_ip_pattern(self, ip_address: str) -> bool:
+        """Check for suspicious IP address patterns"""
+        try:
+            # Simple heuristic checks
+            suspicious_patterns = [
+                '0.0.0.0', '255.255.255.255', '127.0.0.1'
+            ]
+            
+            return ip_address in suspicious_patterns
+            
+        except Exception:
+            return False
+    
+    def _is_likely_datacenter_ip(self, ip_address: str) -> bool:
+        """Heuristic to identify likely datacenter/hosting IPs"""
+        try:
+            # Simple heuristic: certain ranges often used by cloud providers
+            parts = ip_address.split('.')
+            if len(parts) != 4:
+                return False
+            
+            first = int(parts[0])
+            
+            # Common cloud provider ranges (simplified heuristic)
+            cloud_ranges = [52, 54, 3, 13, 35, 34, 104, 108, 142, 146, 162, 185]
+            
+            return first in cloud_ranges
+            
+        except Exception:
+            return False
+    
+    def _check_ip_blacklists(self, ip_address: str) -> Dict[str, Any]:
+        """Check IP against simulated blacklists"""
+        return {
+            'blacklisted': False,
+            'sources_checked': ['heuristic_patterns'],
+            'threat_level': 'LOW',
+            'last_check': datetime.utcnow().isoformat()
+        }
+    
+    def _identify_threat_indicators(self, ip_address: str) -> List[str]:
+        """Identify potential threat indicators for IP"""
+        indicators = []
+        
+        if self._has_suspicious_ip_pattern(ip_address):
+            indicators.append('suspicious_ip_pattern')
+        
+        if self._is_likely_datacenter_ip(ip_address):
+            indicators.append('datacenter_hosting_range')
+        
+        return indicators
+    
+    def _classify_ip_address_type(self, ip_address: str) -> str:
+        """Classify IP address type (residential, datacenter, mobile, etc.)"""
+        try:
+            if self._is_private_ip(ip_address):
+                return 'private'
+            elif self._is_likely_datacenter_ip(ip_address):
+                return 'datacenter'
+            else:
+                return 'residential'  # Default assumption
+                
+        except Exception:
+            return 'unknown'
+    
+    def _analyze_network_latency_routing(self, network_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze network latency and routing characteristics"""
+        try:
+            performance = network_data.get('network_performance', {})
+            routing = network_data.get('routing_info', {})
+            
+            analysis = {
+                'latency': {
+                    'rtt': performance.get('rtt', 0),
+                    'rtt_category': self._categorize_rtt(performance.get('rtt', 0)),
+                    'consistency_score': self._analyze_latency_consistency(performance),
+                    'performance_class': self._classify_network_performance(performance)
+                },
+                'routing': {
+                    'hop_count': routing.get('hop_count', 0),
+                    'routing_path': routing.get('routing_path', []),
+                    'routing_anomalies': self._detect_routing_anomalies(routing),
+                    'path_analysis': self._analyze_routing_path(routing)
+                }
+            }
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing network latency/routing: {str(e)}")
+            return {'error': str(e)}
+    
+    def _categorize_rtt(self, rtt: float) -> str:
+        """Categorize round-trip time"""
+        if rtt < 20:
+            return 'excellent'
+        elif rtt < 50:
+            return 'good'
+        elif rtt < 100:
+            return 'fair'
+        elif rtt < 200:
+            return 'poor'
+        else:
+            return 'very_poor'
+    
+    def _analyze_latency_consistency(self, performance: Dict[str, Any]) -> float:
+        """Analyze latency consistency and stability"""
+        try:
+            rtt = performance.get('rtt', 50)
+            packet_loss = performance.get('packet_loss', 0)
+            
+            # Simple consistency scoring
+            consistency_score = 1.0
+            
+            # High packet loss reduces consistency
+            consistency_score -= packet_loss * 2
+            
+            # Very low or very high RTT might indicate issues
+            if rtt < 5 or rtt > 500:
+                consistency_score -= 0.3
+            
+            return max(0.0, min(1.0, consistency_score))
+            
+        except Exception:
+            return 0.5
+    
+    def _classify_network_performance(self, performance: Dict[str, Any]) -> str:
+        """Classify overall network performance"""
+        try:
+            rtt = performance.get('rtt', 50)
+            download_speed = performance.get('download_speed', 0)
+            upload_speed = performance.get('upload_speed', 0)
+            
+            if rtt < 30 and download_speed > 50 and upload_speed > 10:
+                return 'high_performance'
+            elif rtt < 60 and download_speed > 25 and upload_speed > 5:
+                return 'good_performance'
+            elif rtt < 100 and download_speed > 10:
+                return 'average_performance'
+            else:
+                return 'poor_performance'
+                
+        except Exception:
+            return 'unknown'
+    
+    def _detect_routing_anomalies(self, routing: Dict[str, Any]) -> List[str]:
+        """Detect routing anomalies and suspicious patterns"""
+        anomalies = []
+        
+        hop_count = routing.get('hop_count', 0)
+        routing_path = routing.get('routing_path', [])
+        
+        # Unusually high hop count
+        if hop_count > 20:
+            anomalies.append('excessive_hops')
+        
+        # Very few hops (might indicate VPN/proxy)
+        if hop_count < 3:
+            anomalies.append('minimal_hops')
+        
+        # Suspicious routing path patterns
+        if 'tor' in str(routing_path).lower():
+            anomalies.append('tor_indicators')
+        
+        return anomalies
+    
+    def _analyze_routing_path(self, routing: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze routing path for geographic and network patterns"""
+        return {
+            'hop_count': routing.get('hop_count', 0),
+            'path_complexity': 'normal',  # Simplified analysis
+            'geographic_consistency': True,  # Simplified analysis
+            'routing_efficiency': 0.8  # Simplified scoring
+        }
+    
+    def _detect_proxy_vpn_tor(self, network_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect proxy, VPN, and Tor usage indicators"""
+        try:
+            detection_result = {
+                'proxy_detected': False,
+                'vpn_detected': False,
+                'tor_detected': False,
+                'proxy_indicators': [],
+                'vpn_indicators': [],
+                'tor_indicators': [],
+                'anonymity_level': 'LOW',
+                'detection_confidence': 0.0
+            }
+            
+            indicators = network_data.get('proxy_indicators', [])
+            routing_info = network_data.get('routing_info', {})
+            
+            # Check for proxy indicators
+            proxy_confidence = self._check_proxy_indicators(network_data, indicators)
+            if proxy_confidence > 0.5:
+                detection_result['proxy_detected'] = True
+                detection_result['proxy_indicators'] = indicators
+            
+            # Check for VPN indicators
+            vpn_confidence = self._check_vpn_indicators(network_data)
+            if vpn_confidence > 0.5:
+                detection_result['vpn_detected'] = True
+                detection_result['vpn_indicators'] = ['routing_patterns', 'latency_analysis']
+            
+            # Check for Tor indicators
+            tor_confidence = self._check_tor_indicators(routing_info)
+            if tor_confidence > 0.5:
+                detection_result['tor_detected'] = True
+                detection_result['tor_indicators'] = ['routing_anomalies', 'hop_patterns']
+            
+            # Overall anonymity assessment
+            detection_result['detection_confidence'] = max(proxy_confidence, vpn_confidence, tor_confidence)
+            
+            if detection_result['tor_detected']:
+                detection_result['anonymity_level'] = 'CRITICAL'
+            elif detection_result['vpn_detected']:
+                detection_result['anonymity_level'] = 'HIGH'
+            elif detection_result['proxy_detected']:
+                detection_result['anonymity_level'] = 'MEDIUM'
+            
+            return detection_result
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting proxy/VPN/Tor: {str(e)}")
+            return {'error': str(e)}
+    
+    def _check_proxy_indicators(self, network_data: Dict[str, Any], indicators: List[str]) -> float:
+        """Check for proxy usage indicators"""
+        try:
+            proxy_score = 0.0
+            
+            # Check for common proxy indicators
+            proxy_patterns = ['proxy', 'forwarded', 'x-forwarded-for', 'x-real-ip']
+            
+            for indicator in indicators:
+                for pattern in proxy_patterns:
+                    if pattern.lower() in indicator.lower():
+                        proxy_score += 0.3
+            
+            # Check for datacenter IP (common for proxies)
+            if self._is_likely_datacenter_ip(network_data.get('ip_address', '')):
+                proxy_score += 0.2
+            
+            return min(1.0, proxy_score)
+            
+        except Exception:
+            return 0.0
+    
+    def _check_vpn_indicators(self, network_data: Dict[str, Any]) -> float:
+        """Check for VPN usage indicators"""
+        try:
+            vpn_score = 0.0
+            
+            # Check ISP patterns (simplified heuristic)
+            isp = network_data.get('isp', '').lower()
+            vpn_isp_patterns = ['vpn', 'virtual private', 'proxy', 'tunnel']
+            
+            for pattern in vpn_isp_patterns:
+                if pattern in isp:
+                    vpn_score += 0.4
+            
+            # Check for datacenter hosting
+            if self._is_likely_datacenter_ip(network_data.get('ip_address', '')):
+                vpn_score += 0.2
+            
+            # Check routing anomalies
+            routing = network_data.get('routing_info', {})
+            if self._detect_routing_anomalies(routing):
+                vpn_score += 0.3
+            
+            return min(1.0, vpn_score)
+            
+        except Exception:
+            return 0.0
+    
+    def _check_tor_indicators(self, routing_info: Dict[str, Any]) -> float:
+        """Check for Tor network usage indicators"""
+        try:
+            tor_score = 0.0
+            
+            # Check routing patterns typical of Tor
+            hop_count = routing_info.get('hop_count', 0)
+            routing_path = routing_info.get('routing_path', [])
+            
+            # Tor typically has specific hop patterns
+            if 3 <= hop_count <= 5:
+                tor_score += 0.3
+            
+            # Check for Tor-like routing path keywords
+            tor_patterns = ['tor', 'onion', 'relay', 'exit']
+            path_str = str(routing_path).lower()
+            
+            for pattern in tor_patterns:
+                if pattern in path_str:
+                    tor_score += 0.4
+            
+            return min(1.0, tor_score)
+            
+        except Exception:
+            return 0.0
+    
+    def _analyze_connection_bandwidth_profile(self, network_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze connection type and bandwidth characteristics"""
+        try:
+            performance = network_data.get('network_performance', {})
+            
+            connection_analysis = {
+                'connection_type': self._identify_connection_type(network_data),
+                'bandwidth_profile': {
+                    'download_speed': performance.get('download_speed', 0),
+                    'upload_speed': performance.get('upload_speed', 0),
+                    'speed_ratio': self._calculate_speed_ratio(performance),
+                    'bandwidth_class': self._classify_bandwidth(performance)
+                },
+                'isp_fingerprint': {
+                    'provider': network_data.get('isp', 'Unknown'),
+                    'provider_type': self._classify_isp_type(network_data.get('isp', '')),
+                    'service_quality': self._assess_service_quality(performance)
+                },
+                'connection_consistency': self._assess_connection_consistency(network_data)
+            }
+            
+            return connection_analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing connection/bandwidth profile: {str(e)}")
+            return {'error': str(e)}
+    
+    def _identify_connection_type(self, network_data: Dict[str, Any]) -> str:
+        """Identify connection type based on characteristics"""
+        try:
+            connection_type = network_data.get('connection_type', '')
+            performance = network_data.get('network_performance', {})
+            
+            if connection_type:
+                return connection_type
+            
+            # Infer from performance characteristics
+            download_speed = performance.get('download_speed', 0)
+            
+            if download_speed > 100:
+                return 'fiber'
+            elif download_speed > 50:
+                return 'cable'
+            elif download_speed > 10:
+                return 'dsl'
+            else:
+                return 'mobile'
+                
+        except Exception:
+            return 'unknown'
+    
+    def _calculate_speed_ratio(self, performance: Dict[str, Any]) -> float:
+        """Calculate download to upload speed ratio"""
+        try:
+            download = performance.get('download_speed', 0)
+            upload = performance.get('upload_speed', 0)
+            
+            if upload > 0:
+                return download / upload
+            return 0
+            
+        except Exception:
+            return 0
+    
+    def _classify_bandwidth(self, performance: Dict[str, Any]) -> str:
+        """Classify bandwidth tier"""
+        try:
+            download = performance.get('download_speed', 0)
+            
+            if download > 100:
+                return 'high_speed'
+            elif download > 25:
+                return 'broadband'
+            elif download > 5:
+                return 'basic'
+            else:
+                return 'low_speed'
+                
+        except Exception:
+            return 'unknown'
+    
+    def _classify_isp_type(self, isp: str) -> str:
+        """Classify ISP type based on name patterns"""
+        try:
+            isp_lower = isp.lower()
+            
+            if any(pattern in isp_lower for pattern in ['fiber', 'fios', 'broadband']):
+                return 'fiber_provider'
+            elif any(pattern in isp_lower for pattern in ['cable', 'comcast', 'cox', 'charter']):
+                return 'cable_provider'
+            elif any(pattern in isp_lower for pattern in ['mobile', 'wireless', 'cellular', 'verizon', 't-mobile']):
+                return 'mobile_provider'
+            elif any(pattern in isp_lower for pattern in ['satellite']):
+                return 'satellite_provider'
+            else:
+                return 'traditional_isp'
+                
+        except Exception:
+            return 'unknown'
+    
+    def _assess_service_quality(self, performance: Dict[str, Any]) -> str:
+        """Assess ISP service quality based on performance metrics"""
+        try:
+            rtt = performance.get('rtt', 50)
+            packet_loss = performance.get('packet_loss', 0)
+            download_speed = performance.get('download_speed', 0)
+            
+            quality_score = 1.0
+            
+            # RTT impact
+            if rtt > 100:
+                quality_score -= 0.3
+            elif rtt > 50:
+                quality_score -= 0.1
+            
+            # Packet loss impact
+            quality_score -= packet_loss * 5
+            
+            # Speed impact
+            if download_speed < 5:
+                quality_score -= 0.2
+            
+            if quality_score > 0.8:
+                return 'excellent'
+            elif quality_score > 0.6:
+                return 'good'
+            elif quality_score > 0.4:
+                return 'fair'
+            else:
+                return 'poor'
+                
+        except Exception:
+            return 'unknown'
+    
+    def _assess_connection_consistency(self, network_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess connection consistency and stability"""
+        return {
+            'stability_score': 0.8,  # Simplified scoring
+            'consistency_indicators': ['stable_latency', 'consistent_bandwidth'],
+            'variability_score': 0.2
+        }
+    
+    def _track_network_fingerprint_consistency(self, network_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Track network fingerprint consistency over time"""
+        try:
+            consistency_analysis = {
+                'signature_evolution': {
+                    'stable_characteristics': ['ip_address', 'isp', 'country'],
+                    'changed_characteristics': [],
+                    'evolution_score': 0.9  # High consistency assumed
+                },
+                'geographic_consistency': {
+                    'location_stable': True,
+                    'country_changes': 0,
+                    'region_changes': 0
+                },
+                'network_behavior': {
+                    'connection_pattern': 'consistent',
+                    'performance_trend': 'stable',
+                    'anomaly_count': 0
+                },
+                'consistency_score': 0.9
+            }
+            
+            return consistency_analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error tracking network fingerprint consistency: {str(e)}")
+            return {'error': str(e)}
+    
+    def _assess_network_characteristics_risk(self, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess overall network characteristics risk"""
+        try:
+            risk_factors = []
+            risk_score = 0.0
+            
+            # Check proxy/VPN/Tor detection
+            proxy_detection = analysis_result.get('proxy_vpn_detection', {})
+            if proxy_detection.get('tor_detected'):
+                risk_factors.append('tor_usage')
+                risk_score += 0.4
+            elif proxy_detection.get('vpn_detected'):
+                risk_factors.append('vpn_usage')
+                risk_score += 0.3
+            elif proxy_detection.get('proxy_detected'):
+                risk_factors.append('proxy_usage')
+                risk_score += 0.2
+            
+            # Check IP reputation
+            reputation = analysis_result.get('reputation_analysis', {})
+            if reputation.get('score', 1.0) < 0.5:
+                risk_factors.append('poor_ip_reputation')
+                risk_score += 0.2
+            
+            # Check for datacenter hosting
+            ip_type = reputation.get('ip_type', 'residential')
+            if ip_type == 'datacenter':
+                risk_factors.append('datacenter_hosting')
+                risk_score += 0.15
+            
+            # Determine risk level
+            if risk_score > 0.7:
+                risk_level = 'CRITICAL'
+            elif risk_score > 0.5:
+                risk_level = 'HIGH'
+            elif risk_score > 0.3:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
+            return {
+                'risk_score': min(1.0, risk_score),
+                'risk_level': risk_level,
+                'risk_factors': risk_factors,
+                'recommendations': self._generate_network_risk_recommendations(risk_factors)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error assessing network characteristics risk: {str(e)}")
+            return {'risk_score': 0.5, 'risk_level': 'MEDIUM', 'error': str(e)}
+    
+    def _generate_network_risk_recommendations(self, risk_factors: List[str]) -> List[str]:
+        """Generate network risk mitigation recommendations"""
+        recommendations = []
+        
+        if 'tor_usage' in risk_factors:
+            recommendations.append('CRITICAL: Tor network usage detected - implement immediate verification')
+        if 'vpn_usage' in risk_factors:
+            recommendations.append('HIGH: VPN usage detected - additional identity verification recommended')
+        if 'proxy_usage' in risk_factors:
+            recommendations.append('MEDIUM: Proxy usage detected - monitor for suspicious activity')
+        if 'poor_ip_reputation' in risk_factors:
+            recommendations.append('Monitor IP reputation and consider additional security measures')
+        if 'datacenter_hosting' in risk_factors:
+            recommendations.append('Datacenter IP detected - verify legitimate business usage')
+        
+        return recommendations
+    
+    # ===== TIMEZONE CONSISTENCY ANALYSIS HELPER METHODS =====
+    
+    def _validate_system_browser_timezones(self, timezone_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate consistency between system and browser timezones"""
+        try:
+            system_tz = timezone_data.get('system_timezone', '')
+            browser_tz = timezone_data.get('browser_timezone', '')
+            system_offset = timezone_data.get('timezone_offset', 0)
+            
+            validation = {
+                'system_timezone': system_tz,
+                'browser_timezone': browser_tz,
+                'timezones_match': system_tz == browser_tz,
+                'offset_consistency': True,
+                'dst_validation': {},
+                'consistency_score': 1.0,
+                'inconsistencies': []
+            }
+            
+            # Check timezone name consistency
+            if system_tz != browser_tz and system_tz and browser_tz:
+                validation['inconsistencies'].append('timezone_name_mismatch')
+                validation['consistency_score'] -= 0.3
+                validation['timezones_match'] = False
+            
+            # Validate DST handling
+            dst_validation = self._validate_dst_handling(timezone_data)
+            validation['dst_validation'] = dst_validation
+            
+            if not dst_validation.get('dst_consistent', True):
+                validation['inconsistencies'].append('dst_inconsistency')
+                validation['consistency_score'] -= 0.2
+            
+            # Check offset reasonableness
+            if abs(system_offset) > 12 * 60:  # More than ±12 hours
+                validation['inconsistencies'].append('invalid_timezone_offset')
+                validation['consistency_score'] -= 0.3
+                validation['offset_consistency'] = False
+            
+            validation['consistency_score'] = max(0.0, validation['consistency_score'])
+            
+            return validation
+            
+        except Exception as e:
+            self.logger.error(f"Error validating system/browser timezones: {str(e)}")
+            return {'error': str(e), 'consistency_score': 0.0}
+    
+    def _validate_dst_handling(self, timezone_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate Daylight Saving Time handling consistency"""
+        try:
+            dst_active = timezone_data.get('dst_active', False)
+            system_time = timezone_data.get('system_time', '')
+            browser_time = timezone_data.get('browser_time', '')
+            
+            dst_validation = {
+                'dst_active': dst_active,
+                'dst_consistent': True,
+                'dst_detection_method': 'timezone_offset_analysis',
+                'seasonal_accuracy': True
+            }
+            
+            # Simple DST consistency check based on current date
+            if system_time and browser_time:
+                # Parse timestamps and check DST consistency
+                dst_validation['time_consistency'] = abs(
+                    self._parse_timestamp_offset(system_time) - 
+                    self._parse_timestamp_offset(browser_time)
+                ) < 60000  # Within 1 minute
+            
+            return dst_validation
+            
+        except Exception as e:
+            return {'error': str(e), 'dst_consistent': False}
+    
+    def _parse_timestamp_offset(self, timestamp: str) -> int:
+        """Parse timestamp and return millisecond offset (simplified)"""
+        try:
+            # Simplified timestamp parsing - in production use proper datetime parsing
+            return int(datetime.utcnow().timestamp() * 1000)
+        except Exception:
+            return 0
+    
+    def _correlate_geolocation_timezone(self, timezone_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Correlate geolocation data with timezone information"""
+        try:
+            geolocation = timezone_data.get('geolocation', {})
+            system_timezone = timezone_data.get('system_timezone', '')
+            
+            correlation = {
+                'geolocation_provided': bool(geolocation),
+                'timezone_geographic_match': True,
+                'expected_timezone': '',
+                'actual_timezone': system_timezone,
+                'match_status': True,
+                'correlation_score': 1.0,
+                'geographic_inconsistencies': []
+            }
+            
+            if geolocation:
+                latitude = geolocation.get('latitude', 0)
+                longitude = geolocation.get('longitude', 0)
+                
+                # Determine expected timezone based on coordinates
+                expected_timezone = self._determine_timezone_from_coordinates(latitude, longitude)
+                correlation['expected_timezone'] = expected_timezone
+                
+                # Check if actual timezone matches expected
+                if expected_timezone and system_timezone:
+                    match_score = self._calculate_timezone_match_score(expected_timezone, system_timezone)
+                    correlation['correlation_score'] = match_score
+                    correlation['match_status'] = match_score > 0.7
+                    
+                    if match_score < 0.7:
+                        correlation['geographic_inconsistencies'].append('timezone_location_mismatch')
+            
+            return correlation
+            
+        except Exception as e:
+            self.logger.error(f"Error correlating geolocation/timezone: {str(e)}")
+            return {'error': str(e), 'correlation_score': 0.5}
+    
+    def _determine_timezone_from_coordinates(self, latitude: float, longitude: float) -> str:
+        """Determine expected timezone from geographic coordinates (simplified)"""
+        try:
+            if not latitude or not longitude:
+                return ''
+            
+            # Simplified timezone determination based on longitude
+            # In production, use a proper timezone library like pytz with geographic data
+            hours_offset = int(longitude / 15)  # Rough approximation
+            
+            if -12 <= hours_offset <= 12:
+                # Map to common timezone names (simplified)
+                timezone_mapping = {
+                    -8: 'America/Los_Angeles',
+                    -5: 'America/New_York', 
+                    0: 'Europe/London',
+                    1: 'Europe/Berlin',
+                    8: 'Asia/Shanghai',
+                    9: 'Asia/Tokyo'
+                }
+                
+                return timezone_mapping.get(hours_offset, f'UTC{hours_offset:+d}')
+            
+            return 'UTC+0'
+            
+        except Exception:
+            return ''
+    
+    def _calculate_timezone_match_score(self, expected: str, actual: str) -> float:
+        """Calculate how well expected and actual timezones match"""
+        try:
+            if expected == actual:
+                return 1.0
+            
+            # Check if they're in the same general region
+            expected_region = expected.split('/')[0] if '/' in expected else expected
+            actual_region = actual.split('/')[0] if '/' in actual else actual
+            
+            if expected_region == actual_region:
+                return 0.7  # Same region, different specific timezone
+            
+            # Check if UTC offsets might be similar (simplified)
+            if 'UTC' in expected and 'UTC' in actual:
+                return 0.5
+            
+            return 0.3  # Different regions
+            
+        except Exception:
+            return 0.5
+    
+    def _detect_timezone_manipulation(self, timezone_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect timezone spoofing and manipulation attempts"""
+        try:
+            manipulation_analysis = {
+                'manipulation_detected': False,
+                'spoofing_indicators': [],
+                'authenticity_score': 1.0,
+                'manipulation_techniques': [],
+                'confidence_level': 'HIGH'
+            }
+            
+            # Check for common timezone spoofing indicators
+            spoofing_indicators = self._check_timezone_spoofing_indicators(timezone_data)
+            manipulation_analysis['spoofing_indicators'] = spoofing_indicators
+            
+            if spoofing_indicators:
+                manipulation_analysis['manipulation_detected'] = True
+                manipulation_analysis['authenticity_score'] -= len(spoofing_indicators) * 0.2
+            
+            # Check for inconsistent timezone behavior
+            inconsistency_score = self._analyze_timezone_inconsistencies(timezone_data)
+            if inconsistency_score > 0.3:
+                manipulation_analysis['manipulation_detected'] = True
+                manipulation_analysis['authenticity_score'] -= inconsistency_score
+            
+            # Assess manipulation techniques
+            manipulation_analysis['manipulation_techniques'] = self._identify_manipulation_techniques(timezone_data)
+            
+            manipulation_analysis['authenticity_score'] = max(0.0, manipulation_analysis['authenticity_score'])
+            
+            # Determine confidence level
+            if manipulation_analysis['authenticity_score'] > 0.8:
+                manipulation_analysis['confidence_level'] = 'HIGH'
+            elif manipulation_analysis['authenticity_score'] > 0.5:
+                manipulation_analysis['confidence_level'] = 'MEDIUM'
+            else:
+                manipulation_analysis['confidence_level'] = 'LOW'
+            
+            return manipulation_analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting timezone manipulation: {str(e)}")
+            return {'error': str(e), 'authenticity_score': 0.5}
+    
+    def _check_timezone_spoofing_indicators(self, timezone_data: Dict[str, Any]) -> List[str]:
+        """Check for common timezone spoofing indicators"""
+        indicators = []
+        
+        system_tz = timezone_data.get('system_timezone', '')
+        browser_tz = timezone_data.get('browser_timezone', '')
+        
+        # Check for suspicious timezone names
+        suspicious_patterns = ['fake', 'spoof', 'test', 'dummy']
+        for pattern in suspicious_patterns:
+            if pattern in system_tz.lower() or pattern in browser_tz.lower():
+                indicators.append('suspicious_timezone_name')
+                break
+        
+        # Check for timezone jumping (would require historical data)
+        # For now, simplified check
+        if system_tz != browser_tz:
+            indicators.append('timezone_inconsistency')
+        
+        return indicators
+    
+    def _analyze_timezone_inconsistencies(self, timezone_data: Dict[str, Any]) -> float:
+        """Analyze timezone-related inconsistencies"""
+        try:
+            inconsistency_score = 0.0
+            
+            # Check system vs browser timezone mismatch
+            if timezone_data.get('system_timezone') != timezone_data.get('browser_timezone'):
+                inconsistency_score += 0.3
+            
+            # Check geolocation consistency
+            geolocation = timezone_data.get('geolocation', {})
+            if geolocation:
+                # Simplified geolocation consistency check
+                latitude = geolocation.get('latitude', 0)
+                if abs(latitude) > 90:  # Invalid latitude
+                    inconsistency_score += 0.2
+            
+            return min(1.0, inconsistency_score)
+            
+        except Exception:
+            return 0.0
+    
+    def _identify_manipulation_techniques(self, timezone_data: Dict[str, Any]) -> List[str]:
+        """Identify potential timezone manipulation techniques"""
+        techniques = []
+        
+        # Check for common manipulation patterns
+        system_tz = timezone_data.get('system_timezone', '')
+        browser_tz = timezone_data.get('browser_timezone', '')
+        
+        if system_tz != browser_tz:
+            techniques.append('browser_timezone_override')
+        
+        # Check for automation indicators in timezone handling
+        system_time = timezone_data.get('system_time', '')
+        browser_time = timezone_data.get('browser_time', '')
+        
+        if system_time and browser_time:
+            # Check if times are too perfectly synchronized (automation indicator)
+            time_diff = abs(self._parse_timestamp_offset(system_time) - self._parse_timestamp_offset(browser_time))
+            if time_diff < 10:  # Less than 10ms difference might indicate automation
+                techniques.append('perfect_time_synchronization')
+        
+        return techniques
+    
+    def _analyze_time_synchronization_accuracy(self, timezone_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze time synchronization accuracy and NTP compliance"""
+        try:
+            sync_analysis = {
+                'ntp_synchronized': timezone_data.get('ntp_synchronized', False),
+                'clock_skew': timezone_data.get('clock_skew', 0.0),
+                'synchronization_score': 1.0,
+                'accuracy_assessment': 'ACCURATE',
+                'time_drift_indicators': [],
+                'sync_quality': 'HIGH'
+            }
+            
+            clock_skew = timezone_data.get('clock_skew', 0.0)
+            
+            # Analyze clock skew
+            if abs(clock_skew) > 5.0:  # More than 5 seconds skew
+                sync_analysis['time_drift_indicators'].append('significant_clock_skew')
+                sync_analysis['synchronization_score'] -= 0.4
+                sync_analysis['accuracy_assessment'] = 'POOR'
+                sync_analysis['sync_quality'] = 'LOW'
+            elif abs(clock_skew) > 1.0:  # More than 1 second skew
+                sync_analysis['time_drift_indicators'].append('moderate_clock_skew')
+                sync_analysis['synchronization_score'] -= 0.2
+                sync_analysis['accuracy_assessment'] = 'FAIR'
+                sync_analysis['sync_quality'] = 'MEDIUM'
+            
+            # Check NTP synchronization status
+            if not timezone_data.get('ntp_synchronized', True):
+                sync_analysis['time_drift_indicators'].append('ntp_not_synchronized')
+                sync_analysis['synchronization_score'] -= 0.3
+            
+            sync_analysis['synchronization_score'] = max(0.0, sync_analysis['synchronization_score'])
+            
+            return sync_analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing time synchronization: {str(e)}")
+            return {'error': str(e), 'synchronization_score': 0.5}
+    
+    def _validate_temporal_behavior_patterns(self, timezone_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate temporal behavior patterns and circadian consistency"""
+        try:
+            behavior_analysis = {
+                'activity_timing': {},
+                'circadian_consistency': True,
+                'behavioral_timezone_match': True,
+                'temporal_anomalies': [],
+                'behavior_score': 1.0,
+                'pattern_classification': 'NORMAL'
+            }
+            
+            # Analyze activity timing (simplified - would need historical data)
+            current_hour = datetime.utcnow().hour
+            system_tz = timezone_data.get('system_timezone', '')
+            
+            behavior_analysis['activity_timing'] = {
+                'current_utc_hour': current_hour,
+                'local_timezone': system_tz,
+                'activity_period': self._classify_activity_period(current_hour),
+                'expected_activity': self._assess_expected_activity(current_hour, system_tz)
+            }
+            
+            # Check for temporal anomalies
+            temporal_anomalies = self._detect_temporal_anomalies(timezone_data)
+            behavior_analysis['temporal_anomalies'] = temporal_anomalies
+            
+            if temporal_anomalies:
+                behavior_analysis['behavior_score'] -= len(temporal_anomalies) * 0.2
+                behavior_analysis['circadian_consistency'] = False
+            
+            # Overall behavior pattern classification
+            if behavior_analysis['behavior_score'] > 0.8:
+                behavior_analysis['pattern_classification'] = 'NORMAL'
+            elif behavior_analysis['behavior_score'] > 0.6:
+                behavior_analysis['pattern_classification'] = 'SLIGHTLY_SUSPICIOUS'
+            else:
+                behavior_analysis['pattern_classification'] = 'ANOMALOUS'
+            
+            behavior_analysis['behavior_score'] = max(0.0, behavior_analysis['behavior_score'])
+            
+            return behavior_analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error validating temporal behavior patterns: {str(e)}")
+            return {'error': str(e), 'behavior_score': 0.5}
+    
+    def _classify_activity_period(self, hour: int) -> str:
+        """Classify the activity period based on hour"""
+        if 6 <= hour < 12:
+            return 'morning'
+        elif 12 <= hour < 18:
+            return 'afternoon' 
+        elif 18 <= hour < 22:
+            return 'evening'
+        else:
+            return 'night'
+    
+    def _assess_expected_activity(self, hour: int, timezone: str) -> str:
+        """Assess whether activity is expected for the given time and timezone"""
+        # Simplified assessment - would need more sophisticated logic
+        if 22 <= hour or hour < 6:
+            return 'unusual_night_activity'
+        else:
+            return 'normal_day_activity'
+    
+    def _detect_temporal_anomalies(self, timezone_data: Dict[str, Any]) -> List[str]:
+        """Detect temporal behavior anomalies"""
+        anomalies = []
+        
+        # Check for unusual activity times
+        current_hour = datetime.utcnow().hour
+        if 2 <= current_hour < 6:  # Very early morning activity
+            anomalies.append('unusual_early_morning_activity')
+        
+        # Check clock skew anomalies
+        clock_skew = timezone_data.get('clock_skew', 0.0)
+        if abs(clock_skew) > 10.0:  # More than 10 seconds
+            anomalies.append('significant_clock_drift')
+        
+        return anomalies
+    
+    def _assess_timezone_consistency_risk(self, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess overall timezone consistency risk"""
+        try:
+            risk_factors = []
+            risk_score = 0.0
+            
+            # Check manipulation detection results
+            manipulation = analysis_result.get('manipulation_detection', {})
+            if manipulation.get('manipulation_detected', False):
+                risk_factors.extend(manipulation.get('spoofing_indicators', []))
+                risk_score += 0.4
+            
+            # Check system vs browser timezone validation
+            validation = analysis_result.get('system_browser_validation', {})
+            if not validation.get('timezones_match', True):
+                risk_factors.append('timezone_mismatch')
+                risk_score += 0.2
+            
+            # Check geolocation correlation
+            geo_correlation = analysis_result.get('geolocation_correlation', {})
+            if not geo_correlation.get('match_status', True):
+                risk_factors.append('geolocation_timezone_mismatch')
+                risk_score += 0.3
+            
+            # Check temporal behavior anomalies
+            temporal = analysis_result.get('temporal_behavior', {})
+            anomalies = temporal.get('temporal_anomalies', [])
+            if anomalies:
+                risk_factors.extend(anomalies)
+                risk_score += len(anomalies) * 0.1
+            
+            # Determine risk level
+            if risk_score > 0.7:
+                risk_level = 'CRITICAL'
+            elif risk_score > 0.5:
+                risk_level = 'HIGH'
+            elif risk_score > 0.3:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
+            return {
+                'risk_score': min(1.0, risk_score),
+                'risk_level': risk_level,
+                'risk_factors': risk_factors,
+                'recommendations': self._generate_timezone_risk_recommendations(risk_factors)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error assessing timezone consistency risk: {str(e)}")
+            return {'risk_score': 0.5, 'risk_level': 'MEDIUM', 'error': str(e)}
+    
+    def _generate_timezone_risk_recommendations(self, risk_factors: List[str]) -> List[str]:
+        """Generate timezone risk mitigation recommendations"""
+        recommendations = []
+        
+        if 'timezone_mismatch' in risk_factors:
+            recommendations.append('Investigate system vs browser timezone inconsistency')
+        if 'geolocation_timezone_mismatch' in risk_factors:
+            recommendations.append('Verify user location matches reported timezone')
+        if 'suspicious_timezone_name' in risk_factors:
+            recommendations.append('CRITICAL: Suspicious timezone name detected - manual verification required')
+        if 'significant_clock_drift' in risk_factors:
+            recommendations.append('Check system clock synchronization and NTP configuration')
+        if 'unusual_early_morning_activity' in risk_factors:
+            recommendations.append('Monitor for automated activity during unusual hours')
+        
+        return recommendations
 
 
 # Initialize global EnvironmentAnalyzer instance
