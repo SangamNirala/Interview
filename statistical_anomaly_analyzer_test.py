@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timedelta
 
 # Backend URL
-BACKEND_URL = "https://security-keystroke.preview.emergentagent.com/api"
+BACKEND_URL = "https://advanced-hardware.preview.emergentagent.com/api"
 
 def authenticate_admin():
     """Authenticate as admin"""

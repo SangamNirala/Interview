@@ -12,7 +12,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://security-keystroke.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://advanced-hardware.preview.emergentagent.com')
 
 def test_api_endpoints():
     """Test the specific API endpoints mentioned in the user's issue"""

@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Backend URL configuration
-BACKEND_URL = "https://security-keystroke.preview.emergentagent.com/api"
+BACKEND_URL = "https://advanced-hardware.preview.emergentagent.com/api"
 
 class SkillGapAnalysisTester:
     def __init__(self):

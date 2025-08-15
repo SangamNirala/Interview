@@ -15,7 +15,7 @@ load_dotenv('/app/backend/.env')
 load_dotenv('/app/frontend/.env')
 
 # Get backend URL from frontend environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://security-keystroke.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://advanced-hardware.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 def create_session_with_keystroke_data(session_id):

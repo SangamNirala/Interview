@@ -22,7 +22,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BACKEND_URL = "https://security-keystroke.preview.emergentagent.com/api"
+BACKEND_URL = "https://advanced-hardware.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class Phase32NetworkTimezoneTester:
