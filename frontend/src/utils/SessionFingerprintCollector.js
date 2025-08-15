@@ -560,33 +560,83 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Collect environmental data
+     * PHASE 3.4: ENHANCED ENVIRONMENTAL DATA COLLECTION  
+     * Collect comprehensive environmental data including:
+     * - Timezone and locale information
+     * - Battery status and charging characteristics
+     * - Device orientation and motion sensors
+     * - Ambient light sensor data
+     * - Audio and video device enumeration
      */
     async collectEnvironmentalData() {
         try {
+            this.logger.info("🌍 Starting enhanced environmental data collection");
+            
             const envData = {
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                timezone_offset: new Date().getTimezoneOffset(),
-                locale: navigator.language,
-                locales: navigator.languages || [],
-                currency: this.detectCurrency(),
-                number_format: this.detectNumberFormat(),
-                date_format: this.detectDateFormat(),
-                color_scheme: this.detectColorScheme(),
-                reduced_motion: this.detectReducedMotion(),
-                high_contrast: this.detectHighContrast(),
-                font_preferences: await this.detectFontPreferences(),
-                audio_context: this.getAudioContextInfo(),
-                device_orientation: await this.getDeviceOrientation(),
-                viewport_size: this.getViewportSize(),
-                screen_properties: this.getScreenProperties()
+                // Enhanced timezone and locale information
+                locale_characteristics: await this.getLocaleCharacteristics(),
+                
+                // Enhanced battery status and charging characteristics
+                battery_characteristics: await this.getBatteryCharacteristics(),
+                
+                // Enhanced device orientation and motion sensors
+                motion_sensors: await this.getMotionSensorData(),
+                
+                // Enhanced ambient light sensor data
+                ambient_sensors: await this.getAmbientSensorData(),
+                
+                // Enhanced audio and video device enumeration
+                media_devices: await this.getMediaDeviceCharacteristics(),
+                
+                // Display and visual preferences
+                display_preferences: await this.getDisplayPreferences(),
+                
+                // Input device capabilities
+                input_capabilities: await this.getInputCapabilities(),
+                
+                // Accessibility features detection
+                accessibility_features: await this.getAccessibilityFeatures(),
+                
+                // System performance indicators
+                system_performance: await this.getSystemPerformanceIndicators(),
+                
+                // Privacy and security preferences
+                privacy_settings: await this.getPrivacySettings(),
+                
+                // Legacy environmental data (for backward compatibility)
+                legacy_env_data: {
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    timezone_offset: new Date().getTimezoneOffset(),
+                    locale: navigator.language,
+                    locales: navigator.languages || [],
+                    currency: this.detectCurrency(),
+                    number_format: this.detectNumberFormat(),
+                    date_format: this.detectDateFormat(),
+                    color_scheme: this.detectColorScheme(),
+                    reduced_motion: this.detectReducedMotion(),
+                    high_contrast: this.detectHighContrast(),
+                    font_preferences: await this.detectFontPreferences(),
+                    audio_context: this.getAudioContextInfo(),
+                    device_orientation: await this.getDeviceOrientation(),
+                    viewport_size: this.getViewportSize(),
+                    screen_properties: this.getScreenProperties()
+                },
+                
+                // Collection metadata
+                collection_metadata: {
+                    timestamp: new Date().toISOString(),
+                    collection_id: this.generateUniqueId(),
+                    fingerprint_version: "3.4_enhanced_environmental", 
+                    collection_method: "comprehensive_environmental_analysis"
+                }
             };
             
+            this.logger.info("✅ Environmental data collection completed successfully");
             return envData;
             
         } catch (error) {
-            this.logger.error("Error collecting environmental data:", error);
-            return { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+            this.logger.error("❌ Error collecting enhanced environmental data:", error);
+            return this.getFallbackEnvironmentalData();
         }
     }
     
