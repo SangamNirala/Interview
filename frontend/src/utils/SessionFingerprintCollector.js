@@ -13973,39 +13973,39 @@ class SessionFingerprintCollector {
     
     async testProximitySensorAPI() {
         try {
-            // Check if ProximitySensor is available
-            if (typeof ProximitySensor === 'undefined') {
+            // Check if ProximitySensor is available in window
+            if (typeof window !== 'undefined' && 'ProximitySensor' in window) {
+                const sensor = new window.ProximitySensor();
+                
+                return await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        sensor.stop();
+                        reject(new Error('Proximity sensor timeout'));
+                    }, 3000);
+                    
+                    sensor.addEventListener('reading', () => {
+                        clearTimeout(timeout);
+                        sensor.stop();
+                        
+                        resolve({
+                            available: true,
+                            api_type: 'ProximitySensor_API',
+                            distance: sensor.distance,
+                            max_distance: sensor.max,
+                            near: sensor.near
+                        });
+                    });
+                    
+                    sensor.addEventListener('error', (event) => {
+                        clearTimeout(timeout);
+                        reject(event.error);
+                    });
+                    
+                    sensor.start();
+                });
+            } else {
                 throw new Error('ProximitySensor not available');
             }
-            
-            const sensor = new ProximitySensor();
-            
-            return await new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => {
-                    sensor.stop();
-                    reject(new Error('Proximity sensor timeout'));
-                }, 3000);
-                
-                sensor.addEventListener('reading', () => {
-                    clearTimeout(timeout);
-                    sensor.stop();
-                    
-                    resolve({
-                        available: true,
-                        api_type: 'ProximitySensor_API',
-                        distance: sensor.distance,
-                        max_distance: sensor.max,
-                        near: sensor.near
-                    });
-                });
-                
-                sensor.addEventListener('error', (event) => {
-                    clearTimeout(timeout);
-                    reject(event.error);
-                });
-                
-                sensor.start();
-            });
         } catch (error) {
             throw error;
         }
