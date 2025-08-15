@@ -1329,6 +1329,142 @@ class AdvancedBehavioralBiometricsEngine:
         except Exception as e:
             self.logger.error(f"Error in automation detection: {str(e)}")
             return {"error": str(e), "analysis_type": "automation_detection"}
+    
+    def get_session_analysis_summary(self, session_id: str) -> Dict[str, Any]:
+        """Generate comprehensive session analysis summary"""
+        try:
+            self.logger.info(f"Generating session analysis summary for session {session_id}")
+            
+            # Get session fingerprint if available
+            session_fingerprint = self.session_fingerprints.get(session_id, {})
+            behavioral_baseline = self.behavioral_baselines.get(session_id, {})
+            
+            # Analyze recent analysis history for this session
+            session_analyses = [
+                entry for entry in self.analysis_history 
+                if entry.get('session_id') == session_id
+            ]
+            
+            # Calculate session statistics
+            analysis_count = len(session_analyses)
+            analysis_types = list(set([entry.get('analysis_type', 'unknown') for entry in session_analyses]))
+            
+            # Calculate behavioral consistency scores
+            consistency_scores = {}
+            if session_fingerprint:
+                consistency_scores = {
+                    "keystroke_consistency": session_fingerprint.get('keystroke_consistency', 0.5),
+                    "mouse_consistency": session_fingerprint.get('mouse_consistency', 0.5),
+                    "touch_consistency": session_fingerprint.get('touch_consistency', 0.5),
+                    "interaction_consistency": session_fingerprint.get('interaction_consistency', 0.5)
+                }
+            
+            # Analyze automation risk
+            automation_indicators = []
+            automation_probability = 0.0
+            
+            for analysis in session_analyses:
+                if 'automation_detected' in analysis and analysis['automation_detected']:
+                    automation_indicators.extend(analysis.get('automation_indicators', []))
+                    automation_probability = max(automation_probability, analysis.get('automation_probability', 0))
+            
+            # Calculate overall risk assessment
+            risk_factors = {
+                "automation_risk": automation_probability,
+                "consistency_risk": 1 - np.mean(list(consistency_scores.values())) if consistency_scores else 0.5,
+                "analysis_volume_risk": min(analysis_count / 100, 1.0),  # Normalize by expected analysis count
+                "behavioral_variance_risk": behavioral_baseline.get('variance_score', 0.3)
+            }
+            
+            overall_risk_score = np.mean(list(risk_factors.values()))
+            risk_level = (
+                "critical" if overall_risk_score > 0.8 else
+                "high" if overall_risk_score > 0.6 else
+                "medium" if overall_risk_score > 0.4 else
+                "low"
+            )
+            
+            # Generate timeline analysis
+            if session_analyses:
+                first_analysis = min([entry.get('timestamp', datetime.utcnow()) for entry in session_analyses])
+                last_analysis = max([entry.get('timestamp', datetime.utcnow()) for entry in session_analyses])
+                session_duration = (last_analysis - first_analysis).total_seconds() if isinstance(first_analysis, datetime) and isinstance(last_analysis, datetime) else 0
+            else:
+                session_duration = 0
+            
+            # Generate behavioral patterns summary
+            behavior_patterns = {
+                "dominant_interaction_type": self._identify_dominant_behavior(session_analyses),
+                "typing_speed_category": behavioral_baseline.get('typing_speed_category', 'normal'),
+                "mouse_movement_style": behavioral_baseline.get('mouse_style', 'normal'),
+                "interaction_rhythm": behavioral_baseline.get('rhythm_classification', 'steady')
+            }
+            
+            # Compile comprehensive summary
+            session_summary = {
+                "session_id": session_id,
+                "analysis_overview": {
+                    "total_analyses_performed": analysis_count,
+                    "analysis_types_covered": analysis_types,
+                    "session_duration_seconds": session_duration,
+                    "analyses_per_minute": analysis_count / max(session_duration / 60, 1) if session_duration > 0 else 0
+                },
+                "behavioral_fingerprint": session_fingerprint,
+                "behavioral_baseline": behavioral_baseline,
+                "consistency_assessment": {
+                    "consistency_scores": consistency_scores,
+                    "overall_consistency": np.mean(list(consistency_scores.values())) if consistency_scores else 0.5,
+                    "consistency_trend": "stable"  # Could be enhanced with trend analysis
+                },
+                "automation_assessment": {
+                    "automation_probability": float(automation_probability),
+                    "automation_indicators": list(set(automation_indicators)),
+                    "automation_risk_level": "high" if automation_probability > 0.7 else "medium" if automation_probability > 0.4 else "low"
+                },
+                "risk_analysis": {
+                    "overall_risk_score": float(overall_risk_score),
+                    "risk_level": risk_level,
+                    "risk_factors": {k: float(v) for k, v in risk_factors.items()},
+                    "confidence_level": "high" if analysis_count > 10 else "medium" if analysis_count > 3 else "low"
+                },
+                "behavioral_patterns": behavior_patterns,
+                "session_metadata": {
+                    "fingerprint_available": bool(session_fingerprint),
+                    "baseline_established": bool(behavioral_baseline),
+                    "analysis_completeness": min(len(analysis_types) / 4, 1.0),  # Assume 4 main analysis types
+                    "summary_generated_at": datetime.utcnow().isoformat(),
+                    "engine_version": "4.2.0"
+                }
+            }
+            
+            self.logger.info(f"Session analysis summary generated for {session_id}: {analysis_count} analyses, risk level {risk_level}")
+            return session_summary
+            
+        except Exception as e:
+            self.logger.error(f"Error generating session analysis summary: {str(e)}")
+            return {
+                "session_id": session_id,
+                "error": str(e),
+                "summary_generated_at": datetime.utcnow().isoformat(),
+                "analysis_overview": {"total_analyses_performed": 0},
+                "risk_analysis": {"overall_risk_score": 0.5, "risk_level": "unknown"}
+            }
+    
+    def _identify_dominant_behavior(self, session_analyses: List[Dict]) -> str:
+        """Identify the dominant behavioral interaction type in session"""
+        if not session_analyses:
+            return "unknown"
+        
+        # Count analysis types
+        type_counts = {}
+        for analysis in session_analyses:
+            analysis_type = analysis.get('analysis_type', 'unknown')
+            type_counts[analysis_type] = type_counts.get(analysis_type, 0) + 1
+        
+        # Return most frequent type
+        if type_counts:
+            return max(type_counts.items(), key=lambda x: x[1])[0]
+        return "mixed"
 
 
 # Global instance for use in API endpoints
