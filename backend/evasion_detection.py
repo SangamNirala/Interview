@@ -331,7 +331,7 @@ class EvasionDetectionEngine:
             
             # Calculate consistency metrics
             consistency_scores = [test.get('consistency_score', 1.0) for test in consistency_tests]
-            overall_consistency = np.mean(consistency_scores)
+            overall_consistency = float(np.mean(consistency_scores))
             
             # Collect anomalies and inconsistencies
             all_inconsistencies = []
