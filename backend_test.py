@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-🎯 PHASE 3.2: ADVANCED BROWSER & ENVIRONMENT ANALYSIS TESTING
-Comprehensive testing of Browser Fingerprint Analysis and Automation Tools Detection endpoints
+🎯 PHASE 3.2: ADVANCED BROWSER & ENVIRONMENT ANALYSIS TESTING - REMAINING 2 METHODS
+Comprehensive testing of Network Characteristics Analysis and Timezone Consistency Analysis endpoints
 
 Test Coverage:
-1. Browser Fingerprint Analysis (POST /api/session-fingerprinting/analyze-browser-fingerprint)
-2. Automation Tools Detection (POST /api/session-fingerprinting/detect-automation-tools)
+1. Network Characteristics Analysis (POST /api/session-fingerprinting/monitor-network-characteristics)
+2. Timezone Consistency Analysis (POST /api/session-fingerprinting/track-timezone-consistency)
 
 Testing Scenarios:
-- Normal browser fingerprints vs suspicious ones
-- Clean browser sessions vs automation tool signatures  
-- Various browser types (Chrome, Firefox, Safari, Edge)
-- Different automation tools and patterns
+- Normal residential IPs vs VPN/Proxy detection
+- Various network configurations and ISP information
+- Normal timezone consistency vs timezone mismatches
+- System vs browser timezone validation
 - Edge cases with malformed data
 """
 
