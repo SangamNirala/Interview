@@ -8,7 +8,7 @@ import json
 import os
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://session-guardian-1.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://session-guardian-2.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 def debug_ats_calculation():

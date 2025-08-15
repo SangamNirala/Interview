@@ -22,7 +22,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BACKEND_URL = "https://session-guardian-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://session-guardian-2.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class Phase32BrowserEnvironmentTester:
@@ -761,7 +761,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://session-guardian-1.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://session-guardian-2.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class PlacementPreparationTester:

@@ -6,7 +6,7 @@ Simple ATS Test to see what's actually being generated
 import requests
 import json
 
-BACKEND_URL = "https://session-guardian-1.preview.emergentagent.com"
+BACKEND_URL = "https://session-guardian-2.preview.emergentagent.com"
 ATS_ENDPOINT = f"{BACKEND_URL}/api/placement-preparation/ats-score-calculate"
 
 def test_simple_ats():
