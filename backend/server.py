@@ -742,8 +742,79 @@ tts_client = texttospeech.TextToSpeechClient(credentials=credentials)
 # Create the main app without a prefix
 app = FastAPI()
 
+# Import WebSocket manager
+from websocket_manager import websocket_manager, FingerprintingWebSocketManager
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+# WebSocket Endpoints for Real-time Fingerprinting Monitoring
+
+@app.websocket("/ws/fingerprinting/{session_id}")
+async def websocket_fingerprint_endpoint(websocket: WebSocket, session_id: str):
+    """WebSocket endpoint for real-time fingerprinting monitoring"""
+    await websocket.accept()
+    await websocket_manager.handle_fingerprint_updates(websocket, session_id)
+
+@app.websocket("/ws/device-analytics/{device_id}")
+async def websocket_device_analytics_endpoint(websocket: WebSocket, device_id: str):
+    """WebSocket endpoint for real-time device analytics streaming"""
+    await websocket.accept()
+    await websocket_manager.stream_device_analytics(websocket, device_id)
+
+@app.websocket("/ws/session-integrity/{session_id}")
+async def websocket_session_integrity_endpoint(websocket: WebSocket, session_id: str):
+    """WebSocket endpoint for real-time session integrity monitoring"""
+    await websocket.accept()
+    await websocket_manager.monitor_session_integrity(websocket, session_id)
+
+# Initialize WebSocket manager on startup
+@app.on_event("startup")
+async def startup_websocket_manager():
+    """Initialize WebSocket manager and start background tasks"""
+    try:
+        await websocket_manager.initialize_database()
+        await websocket_manager.start_background_tasks()
+        logging.info("WebSocket manager initialized successfully")
+    except Exception as e:
+        logging.error(f"Failed to initialize WebSocket manager: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_websocket_manager():
+    """Cleanup WebSocket manager on shutdown"""
+    try:
+        await websocket_manager.stop_background_tasks()
+        logging.info("WebSocket manager shutdown completed")
+    except Exception as e:
+        logging.error(f"Error during WebSocket manager shutdown: {e}")
+
+# WebSocket Statistics API Endpoint
+@api_router.get("/websocket/stats")
+async def get_websocket_stats():
+    """Get WebSocket connection statistics"""
+    try:
+        stats = await websocket_manager.get_connection_stats()
+        return {
+            "success": True,
+            "data": stats
+        }
+    except Exception as e:
+        logging.error(f"Error getting WebSocket stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Violation Alert Broadcasting API Endpoint
+@api_router.post("/websocket/broadcast-violation")
+async def broadcast_violation_alert(violation_data: dict):
+    """Broadcast violation alert to connected WebSocket clients"""
+    try:
+        await websocket_manager.broadcast_violation_alerts(violation_data)
+        return {
+            "success": True,
+            "message": "Violation alert broadcasted successfully"
+        }
+    except Exception as e:
+        logging.error(f"Error broadcasting violation alert: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Phase 3: I18n API Endpoints
 @app.get("/api/translations/{language}")
