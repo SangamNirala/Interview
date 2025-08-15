@@ -449,7 +449,7 @@ class FingerprintMLClusteringEngine:
             # For DBSCAN, we need to find the nearest cluster
             # Since DBSCAN doesn't have predict method, we use fit_predict on combined data
             cluster_label = -1  # Default to noise
-            min_distance = float('inf')
+            min_distance = 999999.0  # Large finite value instead of infinity
             
             # Get core samples from trained model
             if hasattr(model, 'core_sample_indices_'):
