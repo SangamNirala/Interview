@@ -239,7 +239,7 @@ class EvasionDetectionEngine:
                         virtualization_types.append(test['detected_type'])
             
             # Calculate overall virtualization confidence
-            overall_confidence = np.mean(virtualization_scores) if virtualization_scores else 0.0
+            overall_confidence = float(np.mean(virtualization_scores)) if virtualization_scores else 0.0
             virtualization_detected = overall_confidence > self.virtualization_threshold
             
             # Determine most likely virtualization type
