@@ -3617,10 +3617,168 @@ class SessionFingerprintCollector {
     
     async benchmarkCSS3DPerformance() { return { render_time_ms: 0 }; }
     async benchmarkAnimationPerformance() { return { fps: 60 }; }
-    async benchmarkCompositePerformance() { return { composite_time_ms: 0 }; }
-    detectHardwareAccelerationIndicators() { return { accelerated: 'unknown' }; }
-    async analyzePerformanceConsistency() { return { consistency_score: 0.8 }; }
-    async detectThermalThrottlingIndicators() { return { throttling_detected: false }; }
+    // Enhanced Performance Analysis - Full Implementation
+    async benchmarkCompositePerformance() {
+        try {
+            const startTime = performance.now();
+            
+            // Run multiple performance tests in sequence
+            const results = await Promise.all([
+                this.testCPUArithmetic(),
+                this.testMemoryAccess(),
+                this.testDOMManipulation(),
+                this.testCanvasRendering()
+            ]);
+            
+            const totalTime = performance.now() - startTime;
+            const avgIndividualTime = results.reduce((a, b) => a + b, 0) / results.length;
+            
+            // Calculate composite score based on individual and parallel performance
+            const parallelEfficiency = avgIndividualTime / (totalTime / results.length);
+            const compositeScore = Math.max(0, 100 - (totalTime / 50));
+            
+            return {
+                composite_time_ms: totalTime,
+                individual_times: results,
+                average_individual_time: avgIndividualTime,
+                parallel_efficiency: parallelEfficiency,
+                composite_score: compositeScore,
+                performance_category: compositeScore > 80 ? 'excellent' : compositeScore > 60 ? 'good' : 'average'
+            };
+        } catch (error) {
+            return { composite_time_ms: 0, error: error.message };
+        }
+    }
+    
+    detectHardwareAccelerationIndicators() {
+        try {
+            const indicators = {
+                accelerated: 'unknown',
+                webgl_acceleration: false,
+                canvas_acceleration: false,
+                css_acceleration: false
+            };
+            
+            // Test WebGL hardware acceleration
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (gl) {
+                const renderer = gl.getParameter(gl.RENDERER);
+                indicators.webgl_acceleration = !renderer.toLowerCase().includes('software');
+                indicators.gpu_renderer = renderer;
+            }
+            
+            // Test CSS hardware acceleration indicators
+            const testElement = document.createElement('div');
+            testElement.style.transform = 'translateZ(0)'; // Force hardware acceleration
+            testElement.style.backfaceVisibility = 'hidden';
+            
+            indicators.css_acceleration = testElement.style.transform === 'translateZ(0px)';
+            
+            // Overall assessment
+            if (indicators.webgl_acceleration) {
+                indicators.accelerated = 'hardware';
+            } else if (indicators.css_acceleration) {
+                indicators.accelerated = 'partial';
+            } else {
+                indicators.accelerated = 'software';
+            }
+            
+            canvas.remove();
+            return indicators;
+            
+        } catch (error) {
+            return { accelerated: 'unknown', error: error.message };
+        }
+    }
+    
+    async analyzePerformanceConsistency() {
+        try {
+            const measurements = [];
+            const testCount = 10;
+            
+            // Run the same test multiple times to measure consistency
+            for (let i = 0; i < testCount; i++) {
+                const testTime = await this.testCPUArithmetic();
+                measurements.push(testTime);
+                
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            // Calculate consistency metrics
+            const mean = measurements.reduce((a, b) => a + b, 0) / measurements.length;
+            const variance = measurements.reduce((sum, time) => sum + Math.pow(time - mean, 2), 0) / measurements.length;
+            const stdDev = Math.sqrt(variance);
+            const coefficientOfVariation = (stdDev / mean) * 100;
+            
+            // Consistency score (lower variation = higher score)
+            const consistencyScore = Math.max(0, Math.min(1, 1 - (coefficientOfVariation / 50)));
+            
+            return {
+                consistency_score: consistencyScore,
+                mean_performance_time: mean,
+                standard_deviation: stdDev,
+                coefficient_of_variation: coefficientOfVariation,
+                measurements: measurements,
+                consistency_rating: consistencyScore > 0.8 ? 'excellent' : 
+                                  consistencyScore > 0.6 ? 'good' : 
+                                  consistencyScore > 0.4 ? 'fair' : 'poor'
+            };
+            
+        } catch (error) {
+            return { consistency_score: 0.8, error: error.message };
+        }
+    }
+    
+    async detectThermalThrottlingIndicators() {
+        try {
+            const indicators = {
+                throttling_detected: false,
+                performance_degradation: 0,
+                thermal_stress_test_results: []
+            };
+            
+            // Baseline performance measurement
+            const baselineTime = await this.testCPUArithmetic();
+            
+            // Run sustained workload to generate heat
+            const sustainedResults = [];
+            for (let i = 0; i < 5; i++) {
+                const testTime = await this.testCPUArithmetic();
+                sustainedResults.push(testTime);
+                
+                // Brief pause between tests but not enough to cool down
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            indicators.thermal_stress_test_results = sustainedResults;
+            
+            // Calculate performance degradation
+            const avgSustainedTime = sustainedResults.reduce((a, b) => a + b, 0) / sustainedResults.length;
+            const degradationPercent = ((avgSustainedTime - baselineTime) / baselineTime) * 100;
+            
+            indicators.performance_degradation = degradationPercent;
+            indicators.throttling_detected = degradationPercent > 15; // >15% degradation indicates throttling
+            
+            // Additional thermal indicators
+            if (sustainedResults.length >= 3) {
+                const earlyAvg = sustainedResults.slice(0, 2).reduce((a, b) => a + b, 0) / 2;
+                const lateAvg = sustainedResults.slice(-2).reduce((a, b) => a + b, 0) / 2;
+                const progressiveDegradation = ((lateAvg - earlyAvg) / earlyAvg) * 100;
+                
+                if (progressiveDegradation > 10) {
+                    indicators.progressive_throttling = true;
+                }
+            }
+            
+            return indicators;
+            
+        } catch (error) {
+            return { throttling_detected: false, error: error.message };
+        }
+    }
     
     // GPU Memory Estimation - Enhanced Implementation
     async estimateGPUMemoryViaTextures() {
