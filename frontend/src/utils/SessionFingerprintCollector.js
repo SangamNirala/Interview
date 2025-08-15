@@ -4591,7 +4591,266 @@ class SessionFingerprintCollector {
         return 'DeviceMotionEvent' in window;
     }
     
-    async checkDeviceOrientationPermission() {
+    // Helper Methods for Enhanced Implementation
+    detectPeriodicPatterns(timings) {
+        try {
+            if (timings.length < 10) return { detected: false };
+            
+            // Simple periodic pattern detection using autocorrelation
+            const mean = timings.reduce((a, b) => a + b) / timings.length;
+            const centered = timings.map(t => t - mean);
+            
+            // Check for periods from 2 to half the data length
+            const maxPeriod = Math.floor(timings.length / 2);
+            let bestPeriod = 0;
+            let bestCorrelation = 0;
+            
+            for (let period = 2; period <= maxPeriod; period++) {
+                let correlation = 0;
+                let count = 0;
+                
+                for (let i = 0; i < timings.length - period; i++) {
+                    correlation += centered[i] * centered[i + period];
+                    count++;
+                }
+                
+                if (count > 0) {
+                    correlation /= count;
+                    if (Math.abs(correlation) > Math.abs(bestCorrelation)) {
+                        bestCorrelation = correlation;
+                        bestPeriod = period;
+                    }
+                }
+            }
+            
+            return {
+                detected: Math.abs(bestCorrelation) > 0.3,
+                period: bestPeriod,
+                correlation: bestCorrelation,
+                strength: Math.abs(bestCorrelation)
+            };
+            
+        } catch (error) {
+            return { detected: false, error: error.message };
+        }
+    }
+    
+    async testCPUStability() {
+        try {
+            const iterations = 10;
+            const executionTimes = [];
+            
+            for (let i = 0; i < iterations; i++) {
+                const start = performance.now();
+                
+                // Standardized CPU workload
+                let result = 0;
+                for (let j = 0; j < 50000; j++) {
+                    result += Math.sin(j) * Math.cos(j);
+                }
+                
+                executionTimes.push(performance.now() - start);
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const avg = executionTimes.reduce((a, b) => a + b) / executionTimes.length;
+            const variance = executionTimes.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) / executionTimes.length;
+            const cv = (Math.sqrt(variance) / avg) * 100;
+            
+            return {
+                unstable: cv > 20,
+                coefficient_variation: cv,
+                avg_execution_time: avg,
+                severity: cv > 50 ? 'high' : cv > 30 ? 'medium' : 'low',
+                details: { execution_times: executionTimes, variance: variance }
+            };
+            
+        } catch (error) {
+            return { unstable: false, error: error.message };
+        }
+    }
+    
+    async testMemoryBandwidth() {
+        try {
+            const arraySizes = [1000, 10000, 100000];
+            const results = [];
+            
+            for (let size of arraySizes) {
+                const start = performance.now();
+                
+                // Memory bandwidth test
+                const array1 = new Float32Array(size);
+                const array2 = new Float32Array(size);
+                
+                // Fill arrays
+                for (let i = 0; i < size; i++) {
+                    array1[i] = Math.random();
+                    array2[i] = Math.random();
+                }
+                
+                // Copy operations
+                for (let i = 0; i < size; i++) {
+                    array2[i] = array1[i] * 2.5;
+                }
+                
+                results.push({
+                    size: size,
+                    time: performance.now() - start,
+                    bandwidth: (size * 8) / ((performance.now() - start) / 1000) // bytes per second
+                });
+            }
+            
+            // Analyze bandwidth degradation
+            const bandwidths = results.map(r => r.bandwidth);
+            const expectedScaling = results[0].bandwidth / results[results.length - 1].bandwidth;
+            const actualScaling = arraySizes[0] / arraySizes[arraySizes.length - 1];
+            
+            return {
+                degraded: Math.abs(expectedScaling - actualScaling) > 0.5,
+                bandwidth_results: results,
+                scaling_factor: expectedScaling / actualScaling,
+                severity: Math.abs(expectedScaling - actualScaling) > 1.0 ? 'high' : 'low',
+                details: { expected_scaling: expectedScaling, actual_scaling: actualScaling }
+            };
+            
+        } catch (error) {
+            return { degraded: false, error: error.message };
+        }
+    }
+    
+    async testGPUThrottling() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 256;
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) return { throttled: false, reason: 'webgl_unavailable' };
+            
+            const renderTimes = [];
+            const iterations = 5;
+            
+            // Create shader program for GPU workload
+            const vertexShaderSource = `
+                attribute vec4 a_position;
+                void main() {
+                    gl_Position = a_position;
+                }
+            `;
+            
+            const fragmentShaderSource = `
+                precision mediump float;
+                uniform float u_time;
+                void main() {
+                    vec2 coord = gl_FragCoord.xy / 256.0;
+                    float color = 0.0;
+                    for(int i = 0; i < 100; i++) {
+                        color += sin(coord.x * float(i) + u_time) * cos(coord.y * float(i) + u_time);
+                    }
+                    gl_FragColor = vec4(color * 0.01, 0.0, 0.0, 1.0);
+                }
+            `;
+            
+            // Compile shaders and create program
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, vertexShaderSource);
+            gl.compileShader(vertexShader);
+            
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, fragmentShaderSource);
+            gl.compileShader(fragmentShader);
+            
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                return { throttled: false, reason: 'shader_compilation_failed' };
+            }
+            
+            // Setup geometry
+            const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+            
+            const positionLocation = gl.getAttribLocation(program, 'a_position');
+            const timeLocation = gl.getUniformLocation(program, 'u_time');
+            
+            gl.useProgram(program);
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+            
+            // Perform rendering tests
+            for (let i = 0; i < iterations; i++) {
+                const startTime = performance.now();
+                
+                // Heavy GPU computation
+                for (let frame = 0; frame < 10; frame++) {
+                    gl.uniform1f(timeLocation, frame * 0.1);
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                    gl.finish(); // Force GPU to complete
+                }
+                
+                renderTimes.push(performance.now() - startTime);
+                
+                // Cool down between tests
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            // Analyze for throttling
+            const avgTime = renderTimes.reduce((a, b) => a + b) / renderTimes.length;
+            const firstHalf = renderTimes.slice(0, Math.ceil(renderTimes.length / 2));
+            const secondHalf = renderTimes.slice(Math.floor(renderTimes.length / 2));
+            
+            const firstAvg = firstHalf.reduce((a, b) => a + b) / firstHalf.length;
+            const secondAvg = secondHalf.reduce((a, b) => a + b) / secondHalf.length;
+            
+            const degradation = (secondAvg - firstAvg) / firstAvg * 100;
+            
+            return {
+                throttled: degradation > 15,
+                degradation_percent: degradation,
+                render_times: renderTimes,
+                avg_render_time: avgTime,
+                severity: degradation > 30 ? 'high' : degradation > 15 ? 'medium' : 'low',
+                details: { first_half_avg: firstAvg, second_half_avg: secondAvg }
+            };
+            
+        } catch (error) {
+            return { throttled: false, error: error.message };
+        }
+    }
+    
+    calculateAverage(numbers) {
+        return numbers.length > 0 ? numbers.reduce((a, b) => a + b, 0) / numbers.length : 0;
+    }
+    
+    calculatePerformanceTrend(timings) {
+        if (timings.length < 2) return { slope: 0, degradation_percent: 0 };
+        
+        // Linear regression to find trend
+        const n = timings.length;
+        const sumX = (n * (n - 1)) / 2; // Sum of indices
+        const sumY = timings.reduce((a, b) => a + b, 0);
+        const sumXY = timings.reduce((sum, y, x) => sum + x * y, 0);
+        const sumXX = (n * (n - 1) * (2 * n - 1)) / 6; // Sum of squares of indices
+        
+        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+        const intercept = (sumY - slope * sumX) / n;
+        
+        // Calculate degradation percentage
+        const firstValue = intercept;
+        const lastValue = intercept + slope * (n - 1);
+        const degradationPercent = ((lastValue - firstValue) / firstValue) * 100;
+        
+        return {
+            slope: slope,
+            intercept: intercept,
+            degradation_percent: degradationPercent,
+            trend_direction: slope > 0.1 ? 'degrading' : slope < -0.1 ? 'improving' : 'stable'
+        };
+    }
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
             try {
                 const permission = await DeviceOrientationEvent.requestPermission();
