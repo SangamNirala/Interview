@@ -2709,21 +2709,44 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Profile storage performance
+     * PHASE 1.1.4: Storage performance profiling and analysis
      */
     async profileStoragePerformance() {
         try {
             const storageProfile = {
-                // localStorage performance
-                local_storage_performance: await this.benchmarkLocalStoragePerformance(),
+                // Sequential Read/Write Testing
+                sequential_performance: await this.testSequentialStoragePerformance(),
                 
-                // sessionStorage performance  
-                session_storage_performance: await this.benchmarkSessionStoragePerformance(),
+                // Random Access Testing
+                random_performance: await this.testRandomStoragePerformance(),
                 
-                // IndexedDB performance
-                indexed_db_performance: await this.benchmarkIndexedDBPerformance(),
+                // Cache Analysis
+                cache_analysis: await this.analyzeStorageCache(),
                 
-                // Cache API performance
+                // Storage Technology Detection
+                technology_detection: await this.detectStorageTechnology(),
+                
+                // Latency Analysis
+                latency_analysis: await this.analyzeStorageLatency(),
+                
+                // Throughput Analysis
+                throughput_analysis: await this.analyzeStorageThroughput(),
+                
+                // Storage Hierarchy Detection
+                hierarchy_detection: await this.detectStorageHierarchy()
+            };
+            
+            // Calculate storage performance score
+            storageProfile.overall_performance_score = this.calculateStoragePerformanceScore(storageProfile);
+            storageProfile.storage_category = this.categorizeStoragePerformance(storageProfile.overall_performance_score);
+            
+            return storageProfile;
+            
+        } catch (error) {
+            this.logger.error("Error profiling storage performance:", error);
+            return { error: error.message, storage_performance: "unknown" };
+        }
+    }
                 cache_api_performance: await this.benchmarkCacheAPIPerformance(),
                 
                 // File system access performance
