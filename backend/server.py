@@ -20056,10 +20056,20 @@ async def get_advanced_biometric_session_analysis(session_id: str):
             "session_id": session_id
         }).sort("analysis_timestamp", 1).to_list(None)
         
+        # Convert ObjectIds to strings for JSON serialization
+        for record in analysis_records:
+            if "_id" in record:
+                record["_id"] = str(record["_id"])
+        
         # Get automation alerts if any
         automation_alerts = await db.automation_alerts.find({
             "session_id": session_id
         }).sort("detection_timestamp", 1).to_list(None)
+        
+        # Convert ObjectIds to strings for JSON serialization
+        for alert in automation_alerts:
+            if "_id" in alert:
+                alert["_id"] = str(alert["_id"])
         
         # Calculate summary statistics
         analysis_summary = {
