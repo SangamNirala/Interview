@@ -28,6 +28,8 @@ BACKEND_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
 class EnhancedBrowserFingerprintingTester:
     def __init__(self):
         self.session = requests.Session()
+        self.session.verify = False  # Disable SSL verification for testing
+        self.session.timeout = 30
         self.test_results = []
         self.admin_authenticated = False
         
