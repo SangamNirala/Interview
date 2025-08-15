@@ -3643,6 +3643,716 @@ class SessionFingerprintCollector {
         };
     }
     
+    // ===== ENHANCED NETWORK INFORMATION HELPER METHODS =====
+    
+    /**
+     * Get comprehensive connection characteristics
+     */
+    async getConnectionCharacteristics() {
+        try {
+            const connectionData = {
+                network_api_available: 'connection' in navigator,
+                connection_type: 'unknown',
+                effective_type: 'unknown',
+                downlink: 0,
+                rtt: 0,
+                save_data: false,
+                max_downlink: 0,
+                network_change_events_supported: false
+            };
+            
+            // Network Information API
+            if ('connection' in navigator) {
+                const connection = navigator.connection;
+                connectionData.connection_type = connection.type || 'unknown';
+                connectionData.effective_type = connection.effectiveType || 'unknown';
+                connectionData.downlink = connection.downlink || 0;
+                connectionData.rtt = connection.rtt || 0;
+                connectionData.save_data = connection.saveData || false;
+                connectionData.max_downlink = connection.downlinkMax || 0;
+                
+                // Test for network change event support
+                connectionData.network_change_events_supported = typeof connection.addEventListener === 'function';
+            }
+            
+            return connectionData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Measure comprehensive network timing using multiple methods
+     */
+    async measureComprehensiveNetworkTiming() {
+        try {
+            const timingData = {
+                navigation_timing: this.getNavigationTiming(),
+                resource_timing: await this.getResourceTiming(),
+                fetch_timing: await this.measureFetchTiming(),
+                ping_timing: await this.measurePingTiming(),
+                dns_timing: await this.measureDNSTiming()
+            };
+            
+            return timingData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Perform comprehensive WebRTC analysis
+     */
+    async performWebRTCAnalysis() {
+        try {
+            const webrtcData = {
+                webrtc_supported: 'RTCPeerConnection' in window,
+                local_ips: [],
+                public_ips: [],
+                ice_servers_tested: [],
+                stun_connectivity: false,
+                turn_connectivity: false,
+                data_channel_support: false,
+                media_stream_support: false
+            };
+            
+            if ('RTCPeerConnection' in window) {
+                // Test basic WebRTC functionality
+                webrtcData.data_channel_support = await this.testDataChannelSupport();
+                webrtcData.media_stream_support = 'getUserMedia' in navigator || 'mediaDevices' in navigator;
+                
+                // IP detection (privacy-conscious)
+                const ipInfo = await this.detectComprehensiveIPs();
+                webrtcData.local_ips = ipInfo.localIPs;
+                webrtcData.public_ips = ipInfo.publicIPs;
+                
+                // STUN/TURN connectivity testing
+                webrtcData.stun_connectivity = await this.testSTUNConnectivity();
+            }
+            
+            return webrtcData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Analyze DNS resolution characteristics
+     */
+    async analyzeDNSCharacteristics() {
+        try {
+            const dnsData = {
+                dns_resolution_time: 0,
+                dns_servers: [],
+                dns_over_https_support: false,
+                dns_prefetch_support: 'prefetch' in document.createElement('link'),
+                public_dns_resolution: await this.testPublicDNSResolution()
+            };
+            
+            // Test DNS resolution timing
+            dnsData.dns_resolution_time = await this.measureDNSResolutionTime();
+            
+            // Test DNS over HTTPS support
+            dnsData.dns_over_https_support = await this.testDNSOverHTTPS();
+            
+            return dnsData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Analyze network topology and routing
+     */
+    async analyzeNetworkTopology() {
+        try {
+            const topologyData = {
+                hop_count_estimate: 0,
+                routing_method: 'unknown',
+                proxy_detected: false,
+                vpn_indicators: [],
+                network_latency_profile: await this.createNetworkLatencyProfile(),
+                connection_stability: await this.measureConnectionStability()
+            };
+            
+            // Estimate hop count through timing analysis
+            topologyData.hop_count_estimate = await this.estimateHopCount();
+            
+            // Detect proxy/VPN indicators
+            topologyData.proxy_detected = await this.detectProxy();
+            topologyData.vpn_indicators = await this.detectVPNIndicators();
+            
+            return topologyData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get basic network information (fallback)
+     */
+    getBasicNetworkInfo() {
+        try {
+            if ('connection' in navigator) {
+                const connection = navigator.connection;
+                return {
+                    type: connection.type || connection.effectiveType || 'unknown',
+                    effective_type: connection.effectiveType || 'unknown',
+                    downlink: connection.downlink || 0,
+                    rtt: connection.rtt || 0,
+                    save_data: connection.saveData || false
+                };
+            }
+            return { available: false };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Analyze network security features
+     */
+    async analyzeNetworkSecurity() {
+        try {
+            const securityData = {
+                https_enabled: window.location.protocol === 'https:',
+                hsts_supported: await this.testHSTSSupport(),
+                csp_detected: this.detectCSP(),
+                mixed_content_warnings: this.detectMixedContent(),
+                certificate_transparency: await this.testCertificateTransparency(),
+                secure_context: window.isSecureContext
+            };
+            
+            return securityData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Perform comprehensive bandwidth analysis
+     */
+    async performBandwidthAnalysis() {
+        try {
+            const bandwidthData = {
+                estimated_downlink: 0,
+                estimated_uplink: 0,
+                throughput_test_results: [],
+                connection_quality_score: 0,
+                bandwidth_variation: 0
+            };
+            
+            // Multiple bandwidth measurement methods
+            const measurements = await Promise.all([
+                this.measureBandwidthViaTiming(),
+                this.measureBandwidthViaResourceLoading(),
+                this.measureBandwidthViaNetworkAPI()
+            ]);
+            
+            bandwidthData.throughput_test_results = measurements;
+            bandwidthData.estimated_downlink = this.calculateAverageBandwidth(measurements);
+            bandwidthData.connection_quality_score = this.calculateConnectionQuality(measurements);
+            
+            return bandwidthData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Measure comprehensive network performance
+     */
+    async measureNetworkPerformance() {
+        try {
+            const performanceData = {
+                page_load_metrics: this.getPageLoadMetrics(),
+                resource_load_times: await this.getResourceLoadTimes(),
+                network_efficiency: await this.calculateNetworkEfficiency(),
+                connection_reliability: await this.measureConnectionReliability(),
+                latency_jitter: await this.measureLatencyJitter()
+            };
+            
+            return performanceData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get fallback network information
+     */
+    getFallbackNetworkInfo() {
+        return {
+            fallback: true,
+            basic_connection: {
+                online: navigator.onLine,
+                user_agent: navigator.userAgent,
+                protocol: window.location.protocol,
+                hostname: window.location.hostname,
+                port: window.location.port
+            },
+            error: 'Enhanced network information collection failed, using fallback method'
+        };
+    }
+    
+    // ===== ENHANCED ENVIRONMENTAL DATA HELPER METHODS =====
+    
+    /**
+     * Get comprehensive locale characteristics
+     */
+    async getLocaleCharacteristics() {
+        try {
+            const localeData = {
+                primary_locale: navigator.language,
+                supported_locales: navigator.languages || [],
+                timezone_info: {
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    timezone_offset: new Date().getTimezoneOffset(),
+                    dst_observed: this.detectDaylightSavingTime(),
+                    utc_offset_hours: -new Date().getTimezoneOffset() / 60
+                },
+                formatting_preferences: {
+                    currency: this.detectCurrency(),
+                    number_format: this.detectNumberFormat(),
+                    date_format: this.detectDateFormat(),
+                    time_format: this.detectTimeFormat(),
+                    calendar_system: this.detectCalendarSystem()
+                },
+                regional_settings: {
+                    country_code: await this.detectCountryCode(),
+                    region: await this.detectRegion(),
+                    city: await this.detectCity()
+                }
+            };
+            
+            return localeData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get comprehensive battery characteristics
+     */
+    async getBatteryCharacteristics() {
+        try {
+            const batteryData = {
+                battery_api_supported: 'getBattery' in navigator,
+                battery_level: null,
+                charging_status: null,
+                charging_time: null,
+                discharging_time: null,
+                power_management: {
+                    low_power_mode: false,
+                    battery_saver_mode: false,
+                    performance_mode: 'unknown'
+                }
+            };
+            
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    batteryData.battery_level = Math.floor(battery.level * 100);
+                    batteryData.charging_status = battery.charging;
+                    batteryData.charging_time = battery.chargingTime === Infinity ? null : battery.chargingTime;
+                    batteryData.discharging_time = battery.dischargingTime === Infinity ? null : battery.dischargingTime;
+                    
+                    // Set up battery event listeners for change detection
+                    batteryData.battery_events_supported = true;
+                    
+                    // Estimate battery health based on charging characteristics
+                    batteryData.battery_health_estimate = this.estimateBatteryHealth(battery);
+                    
+                } catch (e) {
+                    batteryData.battery_access_denied = true;
+                }
+            }
+            
+            return batteryData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get comprehensive motion sensor data  
+     */
+    async getMotionSensorData() {
+        try {
+            const motionData = {
+                device_motion_supported: 'DeviceMotionEvent' in window,
+                device_orientation_supported: 'DeviceOrientationEvent' in window,
+                accelerometer: {
+                    supported: false,
+                    permission_required: false,
+                    current_reading: null
+                },
+                gyroscope: {
+                    supported: false,
+                    permission_required: false,
+                    current_reading: null
+                },
+                magnetometer: {
+                    supported: false,
+                    permission_required: false,
+                    current_reading: null
+                },
+                orientation_data: null,
+                motion_patterns: {
+                    device_stationary: true,
+                    movement_detected: false,
+                    rotation_detected: false
+                }
+            };
+            
+            // Test DeviceMotion support
+            if ('DeviceMotionEvent' in window) {
+                motionData.accelerometer.supported = true;
+                motionData.gyroscope.supported = true;
+                
+                // Check for permission requirement (iOS 13+)
+                if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                    motionData.accelerometer.permission_required = true;
+                    motionData.gyroscope.permission_required = true;
+                }
+                
+                // Get current readings if available
+                const motionReading = await this.getCurrentMotionReading();
+                if (motionReading) {
+                    motionData.accelerometer.current_reading = motionReading.acceleration;
+                    motionData.gyroscope.current_reading = motionReading.rotation;
+                    motionData.motion_patterns = this.analyzeMotionPatterns(motionReading);
+                }
+            }
+            
+            // Test DeviceOrientation support
+            if ('DeviceOrientationEvent' in window) {
+                motionData.magnetometer.supported = true;
+                
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    motionData.magnetometer.permission_required = true;
+                }
+                
+                motionData.orientation_data = await this.getCurrentOrientationReading();
+            }
+            
+            return motionData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get comprehensive ambient sensor data
+     */
+    async getAmbientSensorData() {
+        try {
+            const sensorData = {
+                ambient_light: {
+                    supported: 'AmbientLightSensor' in window,
+                    current_lux: null,
+                    light_level_category: 'unknown'
+                },
+                proximity: {
+                    supported: 'ProximitySensor' in window,
+                    near_object_detected: null,
+                    distance_estimate: null
+                },
+                environmental_context: {
+                    indoor_outdoor_estimate: 'unknown',
+                    brightness_adaptation: this.detectBrightnessAdaptation(),
+                    color_temperature_preference: this.detectColorTemperaturePreference()
+                },
+                display_brightness: await this.estimateDisplayBrightness(),
+                color_scheme_preference: this.detectColorScheme()
+            };
+            
+            // Test Ambient Light Sensor
+            if ('AmbientLightSensor' in window) {
+                try {
+                    const lightReading = await this.getAmbientLightReading();
+                    if (lightReading) {
+                        sensorData.ambient_light.current_lux = lightReading.lux;
+                        sensorData.ambient_light.light_level_category = this.categorizeLightLevel(lightReading.lux);
+                        sensorData.environmental_context.indoor_outdoor_estimate = this.estimateIndoorOutdoor(lightReading.lux);
+                    }
+                } catch (e) {
+                    sensorData.ambient_light.access_denied = true;
+                }
+            }
+            
+            // Test Proximity Sensor
+            if ('ProximitySensor' in window) {
+                try {
+                    const proximityReading = await this.getProximityReading();
+                    if (proximityReading) {
+                        sensorData.proximity.near_object_detected = proximityReading.near;
+                        sensorData.proximity.distance_estimate = proximityReading.distance;
+                    }
+                } catch (e) {
+                    sensorData.proximity.access_denied = true;
+                }
+            }
+            
+            return sensorData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get comprehensive media device characteristics
+     */
+    async getMediaDeviceCharacteristics() {
+        try {
+            const mediaData = {
+                media_devices_api_supported: 'mediaDevices' in navigator,
+                audio_devices: [],
+                video_devices: [],
+                audio_capabilities: {
+                    input_supported: false,
+                    output_supported: false,
+                    echo_cancellation: false,
+                    noise_suppression: false,
+                    auto_gain_control: false
+                },
+                video_capabilities: {
+                    camera_supported: false,
+                    screen_capture_supported: false,
+                    max_resolution: null,
+                    supported_formats: []
+                },
+                media_stream_constraints: await this.getMediaStreamConstraints(),
+                audio_context_info: this.getAudioContextInfo()
+            };
+            
+            if ('mediaDevices' in navigator) {
+                try {
+                    // Enumerate media devices
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    
+                    devices.forEach(device => {
+                        const deviceInfo = {
+                            kind: device.kind,
+                            label: device.label || 'Unknown Device',
+                            device_id_hash: device.deviceId ? this.hashString(device.deviceId) : null,
+                            group_id_hash: device.groupId ? this.hashString(device.groupId) : null
+                        };
+                        
+                        if (device.kind === 'audioinput' || device.kind === 'audiooutput') {
+                            mediaData.audio_devices.push(deviceInfo);
+                            if (device.kind === 'audioinput') mediaData.audio_capabilities.input_supported = true;
+                            if (device.kind === 'audiooutput') mediaData.audio_capabilities.output_supported = true;
+                        } else if (device.kind === 'videoinput') {
+                            mediaData.video_devices.push(deviceInfo);
+                            mediaData.video_capabilities.camera_supported = true;
+                        }
+                    });
+                    
+                    // Test advanced audio capabilities
+                    mediaData.audio_capabilities = {
+                        ...mediaData.audio_capabilities,
+                        ...(await this.testAdvancedAudioCapabilities())
+                    };
+                    
+                    // Test advanced video capabilities
+                    mediaData.video_capabilities = {
+                        ...mediaData.video_capabilities,
+                        ...(await this.testAdvancedVideoCapabilities())
+                    };
+                    
+                } catch (e) {
+                    mediaData.media_devices_access_denied = true;
+                }
+            }
+            
+            return mediaData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get comprehensive display preferences
+     */
+    async getDisplayPreferences() {
+        try {
+            const displayData = {
+                color_scheme: this.detectColorScheme(),
+                reduced_motion: this.detectReducedMotion(),
+                high_contrast: this.detectHighContrast(),
+                prefers_transparency: this.detectTransparencyPreference(),
+                display_properties: {
+                    color_gamut: this.detectColorGamut(),
+                    hdr_support: this.detectHDRSupport(),
+                    refresh_rate: await this.estimateRefreshRate(),
+                    pixel_ratio: window.devicePixelRatio || 1
+                },
+                font_rendering: {
+                    subpixel_rendering: this.detectSubpixelRendering(),
+                    font_smoothing: this.detectFontSmoothing(),
+                    preferred_fonts: await this.detectPreferredFonts()
+                },
+                visual_preferences: {
+                    zoom_level: this.detectZoomLevel(),
+                    text_size_preference: this.detectTextSizePreference(),
+                    contrast_preference: this.detectContrastPreference()
+                }
+            };
+            
+            return displayData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get comprehensive input capabilities
+     */
+    async getInputCapabilities() {
+        try {
+            const inputData = {
+                touch_support: {
+                    touch_enabled: 'ontouchstart' in window,
+                    max_touch_points: navigator.maxTouchPoints || 0,
+                    touch_precision: this.detectTouchPrecision(),
+                    gesture_support: this.detectGestureSupport()
+                },
+                pointer_support: {
+                    mouse_support: 'MouseEvent' in window,
+                    pointer_events: 'PointerEvent' in window,
+                    fine_pointer: this.detectFinePointer(),
+                    hover_capability: this.detectHoverCapability()
+                },
+                keyboard_support: {
+                    physical_keyboard: this.detectPhysicalKeyboard(),
+                    virtual_keyboard: 'VirtualKeyboard' in navigator,
+                    keyboard_layout: await this.detectKeyboardLayout(),
+                    special_keys: this.detectSpecialKeys()
+                },
+                input_methods: {
+                    voice_input: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
+                    handwriting_input: this.detectHandwritingInput(),
+                    eye_tracking: this.detectEyeTracking()
+                }
+            };
+            
+            return inputData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get comprehensive accessibility features
+     */
+    async getAccessibilityFeatures() {
+        try {
+            const accessibilityData = {
+                screen_reader: {
+                    supported: this.detectScreenReader(),
+                    active: this.detectActiveScreenReader(),
+                    type: this.detectScreenReaderType()
+                },
+                motor_accessibility: {
+                    switch_navigation: this.detectSwitchNavigation(),
+                    sticky_keys: this.detectStickyKeys(),
+                    slow_keys: this.detectSlowKeys()
+                },
+                visual_accessibility: {
+                    high_contrast_mode: this.detectHighContrast(),
+                    large_text_mode: this.detectLargeTextMode(),
+                    magnification_active: this.detectMagnification()
+                },
+                cognitive_accessibility: {
+                    reduced_motion: this.detectReducedMotion(),
+                    simplified_ui: this.detectSimplifiedUI(),
+                    focus_assistance: this.detectFocusAssistance()
+                },
+                platform_accessibility: {
+                    accessibility_api: this.detectAccessibilityAPI(),
+                    assistive_technology: this.detectAssistiveTechnology()
+                }
+            };
+            
+            return accessibilityData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get system performance indicators
+     */
+    async getSystemPerformanceIndicators() {
+        try {
+            const performanceData = {
+                memory_pressure: this.detectMemoryPressure(),
+                cpu_utilization: await this.estimateCPUUtilization(),
+                battery_impact: this.detectBatteryImpact(),
+                thermal_state: this.detectThermalState(),
+                power_efficiency: await this.calculatePowerEfficiency(),
+                system_responsiveness: await this.measureSystemResponsiveness(),
+                background_processing: this.detectBackgroundProcessing()
+            };
+            
+            return performanceData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get privacy and security preferences
+     */
+    async getPrivacySettings() {
+        try {
+            const privacyData = {
+                do_not_track: navigator.doNotTrack === '1' || navigator.doNotTrack === 'yes',
+                cookieEnabled: navigator.cookieEnabled,
+                third_party_cookies: await this.detectThirdPartyCookies(),
+                local_storage_enabled: this.testLocalStorage(),
+                permissions: {
+                    geolocation: await this.checkGeolocationPermission(),
+                    notifications: await this.checkNotificationPermission(),
+                    camera: await this.checkCameraPermission(),
+                    microphone: await this.checkMicrophonePermission()
+                },
+                fingerprinting_resistance: {
+                    canvas_fingerprinting_blocked: await this.testCanvasFingerprintingBlocked(),
+                    webgl_fingerprinting_blocked: await this.testWebGLFingerprintingBlocked(),
+                    audio_fingerprinting_blocked: await this.testAudioFingerprintingBlocked()
+                },
+                tracking_protection: {
+                    ad_blocker_detected: await this.detectAdBlocker(),
+                    tracking_protection_enabled: await this.detectTrackingProtection(),
+                    privacy_mode: this.detectPrivateMode()
+                }
+            };
+            
+            return privacyData;
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get fallback environmental data
+     */
+    getFallbackEnvironmentalData() {
+        return {
+            fallback: true,
+            basic_environment: {
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: navigator.language,
+                color_scheme: this.detectColorScheme(),
+                screen_size: `${screen.width}x${screen.height}`,
+                timestamp: new Date().toISOString()
+            },
+            error: 'Enhanced environmental data collection failed, using fallback method'
+        };
+    }
+    
     /**
      * Send collected fingerprint to backend
      */
