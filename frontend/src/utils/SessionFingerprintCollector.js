@@ -2475,40 +2475,36 @@ class SessionFingerprintCollector {
     /**
      * Detect HDR and wide gamut support
      */
+    /**
+     * PHASE 1.1.2: HDR and wide gamut support detection
+     */
     detectHDRWideGamutSupport() {
         try {
-            const hdrWideGamut = {
-                // HDR support detection
-                hdr_support: {
-                    css_hdr_support: window.matchMedia && window.matchMedia('(dynamic-range: high)').matches,
-                    webgl_hdr_support: this.detectWebGLHDRSupport(),
-                    canvas_hdr_support: this.detectCanvasHDRSupport(),
-                    media_hdr_support: this.detectMediaHDRSupport()
-                },
+            const advancedDisplay = {
+                // HDR Detection
+                hdr_support: this.detectHDRCapabilities(),
                 
-                // Wide gamut detection
-                wide_gamut_support: {
-                    p3_support: window.matchMedia && window.matchMedia('(color-gamut: p3)').matches,
-                    rec2020_support: window.matchMedia && window.matchMedia('(color-gamut: rec2020)').matches,
-                    srgb_support: window.matchMedia && window.matchMedia('(color-gamut: srgb)').matches,
-                    webgl_wide_gamut: this.detectWebGLWideGamut()
-                },
+                // Wide Gamut Detection
+                wide_gamut_support: this.detectWideGamutCapabilities(),
                 
-                // Color depth analysis
-                color_depth_analysis: {
-                    bit_depth: screen.colorDepth,
-                    estimated_real_depth: this.estimateRealColorDepth(),
-                    color_accuracy_score: this.calculateColorAccuracyScore()
-                },
+                // Color Space Support
+                color_space_support: this.detectColorSpaceSupport(),
                 
-                // Display technology hints
-                display_technology_hints: this.getDisplayTechnologyHints()
+                // Bit Depth Analysis
+                bit_depth: this.analyzeBitDepth(),
+                
+                // Dynamic Range Analysis
+                dynamic_range: this.analyzeDynamicRange(),
+                
+                // Tone Mapping Capabilities
+                tone_mapping: this.detectToneMappingCapabilities()
             };
             
-            return hdrWideGamut;
+            return advancedDisplay;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error detecting HDR/wide gamut support:", error);
+            return { error: error.message, standard_display: true };
         }
     }
     
