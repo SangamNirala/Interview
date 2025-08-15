@@ -1839,6 +1839,515 @@ class SessionFingerprintCollector {
         };
     }
     
+    // ===== PHASE 1.1: HARDWARE ENUMERATION METHODS =====
+    
+    /**
+     * Get advanced WebGL hardware information
+     */
+    async getAdvancedWebGLHardwareInfo() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) {
+                return { webgl_supported: false, error: 'WebGL not supported' };
+            }
+            
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            const extensions = gl.getSupportedExtensions() || [];
+            
+            const hardwareInfo = {
+                webgl_version: gl.getParameter(gl.VERSION),
+                shading_language_version: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+                vendor: gl.getParameter(gl.VENDOR),
+                renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Unknown',
+                unmasked_vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Unknown',
+                
+                // WebGL capabilities
+                max_texture_size: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+                max_viewport_dims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
+                max_vertex_attribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
+                max_vertex_uniform_vectors: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
+                max_fragment_uniform_vectors: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
+                max_varying_vectors: gl.getParameter(gl.MAX_VARYING_VECTORS),
+                max_combined_texture_image_units: gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+                max_vertex_texture_image_units: gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS),
+                max_texture_image_units: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
+                max_renderbuffer_size: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+                max_cube_map_texture_size: gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE),
+                
+                // Extensions analysis
+                supported_extensions: extensions,
+                extension_count: extensions.length,
+                anisotropic_filtering: extensions.includes('EXT_texture_filter_anisotropic'),
+                depth_texture_support: extensions.includes('WEBGL_depth_texture'),
+                float_textures: extensions.includes('OES_texture_float'),
+                half_float_textures: extensions.includes('OES_texture_half_float'),
+                
+                // Precision analysis
+                vertex_shader_precision: this.analyzeShaderPrecision(gl, gl.VERTEX_SHADER),
+                fragment_shader_precision: this.analyzeShaderPrecision(gl, gl.FRAGMENT_SHADER),
+                
+                // Context attributes
+                context_attributes: gl.getContextAttributes(),
+                
+                // Advanced GPU detection
+                gpu_architecture: this.detectGPUArchitecture(gl, debugInfo),
+                gpu_generation: this.detectGPUGeneration(gl, debugInfo)
+            };
+            
+            return hardwareInfo;
+            
+        } catch (error) {
+            return { error: error.message, webgl_supported: false };
+        }
+    }
+    
+    /**
+     * Get canvas-based hardware detection
+     */
+    async getCanvasBasedHardwareInfo() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) {
+                return { canvas_supported: false };
+            }
+            
+            // Hardware-specific canvas rendering tests
+            const hardwareInfo = {
+                // Canvas capabilities
+                max_canvas_size: this.getMaxCanvasSize(),
+                
+                // Font rendering analysis
+                font_rendering_analysis: await this.analyzeCanvasFontRendering(ctx, canvas),
+                
+                // Graphics acceleration detection
+                hardware_acceleration: await this.detectCanvasHardwareAcceleration(ctx, canvas),
+                
+                // Subpixel rendering detection
+                subpixel_rendering: this.detectSubpixelRendering(ctx, canvas),
+                
+                // Color space analysis
+                color_space_analysis: this.analyzeCanvasColorSpace(ctx, canvas),
+                
+                // Performance profiling
+                rendering_performance: await this.profileCanvasRenderingPerformance(ctx, canvas),
+                
+                // Hardware-specific rendering quirks
+                rendering_quirks: this.detectCanvasRenderingQuirks(ctx, canvas),
+                
+                // Text measurement precision
+                text_measurement_precision: this.analyzeTextMeasurementPrecision(ctx),
+                
+                // Canvas fingerprint hash
+                canvas_hash: this.generateCanvasHash(ctx, canvas)
+            };
+            
+            return hardwareInfo;
+            
+        } catch (error) {
+            return { error: error.message, canvas_supported: false };
+        }
+    }
+    
+    /**
+     * Estimate GPU memory through various techniques
+     */
+    async estimateGPUMemory() {
+        try {
+            const estimates = {
+                // Method 1: WebGL texture allocation
+                texture_allocation_estimate: await this.estimateGPUMemoryViaTextures(),
+                
+                // Method 2: Performance-based estimation
+                performance_based_estimate: await this.estimateGPUMemoryViaPerformance(),
+                
+                // Method 3: Capability-based estimation
+                capability_based_estimate: this.estimateGPUMemoryViaCapabilities(),
+                
+                // Method 4: Renderer-based estimation
+                renderer_based_estimate: this.estimateGPUMemoryViaRenderer(),
+                
+                // Combined estimate
+                combined_estimate: 0,
+                confidence_level: 'unknown'
+            };
+            
+            // Calculate combined estimate
+            const validEstimates = Object.values(estimates)
+                .filter(val => typeof val === 'number' && val > 0);
+            
+            if (validEstimates.length > 0) {
+                estimates.combined_estimate = Math.round(
+                    validEstimates.reduce((a, b) => a + b) / validEstimates.length
+                );
+                estimates.confidence_level = validEstimates.length > 2 ? 'high' : 'medium';
+            }
+            
+            return estimates;
+            
+        } catch (error) {
+            return { error: error.message, combined_estimate: 0 };
+        }
+    }
+    
+    /**
+     * Profile rendering performance for hardware detection
+     */
+    async profileRenderingPerformance() {
+        try {
+            const performanceProfile = {
+                // Canvas 2D performance
+                canvas_2d_performance: await this.benchmarkCanvas2DPerformance(),
+                
+                // WebGL performance
+                webgl_performance: await this.benchmarkWebGLPerformance(),
+                
+                // CSS3D performance
+                css3d_performance: await this.benchmarkCSS3DPerformance(),
+                
+                // Animation performance
+                animation_performance: await this.benchmarkAnimationPerformance(),
+                
+                // Composite performance
+                composite_performance: await this.benchmarkCompositePerformance(),
+                
+                // Hardware acceleration indicators
+                hardware_acceleration_indicators: this.detectHardwareAccelerationIndicators(),
+                
+                // Performance consistency
+                performance_consistency: await this.analyzePerformanceConsistency(),
+                
+                // Thermal throttling indicators
+                thermal_indicators: await this.detectThermalThrottlingIndicators()
+            };
+            
+            return performanceProfile;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // ===== PHASE 1.1: ENHANCED SCREEN ANALYSIS METHODS =====
+    
+    /**
+     * Get color profile characteristics
+     */
+    getColorProfileCharacteristics() {
+        try {
+            const colorProfile = {
+                // Basic color information
+                color_depth: screen.colorDepth,
+                pixel_depth: screen.pixelDepth,
+                
+                // Color gamut detection
+                color_gamut: this.detectColorGamut(),
+                
+                // HDR support
+                hdr_support: this.detectHDRSupport(),
+                
+                // Wide color gamut support
+                wide_color_gamut: this.detectWideColorGamut(),
+                
+                // Color accuracy indicators
+                color_accuracy: this.analyzeColorAccuracy(),
+                
+                // Display P3 support
+                display_p3_support: this.detectDisplayP3Support(),
+                
+                // Rec2020 support
+                rec2020_support: this.detectRec2020Support(),
+                
+                // Color management
+                color_management: this.analyzeColorManagement(),
+                
+                // Gamma information
+                gamma_analysis: this.analyzeDisplayGamma()
+            };
+            
+            return colorProfile;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Get display capability analysis
+     */
+    getDisplayCapabilityAnalysis() {
+        try {
+            const displayCapabilities = {
+                // Resolution information
+                physical_resolution: {
+                    width: screen.width,
+                    height: screen.height,
+                    available_width: screen.availWidth,
+                    available_height: screen.availHeight
+                },
+                
+                // Pixel density
+                device_pixel_ratio: window.devicePixelRatio || 1,
+                pixel_density_analysis: this.analyzePixelDensity(),
+                
+                // Refresh rate detection
+                refresh_rate: await this.detectRefreshRate(),
+                
+                // Display orientation
+                orientation_support: this.analyzeOrientationSupport(),
+                
+                // Touch capabilities
+                touch_capabilities: this.analyzeTouchCapabilities(),
+                
+                // Viewport analysis
+                viewport_analysis: this.analyzeViewportCapabilities(),
+                
+                // Display scaling
+                display_scaling: this.analyzeDisplayScaling(),
+                
+                // Visual viewport support
+                visual_viewport_support: 'visualViewport' in window
+            };
+            
+            return displayCapabilities;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Detect multi-monitor configuration
+     */
+    detectMultiMonitorConfiguration() {
+        try {
+            const multiMonitorInfo = {
+                // Screen spanning detection
+                screen_spanning_detected: this.detectScreenSpanning(),
+                
+                // Virtual desktop detection
+                virtual_desktop_detected: this.detectVirtualDesktop(),
+                
+                // Extended display detection
+                extended_display_detected: this.detectExtendedDisplay(),
+                
+                // Monitor count estimation
+                estimated_monitor_count: this.estimateMonitorCount(),
+                
+                // Primary monitor detection
+                primary_monitor_analysis: this.analyzePrimaryMonitor(),
+                
+                // Multi-monitor indicators
+                multi_monitor_indicators: this.getMultiMonitorIndicators(),
+                
+                // Display arrangement hints
+                display_arrangement_hints: this.getDisplayArrangementHints()
+            };
+            
+            return multiMonitorInfo;
+            
+        } catch (error) {
+            return { error: error.message, single_monitor: true };
+        }
+    }
+    
+    /**
+     * Detect HDR and wide gamut support
+     */
+    detectHDRWideGamutSupport() {
+        try {
+            const hdrWideGamut = {
+                // HDR support detection
+                hdr_support: {
+                    css_hdr_support: window.matchMedia && window.matchMedia('(dynamic-range: high)').matches,
+                    webgl_hdr_support: this.detectWebGLHDRSupport(),
+                    canvas_hdr_support: this.detectCanvasHDRSupport(),
+                    media_hdr_support: this.detectMediaHDRSupport()
+                },
+                
+                // Wide gamut detection
+                wide_gamut_support: {
+                    p3_support: window.matchMedia && window.matchMedia('(color-gamut: p3)').matches,
+                    rec2020_support: window.matchMedia && window.matchMedia('(color-gamut: rec2020)').matches,
+                    srgb_support: window.matchMedia && window.matchMedia('(color-gamut: srgb)').matches,
+                    webgl_wide_gamut: this.detectWebGLWideGamut()
+                },
+                
+                // Color depth analysis
+                color_depth_analysis: {
+                    bit_depth: screen.colorDepth,
+                    estimated_real_depth: this.estimateRealColorDepth(),
+                    color_accuracy_score: this.calculateColorAccuracyScore()
+                },
+                
+                // Display technology hints
+                display_technology_hints: this.getDisplayTechnologyHints()
+            };
+            
+            return hdrWideGamut;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // ===== PHASE 1.1: CPU PERFORMANCE PROFILING METHODS =====
+    
+    /**
+     * Detect detailed CPU architecture
+     */
+    async detectDetailedCPUArchitecture() {
+        try {
+            const cpuArchitecture = {
+                // Basic architecture info
+                platform: navigator.platform,
+                hardware_concurrency: navigator.hardwareConcurrency || 0,
+                
+                // Advanced architecture detection
+                instruction_set_architecture: await this.detectInstructionSetArchitecture(),
+                cpu_vendor: await this.detectCPUVendor(),
+                cpu_family: await this.detectCPUFamily(),
+                cpu_model: await this.detectCPUModel(),
+                
+                // Performance characteristics
+                performance_profile: await this.createCPUPerformanceProfile(),
+                
+                // Cache analysis
+                cache_analysis: await this.analyzeCPUCache(),
+                
+                // SIMD support
+                simd_support: this.detectSIMDSupport(),
+                
+                // WebAssembly capabilities
+                wasm_capabilities: await this.analyzeWebAssemblyCapabilities(),
+                
+                // Thread analysis
+                threading_capabilities: await this.analyzeThreadingCapabilities()
+            };
+            
+            return cpuArchitecture;
+            
+        } catch (error) {
+            return { error: error.message, platform: navigator.platform };
+        }
+    }
+    
+    /**
+     * Run CPU performance benchmarks
+     */
+    async runCPUPerformanceBenchmarks() {
+        try {
+            this.logger.info("🏃 Running CPU performance benchmarks...");
+            
+            const benchmarks = {
+                // Integer arithmetic benchmark
+                integer_arithmetic: await this.benchmarkIntegerArithmetic(),
+                
+                // Floating point benchmark
+                floating_point: await this.benchmarkFloatingPoint(),
+                
+                // Memory access benchmark
+                memory_access: await this.benchmarkMemoryAccess(),
+                
+                // String processing benchmark
+                string_processing: await this.benchmarkStringProcessing(),
+                
+                // Array operations benchmark
+                array_operations: await this.benchmarkArrayOperations(),
+                
+                // Cryptographic operations benchmark
+                crypto_operations: await this.benchmarkCryptoOperations(),
+                
+                // WebAssembly benchmark
+                wasm_performance: await this.benchmarkWebAssemblyPerformance(),
+                
+                // Multi-threading benchmark
+                multi_threading: await this.benchmarkMultiThreading(),
+                
+                // Combined performance score
+                overall_performance_score: 0,
+                performance_class: 'unknown'
+            };
+            
+            // Calculate overall performance score
+            benchmarks.overall_performance_score = this.calculateOverallPerformanceScore(benchmarks);
+            benchmarks.performance_class = this.classifyPerformance(benchmarks.overall_performance_score);
+            
+            return benchmarks;
+            
+        } catch (error) {
+            return { error: error.message, overall_performance_score: 0 };
+        }
+    }
+    
+    /**
+     * Analyze instruction set support
+     */
+    async analyzeInstructionSetSupport() {
+        try {
+            const instructionSets = {
+                // WebAssembly instruction sets
+                wasm_simd: await this.detectWasmSIMDSupport(),
+                wasm_threads: await this.detectWasmThreadsSupport(),
+                wasm_bulk_memory: await this.detectWasmBulkMemorySupport(),
+                
+                // JavaScript engine optimizations
+                js_jit_compilation: this.detectJITCompilation(),
+                js_optimization_tier: this.detectJSOptimizationTier(),
+                
+                // Atomic operations
+                shared_array_buffer: 'SharedArrayBuffer' in window,
+                atomics_support: 'Atomics' in window,
+                
+                // Advanced math operations
+                bigint_support: typeof BigInt !== 'undefined',
+                advanced_math_support: this.detectAdvancedMathSupport()
+            };
+            
+            return instructionSets;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * Detect thermal throttling
+     */
+    async detectThermalThrottling() {
+        try {
+            const thermalAnalysis = {
+                // Performance consistency over time
+                performance_consistency: await this.analyzePerformanceConsistency(),
+                
+                // Clock speed variation detection
+                clock_speed_variation: await this.detectClockSpeedVariation(),
+                
+                // Thermal throttling indicators
+                throttling_indicators: await this.detectThrottlingIndicators(),
+                
+                // Performance degradation detection
+                performance_degradation: await this.detectPerformanceDegradation(),
+                
+                // System responsiveness analysis
+                system_responsiveness: await this.analyzeSystemResponsiveness(),
+                
+                // Battery impact analysis (mobile devices)
+                battery_impact: await this.analyzeBatteryImpactOnPerformance()
+            };
+            
+            return thermalAnalysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
     // ===== ENHANCED BROWSER CHARACTERISTICS METHODS =====
     
     /**
