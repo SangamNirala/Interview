@@ -53,10 +53,15 @@ class Phase32NetworkTimezoneTester:
             )
             
             if response.status_code == 200:
-                self.log_result("Admin Authentication", True, f"Successfully authenticated (Status: {response.status_code})")
-                return True
+                data = response.json()
+                if data.get('success'):
+                    self.log_result("Admin Authentication", True, f"Successfully authenticated (Status: {response.status_code})")
+                    return True
+                else:
+                    self.log_result("Admin Authentication", False, f"Authentication failed: {data}")
+                    return False
             else:
-                self.log_result("Admin Authentication", False, f"Authentication failed (Status: {response.status_code})")
+                self.log_result("Admin Authentication", False, f"Authentication failed (Status: {response.status_code}): {response.text}")
                 return False
                 
         except Exception as e:
