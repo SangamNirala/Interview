@@ -21888,5 +21888,228 @@ async def track_multi_device_usage(request: MultiDeviceUsageRequest):
         logging.error(f"Error tracking multi-device usage: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Multi-device usage tracking failed: {str(e)}")
 
+
+# ========================================
+# ML FINGERPRINT CLUSTERING ENDPOINTS
+# ========================================
+
+class DeviceClusteringTrainingRequest(BaseModel):
+    fingerprint_data: List[Dict[str, Any]] = Field(..., description="List of device fingerprint data for training")
+
+class RelatedDeviceDetectionRequest(BaseModel):
+    device_fingerprint: Dict[str, Any] = Field(..., description="Device fingerprint data for analysis")
+
+class FraudRiskPredictionRequest(BaseModel):
+    session_data: Dict[str, Any] = Field(..., description="Complete session data for risk assessment")
+
+class BehaviorPatternAnalysisRequest(BaseModel):
+    user_interactions: List[Dict[str, Any]] = Field(..., description="List of user interaction events")
+
+@api_router.post("/ml-fingerprint-clustering/train-device-clustering")
+async def train_device_clustering_model(request: DeviceClusteringTrainingRequest):
+    """
+    Train DBSCAN model for device clustering
+    
+    Trains a machine learning model to identify clusters of related devices
+    based on hardware and software fingerprinting characteristics.
+    """
+    try:
+        logging.info(f"Training device clustering model with {len(request.fingerprint_data)} samples")
+        
+        result = await ml_clustering_engine.train_device_clustering_model(request.fingerprint_data)
+        
+        if result.get('success', True):
+            return {
+                "success": True,
+                "message": "Device clustering model trained successfully",
+                "training_results": result,
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Training failed'))
+        
+    except Exception as e:
+        logging.error(f"Error training device clustering model: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Device clustering training failed: {str(e)}")
+
+@api_router.post("/ml-fingerprint-clustering/detect-related-devices")
+async def detect_related_devices(request: RelatedDeviceDetectionRequest):
+    """
+    Detect potentially related devices using ML
+    
+    Analyzes device fingerprint to identify whether it belongs to a cluster
+    of related devices, potentially indicating device farms or fraud.
+    """
+    try:
+        logging.info(f"Analyzing device fingerprint for related devices")
+        
+        result = await ml_clustering_engine.detect_related_devices(request.device_fingerprint)
+        
+        return {
+            "success": True,
+            "message": "Device relationship analysis completed",
+            "analysis_results": result,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error detecting related devices: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Related device detection failed: {str(e)}")
+
+@api_router.post("/ml-fingerprint-clustering/predict-fraud-risk")
+async def predict_fraud_risk(request: FraudRiskPredictionRequest):
+    """
+    Predict fraud risk using ensemble methods
+    
+    Uses Random Forest and other ML algorithms to assess the fraud risk
+    based on comprehensive session data including device, behavior, and context.
+    """
+    try:
+        logging.info(f"Predicting fraud risk for session")
+        
+        result = await ml_clustering_engine.predict_fraud_risk(request.session_data)
+        
+        return {
+            "success": True,
+            "message": "Fraud risk prediction completed",
+            "risk_assessment": result,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error predicting fraud risk: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Fraud risk prediction failed: {str(e)}")
+
+@api_router.post("/ml-fingerprint-clustering/analyze-behavior-patterns")
+async def analyze_behavior_patterns(request: BehaviorPatternAnalysisRequest):
+    """
+    Analyze user behavior patterns for anomalies
+    
+    Uses K-Means clustering and Isolation Forest to detect anomalous
+    behavior patterns that may indicate automation or fraudulent activity.
+    """
+    try:
+        logging.info(f"Analyzing behavior patterns for {len(request.user_interactions)} interactions")
+        
+        result = await ml_clustering_engine.analyze_behavior_patterns(request.user_interactions)
+        
+        return {
+            "success": True,
+            "message": "Behavior pattern analysis completed",
+            "pattern_analysis": result,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error analyzing behavior patterns: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Behavior pattern analysis failed: {str(e)}")
+
+@api_router.get("/ml-fingerprint-clustering/model-performance")
+async def get_model_performance():
+    """
+    Get comprehensive ML model performance summary
+    
+    Returns performance metrics, training status, and configuration
+    for all ML clustering models.
+    """
+    try:
+        performance_summary = ml_clustering_engine.get_model_performance_summary()
+        
+        return {
+            "success": True,
+            "message": "Model performance summary retrieved",
+            "performance_data": performance_summary,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting model performance: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve model performance: {str(e)}")
+
+@api_router.post("/ml-fingerprint-clustering/comprehensive-analysis")
+async def comprehensive_ml_analysis(
+    device_fingerprint: Dict[str, Any] = None,
+    user_interactions: List[Dict[str, Any]] = None,
+    session_data: Dict[str, Any] = None
+):
+    """
+    Comprehensive ML analysis combining all clustering methods
+    
+    Performs device clustering, behavior analysis, anomaly detection,
+    and fraud risk prediction in a single comprehensive analysis.
+    """
+    try:
+        logging.info("Starting comprehensive ML fingerprint analysis")
+        
+        results = {
+            "analysis_id": str(uuid.uuid4()),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Device relationship analysis
+        if device_fingerprint:
+            device_result = await ml_clustering_engine.detect_related_devices(device_fingerprint)
+            results["device_analysis"] = device_result
+        
+        # Behavior pattern analysis
+        if user_interactions:
+            behavior_result = await ml_clustering_engine.analyze_behavior_patterns(user_interactions)
+            results["behavior_analysis"] = behavior_result
+        
+        # Fraud risk prediction
+        if session_data:
+            risk_result = await ml_clustering_engine.predict_fraud_risk(session_data)
+            results["risk_assessment"] = risk_result
+        
+        # Composite risk score calculation
+        composite_risk = 0.0
+        risk_factors = []
+        
+        if "device_analysis" in results and results["device_analysis"].get("success"):
+            device_risk = 1.0 - results["device_analysis"].get("confidence_score", 0.5)
+            composite_risk += device_risk * 0.3
+            if results["device_analysis"].get("is_related_device"):
+                risk_factors.append("Related device detected")
+        
+        if "behavior_analysis" in results and results["behavior_analysis"].get("success"):
+            behavior_risk = 1.0 if results["behavior_analysis"].get("is_anomaly") else 0.2
+            composite_risk += behavior_risk * 0.4
+            if results["behavior_analysis"].get("is_anomaly"):
+                risk_factors.append("Anomalous behavior detected")
+        
+        if "risk_assessment" in results and results["risk_assessment"].get("success"):
+            fraud_risk = results["risk_assessment"].get("fraud_probability", 0.5)
+            composite_risk += fraud_risk * 0.3
+            risk_factors.extend(results["risk_assessment"].get("risk_factors", []))
+        
+        # Overall risk classification
+        if composite_risk >= 0.8:
+            overall_risk = "CRITICAL"
+        elif composite_risk >= 0.6:
+            overall_risk = "HIGH"
+        elif composite_risk >= 0.4:
+            overall_risk = "MEDIUM"
+        elif composite_risk >= 0.2:
+            overall_risk = "LOW"
+        else:
+            overall_risk = "MINIMAL"
+        
+        results["composite_analysis"] = {
+            "composite_risk_score": composite_risk,
+            "overall_risk_level": overall_risk,
+            "risk_factors": list(set(risk_factors)),
+            "recommendation": "Allow" if composite_risk < 0.6 else "Review" if composite_risk < 0.8 else "Block"
+        }
+        
+        return {
+            "success": True,
+            "message": "Comprehensive ML analysis completed",
+            "analysis_results": results
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in comprehensive ML analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Comprehensive analysis failed: {str(e)}")
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
