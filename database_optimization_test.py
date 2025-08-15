@@ -680,7 +680,11 @@ class DatabaseOptimizationTester:
 def main():
     """Main function to run database optimization tests"""
     tester = DatabaseOptimizationTester()
-    passed, total = tester.run_all_tests()
+    result = tester.run_all_tests()
+    if result is None:
+        passed, total = 0, 11
+    else:
+        passed, total = result
     
     # Return appropriate exit code
     if passed == total:
