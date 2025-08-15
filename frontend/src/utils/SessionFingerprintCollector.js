@@ -14078,49 +14078,54 @@ class SessionFingerprintCollector {
     
     async testAmbientLightSensorAPI() {
         try {
-            const sensor = new AmbientLightSensor({ frequency: 5 });
-            
-            return await new Promise((resolve, reject) => {
-                let readings = [];
-                const timeout = setTimeout(() => {
-                    sensor.stop();
-                    if (readings.length > 0) {
-                        resolve({
-                            available: true,
-                            api_type: 'AmbientLightSensor_API',
-                            readings: readings,
-                            average_illuminance: readings.reduce((a, b) => a + b.illuminance, 0) / readings.length
-                        });
-                    } else {
-                        reject(new Error('No light readings'));
-                    }
-                }, 3000);
+            // Check if AmbientLightSensor is available in window
+            if (typeof window !== 'undefined' && 'AmbientLightSensor' in window) {
+                const sensor = new window.AmbientLightSensor({ frequency: 5 });
                 
-                sensor.addEventListener('reading', () => {
-                    readings.push({
-                        illuminance: sensor.illuminance,
-                        timestamp: sensor.timestamp || Date.now()
+                return await new Promise((resolve, reject) => {
+                    let readings = [];
+                    const timeout = setTimeout(() => {
+                        sensor.stop();
+                        if (readings.length > 0) {
+                            resolve({
+                                available: true,
+                                api_type: 'AmbientLightSensor_API',
+                                readings: readings,
+                                average_illuminance: readings.reduce((a, b) => a + b.illuminance, 0) / readings.length
+                            });
+                        } else {
+                            reject(new Error('No light readings'));
+                        }
+                    }, 3000);
+                    
+                    sensor.addEventListener('reading', () => {
+                        readings.push({
+                            illuminance: sensor.illuminance,
+                            timestamp: sensor.timestamp || Date.now()
+                        });
+                        
+                        if (readings.length >= 3) {
+                            clearTimeout(timeout);
+                            sensor.stop();
+                            resolve({
+                                available: true,
+                                api_type: 'AmbientLightSensor_API',
+                                readings: readings,
+                                average_illuminance: readings.reduce((a, b) => a + b.illuminance, 0) / readings.length
+                            });
+                        }
                     });
                     
-                    if (readings.length >= 3) {
+                    sensor.addEventListener('error', (event) => {
                         clearTimeout(timeout);
-                        sensor.stop();
-                        resolve({
-                            available: true,
-                            api_type: 'AmbientLightSensor_API',
-                            readings: readings,
-                            average_illuminance: readings.reduce((a, b) => a + b.illuminance, 0) / readings.length
-                        });
-                    }
+                        reject(event.error);
+                    });
+                    
+                    sensor.start();
                 });
-                
-                sensor.addEventListener('error', (event) => {
-                    clearTimeout(timeout);
-                    reject(event.error);
-                });
-                
-                sensor.start();
-            });
+            } else {
+                throw new Error('AmbientLightSensor not available');
+            }
         } catch (error) {
             throw error;
         }
