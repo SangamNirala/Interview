@@ -11000,41 +11000,277 @@ class SessionFingerprintCollector {
     async analyzeJSMemoryManagement() {
         try {
             const memoryAnalysis = {
-                heap_characteristics: {},
-                gc_behavior: {},
-                memory_pressure: {},
-                allocation_patterns: {}
-            };
-            
-            // Heap characteristics
-            if (performance.memory) {
-                memoryAnalysis.heap_characteristics = {
-                    used_heap_size: performance.memory.usedJSHeapSize,
-                    total_heap_size: performance.memory.totalJSHeapSize,
-                    heap_size_limit: performance.memory.jsHeapSizeLimit,
-                    heap_utilization: (performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100
-                };
-            }
-            
-            // GC behavior analysis
-            memoryAnalysis.gc_behavior = await this.analyzeGarbageCollectionBehavior();
-            
-            // Memory pressure detection
-            memoryAnalysis.memory_pressure = {
-                pressure_indicators: await this.detectMemoryPressure(),
-                allocation_failures: await this.detectAllocationFailures(),
-                memory_warnings: await this.detectMemoryWarnings()
-            };
-            
-            // Allocation patterns
-            memoryAnalysis.allocation_patterns = {
-                object_allocation_rate: await this.measureObjectAllocationRate(),
-                array_allocation_patterns: await this.analyzeArrayAllocationPatterns(),
-                string_allocation_behavior: await this.analyzeStringAllocationBehavior(),
-                closure_allocation_analysis: await this.analyzeClosureAllocation()
+                // Heap Size Analysis
+                heap_analysis: await this.analyzeHeapSize(),
+                
+                // Garbage Collection Patterns
+                gc_patterns: await this.analyzeGCPatterns(),
+                
+                // Memory Leak Detection
+                leak_detection: await this.detectMemoryLeaks(),
+                
+                // Memory Pressure Handling
+                pressure_handling: await this.analyzeMemoryPressureHandling(),
+                
+                // Memory Fragmentation Analysis
+                fragmentation_analysis: await this.analyzeMemoryFragmentation(),
+                
+                // Weak Reference Support
+                weak_references: await this.analyzeWeakReferenceSupport(),
+                
+                // Memory Usage Patterns
+                usage_patterns: await this.analyzeMemoryUsagePatterns()
             };
             
             return memoryAnalysis;
+            
+        } catch (error) {
+            this.logger.error("Error analyzing JS memory management:", error);
+            return { error: error.message, memory_management: "unknown" };
+        }
+    }
+    
+    // Analyze Heap Size
+    async analyzeHeapSize() {
+        try {
+            const heapAnalysis = {
+                current_heap_size: 0,
+                heap_limit: 0,
+                heap_utilization: 0,
+                heap_growth_rate: 0,
+                heap_efficiency: 'unknown'
+            };
+            
+            // Performance memory API (Chrome)
+            if (performance.memory) {
+                heapAnalysis.current_heap_size = performance.memory.usedJSHeapSize;
+                heapAnalysis.heap_limit = performance.memory.jsHeapSizeLimit;
+                heapAnalysis.heap_utilization = performance.memory.usedJSHeapSize / performance.memory.totalJSHeapSize;
+                
+                // Monitor heap growth over time
+                heapAnalysis.heap_growth_rate = await this.measureHeapGrowthRate();
+                heapAnalysis.heap_efficiency = this.categorizeHeapEfficiency(heapAnalysis.heap_utilization);
+            }
+            
+            // Node.js memory usage
+            if (typeof process !== 'undefined' && process.memoryUsage) {
+                const memUsage = process.memoryUsage();
+                heapAnalysis.current_heap_size = memUsage.heapUsed;
+                heapAnalysis.heap_limit = memUsage.heapTotal;
+                heapAnalysis.external_memory = memUsage.external;
+            }
+            
+            return heapAnalysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze GC Patterns
+    async analyzeGCPatterns() {
+        try {
+            const gcPatterns = {
+                gc_frequency: 0,
+                gc_duration: 0,
+                gc_efficiency: 'unknown',
+                minor_gc_count: 0,
+                major_gc_count: 0,
+                gc_pressure_indicators: []
+            };
+            
+            // Monitor GC activity through memory measurements
+            const memoryBefore = performance.memory ? performance.memory.usedJSHeapSize : 0;
+            
+            // Force memory allocation to trigger GC
+            await this.createMemoryPressure();
+            
+            const memoryAfter = performance.memory ? performance.memory.usedJSHeapSize : 0;
+            const memoryChange = Math.abs(memoryAfter - memoryBefore);
+            
+            gcPatterns.gc_frequency = await this.estimateGCFrequency();
+            gcPatterns.gc_efficiency = this.categorizeGCEfficiency(memoryChange);
+            
+            // Detect GC pressure indicators
+            if (memoryChange > 1000000) gcPatterns.gc_pressure_indicators.push('large_memory_fluctuation');
+            if (performance.now() - (this.lastGCCheck || 0) > 1000) gcPatterns.gc_pressure_indicators.push('gc_timing_anomaly');
+            
+            return gcPatterns;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Memory Leaks
+    async detectMemoryLeaks() {
+        try {
+            const leakDetection = {
+                leak_indicators: [],
+                memory_growth_trend: 'stable',
+                suspicious_patterns: [],
+                confidence: 0
+            };
+            
+            // Monitor memory growth over time
+            const memoryReadings = [];
+            for (let i = 0; i < 5; i++) {
+                memoryReadings.push(performance.memory ? performance.memory.usedJSHeapSize : 0);
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Analyze growth trend
+            const growthRate = this.calculateGrowthRate(memoryReadings);
+            if (growthRate > 0.1) {
+                leakDetection.memory_growth_trend = 'increasing';
+                leakDetection.leak_indicators.push('continuous_memory_growth');
+            } else if (growthRate < -0.1) {
+                leakDetection.memory_growth_trend = 'decreasing';
+            }
+            
+            // Check for circular references
+            if (this.detectCircularReferences()) {
+                leakDetection.suspicious_patterns.push('circular_references');
+            }
+            
+            // Check for uncleaned event listeners
+            if (this.detectUncleanedListeners()) {
+                leakDetection.suspicious_patterns.push('uncleaned_listeners');
+            }
+            
+            // Calculate confidence
+            leakDetection.confidence = (leakDetection.leak_indicators.length + leakDetection.suspicious_patterns.length) / 4;
+            
+            return leakDetection;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Memory Pressure Handling
+    async analyzeMemoryPressureHandling() {
+        try {
+            const pressureAnalysis = {
+                pressure_resistance: 'unknown',
+                recovery_time: 0,
+                degradation_pattern: 'none',
+                stability_score: 0
+            };
+            
+            // Create controlled memory pressure
+            const startTime = performance.now();
+            const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+            
+            await this.createControlledMemoryPressure();
+            
+            const endTime = performance.now();
+            const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+            
+            // Analyze response
+            pressureAnalysis.recovery_time = endTime - startTime;
+            pressureAnalysis.pressure_resistance = this.categorizePressureResistance(pressureAnalysis.recovery_time);
+            pressureAnalysis.degradation_pattern = this.analyzeDegradationPattern(startMemory, endMemory);
+            pressureAnalysis.stability_score = this.calculateStabilityScore(pressureAnalysis.recovery_time);
+            
+            return pressureAnalysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Memory Fragmentation
+    async analyzeMemoryFragmentation() {
+        try {
+            const fragmentation = {
+                fragmentation_level: 'unknown',
+                allocation_efficiency: 0,
+                memory_utilization_pattern: 'unknown'
+            };
+            
+            // Test allocation patterns
+            const allocations = [];
+            const startTime = performance.now();
+            
+            for (let i = 0; i < 1000; i++) {
+                allocations.push(new Array(Math.floor(Math.random() * 100)).fill(i));
+            }
+            
+            const allocationTime = performance.now() - startTime;
+            fragmentation.allocation_efficiency = 1000 / allocationTime;
+            
+            // Analyze memory utilization
+            if (performance.memory) {
+                const utilization = performance.memory.usedJSHeapSize / performance.memory.totalJSHeapSize;
+                fragmentation.memory_utilization_pattern = utilization > 0.8 ? 'high' : utilization > 0.5 ? 'medium' : 'low';
+                fragmentation.fragmentation_level = utilization > 0.9 ? 'high' : utilization > 0.7 ? 'medium' : 'low';
+            }
+            
+            return fragmentation;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Weak Reference Support
+    async analyzeWeakReferenceSupport() {
+        try {
+            const weakRefSupport = {
+                weak_ref_available: 'WeakRef' in window,
+                finalization_registry_available: 'FinalizationRegistry' in window,
+                weak_map_available: 'WeakMap' in window,
+                weak_set_available: 'WeakSet' in window,
+                weak_reference_behavior: 'unknown'
+            };
+            
+            // Test WeakRef behavior if available
+            if (weakRefSupport.weak_ref_available) {
+                try {
+                    const obj = { test: 'data' };
+                    const weakRef = new WeakRef(obj);
+                    weakRefSupport.weak_reference_behavior = 'functional';
+                } catch (e) {
+                    weakRefSupport.weak_reference_behavior = 'error';
+                }
+            }
+            
+            return weakRefSupport;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Memory Usage Patterns
+    async analyzeMemoryUsagePatterns() {
+        try {
+            const patterns = {
+                baseline_usage: 0,
+                peak_usage: 0,
+                usage_variance: 0,
+                allocation_patterns: []
+            };
+            
+            if (performance.memory) {
+                patterns.baseline_usage = performance.memory.usedJSHeapSize;
+                
+                // Monitor usage over several allocations
+                const readings = [patterns.baseline_usage];
+                
+                for (let i = 0; i < 10; i++) {
+                    // Create temporary allocation
+                    const temp = new Array(10000).fill(Math.random());
+                    readings.push(performance.memory.usedJSHeapSize);
+                }
+                
+                patterns.peak_usage = Math.max(...readings);
+                patterns.usage_variance = this.calculateVariance(readings);
+                patterns.allocation_patterns = this.analyzeAllocationPatterns(readings);
+            }
+            
+            return patterns;
             
         } catch (error) {
             return { error: error.message };
