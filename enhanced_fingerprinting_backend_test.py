@@ -428,13 +428,12 @@ class EnhancedFingerprintingTester:
     def test_device_analytics_retrieval(self):
         """Test device analytics retrieval"""
         try:
-            device_id = str(uuid.uuid4())
-            
+            # Test device analytics endpoint
             response = self.session.get(
-                f"{BACKEND_URL}/fingerprinting/device-analytics/{device_id}"
+                f"{BACKEND_URL}/session-fingerprinting/device-analytics/{self.session_id}"
             )
             
-            if response.status_code in [200, 404]:  # 404 is acceptable for non-existent device
+            if response.status_code in [200, 404]:  # 404 is acceptable for non-existent session
                 if response.status_code == 200:
                     data = response.json()
                     if data.get('success'):
@@ -447,7 +446,7 @@ class EnhancedFingerprintingTester:
                     else:
                         self.log_result("Device Analytics Retrieval", True, "Device analytics endpoint accessible but no data found")
                 else:
-                    self.log_result("Device Analytics Retrieval", True, "Device analytics endpoint accessible (404 for non-existent device is expected)")
+                    self.log_result("Device Analytics Retrieval", True, "Device analytics endpoint accessible (404 for non-existent session is expected)")
                 return True
             else:
                 self.log_result("Device Analytics Retrieval", False, f"HTTP {response.status_code}: {response.text}")
