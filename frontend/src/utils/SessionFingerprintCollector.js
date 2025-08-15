@@ -4874,7 +4874,7 @@ class SessionFingerprintCollector {
         // Note: AmbientLightSensor is not widely supported, this is a placeholder
         return new Promise((resolve) => {
             try {
-                if ('AmbientLightSensor' in window) {
+                if (typeof AmbientLightSensor !== 'undefined') {
                     const sensor = new AmbientLightSensor();
                     sensor.onreading = () => {
                         resolve({ lux: sensor.illuminance });
