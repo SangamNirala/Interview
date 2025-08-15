@@ -320,7 +320,7 @@ class EnhancedFingerprintingTester:
             hardware_analysis_data = {
                 "session_id": self.session_id,
                 "device_data": {
-                    "hardware_specs": {
+                    "hardware": {
                         "cpu_info": {
                             "cores": 8,
                             "threads": 16,
@@ -353,9 +353,7 @@ class EnhancedFingerprintingTester:
                         "memory_bandwidth": 51200,
                         "storage_speed": 3500
                     }
-                },
-                "analysis_depth": "comprehensive",
-                "include_benchmarks": True
+                }
             }
             
             response = self.session.post(
