@@ -24,6 +24,9 @@ import random
 
 # Import ML Fingerprint Clustering Engine
 from ml_fingerprint_clustering import ml_clustering_engine
+
+# Import Real-Time Alert System
+from alert_system import real_time_alert_system
 # Google Generative AI import
 import google.generativeai as genai
 
