@@ -6833,95 +6833,132 @@ class SessionIntegrityMonitor:
     def validate_session_authenticity(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         ✅ VALIDATE SESSION AUTHENTICITY
-        Comprehensive session authenticity validation including authentication validation,
-        user identity consistency, biometric validation, and authentication token integrity
+        Enhanced session authenticity validation including biometric consistency validation,
+        behavioral pattern authentication, session authentication token verification,
+        identity continuity assessment, and authenticity confidence scoring
         
         Args:
             session_data: Dictionary containing session and authentication information
             
         Returns:
-            Dict containing comprehensive session authenticity validation
+            Dict containing comprehensive enhanced session authenticity validation
         """
         try:
-            self.logger.info("Starting comprehensive session authenticity validation")
+            self.logger.info("Starting comprehensive enhanced session authenticity validation")
             
             analysis_result = {
                 'authenticity_status': {},
                 'authentication_validation': {},
                 'identity_consistency': {},
-                'biometric_validation': {},
+                'biometric_consistency_validation': {},
+                'behavioral_pattern_authentication': {},
                 'token_integrity': {},
+                'identity_continuity_assessment': {},
+                'authenticity_confidence_scoring': {},
                 'authenticity_score': 0.0,
                 'validation_details': {},
                 'analysis_timestamp': datetime.utcnow().isoformat()
             }
             
             session_id = session_data.get('session_id', '')
+            user_id = session_data.get('user_id', '')
             
             # 1. Authentication Validation
             auth_validation = self._validate_authentication_credentials(session_data)
             analysis_result['authentication_validation'] = auth_validation
             
-            # 2. User Identity Consistency
+            # 2. User Identity Consistency  
             identity_consistency = self._validate_user_identity_consistency(session_data)
             analysis_result['identity_consistency'] = identity_consistency
             
-            # 3. Biometric Validation (if available)
-            biometric_validation = self._validate_biometric_consistency(session_data)
-            analysis_result['biometric_validation'] = biometric_validation
+            # 3. Enhanced Biometric Consistency Validation
+            biometric_consistency = self._validate_enhanced_biometric_consistency(session_data)
+            analysis_result['biometric_consistency_validation'] = biometric_consistency
             
-            # 4. Authentication Token Integrity
-            token_integrity = self._validate_authentication_token_integrity(session_data)
-            analysis_result['token_integrity'] = token_integrity
+            # 4. Behavioral Pattern Authentication
+            behavioral_authentication = self._authenticate_behavioral_patterns(session_data)
+            analysis_result['behavioral_pattern_authentication'] = behavioral_authentication
             
-            # 5. Calculate Overall Authenticity Score
+            # 5. Session Authentication Token Verification  
+            token_verification = self._verify_session_authentication_tokens(session_data)
+            analysis_result['token_integrity'] = token_verification
+            
+            # 6. Identity Continuity Assessment
+            continuity_assessment = self._assess_identity_continuity(session_data)
+            analysis_result['identity_continuity_assessment'] = continuity_assessment
+            
+            # 7. Authenticity Confidence Scoring
+            confidence_scoring = self._calculate_authenticity_confidence_scoring(session_data, analysis_result)
+            analysis_result['authenticity_confidence_scoring'] = confidence_scoring
+            
+            # 8. Calculate Overall Authenticity Score with Enhanced Factors
             authenticity_scores = [
                 auth_validation.get('validity_score', 0.5),
                 identity_consistency.get('consistency_score', 0.5),
-                biometric_validation.get('validation_score', 0.5),
-                token_integrity.get('integrity_score', 0.5)
+                biometric_consistency.get('consistency_score', 0.5),
+                behavioral_authentication.get('authentication_score', 0.5),
+                token_verification.get('verification_score', 0.5),
+                continuity_assessment.get('continuity_score', 0.5),
+                confidence_scoring.get('confidence_score', 0.5)
             ]
             analysis_result['authenticity_score'] = statistics.mean(authenticity_scores)
             
-            # Authenticity Status Summary
+            # Enhanced Authenticity Status Summary
             authentic = analysis_result['authenticity_score'] > 0.7
+            high_confidence = confidence_scoring.get('confidence_level', 'MEDIUM') in ['HIGH', 'VERY_HIGH']
+            
             analysis_result['authenticity_status'] = {
                 'session_authentic': authentic,
                 'authenticity_confidence': analysis_result['authenticity_score'],
                 'validation_passed': authentic,
+                'high_confidence_validation': high_confidence,
                 'identity_verified': identity_consistency.get('identity_verified', False),
                 'authentication_valid': auth_validation.get('authentication_valid', False),
-                'token_valid': token_integrity.get('token_valid', False)
+                'biometric_consistent': biometric_consistency.get('biometric_consistent', False),
+                'behavioral_pattern_match': behavioral_authentication.get('pattern_match', False),
+                'token_valid': token_verification.get('token_valid', False),
+                'identity_continuous': continuity_assessment.get('continuous', False)
             }
             
-            # Validation Details
+            # Enhanced Validation Details
             analysis_result['validation_details'] = {
-                'validation_methods': ['authentication', 'identity', 'biometric', 'token'],
+                'validation_methods': [
+                    'authentication', 'identity', 'biometric_consistency', 
+                    'behavioral_patterns', 'token_verification', 'identity_continuity', 'confidence_scoring'
+                ],
                 'passed_validations': sum([
                     1 if auth_validation.get('authentication_valid', False) else 0,
                     1 if identity_consistency.get('identity_verified', False) else 0,
-                    1 if biometric_validation.get('biometric_valid', False) else 0,
-                    1 if token_integrity.get('token_valid', False) else 0
+                    1 if biometric_consistency.get('biometric_consistent', False) else 0,
+                    1 if behavioral_authentication.get('pattern_match', False) else 0,
+                    1 if token_verification.get('token_valid', False) else 0,
+                    1 if continuity_assessment.get('continuous', False) else 0
                 ]),
-                'failed_validations': self._collect_failed_validations(analysis_result),
-                'recommendation': 'APPROVE' if authentic else 'REJECT'
+                'failed_validations': self._collect_enhanced_failed_validations(analysis_result),
+                'confidence_level': confidence_scoring.get('confidence_level', 'MEDIUM'),
+                'recommendation': self._make_enhanced_authenticity_recommendation(analysis_result),
+                'risk_factors': self._identify_authenticity_risk_factors(analysis_result)
             }
             
-            self.logger.info(f"Session authenticity validation completed - Session: {session_id}, Authentic: {authentic}")
+            self.logger.info(f"Enhanced session authenticity validation completed - Session: {session_id}, Authentic: {authentic}, Confidence: {confidence_scoring.get('confidence_level', 'MEDIUM')}")
             
             return {
                 'success': True,
-                'authenticity_analysis': analysis_result,
+                'session_authenticity_analysis': analysis_result,
                 'analysis_summary': {
                     'session_id': session_id,
+                    'user_id': user_id,
                     'session_authentic': authentic,
                     'authenticity_score': analysis_result['authenticity_score'],
-                    'validation_recommendation': analysis_result['validation_details']['recommendation']
+                    'confidence_level': confidence_scoring.get('confidence_level', 'MEDIUM'),
+                    'validation_recommendation': analysis_result['validation_details']['recommendation'],
+                    'high_confidence': high_confidence,
+                    'risk_factors_count': len(analysis_result['validation_details']['risk_factors'])
                 }
             }
             
         except Exception as e:
-            self.logger.error(f"Error validating session authenticity: {str(e)}")
+            self.logger.error(f"Error validating enhanced session authenticity: {str(e)}")
             return {
                 'success': False,
                 'error': str(e),
