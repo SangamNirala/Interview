@@ -2513,39 +2513,39 @@ class SessionFingerprintCollector {
     /**
      * Detect detailed CPU architecture
      */
+    /**
+     * PHASE 1.1.3: Detailed CPU architecture detection beyond navigator.platform
+     */
     async detectDetailedCPUArchitecture() {
         try {
             const cpuArchitecture = {
-                // Basic architecture info
-                platform: navigator.platform,
-                hardware_concurrency: navigator.hardwareConcurrency || 0,
+                // Instruction Set Analysis
+                instruction_sets: await this.analyzeInstructionSets(),
                 
-                // Advanced architecture detection
-                instruction_set_architecture: await this.detectInstructionSetArchitecture(),
+                // CPU Vendor Detection
                 cpu_vendor: await this.detectCPUVendor(),
-                cpu_family: await this.detectCPUFamily(),
-                cpu_model: await this.detectCPUModel(),
                 
-                // Performance characteristics
-                performance_profile: await this.createCPUPerformanceProfile(),
+                // Architecture Family Detection
+                architecture_family: await this.detectArchitectureFamily(),
                 
-                // Cache analysis
-                cache_analysis: await this.analyzeCPUCache(),
+                // Core Configuration Analysis
+                core_configuration: await this.analyzeCoreConfiguration(),
                 
-                // SIMD support
-                simd_support: this.detectSIMDSupport(),
+                // Cache Hierarchy Detection
+                cache_hierarchy: await this.detectCacheHierarchy(),
                 
-                // WebAssembly capabilities
-                wasm_capabilities: await this.analyzeWebAssemblyCapabilities(),
+                // CPU Feature Flags
+                feature_flags: await this.detectCPUFeatureFlags(),
                 
-                // Thread analysis
-                threading_capabilities: await this.analyzeThreadingCapabilities()
+                // Microarchitecture Detection
+                microarchitecture: await this.detectMicroarchitecture()
             };
             
             return cpuArchitecture;
             
         } catch (error) {
-            return { error: error.message, platform: navigator.platform };
+            this.logger.error("Error detecting CPU architecture:", error);
+            return { error: error.message, basic_cpu_info: this.getBasicCPUInfo() };
         }
     }
     
