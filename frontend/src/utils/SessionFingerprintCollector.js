@@ -3445,6 +3445,291 @@ class SessionFingerprintCollector {
         return 'basic';
     }
     
+    // ===== STUB METHODS FOR REMAINING FUNCTIONALITY =====
+    // These methods provide basic implementations to prevent errors
+    // They can be enhanced in future phases
+    
+    // Memory and Storage Analysis Stubs
+    async estimateMemoryViaPerformance() { return navigator.deviceMemory ? navigator.deviceMemory * 1024 : 0; }
+    async detectMemoryPressure() { return { pressure_level: 'unknown' }; }
+    async estimateAvailableMemory() { return { available_mb: 0 }; }
+    async analyzeMemoryAllocationPatterns() { return { pattern: 'unknown' }; }
+    async analyzeGarbageCollection() { return { gc_frequency: 'unknown' }; }
+    async estimateMemoryBandwidth() { return { bandwidth_mb_s: 0 }; }
+    detectVirtualMemoryIndicators() { return { vm_detected: false }; }
+    
+    async benchmarkLocalStoragePerformance() { 
+        try {
+            const startTime = performance.now();
+            localStorage.setItem('test', 'data');
+            localStorage.getItem('test');
+            localStorage.removeItem('test');
+            return { operation_time_ms: performance.now() - startTime };
+        } catch (e) {
+            return { error: e.message };
+        }
+    }
+    
+    async benchmarkSessionStoragePerformance() {
+        try {
+            const startTime = performance.now();
+            sessionStorage.setItem('test', 'data');
+            sessionStorage.getItem('test');
+            sessionStorage.removeItem('test');
+            return { operation_time_ms: performance.now() - startTime };
+        } catch (e) {
+            return { error: e.message };
+        }
+    }
+    
+    async benchmarkIndexedDBPerformance() { return { operation_time_ms: 0 }; }
+    async benchmarkCacheAPIPerformance() { return { operation_time_ms: 0 }; }
+    async benchmarkFileSystemPerformance() { return { operation_time_ms: 0 }; }
+    async analyzeStorageCapacity() { return { capacity_estimate: 0 }; }
+    detectStorageTechnologyHints() { return { technology: 'unknown' }; }
+    async analyzeIOPerformance() { return { io_score: 0 }; }
+    
+    async analyzeL1Cache() { return { size_estimate: 'unknown' }; }
+    async analyzeL2Cache() { return { size_estimate: 'unknown' }; }
+    async analyzeL3Cache() { return { size_estimate: 'unknown' }; }
+    async detectCacheLineSize() { return { line_size: 64 }; } // Common default
+    async analyzeCacheAssociativity() { return { associativity: 'unknown' }; }
+    async analyzeCacheCoherency() { return { coherency_protocol: 'unknown' }; }
+    async benchmarkMemoryHierarchy() { return { hierarchy_score: 0 }; }
+    
+    async analyzeMemoryPressurePatterns() { return { pressure_patterns: [] }; }
+    async detectPagingActivity() { return { paging_detected: false }; }
+    async analyzeMemoryFragmentation() { return { fragmentation_level: 'unknown' }; }
+    detectSwapUsageIndicators() { return { swap_usage: 'unknown' }; }
+    async analyzeMemoryMapping() { return { mapping_efficiency: 'unknown' }; }
+    
+    // Display and Screen Analysis Stubs
+    analyzePixelDensity() { 
+        return { 
+            dpi: window.devicePixelRatio * 96,
+            category: window.devicePixelRatio > 2 ? 'high' : 'standard'
+        };
+    }
+    
+    async detectRefreshRate() {
+        return new Promise((resolve) => {
+            let frameCount = 0;
+            const startTime = performance.now();
+            
+            function countFrames() {
+                frameCount++;
+                if (frameCount < 60) {
+                    requestAnimationFrame(countFrames);
+                } else {
+                    const duration = performance.now() - startTime;
+                    const fps = Math.round(frameCount / (duration / 1000));
+                    resolve({ refresh_rate: fps, method: 'frame_counting' });
+                }
+            }
+            
+            requestAnimationFrame(countFrames);
+            
+            // Fallback timeout
+            setTimeout(() => resolve({ refresh_rate: 60, method: 'default' }), 2000);
+        });
+    }
+    
+    analyzeOrientationSupport() {
+        return {
+            orientation_api: 'orientation' in screen,
+            current_orientation: screen.orientation ? screen.orientation.type : 'unknown',
+            orientation_change_support: 'onorientationchange' in window
+        };
+    }
+    
+    analyzeTouchCapabilities() {
+        return {
+            touch_support: 'ontouchstart' in window,
+            max_touch_points: navigator.maxTouchPoints || 0,
+            touch_events: 'TouchEvent' in window,
+            pointer_events: 'PointerEvent' in window
+        };
+    }
+    
+    analyzeViewportCapabilities() {
+        return {
+            viewport_width: window.innerWidth,
+            viewport_height: window.innerHeight,
+            visual_viewport: 'visualViewport' in window,
+            device_pixel_ratio: window.devicePixelRatio || 1
+        };
+    }
+    
+    analyzeDisplayScaling() {
+        return {
+            device_pixel_ratio: window.devicePixelRatio || 1,
+            scaling_factor: window.devicePixelRatio || 1,
+            scaled_display: (window.devicePixelRatio || 1) !== 1
+        };
+    }
+    
+    // Multi-monitor and Display Detection Stubs
+    detectScreenSpanning() { 
+        return screen.width > 2560 || screen.height > 1440; // Simple heuristic
+    }
+    detectVirtualDesktop() { return false; }
+    detectExtendedDisplay() { return screen.availWidth !== screen.width; }
+    estimateMonitorCount() { 
+        return screen.width > 3000 ? 2 : 1; // Simple estimation
+    }
+    analyzePrimaryMonitor() { return { is_primary: true }; }
+    getMultiMonitorIndicators() { return { indicators: [] }; }
+    getDisplayArrangementHints() { return { arrangement: 'single' }; }
+    
+    // HDR and Color Support Stubs
+    detectWebGLHDRSupport() { return false; }
+    detectCanvasHDRSupport() { return false; }
+    detectMediaHDRSupport() { return 'matchMedia' in window && window.matchMedia('(dynamic-range: high)').matches; }
+    detectWebGLWideGamut() { return false; }
+    estimateRealColorDepth() { return screen.colorDepth; }
+    calculateColorAccuracyScore() { return 0.8; } // Default score
+    getDisplayTechnologyHints() { return { technology: 'unknown' }; }
+    
+    // Performance and Rendering Stubs
+    async benchmarkCanvas2DPerformance() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return { error: 'Canvas not supported' };
+        
+        const startTime = performance.now();
+        for (let i = 0; i < 1000; i++) {
+            ctx.fillRect(i % 100, Math.floor(i / 100) * 10, 5, 5);
+        }
+        return { render_time_ms: performance.now() - startTime };
+    }
+    
+    async benchmarkWebGLPerformance() {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl');
+        if (!gl) return { error: 'WebGL not supported' };
+        
+        const startTime = performance.now();
+        for (let i = 0; i < 1000; i++) {
+            gl.clear(gl.COLOR_BUFFER_BIT);
+        }
+        return { render_time_ms: performance.now() - startTime };
+    }
+    
+    async benchmarkCSS3DPerformance() { return { render_time_ms: 0 }; }
+    async benchmarkAnimationPerformance() { return { fps: 60 }; }
+    async benchmarkCompositePerformance() { return { composite_time_ms: 0 }; }
+    detectHardwareAccelerationIndicators() { return { accelerated: 'unknown' }; }
+    async analyzePerformanceConsistency() { return { consistency_score: 0.8 }; }
+    async detectThermalThrottlingIndicators() { return { throttling_detected: false }; }
+    
+    // GPU Memory Estimation Stubs  
+    async estimateGPUMemoryViaTextures() { return 0; }
+    async estimateGPUMemoryViaPerformance() { return 0; }
+    estimateGPUMemoryViaCapabilities() { return 0; }
+    estimateGPUMemoryViaRenderer() { return 0; }
+    
+    // Canvas Analysis Stubs
+    detectSubpixelRendering(ctx, canvas) { return { subpixel_rendering: 'unknown' }; }
+    analyzeCanvasColorSpace(ctx, canvas) { return { color_space: 'srgb' }; }
+    async profileCanvasRenderingPerformance(ctx, canvas) { return { performance_score: 0 }; }
+    detectCanvasRenderingQuirks(ctx, canvas) { return { quirks: [] }; }
+    analyzeTextMeasurementPrecision(ctx) { return { precision: 'standard' }; }
+    
+    // Thermal and Performance Analysis Stubs
+    async detectClockSpeedVariation() { return { variation_detected: false }; }
+    async detectThrottlingIndicators() { return { indicators: [] }; }
+    async detectPerformanceDegradation() { return { degradation_detected: false }; }
+    async analyzeSystemResponsiveness() { return { responsiveness_score: 0.8 }; }
+    async analyzeBatteryImpactOnPerformance() { return { impact_level: 'unknown' }; }
+    
+    // Advanced Detection Methods Stubs
+    detectJITCompilation() { return { jit_detected: true }; }
+    detectJSOptimizationTier() { return { tier: 'optimized' }; }
+    detectAdvancedMathSupport() { return { advanced_math: true }; }
+    
+    // Sensor Permission and Data Methods
+    async checkDeviceMotionPermission() {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceMotionEvent.requestPermission();
+                return permission === 'granted';
+            } catch (e) {
+                return false;
+            }
+        }
+        return 'DeviceMotionEvent' in window;
+    }
+    
+    async checkDeviceOrientationPermission() {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                return permission === 'granted';
+            } catch (e) {
+                return false;
+            }
+        }
+        return 'DeviceOrientationEvent' in window;
+    }
+    
+    async getCurrentMotionSensorData() { return await this.getCurrentMotionReading(); }
+    async getCurrentOrientationData() { return await this.getCurrentOrientationReading(); }
+    async analyzeMotionSensorCapabilities() { return { capabilities: 'basic' }; }
+    async analyzeSensorAccuracy() { return { accuracy: 'unknown' }; }
+    
+    // Environmental Context Analysis
+    async analyzeEnvironmentalContext() {
+        const lightReading = await this.getAmbientLightReading();
+        return {
+            lighting_conditions: lightReading ? this.categorizeLightLevel(lightReading.lux) : 'unknown',
+            estimated_environment: lightReading ? this.estimateIndoorOutdoor(lightReading.lux) : 'unknown'
+        };
+    }
+    
+    // Biometric and Authentication Stubs
+    async analyzeWebAuthnCapabilities() {
+        if (!('PublicKeyCredential' in window)) return { supported: false };
+        
+        return {
+            supported: true,
+            conditional_ui: PublicKeyCredential.isConditionalMediationAvailable ? 
+                await PublicKeyCredential.isConditionalMediationAvailable() : false,
+            user_verifying_platform_authenticator: PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable ?
+                await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() : false
+        };
+    }
+    
+    async detectFingerprintSensorHints() { return { fingerprint_sensor_likely: false }; }
+    async analyzeBiometricAuthAvailability() { return { biometric_auth: 'unknown' }; }
+    async detectPlatformBiometrics() { return { platform_biometrics: 'unknown' }; }
+    async analyzeBehavioralBiometrics() { return { behavioral_support: true }; }
+    
+    // Connectivity Analysis Stubs
+    async analyzeNetworkCapabilities() {
+        return navigator.connection ? {
+            connection_type: navigator.connection.type,
+            effective_type: navigator.connection.effectiveType,
+            downlink: navigator.connection.downlink,
+            rtt: navigator.connection.rtt
+        } : { network_info_unavailable: true };
+    }
+    
+    async analyzeBluetoothCapabilities() {
+        return {
+            bluetooth_support: 'bluetooth' in navigator,
+            availability: navigator.bluetooth ? await navigator.bluetooth.getAvailability().catch(() => false) : false
+        };
+    }
+    
+    async analyzeGeolocationCapabilities() {
+        return {
+            geolocation_support: 'geolocation' in navigator,
+            high_accuracy_support: true // Assume supported
+        };
+    }
+    
+    async analyzeConnectivityPatterns() { return { patterns: [] }; }
+    
     // ===== ENHANCED BROWSER CHARACTERISTICS METHODS =====
     
     /**
