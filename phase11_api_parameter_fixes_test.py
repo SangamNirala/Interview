@@ -100,7 +100,7 @@ class Phase11APIParameterFixesTester:
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/device-fingerprinting/generate-device-signature",
+                f"{BACKEND_URL}/session-fingerprinting/generate-device-signature",
                 json=payload
             )
             
