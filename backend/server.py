@@ -21378,10 +21378,19 @@ async def detect_virtual_machines(request: DeviceFingerprintRequest):
     try:
         logging.info(f"Performing VM detection for session: {request.session_id}")
         
+        # Validate device_data is not None
+        if request.device_data is None:
+            raise HTTPException(status_code=400, detail="device_data is required and cannot be None")
+        
         # Perform VM detection using the engine
         result = device_fingerprinting_engine.detect_virtual_machines(request.device_data)
         
         if result.get('success'):
+            # Ensure confidence_level is properly set
+            confidence_level = result.get('confidence_level', 'medium')
+            if not isinstance(confidence_level, str):
+                confidence_level = str(confidence_level) if confidence_level is not None else 'medium'
+            
             # Store VM detection results in MongoDB
             vm_detection_doc = {
                 "session_id": request.session_id,
@@ -21389,7 +21398,7 @@ async def detect_virtual_machines(request: DeviceFingerprintRequest):
                 "vm_probability": result['vm_probability'],
                 "vm_classification": result['vm_classification'],
                 "is_virtual_machine": result['is_virtual_machine'],
-                "confidence_level": result['confidence_level'],
+                "confidence_level": confidence_level,
                 "analysis_timestamp": result['analysis_timestamp'],
                 "created_at": datetime.utcnow()
             }
