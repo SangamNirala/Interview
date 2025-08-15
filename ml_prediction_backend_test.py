@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Backend URL configuration
-BACKEND_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
+BACKEND_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
 
 class MLPredictionTester:
     def __init__(self):

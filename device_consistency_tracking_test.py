@@ -17,7 +17,7 @@ import uuid
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://browser-dna-collect.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://dbcollections-setup.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class DeviceConsistencyTrackingTester:

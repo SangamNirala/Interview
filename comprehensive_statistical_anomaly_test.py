@@ -12,7 +12,7 @@ import random
 import time
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
+BACKEND_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
 
 def create_comprehensive_session_data(scenario="normal"):
     """Create comprehensive realistic mock session data for different scenarios"""

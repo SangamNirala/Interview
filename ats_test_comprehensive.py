@@ -12,7 +12,7 @@ import traceback
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://browser-dna-collect.preview.emergentagent.com"
+BACKEND_URL = "https://dbcollections-setup.preview.emergentagent.com"
 ATS_ENDPOINT = f"{BACKEND_URL}/api/placement-preparation/ats-score-calculate"
 
 class ATSTestRunner:

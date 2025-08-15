@@ -19,7 +19,7 @@ import os
 from typing import Dict, Any, List, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
+BASE_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
 
 class BulkCandidateManagementTester:
     def __init__(self):

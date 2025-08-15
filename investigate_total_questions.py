@@ -7,7 +7,7 @@ import requests
 import json
 import io
 
-BASE_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
+BASE_URL = "https://dbcollections-setup.preview.emergentagent.com/api"
 
 def test_total_questions_investigation():
     session = requests.Session()

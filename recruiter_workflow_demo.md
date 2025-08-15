@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://browser-dna-collect.preview.emergentagent.com
+URL: https://dbcollections-setup.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
