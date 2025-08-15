@@ -20779,5 +20779,139 @@ async def detect_automation_tools(request: AutomationDetectionRequest):
         logging.error(f"Error detecting automation tools: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Automation detection failed: {str(e)}")
 
+@api_router.post("/session-fingerprinting/monitor-network-characteristics")
+async def monitor_network_characteristics(request: NetworkAnalysisRequest):
+    """
+    🌐 MONITOR NETWORK CHARACTERISTICS
+    Comprehensive network analysis including IP geolocation and reputation,
+    network latency and routing analysis, proxy/VPN/Tor detection, connection profiling,
+    and network fingerprint consistency tracking
+    
+    Expected network_data format:
+    {
+        "ip_address": "203.0.113.45",
+        "public_ip": "203.0.113.45", 
+        "private_ip": "192.168.1.100",
+        "connection_type": "ethernet",
+        "isp": "Comcast Cable",
+        "country": "US",
+        "region": "California", 
+        "city": "San Francisco",
+        "network_performance": {
+            "rtt": 50,
+            "download_speed": 100.5,
+            "upload_speed": 20.3,
+            "packet_loss": 0.1
+        },
+        "proxy_indicators": ["user_agent", "headers"],
+        "routing_info": {
+            "hop_count": 12,
+            "routing_path": ["gateway", "isp", "backbone"]
+        }
+    }
+    
+    Returns comprehensive network analysis with risk assessment, IP reputation,
+    geolocation accuracy, proxy/VPN/Tor detection, and network consistency scoring.
+    """
+    try:
+        # Connect to MongoDB
+        client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+        db = client.aptitude_test_db
+        
+        logging.info(f"Starting network characteristics analysis for session: {request.session_id}")
+        
+        # Perform network characteristics analysis using the environment analyzer
+        result = environment_analyzer.monitor_network_characteristics(request.network_data)
+        
+        if result.get('success'):
+            # Store network analysis results in MongoDB
+            network_analysis_doc = {
+                "session_id": request.session_id,
+                "network_analysis": convert_numeric_keys_to_strings(result['network_analysis']),
+                "analysis_summary": result['analysis_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into network_analyses collection
+            await db.network_analyses.insert_one(network_analysis_doc)
+            
+            logging.info(f"Network analysis completed for session: {request.session_id} - Risk Level: {result['analysis_summary']['network_risk_level']}")
+            
+            return {
+                "success": True,
+                "network_analysis": result,
+                "storage_confirmation": "Network analysis results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Network characteristics analysis failed'))
+        
+    except Exception as e:
+        logging.error(f"Error monitoring network characteristics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Network characteristics analysis failed: {str(e)}")
+
+@api_router.post("/session-fingerprinting/track-timezone-consistency")
+async def track_timezone_consistency(request: TimezoneAnalysisRequest):
+    """
+    ⏰ TRACK TIMEZONE CONSISTENCY
+    Comprehensive timezone analysis including system vs browser validation,
+    geolocation vs timezone correlation, timezone manipulation detection,
+    time synchronization accuracy analysis, and temporal behavior pattern validation
+    
+    Expected timezone_data format:
+    {
+        "system_timezone": "America/New_York",
+        "browser_timezone": "America/New_York",
+        "timezone_offset": -300,
+        "dst_active": true,
+        "system_time": "2023-12-07T15:30:45.123Z",
+        "browser_time": "2023-12-07T15:30:45.125Z",
+        "geolocation": {
+            "latitude": 40.7128,
+            "longitude": -74.0060,
+            "accuracy": 100
+        },
+        "ntp_synchronized": true,
+        "clock_skew": 0.002
+    }
+    
+    Returns comprehensive timezone consistency analysis with manipulation detection,
+    geolocation correlation, time synchronization accuracy, and risk assessment.
+    """
+    try:
+        # Connect to MongoDB
+        client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+        db = client.aptitude_test_db
+        
+        logging.info(f"Starting timezone consistency analysis for session: {request.session_id}")
+        
+        # Perform timezone consistency analysis using the environment analyzer
+        result = environment_analyzer.track_timezone_consistency(request.timezone_data)
+        
+        if result.get('success'):
+            # Store timezone analysis results in MongoDB
+            timezone_analysis_doc = {
+                "session_id": request.session_id,
+                "timezone_analysis": convert_numeric_keys_to_strings(result['timezone_analysis']),
+                "analysis_summary": result['analysis_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into timezone_analyses collection
+            await db.timezone_analyses.insert_one(timezone_analysis_doc)
+            
+            logging.info(f"Timezone analysis completed for session: {request.session_id} - Consistency Score: {result['analysis_summary']['consistency_score']:.3f}")
+            
+            return {
+                "success": True,
+                "timezone_analysis": result,
+                "storage_confirmation": "Timezone analysis results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Timezone consistency analysis failed'))
+        
+    except Exception as e:
+        logging.error(f"Error tracking timezone consistency: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Timezone consistency analysis failed: {str(e)}")
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
