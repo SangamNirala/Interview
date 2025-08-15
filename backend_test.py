@@ -20,7 +20,7 @@ import sys
 import os
 
 # Backend URL from environment - use local for testing
-BACKEND_URL = "http://localhost:8001/api"
+BACKEND_URL = "http://127.0.0.1:8001/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class EnhancedFingerprintingBackendTest:
