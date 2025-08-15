@@ -10,7 +10,7 @@ import urllib3
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-BACKEND_URL = 'https://session-monitor.preview.emergentagent.com'
+BACKEND_URL = 'https://session-guardian-1.preview.emergentagent.com'
 BASE_URL = f"{BACKEND_URL}/api"
 
 def test_alert_with_minimal_data():
