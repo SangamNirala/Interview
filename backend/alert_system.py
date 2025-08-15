@@ -28,9 +28,9 @@ from enum import Enum
 import statistics
 import numpy as np
 from motor.motor_asyncio import AsyncIOMotorClient
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
-from email.mime.base import MimeBase
+from email.mime.text import MIMEText as MimeText
+from email.mime.multipart import MIMEMultipart as MimeMultipart
+from email.mime.base import MIMEBase as MimeBase
 from email import encoders
 import os
 
