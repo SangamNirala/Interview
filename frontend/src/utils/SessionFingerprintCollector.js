@@ -9009,6 +9009,213 @@ class SessionFingerprintCollector {
             return { error: error.message, is_headless: false, confidence_score: 0 };
         }
     }
+    
+    /**
+     * JavaScript Engine Profiling Methods
+     */
+    async detectV8Features() {
+        try {
+            const v8Features = {
+                engine_detected: false,
+                version_indicators: {},
+                v8_specific_features: {},
+                performance_optimizations: {},
+                memory_management: {}
+            };
+            
+            // V8 engine detection
+            v8Features.engine_detected = this.detectV8Engine();
+            
+            if (v8Features.engine_detected) {
+                // V8 version indicators
+                v8Features.version_indicators = {
+                    error_stack_trace_api: Error.captureStackTrace ? true : false,
+                    v8_compile_cache: 'v8' in process ? true : false, // Node.js specific
+                    array_buffer_transfer: ArrayBuffer.prototype.transfer ? true : false,
+                    weak_ref_support: 'WeakRef' in window,
+                    finalization_registry: 'FinalizationRegistry' in window
+                };
+                
+                // V8 specific features
+                v8Features.v8_specific_features = {
+                    harmony_features: await this.detectV8HarmonyFeatures(),
+                    turbofan_optimizations: await this.detectTurboFanOptimizations(),
+                    ignition_interpreter: await this.detectIgnitionInterpreter(),
+                    concurrent_marking: await this.detectConcurrentMarking()
+                };
+                
+                // Performance optimizations
+                v8Features.performance_optimizations = {
+                    hidden_classes: await this.analyzeHiddenClasses(),
+                    inline_caching: await this.analyzeInlineCaching(),
+                    escape_analysis: await this.analyzeEscapeAnalysis(),
+                    loop_optimization: await this.analyzeLoopOptimization()
+                };
+                
+                // Memory management
+                v8Features.memory_management = {
+                    heap_snapshot_support: this.detectHeapSnapshotSupport(),
+                    memory_pressure_api: 'memory' in performance,
+                    gc_scheduling: await this.analyzeGCScheduling(),
+                    memory_segments: await this.analyzeMemorySegments()
+                };
+            }
+            
+            return v8Features;
+            
+        } catch (error) {
+            return { error: error.message, engine_detected: false };
+        }
+    }
+    
+    async profileJSPerformance() {
+        try {
+            const performanceProfile = {
+                execution_speed: {},
+                memory_efficiency: {},
+                optimization_indicators: {},
+                compilation_characteristics: {}
+            };
+            
+            // Execution speed tests
+            performanceProfile.execution_speed = {
+                function_calls: await this.measureFunctionCallPerformance(),
+                object_operations: await this.measureObjectOperationPerformance(),
+                array_operations: await this.measureArrayPerformance(),
+                string_operations: await this.measureStringPerformance(),
+                math_operations: await this.measureMathPerformance(),
+                regexp_operations: await this.measureRegExpPerformance()
+            };
+            
+            // Memory efficiency tests
+            performanceProfile.memory_efficiency = {
+                allocation_speed: await this.measureAllocationSpeed(),
+                gc_frequency: await this.measureGCFrequency(),
+                memory_fragmentation: await this.measureMemoryFragmentation(),
+                object_pooling_efficiency: await this.measureObjectPoolingEfficiency()
+            };
+            
+            // Optimization indicators
+            performanceProfile.optimization_indicators = {
+                hot_function_detection: await this.detectHotFunctionOptimization(),
+                deoptimization_triggers: await this.detectDeoptimizationTriggers(),
+                type_feedback: await this.analyzeTypeFeedback(),
+                speculative_optimization: await this.detectSpeculativeOptimization()
+            };
+            
+            // Compilation characteristics
+            performanceProfile.compilation_characteristics = {
+                parse_time: await this.measureParseTime(),
+                compilation_time: await this.measureCompilationTime(),
+                execution_tier_transitions: await this.measureTierTransitions(),
+                bytecode_analysis: await this.analyzeBytecodeExecution()
+            };
+            
+            return performanceProfile;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async analyzeJSMemoryManagement() {
+        try {
+            const memoryAnalysis = {
+                heap_characteristics: {},
+                gc_behavior: {},
+                memory_pressure: {},
+                allocation_patterns: {}
+            };
+            
+            // Heap characteristics
+            if (performance.memory) {
+                memoryAnalysis.heap_characteristics = {
+                    used_heap_size: performance.memory.usedJSHeapSize,
+                    total_heap_size: performance.memory.totalJSHeapSize,
+                    heap_size_limit: performance.memory.jsHeapSizeLimit,
+                    heap_utilization: (performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100
+                };
+            }
+            
+            // GC behavior analysis
+            memoryAnalysis.gc_behavior = await this.analyzeGarbageCollectionBehavior();
+            
+            // Memory pressure detection
+            memoryAnalysis.memory_pressure = {
+                pressure_indicators: await this.detectMemoryPressure(),
+                allocation_failures: await this.detectAllocationFailures(),
+                memory_warnings: await this.detectMemoryWarnings()
+            };
+            
+            // Allocation patterns
+            memoryAnalysis.allocation_patterns = {
+                object_allocation_rate: await this.measureObjectAllocationRate(),
+                array_allocation_patterns: await this.analyzeArrayAllocationPatterns(),
+                string_allocation_behavior: await this.analyzeStringAllocationBehavior(),
+                closure_allocation_analysis: await this.analyzeClosureAllocation()
+            };
+            
+            return memoryAnalysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async detectJSOptimizations() {
+        try {
+            const optimizations = {
+                jit_compilation: {},
+                inlining_analysis: {},
+                dead_code_elimination: {},
+                constant_folding: {},
+                loop_optimizations: {}
+            };
+            
+            // JIT compilation detection
+            optimizations.jit_compilation = {
+                compilation_detected: await this.detectJITCompilation(),
+                compilation_tiers: await this.identifyCompilationTiers(),
+                optimization_thresholds: await this.measureOptimizationThresholds(),
+                deoptimization_patterns: await this.analyzeDeoptimizationPatterns()
+            };
+            
+            // Function inlining analysis
+            optimizations.inlining_analysis = {
+                inline_candidates: await this.identifyInlineCandidates(),
+                inlining_effectiveness: await this.measureInliningEffectiveness(),
+                polymorphic_inline_cache: await this.analyzePolymorphicInlineCache(),
+                megamorphic_detection: await this.detectMegamorphicCallSites()
+            };
+            
+            // Dead code elimination
+            optimizations.dead_code_elimination = {
+                unreachable_code_detection: await this.detectUnreachableCodeOptimization(),
+                unused_variable_elimination: await this.detectUnusedVariableElimination(),
+                dead_store_elimination: await this.detectDeadStoreElimination()
+            };
+            
+            // Constant folding and propagation
+            optimizations.constant_folding = {
+                compile_time_evaluation: await this.detectConstantFolding(),
+                constant_propagation: await this.detectConstantPropagation(),
+                strength_reduction: await this.detectStrengthReduction()
+            };
+            
+            // Loop optimizations
+            optimizations.loop_optimizations = {
+                loop_unrolling: await this.detectLoopUnrolling(),
+                loop_invariant_motion: await this.detectLoopInvariantMotion(),
+                vectorization: await this.detectVectorization(),
+                loop_peeling: await this.detectLoopPeeling()
+            };
+            
+            return optimizations;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
 }
 
 // Export the class
