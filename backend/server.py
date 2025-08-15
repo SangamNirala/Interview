@@ -21428,8 +21428,15 @@ async def analyze_hardware_characteristics(request: DeviceFingerprintRequest):
     try:
         logging.info(f"Analyzing hardware characteristics for session: {request.session_id}")
         
+        # Validate device_data is not None and contains hardware data
+        if request.device_data is None:
+            raise HTTPException(status_code=400, detail="device_data is required and cannot be None")
+        
         # Extract hardware data from device data
         hardware_data = request.device_data.get('hardware', {})
+        
+        if not hardware_data:
+            raise HTTPException(status_code=400, detail="device_data must contain 'hardware' field with hardware information")
         
         # Perform hardware analysis using the engine
         result = device_fingerprinting_engine.analyze_hardware_characteristics(hardware_data)
