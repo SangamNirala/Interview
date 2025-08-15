@@ -2785,34 +2785,35 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Detect virtual memory usage patterns
+     * PHASE 1.1.4: Virtual memory detection and analysis
      */
     async detectVirtualMemoryUsage() {
         try {
             const virtualMemoryAnalysis = {
-                // Virtual memory indicators
-                vm_indicators: this.detectVirtualMemoryIndicators(),
+                // Address Space Analysis
+                address_space: await this.analyzeAddressSpace(),
                 
-                // Memory pressure analysis
-                memory_pressure: await this.analyzeMemoryPressurePatterns(),
+                // Page Size Detection
+                page_size: await this.detectPageSize(),
                 
-                // Paging activity detection
-                paging_activity: await this.detectPagingActivity(),
+                // Virtual Memory Allocation Testing
+                allocation_testing: await this.testVirtualMemoryAllocation(),
                 
-                // Memory fragmentation analysis
-                memory_fragmentation: await this.analyzeMemoryFragmentation(),
+                // Memory Mapping Analysis
+                mapping_analysis: await this.analyzeMemoryMapping(),
                 
-                // Swap usage indicators
-                swap_usage_indicators: this.detectSwapUsageIndicators(),
+                // Swap Usage Detection
+                swap_usage: await this.detectSwapUsage(),
                 
-                // Memory mapping analysis
-                memory_mapping_analysis: await this.analyzeMemoryMapping()
+                // Memory Protection Analysis
+                protection_analysis: await this.analyzeMemoryProtection()
             };
             
             return virtualMemoryAnalysis;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error detecting virtual memory usage:", error);
+            return { error: error.message, virtual_memory: "unknown" };
         }
     }
     
