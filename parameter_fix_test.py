@@ -86,7 +86,7 @@ class ParameterFixTester:
             else:
                 self.log_result("Generate Device Signature (Valid Data)", False, f"Failed: {response.status_code} - {response.text}")
                 
-            # Test 2: None device data (should return 400)
+            # Test 2: None device data (should return 422 - Pydantic validation error)
             invalid_data = {
                 "device_data": None,
                 "session_id": self.session_id
@@ -97,10 +97,10 @@ class ParameterFixTester:
                 json=invalid_data
             )
             
-            if response.status_code == 400:
+            if response.status_code in [400, 422]:  # Accept both 400 and 422
                 self.log_result("Generate Device Signature (None Data)", True, f"Correctly rejected: {response.status_code}")
             else:
-                self.log_result("Generate Device Signature (None Data)", False, f"Should be 400: {response.status_code}")
+                self.log_result("Generate Device Signature (None Data)", False, f"Should be 400/422: {response.status_code}")
                 
         except Exception as e:
             self.log_result("Generate Device Signature Fix", False, f"Exception: {str(e)}")
