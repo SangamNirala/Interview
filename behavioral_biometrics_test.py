@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import random
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://hw-detection.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://browser-dna-collect.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class BiometricAnalysisTester:

@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://hw-detection.preview.emergentagent.com
+URL: https://browser-dna-collect.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

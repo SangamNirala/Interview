@@ -10,7 +10,7 @@ import time
 import io
 
 # Backend URL from frontend .env
-BASE_URL = "https://hw-detection.preview.emergentagent.com/api"
+BASE_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
 
 class AIQuestionTester:
     def __init__(self):

@@ -17,7 +17,7 @@ import uuid
 import math
 
 # Configuration
-BACKEND_URL = "https://hw-detection.preview.emergentagent.com/api"
+BACKEND_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class IRTCalibrationTester:

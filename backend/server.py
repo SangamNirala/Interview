@@ -17819,7 +17819,7 @@ async def root():
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["https://hw-detection.preview.emergentagent.com", "http://localhost:3000", "*"],
+    allow_origins=["https://browser-dna-collect.preview.emergentagent.com", "http://localhost:3000", "*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

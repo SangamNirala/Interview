@@ -17,7 +17,7 @@ import io
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://hw-detection.preview.emergentagent.com/api"
+BASE_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
 
 class AdminScreeningTester:
     def __init__(self):

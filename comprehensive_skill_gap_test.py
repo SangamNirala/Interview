@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Backend URL configuration
-BACKEND_URL = "https://hw-detection.preview.emergentagent.com/api"
+BACKEND_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
 
 class ComprehensiveSkillGapTester:
     def __init__(self):
