@@ -2667,38 +2667,44 @@ class SessionFingerprintCollector {
     /**
      * Estimate system memory through performance testing
      */
+    /**
+     * PHASE 1.1.4: Advanced system memory estimation beyond navigator.deviceMemory
+     */
     async estimateSystemMemory() {
         try {
             const memoryAnalysis = {
-                // Navigator API memory info
-                device_memory_gb: navigator.deviceMemory || 0,
+                // JavaScript Heap Analysis
+                js_heap_analysis: await this.analyzeJavaScriptHeap(),
                 
-                // Performance-based memory estimation
-                performance_memory_estimate: await this.estimateMemoryViaPerformance(),
+                // Memory Allocation Testing
+                allocation_testing: await this.testMemoryAllocation(),
                 
-                // Memory pressure detection
-                memory_pressure_indicators: await this.detectMemoryPressure(),
+                // Memory Bandwidth Testing
+                bandwidth_testing: await this.testMemoryBandwidth(),
                 
-                // Available memory estimation
-                available_memory_estimate: await this.estimateAvailableMemory(),
+                // Virtual Memory Analysis
+                virtual_memory: await this.analyzeVirtualMemory(),
                 
-                // Memory allocation patterns
-                allocation_patterns: await this.analyzeMemoryAllocationPatterns(),
+                // Memory Pressure Testing
+                pressure_testing: await this.testMemoryPressure(),
                 
-                // Garbage collection analysis
-                gc_analysis: await this.analyzeGarbageCollection(),
+                // Memory Hierarchy Analysis
+                hierarchy_analysis: await this.analyzeMemoryHierarchy(),
                 
-                // Memory bandwidth estimation
-                memory_bandwidth_estimate: await this.estimateMemoryBandwidth(),
-                
-                // Virtual memory indicators
-                virtual_memory_indicators: this.detectVirtualMemoryIndicators()
+                // Swap/Pagefile Detection
+                swap_analysis: await this.analyzeSwapUsage()
             };
+            
+            // Calculate memory estimation
+            memoryAnalysis.estimated_physical_memory = this.calculatePhysicalMemoryEstimate(memoryAnalysis);
+            memoryAnalysis.estimated_available_memory = this.calculateAvailableMemoryEstimate(memoryAnalysis);
+            memoryAnalysis.confidence_level = this.calculateMemoryEstimationConfidence(memoryAnalysis);
             
             return memoryAnalysis;
             
         } catch (error) {
-            return { error: error.message, device_memory_gb: navigator.deviceMemory || 0 };
+            this.logger.error("Error estimating system memory:", error);
+            return { error: error.message, memory_estimate: "unknown" };
         }
     }
     
