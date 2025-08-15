@@ -8280,6 +8280,303 @@ class SessionFingerprintCollector {
     async calculateNetworkEfficiency() { return 'unknown'; }
     async measureConnectionReliability() { return 'unknown'; }
     async measureLatencyJitter() { return 0; }
+    
+    // Additional Helper Methods for Enhanced Implementation
+    async testCPUArithmetic() {
+        const start = performance.now();
+        let sum = 0;
+        for (let i = 0; i < 50000; i++) {
+            sum += Math.sqrt(i) * Math.sin(i) + Math.cos(i);
+        }
+        return performance.now() - start;
+    }
+    
+    async testMemoryAccess() {
+        const start = performance.now();
+        const array = new Array(10000).fill(0).map(() => Math.random());
+        let sum = 0;
+        for (let i = 0; i < array.length; i++) {
+            sum += array[i] * 2;
+        }
+        return performance.now() - start;
+    }
+    
+    async testDOMManipulation() {
+        const start = performance.now();
+        const container = document.createElement('div');
+        for (let i = 0; i < 100; i++) {
+            const element = document.createElement('span');
+            element.textContent = `Test ${i}`;
+            container.appendChild(element);
+        }
+        return performance.now() - start;
+    }
+    
+    async testCanvasRendering() {
+        const start = performance.now();
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        for (let i = 0; i < 50; i++) {
+            ctx.fillStyle = `hsl(${i * 7}, 50%, 50%)`;
+            ctx.fillRect(i * 4, i * 4, 10, 10);
+        }
+        return performance.now() - start;
+    }
+    
+    async measureEventResponseTime() {
+        return new Promise(resolve => {
+            const times = [];
+            let count = 0;
+            const maxTests = 5;
+            
+            const testElement = document.createElement('div');
+            document.body.appendChild(testElement);
+            
+            const handler = () => {
+                times.push(performance.now() - startTime);
+                count++;
+                if (count >= maxTests) {
+                    testElement.removeEventListener('click', handler);
+                    testElement.remove();
+                    resolve({ response_times: times });
+                } else {
+                    setTimeout(() => {
+                        startTime = performance.now();
+                        testElement.click();
+                    }, 100);
+                }
+            };
+            
+            testElement.addEventListener('click', handler);
+            
+            let startTime = performance.now();
+            testElement.click();
+        });
+    }
+    
+    async measureAnimationFrameConsistency() {
+        return new Promise(resolve => {
+            const frameTimes = [];
+            let lastTime = performance.now();
+            let frameCount = 0;
+            const maxFrames = 30;
+            
+            const measure = (currentTime) => {
+                frameTimes.push(currentTime - lastTime);
+                lastTime = currentTime;
+                frameCount++;
+                
+                if (frameCount < maxFrames) {
+                    requestAnimationFrame(measure);
+                } else {
+                    resolve({ frame_times: frameTimes });
+                }
+            };
+            
+            requestAnimationFrame(measure);
+        });
+    }
+    
+    async measureDOMUpdatePerformance() {
+        const times = [];
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        
+        for (let i = 0; i < 10; i++) {
+            const start = performance.now();
+            container.innerHTML = `<div>Update ${i}: ${Date.now()}</div>`;
+            times.push(performance.now() - start);
+        }
+        
+        container.remove();
+        return { update_times: times };
+    }
+    
+    async measureInteractionLatency() {
+        return new Promise(resolve => {
+            const latencies = [];
+            let testCount = 0;
+            const maxTests = 5;
+            
+            const button = document.createElement('button');
+            button.textContent = 'Test Button';
+            button.style.position = 'fixed';
+            button.style.top = '-100px'; // Hide off-screen
+            document.body.appendChild(button);
+            
+            const clickHandler = () => {
+                const endTime = performance.now();
+                latencies.push(endTime - startTime);
+                testCount++;
+                
+                if (testCount >= maxTests) {
+                    button.removeEventListener('click', clickHandler);
+                    button.remove();
+                    resolve({ latencies: latencies });
+                } else {
+                    setTimeout(() => {
+                        startTime = performance.now();
+                        button.click();
+                    }, 200);
+                }
+            };
+            
+            button.addEventListener('click', clickHandler);
+            
+            let startTime = performance.now();
+            button.click();
+        });
+    }
+    
+    categorizeDegradationSeverity(percentage) {
+        if (percentage > 30) return 'severe';
+        if (percentage > 15) return 'moderate';
+        if (percentage > 5) return 'mild';
+        return 'negligible';
+    }
+    
+    identifyDegradationCauses(testResults) {
+        const causes = [];
+        const degradedTests = testResults.filter(t => t.degradation_detected);
+        
+        if (degradedTests.length > testResults.length * 0.5) {
+            causes.push('system_wide_thermal_throttling');
+        }
+        
+        if (degradedTests.some(t => t.test_name === 'cpu_arithmetic')) {
+            causes.push('cpu_thermal_throttling');
+        }
+        
+        if (degradedTests.some(t => t.test_name === 'memory_access')) {
+            causes.push('memory_bandwidth_limitation');
+        }
+        
+        if (degradedTests.some(t => t.test_name === 'canvas_rendering')) {
+            causes.push('gpu_thermal_throttling');
+        }
+        
+        return causes;
+    }
+    
+    calculateOverallSeverity(indicators) {
+        if (indicators.length === 0) return 'none';
+        
+        const severityLevels = indicators.map(i => i.severity);
+        if (severityLevels.includes('high')) return 'high';
+        if (severityLevels.includes('medium')) return 'medium';
+        return 'low';
+    }
+    
+    categorizeResponsiveness(score) {
+        if (score > 80) return 'excellent';
+        if (score > 60) return 'good';
+        if (score > 40) return 'fair';
+        if (score > 20) return 'poor';
+        return 'very_poor';
+    }
+    
+    async analyzeBatteryPerformanceImpact() {
+        try {
+            let batteryLevel = null;
+            let charging = null;
+            
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    batteryLevel = battery.level;
+                    charging = battery.charging;
+                } catch (e) {
+                    // Battery API not available
+                }
+            }
+            
+            const performanceTest = await this.testCPUArithmetic();
+            
+            return {
+                impacted: batteryLevel !== null && batteryLevel < 0.2 && !charging && performanceTest > 100,
+                battery_level: batteryLevel,
+                charging: charging,
+                performance_time: performanceTest,
+                severity: performanceTest > 200 ? 'high' : performanceTest > 150 ? 'medium' : 'low',
+                details: { test_time_ms: performanceTest }
+            };
+        } catch (error) {
+            return { impacted: false, error: error.message };
+        }
+    }
+    
+    async testSystemResponsiveness() {
+        const start = performance.now();
+        
+        // Simulate system load with multiple operations
+        await Promise.all([
+            this.testCPUArithmetic(),
+            this.testMemoryAccess(),
+            this.testDOMManipulation()
+        ]);
+        
+        const totalTime = performance.now() - start;
+        
+        return {
+            degraded: totalTime > 500, // More than 500ms indicates degradation
+            response_time: totalTime,
+            severity: totalTime > 1000 ? 'high' : totalTime > 500 ? 'medium' : 'low',
+            details: { total_time_ms: totalTime }
+        };
+    }
+    
+    async establishPerformanceBaseline() {
+        const cpuTime = await this.testCPUArithmetic();
+        const memoryTime = await this.testMemoryAccess();
+        const domTime = await this.testDOMManipulation();
+        
+        return {
+            score: Math.max(0, 1000 - (cpuTime + memoryTime + domTime) / 3),
+            cpu_time: cpuTime,
+            memory_time: memoryTime,
+            dom_time: domTime
+        };
+    }
+    
+    async measureThrottledPerformance() {
+        // Similar to baseline but potentially under throttled conditions
+        return await this.establishPerformanceBaseline();
+    }
+    
+    identifyPowerThrottling(baseline, throttled) {
+        const indicators = [];
+        
+        if (throttled.cpu_time > baseline.cpu_time * 1.2) {
+            indicators.push('cpu_frequency_reduction');
+        }
+        
+        if (throttled.memory_time > baseline.memory_time * 1.15) {
+            indicators.push('memory_bus_throttling');
+        }
+        
+        if (throttled.dom_time > baseline.dom_time * 1.3) {
+            indicators.push('graphics_throttling');
+        }
+        
+        return indicators;
+    }
+    
+    async detectDesktopPowerThrottling() {
+        const baseline = await this.establishPerformanceBaseline();
+        
+        // Run a sustained test to trigger throttling
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const sustained = await this.measureThrottledPerformance();
+        const reduction = ((baseline.score - sustained.score) / baseline.score) * 100;
+        
+        return {
+            detected: reduction > 10,
+            estimated_reduction: reduction,
+            indicators: reduction > 10 ? ['sustained_performance_reduction'] : []
+        };
+    }
 }
 
 // Export the class
