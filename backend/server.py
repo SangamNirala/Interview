@@ -22345,5 +22345,369 @@ async def simulate_security_violation(
         logging.error(f"Error simulating security violation: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Violation simulation failed: {str(e)}")
 
+# ===== ANTI-EVASION DETECTION ENDPOINTS (TASK 4.1) =====
+
+# Import Anti-Evasion Detection Engine
+from evasion_detection import evasion_detection_engine
+
+# Request models for anti-evasion endpoints
+class EvasionAnalysisRequest(BaseModel):
+    fingerprint_data: Dict[str, Any]
+    session_id: Optional[str] = None
+    user_id: Optional[str] = None
+
+class VirtualizationDetectionRequest(BaseModel):
+    device_data: Dict[str, Any]
+    hardware_characteristics: Optional[Dict[str, Any]] = {}
+    software_information: Optional[Dict[str, Any]] = {}
+
+class ConsistencyValidationRequest(BaseModel):
+    historical_data: List[Dict[str, Any]]
+    current_data: Dict[str, Any]
+    session_id: Optional[str] = None
+
+class CounterMeasureRequest(BaseModel):
+    suspicious_patterns: List[Dict[str, Any]]
+    session_id: Optional[str] = None
+    severity_threshold: Optional[str] = "MEDIUM"
+
+@api_router.post("/anti-evasion/analyze-patterns")
+async def analyze_evasion_patterns(request: EvasionAnalysisRequest):
+    """
+    Analyze fingerprint data for evasion patterns using advanced pattern recognition
+    """
+    try:
+        logging.info(f"[AntiEvasion] Starting evasion pattern analysis for session: {request.session_id}")
+        
+        # Add session and user context to fingerprint data
+        enriched_data = request.fingerprint_data.copy()
+        if request.session_id:
+            enriched_data['session_id'] = request.session_id
+        if request.user_id:
+            enriched_data['user_id'] = request.user_id
+        
+        # Perform evasion analysis
+        analysis_results = await evasion_detection_engine.analyze_evasion_patterns(enriched_data)
+        
+        # Store results in database for future reference
+        await db.evasion_analyses.insert_one({
+            **analysis_results,
+            'fingerprint_data_hash': hashlib.md5(json.dumps(request.fingerprint_data, sort_keys=True).encode()).hexdigest(),
+            'stored_at': datetime.now()
+        })
+        
+        logging.info(f"[AntiEvasion] Pattern analysis completed - Risk Level: {analysis_results.get('risk_level')}")
+        
+        return {
+            "success": True,
+            "message": "Evasion pattern analysis completed successfully",
+            "analysis": analysis_results,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"[AntiEvasion] Error in pattern analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Evasion pattern analysis failed: {str(e)}")
+
+@api_router.post("/anti-evasion/detect-virtualization")
+async def detect_virtualization_hiding(request: VirtualizationDetectionRequest):
+    """
+    Detect attempts to hide virtualization environments using advanced techniques
+    """
+    try:
+        logging.info(f"[AntiEvasion] Starting virtualization detection analysis")
+        
+        # Merge device data with hardware and software characteristics
+        comprehensive_device_data = {
+            **request.device_data,
+            'hardware_characteristics': request.hardware_characteristics or {},
+            'software_information': request.software_information or {}
+        }
+        
+        # Perform virtualization detection
+        detection_results = await evasion_detection_engine.detect_virtualization_hiding(comprehensive_device_data)
+        
+        # Store detection results in database
+        await db.virtualization_detections.insert_one({
+            **detection_results,
+            'device_data_hash': hashlib.md5(json.dumps(request.device_data, sort_keys=True).encode()).hexdigest(),
+            'stored_at': datetime.now()
+        })
+        
+        logging.info(f"[AntiEvasion] Virtualization detection completed - Detected: {detection_results.get('virtualization_detected')}")
+        
+        return {
+            "success": True,
+            "message": "Virtualization detection completed successfully",
+            "detection": detection_results,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"[AntiEvasion] Error in virtualization detection: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Virtualization detection failed: {str(e)}")
+
+@api_router.post("/anti-evasion/validate-consistency")
+async def validate_fingerprint_consistency(request: ConsistencyValidationRequest):
+    """
+    Validate fingerprint consistency over time using advanced statistical analysis
+    """
+    try:
+        logging.info(f"[AntiEvasion] Starting fingerprint consistency validation")
+        
+        # Add session context to current data if provided
+        enriched_current_data = request.current_data.copy()
+        if request.session_id:
+            enriched_current_data['session_id'] = request.session_id
+        
+        # Perform consistency validation
+        validation_results = await evasion_detection_engine.validate_fingerprint_consistency(
+            request.historical_data,
+            enriched_current_data
+        )
+        
+        # Store validation results in database
+        await db.consistency_validations.insert_one({
+            **validation_results,
+            'historical_data_count': len(request.historical_data),
+            'current_data_hash': hashlib.md5(json.dumps(request.current_data, sort_keys=True).encode()).hexdigest(),
+            'stored_at': datetime.now()
+        })
+        
+        logging.info(f"[AntiEvasion] Consistency validation completed - Status: {validation_results.get('validation_status')}")
+        
+        return {
+            "success": True,
+            "message": "Fingerprint consistency validation completed successfully",
+            "validation": validation_results,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"[AntiEvasion] Error in consistency validation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Consistency validation failed: {str(e)}")
+
+@api_router.post("/anti-evasion/counter-spoofing")
+async def implement_counter_spoofing_measures(request: CounterMeasureRequest):
+    """
+    Implement counter-measures for detected spoofing patterns
+    """
+    try:
+        logging.info(f"[AntiEvasion] Implementing counter-spoofing measures for {len(request.suspicious_patterns)} patterns")
+        
+        # Filter patterns by severity threshold if specified
+        filtered_patterns = request.suspicious_patterns
+        if request.severity_threshold:
+            severity_order = {'LOW': 1, 'MEDIUM': 2, 'HIGH': 3, 'CRITICAL': 4}
+            threshold_value = severity_order.get(request.severity_threshold, 2)
+            
+            filtered_patterns = [
+                pattern for pattern in request.suspicious_patterns 
+                if severity_order.get(pattern.get('severity', 'LOW'), 1) >= threshold_value
+            ]
+        
+        # Implement counter-measures
+        countermeasure_results = await evasion_detection_engine.counter_spoofing_techniques(filtered_patterns)
+        
+        # Store countermeasure results in database
+        await db.countermeasures.insert_one({
+            **countermeasure_results,
+            'session_id': request.session_id,
+            'original_patterns_count': len(request.suspicious_patterns),
+            'filtered_patterns_count': len(filtered_patterns),
+            'severity_threshold': request.severity_threshold,
+            'stored_at': datetime.now()
+        })
+        
+        logging.info(f"[AntiEvasion] Counter-spoofing implementation completed - Measures: {len(countermeasure_results.get('active_countermeasures', []))}")
+        
+        return {
+            "success": True,
+            "message": "Counter-spoofing measures implemented successfully",
+            "countermeasures": countermeasure_results,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"[AntiEvasion] Error implementing counter-measures: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Counter-spoofing implementation failed: {str(e)}")
+
+@api_router.get("/anti-evasion/system-status")
+async def get_anti_evasion_system_status():
+    """
+    Get comprehensive status of the anti-evasion detection system
+    """
+    try:
+        logging.info("[AntiEvasion] Retrieving system status")
+        
+        # Get detection engine status
+        engine_status = {
+            'version': evasion_detection_engine.version,
+            'engine_name': evasion_detection_engine.engine_name,
+            'initialization_time': evasion_detection_engine.initialization_time.isoformat(),
+            'detected_patterns_count': len(evasion_detection_engine.detected_patterns),
+            'active_countermeasures_count': len(evasion_detection_engine.active_countermeasures),
+            'evasion_signatures_count': len(evasion_detection_engine.evasion_signatures)
+        }
+        
+        # Get database statistics
+        db_stats = {}
+        try:
+            db_stats['evasion_analyses'] = await db.evasion_analyses.count_documents({})
+            db_stats['virtualization_detections'] = await db.virtualization_detections.count_documents({})
+            db_stats['consistency_validations'] = await db.consistency_validations.count_documents({})
+            db_stats['countermeasures'] = await db.countermeasures.count_documents({})
+        except Exception as db_e:
+            logging.warning(f"[AntiEvasion] Could not retrieve database stats: {str(db_e)}")
+            db_stats = {'error': 'Database statistics unavailable'}
+        
+        # Get recent activity summary
+        recent_activity = {}
+        try:
+            # Get counts from last 24 hours
+            yesterday = datetime.now() - timedelta(days=1)
+            
+            recent_activity['analyses_24h'] = await db.evasion_analyses.count_documents({
+                'stored_at': {'$gte': yesterday}
+            })
+            recent_activity['detections_24h'] = await db.virtualization_detections.count_documents({
+                'stored_at': {'$gte': yesterday}
+            })
+            recent_activity['validations_24h'] = await db.consistency_validations.count_documents({
+                'stored_at': {'$gte': yesterday}
+            })
+            recent_activity['countermeasures_24h'] = await db.countermeasures.count_documents({
+                'stored_at': {'$gte': yesterday}
+            })
+            
+        except Exception as activity_e:
+            logging.warning(f"[AntiEvasion] Could not retrieve activity stats: {str(activity_e)}")
+            recent_activity = {'error': 'Activity statistics unavailable'}
+        
+        system_status = {
+            'system_operational': True,
+            'engine_status': engine_status,
+            'database_statistics': db_stats,
+            'recent_activity': recent_activity,
+            'system_health': 'operational',
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        logging.info("[AntiEvasion] System status retrieved successfully")
+        
+        return {
+            "success": True,
+            "message": "Anti-evasion system status retrieved successfully",
+            "status": system_status,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"[AntiEvasion] Error retrieving system status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"System status retrieval failed: {str(e)}")
+
+@api_router.post("/anti-evasion/test-detection")
+async def test_anti_evasion_detection(test_data: Optional[Dict[str, Any]] = None):
+    """
+    Test anti-evasion detection system with sample data
+    """
+    try:
+        logging.info("[AntiEvasion] Running detection system test")
+        
+        # Use provided test data or generate sample data
+        sample_fingerprint_data = test_data or {
+            'session_id': f'test_session_{int(time.time())}',
+            'canvas_fingerprint': {
+                'hash': 'test_canvas_hash_12345',
+                'hash_consistency': 0.95,
+                'timing_variance': 0.05,
+                'rendering_time': 45.2
+            },
+            'webgl_fingerprint': {
+                'renderer_info': 'Test WebGL Renderer',
+                'parameters_consistency': 0.88,
+                'extensions_count': 15
+            },
+            'user_agent': 'Mozilla/5.0 (Test) Chrome/119.0.0.0 Safari/537.36',
+            'timing_data': {
+                'performance_now_precision': 5,
+                'date_now_correlation': 0.99
+            },
+            'hardware_characteristics': {
+                'cpu_info': {'model_name': 'Test CPU Virtual'},
+                'memory_info': {'total_gb': 4}
+            }
+        }
+        
+        # Run comprehensive test
+        test_results = {
+            'test_id': f'anti_evasion_test_{int(time.time())}',
+            'test_timestamp': datetime.now().isoformat()
+        }
+        
+        # Test evasion pattern analysis
+        try:
+            pattern_analysis = await evasion_detection_engine.analyze_evasion_patterns(sample_fingerprint_data)
+            test_results['pattern_analysis'] = {
+                'success': True,
+                'evasion_score': pattern_analysis.get('overall_evasion_score', 0.0),
+                'patterns_detected': len(pattern_analysis.get('evasion_patterns', [])),
+                'risk_level': pattern_analysis.get('risk_level', 'MINIMAL')
+            }
+        except Exception as e:
+            test_results['pattern_analysis'] = {'success': False, 'error': str(e)}
+        
+        # Test virtualization detection
+        try:
+            vm_detection = await evasion_detection_engine.detect_virtualization_hiding(sample_fingerprint_data)
+            test_results['virtualization_detection'] = {
+                'success': True,
+                'virtualization_detected': vm_detection.get('virtualization_detected', False),
+                'confidence_level': vm_detection.get('confidence_level', 0.0),
+                'virtualization_type': vm_detection.get('virtualization_type', 'none')
+            }
+        except Exception as e:
+            test_results['virtualization_detection'] = {'success': False, 'error': str(e)}
+        
+        # Test consistency validation (with minimal historical data)
+        try:
+            historical_data = [sample_fingerprint_data.copy() for _ in range(3)]
+            consistency_validation = await evasion_detection_engine.validate_fingerprint_consistency(
+                historical_data, sample_fingerprint_data
+            )
+            test_results['consistency_validation'] = {
+                'success': True,
+                'consistency_score': consistency_validation.get('consistency_score', 0.0),
+                'validation_status': consistency_validation.get('validation_status', 'UNKNOWN'),
+                'anomaly_count': consistency_validation.get('anomaly_count', 0)
+            }
+        except Exception as e:
+            test_results['consistency_validation'] = {'success': False, 'error': str(e)}
+        
+        # Calculate overall test success
+        successful_tests = sum(1 for result in [
+            test_results.get('pattern_analysis', {}).get('success', False),
+            test_results.get('virtualization_detection', {}).get('success', False),
+            test_results.get('consistency_validation', {}).get('success', False)
+        ])
+        
+        test_results['overall_success'] = successful_tests == 3
+        test_results['successful_tests'] = successful_tests
+        test_results['total_tests'] = 3
+        test_results['success_rate'] = (successful_tests / 3) * 100
+        
+        logging.info(f"[AntiEvasion] Detection system test completed - Success Rate: {test_results['success_rate']}%")
+        
+        return {
+            "success": True,
+            "message": f"Anti-evasion detection test completed with {test_results['success_rate']}% success rate",
+            "test_results": test_results,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"[AntiEvasion] Error in detection system test: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Detection system test failed: {str(e)}")
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
