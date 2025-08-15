@@ -9909,97 +9909,535 @@ class SessionFingerprintCollector {
     
     async detectHeadlessBrowser() {
         try {
-            const headlessIndicators = {
-                is_headless: false,
-                confidence_score: 0,
-                detected_indicators: [],
-                phantom_js_indicators: [],
-                selenium_indicators: [],
-                puppeteer_indicators: []
+            const headlessDetection = {
+                // Headless Environment Indicators
+                environment_indicators: await this.detectHeadlessEnvironment(),
+                
+                // Automation Framework Detection
+                automation_detection: await this.detectAutomationFrameworks(),
+                
+                // WebDriver Detection
+                webdriver_detection: await this.detectWebDriver(),
+                
+                // Phantom Properties Detection
+                phantom_detection: await this.detectPhantomProperties(),
+                
+                // Chrome Headless Detection
+                chrome_headless: await this.detectChromeHeadless(),
+                
+                // Firefox Headless Detection
+                firefox_headless: await this.detectFirefoxHeadless(),
+                
+                // User Interaction Simulation Detection
+                interaction_simulation: await this.detectInteractionSimulation(),
+                
+                // Headless Behavior Patterns
+                behavior_patterns: await this.analyzeHeadlessBehaviorPatterns()
             };
             
-            let suspicionCount = 0;
+            // Calculate headless detection confidence
+            headlessDetection.is_headless = this.assessHeadlessLikelihood(headlessDetection);
+            headlessDetection.confidence = this.calculateHeadlessConfidence(headlessDetection);
             
-            // PhantomJS indicators
-            if (window.phantom) {
-                headlessIndicators.phantom_js_indicators.push('phantom_global_object');
-                suspicionCount += 3;
+            return headlessDetection;
+            
+        } catch (error) {
+            this.logger.error("Error detecting headless browser:", error);
+            return { error: error.message, is_headless: false };
+        }
+    }
+    
+    // Detect Headless Environment
+    async detectHeadlessEnvironment() {
+        try {
+            const indicators = {
+                window_properties: {},
+                screen_properties: {},
+                navigator_properties: {},
+                document_properties: {},
+                performance_properties: {}
+            };
+            
+            // Window property analysis
+            indicators.window_properties = {
+                outer_dimensions_zero: window.outerHeight === 0 || window.outerWidth === 0,
+                screen_dimensions_mismatch: screen.width !== window.screen.width,
+                missing_window_chrome: !window.chrome && navigator.userAgent.includes('Chrome'),
+                phantom_window: !!window.phantom,
+                call_phantom: !!window.callPhantom,
+                spawn_function: !!window.spawn,
+                emit_function: !!window.emit
+            };
+            
+            // Screen property analysis  
+            indicators.screen_properties = {
+                color_depth_anomaly: screen.colorDepth === 24 && screen.pixelDepth !== 24,
+                availability_mismatch: screen.availWidth > screen.width,
+                device_pixel_ratio_anomaly: window.devicePixelRatio === 1 && screen.width > 1920,
+                screen_orientation_missing: !screen.orientation
+            };
+            
+            // Navigator properties
+            indicators.navigator_properties = {
+                webdriver_present: !!navigator.webdriver,
+                languages_empty: navigator.languages.length === 0,
+                plugins_empty: navigator.plugins.length === 0,
+                mime_types_empty: navigator.mimeTypes.length === 0,
+                permissions_missing: !navigator.permissions,
+                connection_missing: !navigator.connection
+            };
+            
+            // Document properties
+            indicators.document_properties = {
+                webdriver_script_present: !!(document.__webdriver_script_fn || window.__webdriver_script_fn),
+                selenium_present: !!(document.$cdc_asdjflasutopfhvcZLmcfl_ || window.$cdc_asdjflasutopfhvcZLmcfl_),
+                phantom_navigation: !!document.__phantomas,
+                missing_hidden: typeof document.hidden === 'undefined'
+            };
+            
+            // Performance properties
+            indicators.performance_properties = {
+                memory_missing: !performance.memory,
+                timing_anomalies: this.detectTimingAnomalies(),
+                navigation_missing: !performance.navigation,
+                entries_missing: !performance.getEntries
+            };
+            
+            return indicators;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Automation Frameworks
+    async detectAutomationFrameworks() {
+        try {
+            const frameworks = {
+                selenium: {
+                    indicators: [],
+                    confidence: 0
+                },
+                puppeteer: {
+                    indicators: [],
+                    confidence: 0
+                },
+                playwright: {
+                    indicators: [],
+                    confidence: 0
+                },
+                webdriverio: {
+                    indicators: [],
+                    confidence: 0
+                }
+            };
+            
+            // Selenium detection
+            const seleniumIndicators = [
+                () => !!navigator.webdriver,
+                () => !!window.webdriver,
+                () => !!document.__webdriver_script_fn,
+                () => !!window.__webdriver_script_fn,
+                () => !!document.$cdc_asdjflasutopfhvcZLmcfl_,
+                () => !!window.$cdc_asdjflasutopfhvcZLmcfl_,
+                () => navigator.userAgent.includes('selenium'),
+                () => 'webdriver' in window || 'webdriver' in navigator
+            ];
+            
+            frameworks.selenium.indicators = seleniumIndicators.filter(indicator => {
+                try { return indicator(); } catch (e) { return false; }
+            });
+            frameworks.selenium.confidence = frameworks.selenium.indicators.length / seleniumIndicators.length;
+            
+            // Puppeteer detection  
+            const puppeteerIndicators = [
+                () => window.outerHeight === 0 && window.outerWidth === 0,
+                () => navigator.languages.length === 0,
+                () => navigator.userAgent.includes('HeadlessChrome'),
+                () => !window.chrome && navigator.userAgent.includes('Chrome'),
+                () => navigator.permissions.query.toString().includes('denied'),
+                () => navigator.plugins.length === 0
+            ];
+            
+            frameworks.puppeteer.indicators = puppeteerIndicators.filter(indicator => {
+                try { return indicator(); } catch (e) { return false; }
+            });
+            frameworks.puppeteer.confidence = frameworks.puppeteer.indicators.length / puppeteerIndicators.length;
+            
+            // Playwright detection
+            const playwrightIndicators = [
+                () => !!window.playwright,
+                () => !!window.__playwright,
+                () => navigator.userAgent.includes('playwright'),
+                () => Object.getOwnPropertyNames(window).includes('playwright')
+            ];
+            
+            frameworks.playwright.indicators = playwrightIndicators.filter(indicator => {
+                try { return indicator(); } catch (e) { return false; }
+            });
+            frameworks.playwright.confidence = frameworks.playwright.indicators.length / playwrightIndicators.length;
+            
+            // WebDriverIO detection
+            const webdriverioIndicators = [
+                () => !!window.browser,
+                () => !!window.$$,
+                () => !!window.$,
+                () => 'executeScript' in window
+            ];
+            
+            frameworks.webdriverio.indicators = webdriverioIndicators.filter(indicator => {
+                try { return indicator(); } catch (e) { return false; }
+            });
+            frameworks.webdriverio.confidence = frameworks.webdriverio.indicators.length / webdriverioIndicators.length;
+            
+            return frameworks;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect WebDriver
+    async detectWebDriver() {
+        try {
+            const webdriverDetection = {
+                webdriver_properties: [],
+                webdriver_functions: [],
+                webdriver_variables: [],
+                confidence_score: 0
+            };
+            
+            // WebDriver properties in navigator
+            if (navigator.webdriver === true) {
+                webdriverDetection.webdriver_properties.push('navigator.webdriver');
             }
             
-            if (window.callPhantom) {
-                headlessIndicators.phantom_js_indicators.push('call_phantom_function');
-                suspicionCount += 3;
+            // WebDriver properties in window
+            if (window.webdriver === true) {
+                webdriverDetection.webdriver_properties.push('window.webdriver');
             }
             
-            // Selenium indicators
-            if (window.webdriver || navigator.webdriver) {
-                headlessIndicators.selenium_indicators.push('webdriver_property');
-                suspicionCount += 3;
+            // WebDriver script functions
+            const webdriverFunctions = ['__webdriver_script_fn', '__selenium_unwrapped', '__webdriver_evaluate'];
+            for (const func of webdriverFunctions) {
+                if (document[func] || window[func]) {
+                    webdriverDetection.webdriver_functions.push(func);
+                }
             }
             
-            if (window.__webdriver_script_fn || document.__webdriver_script_fn) {
-                headlessIndicators.selenium_indicators.push('webdriver_script_function');
-                suspicionCount += 2;
+            // Chrome DevTools Protocol variables
+            const cdpVariables = ['$cdc_asdjflasutopfhvcZLmcfl_', '$chrome_asyncScriptInfo'];
+            for (const variable of cdpVariables) {
+                if (document[variable] || window[variable]) {
+                    webdriverDetection.webdriver_variables.push(variable);
+                }
             }
             
-            // Puppeteer indicators
-            if (window.outerHeight === 0 && window.outerWidth === 0) {
-                headlessIndicators.puppeteer_indicators.push('zero_outer_dimensions');
-                suspicionCount += 2;
+            // Calculate confidence
+            const totalIndicators = webdriverDetection.webdriver_properties.length + 
+                                  webdriverDetection.webdriver_functions.length + 
+                                  webdriverDetection.webdriver_variables.length;
+            webdriverDetection.confidence_score = Math.min(totalIndicators / 3, 1);
+            
+            return webdriverDetection;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Phantom Properties
+    async detectPhantomProperties() {
+        try {
+            const phantomDetection = {
+                phantom_objects: [],
+                phantom_functions: [],
+                phantom_variables: [],
+                confidence_score: 0
+            };
+            
+            // PhantomJS-specific objects
+            const phantomObjects = ['phantom', 'callPhantom', 'phantomCallback'];
+            for (const obj of phantomObjects) {
+                if (window[obj]) {
+                    phantomDetection.phantom_objects.push(obj);
+                }
             }
             
-            if (navigator.languages.length === 0) {
-                headlessIndicators.puppeteer_indicators.push('no_languages');
-                suspicionCount += 1;
+            // PhantomJS-specific functions
+            const phantomFunctions = ['_phantom', '__phantom'];
+            for (const func of phantomFunctions) {
+                if (typeof window[func] === 'function') {
+                    phantomDetection.phantom_functions.push(func);
+                }
             }
             
-            // Chrome headless specific
+            // PhantomJS-specific variables
+            if (window.Buffer) {
+                phantomDetection.phantom_variables.push('Buffer');
+            }
+            if (window.emit) {
+                phantomDetection.phantom_variables.push('emit');
+            }
+            if (window.spawn) {
+                phantomDetection.phantom_variables.push('spawn');
+            }
+            
+            // Calculate confidence
+            const totalIndicators = phantomDetection.phantom_objects.length + 
+                                  phantomDetection.phantom_functions.length + 
+                                  phantomDetection.phantom_variables.length;
+            phantomDetection.confidence_score = totalIndicators > 0 ? 1 : 0;
+            
+            return phantomDetection;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Chrome Headless
+    async detectChromeHeadless() {
+        try {
+            const chromeHeadless = {
+                user_agent_indicators: [],
+                missing_features: [],
+                behavior_anomalies: [],
+                confidence_score: 0
+            };
+            
+            // User agent indicators
             if (navigator.userAgent.includes('HeadlessChrome')) {
-                headlessIndicators.detected_indicators.push('headless_chrome_user_agent');
-                suspicionCount += 4;
+                chromeHeadless.user_agent_indicators.push('HeadlessChrome in user agent');
             }
             
-            // General headless indicators
+            // Missing features typical in headless Chrome
             if (!window.chrome && navigator.userAgent.includes('Chrome')) {
-                headlessIndicators.detected_indicators.push('missing_chrome_object');
-                suspicionCount += 1;
+                chromeHeadless.missing_features.push('window.chrome object missing');
             }
             
             if (navigator.plugins.length === 0) {
-                headlessIndicators.detected_indicators.push('no_plugins');
-                suspicionCount += 1;
+                chromeHeadless.missing_features.push('no plugins');
             }
             
-            // Permission API anomalies
-            try {
-                const permissions = await navigator.permissions.query({ name: 'notifications' });
-                if (permissions.state === 'denied' && !('Notification' in window)) {
-                    headlessIndicators.detected_indicators.push('permission_notification_anomaly');
-                    suspicionCount += 1;
-                }
-            } catch (e) {
-                // Permission API not available
+            if (navigator.languages.length === 0) {
+                chromeHeadless.missing_features.push('no languages');
             }
             
-            // WebGL context anomalies
+            // Behavior anomalies
+            if (window.outerHeight === 0 && window.outerWidth === 0) {
+                chromeHeadless.behavior_anomalies.push('zero outer dimensions');
+            }
+            
+            // Test WebGL context for software rendering
             const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl');
             if (gl) {
                 const renderer = gl.getParameter(gl.RENDERER);
-                if (renderer.includes('SwiftShader') || renderer.includes('Software')) {
-                    headlessIndicators.detected_indicators.push('software_webgl_renderer');
-                    suspicionCount += 2;
+                if (renderer && (renderer.includes('SwiftShader') || renderer.includes('Software'))) {
+                    chromeHeadless.behavior_anomalies.push('software WebGL renderer');
                 }
             }
             
-            // Calculate confidence score
-            headlessIndicators.confidence_score = Math.min(suspicionCount / 10, 1);
-            headlessIndicators.is_headless = headlessIndicators.confidence_score > 0.5;
+            // Calculate confidence
+            const totalIndicators = chromeHeadless.user_agent_indicators.length + 
+                                  chromeHeadless.missing_features.length + 
+                                  chromeHeadless.behavior_anomalies.length;
+            chromeHeadless.confidence_score = Math.min(totalIndicators / 4, 1);
             
-            return headlessIndicators;
+            return chromeHeadless;
             
         } catch (error) {
-            return { error: error.message, is_headless: false, confidence_score: 0 };
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Firefox Headless
+    async detectFirefoxHeadless() {
+        try {
+            const firefoxHeadless = {
+                missing_features: [],
+                behavior_anomalies: [],
+                confidence_score: 0
+            };
+            
+            if (navigator.userAgent.includes('Firefox')) {
+                // Missing features in headless Firefox
+                if (!('mozInnerScreenX' in window)) {
+                    firefoxHeadless.missing_features.push('mozInnerScreenX missing');
+                }
+                
+                if (!navigator.buildID) {
+                    firefoxHeadless.missing_features.push('buildID missing');
+                }
+                
+                if (navigator.plugins.length === 0) {
+                    firefoxHeadless.missing_features.push('no plugins');
+                }
+                
+                // Behavior anomalies
+                if (screen.width === 1024 && screen.height === 768) {
+                    firefoxHeadless.behavior_anomalies.push('default headless screen size');
+                }
+            }
+            
+            // Calculate confidence
+            const totalIndicators = firefoxHeadless.missing_features.length + 
+                                  firefoxHeadless.behavior_anomalies.length;
+            firefoxHeadless.confidence_score = totalIndicators > 0 ? totalIndicators / 3 : 0;
+            
+            return firefoxHeadless;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Interaction Simulation
+    async detectInteractionSimulation() {
+        try {
+            const simulation = {
+                mouse_simulation_indicators: [],
+                keyboard_simulation_indicators: [],
+                touch_simulation_indicators: [],
+                confidence_score: 0
+            };
+            
+            // Mouse simulation detection
+            let mouseEventsFired = 0;
+            const mouseHandler = () => mouseEventsFired++;
+            
+            document.addEventListener('mousemove', mouseHandler);
+            
+            // Simulate a brief delay to detect automated mouse events
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            if (mouseEventsFired === 0) {
+                simulation.mouse_simulation_indicators.push('no natural mouse movement');
+            }
+            
+            document.removeEventListener('mousemove', mouseHandler);
+            
+            // Test for synthetic events
+            try {
+                const syntheticEvent = new MouseEvent('click', { isTrusted: false });
+                if (syntheticEvent.isTrusted === false) {
+                    simulation.mouse_simulation_indicators.push('synthetic events detected');
+                }
+            } catch (e) {}
+            
+            // Keyboard simulation detection
+            if (typeof KeyboardEvent !== 'undefined') {
+                try {
+                    const keyEvent = new KeyboardEvent('keydown', { isTrusted: false });
+                    if (keyEvent.isTrusted === false) {
+                        simulation.keyboard_simulation_indicators.push('synthetic keyboard events');
+                    }
+                } catch (e) {}
+            }
+            
+            // Touch simulation detection
+            if ('TouchEvent' in window) {
+                try {
+                    const touchEvent = new TouchEvent('touchstart', { isTrusted: false });
+                    if (touchEvent.isTrusted === false) {
+                        simulation.touch_simulation_indicators.push('synthetic touch events');
+                    }
+                } catch (e) {}
+            } else if ('ontouchstart' in window) {
+                simulation.touch_simulation_indicators.push('touch events missing but touch supported');
+            }
+            
+            // Calculate confidence
+            const totalIndicators = simulation.mouse_simulation_indicators.length + 
+                                  simulation.keyboard_simulation_indicators.length + 
+                                  simulation.touch_simulation_indicators.length;
+            simulation.confidence_score = Math.min(totalIndicators / 3, 1);
+            
+            return simulation;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Headless Behavior Patterns
+    async analyzeHeadlessBehaviorPatterns() {
+        try {
+            const patterns = {
+                timing_patterns: await this.analyzeTimingPatterns(),
+                resource_loading_patterns: await this.analyzeResourceLoadingPatterns(),
+                api_usage_patterns: await this.analyzeAPIUsagePatterns(),
+                rendering_patterns: await this.analyzeRenderingPatterns(),
+                confidence_score: 0
+            };
+            
+            // Calculate overall confidence
+            const validPatterns = Object.values(patterns).filter(p => p && typeof p.confidence === 'number');
+            if (validPatterns.length > 0) {
+                patterns.confidence_score = validPatterns.reduce((sum, p) => sum + p.confidence, 0) / validPatterns.length;
+            }
+            
+            return patterns;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Assess Headless Likelihood
+    assessHeadlessLikelihood(detectionData) {
+        try {
+            let suspicionScore = 0;
+            let maxScore = 0;
+            
+            // Weight different detection methods
+            const weights = {
+                environment_indicators: 0.3,
+                automation_detection: 0.25,
+                webdriver_detection: 0.2,
+                phantom_detection: 0.15,
+                chrome_headless: 0.1
+            };
+            
+            for (const [key, weight] of Object.entries(weights)) {
+                if (detectionData[key] && typeof detectionData[key].confidence_score === 'number') {
+                    suspicionScore += detectionData[key].confidence_score * weight;
+                }
+                maxScore += weight;
+            }
+            
+            return maxScore > 0 ? (suspicionScore / maxScore) > 0.5 : false;
+            
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    // Calculate Headless Confidence
+    calculateHeadlessConfidence(detectionData) {
+        try {
+            let totalScore = 0;
+            let totalWeight = 0;
+            
+            // Aggregate confidence scores from all detection methods
+            const methods = [
+                'environment_indicators', 'automation_detection', 'webdriver_detection',
+                'phantom_detection', 'chrome_headless', 'firefox_headless',
+                'interaction_simulation', 'behavior_patterns'
+            ];
+            
+            for (const method of methods) {
+                if (detectionData[method] && typeof detectionData[method].confidence_score === 'number') {
+                    totalScore += detectionData[method].confidence_score;
+                    totalWeight += 1;
+                }
+            }
+            
+            return totalWeight > 0 ? totalScore / totalWeight : 0;
+            
+        } catch (error) {
+            return 0;
         }
     }
     
