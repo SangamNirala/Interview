@@ -2591,37 +2591,9 @@ class SessionFingerprintCollector {
             return { error: error.message, performance_level: "unknown" };
         }
     }
-                
-                // Array operations benchmark
-                array_operations: await this.benchmarkArrayOperations(),
-                
-                // Cryptographic operations benchmark
-                crypto_operations: await this.benchmarkCryptoOperations(),
-                
-                // WebAssembly benchmark
-                wasm_performance: await this.benchmarkWebAssemblyPerformance(),
-                
-                // Multi-threading benchmark
-                multi_threading: await this.benchmarkMultiThreading(),
-                
-                // Combined performance score
-                overall_performance_score: 0,
-                performance_class: 'unknown'
-            };
-            
-            // Calculate overall performance score
-            benchmarks.overall_performance_score = this.calculateOverallPerformanceScore(benchmarks);
-            benchmarks.performance_class = this.classifyPerformance(benchmarks.overall_performance_score);
-            
-            return benchmarks;
-            
-        } catch (error) {
-            return { error: error.message, overall_performance_score: 0 };
-        }
-    }
-    
+
     /**
-     * Analyze instruction set support
+     * PHASE 1.1.3: CPU instruction set support analysis
      */
     async analyzeInstructionSetSupport() {
         try {
