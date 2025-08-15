@@ -121,7 +121,6 @@ class WebSocketRealTimeMonitoringTester:
             # Connect to WebSocket
             websocket = await websockets.connect(
                 ws_url,
-                timeout=10,
                 ping_interval=20,
                 ping_timeout=10
             )
