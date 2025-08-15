@@ -11345,9 +11345,9 @@ class SessionFingerprintCollector {
             
             // Check for JIT-specific features
             try {
-                if (typeof %OptimizeFunctionOnNextCall === 'function') {
-                    jitDetection.compilation_tiers.push('v8_optimization_functions');
-                }
+                // V8 optimization functions are not accessible in normal JavaScript
+                // This is just a placeholder for potential future detection methods
+                jitDetection.compilation_tiers.push('standard_js_engine');
             } catch (e) {
                 // V8 optimization functions not available
             }
