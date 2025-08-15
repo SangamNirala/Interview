@@ -322,84 +322,86 @@ class EnhancedFingerprintingBackendTest:
             # Enhanced hardware data from the 150+ helper methods
             hardware_data = {
                 "device_data": {
-                    # WebGL Hardware Analysis (from Phase 1.1 methods)
-                    "webgl_hardware": {
-                        "gpu_vendor": "NVIDIA Corporation",
-                        "gpu_renderer": "NVIDIA GeForce RTX 3080",
-                        "webgl_capabilities": {
-                            "max_texture_size": 16384,
-                            "max_viewport_dims": [16384, 16384],
-                            "max_vertex_attribs": 16,
-                            "max_uniform_vectors": 1024
+                    "hardware": {
+                        # WebGL Hardware Analysis (from Phase 1.1 methods)
+                        "webgl_hardware": {
+                            "gpu_vendor": "NVIDIA Corporation",
+                            "gpu_renderer": "NVIDIA GeForce RTX 3080",
+                            "webgl_capabilities": {
+                                "max_texture_size": 16384,
+                                "max_viewport_dims": [16384, 16384],
+                                "max_vertex_attribs": 16,
+                                "max_uniform_vectors": 1024
+                            },
+                            "rendering_performance": {
+                                "shader_compilation_time": 2.5,
+                                "draw_call_performance": 95.2,
+                                "fps_benchmark": 144.0
+                            },
+                            "gpu_memory_estimate": {
+                                "total_memory_mb": 10240,
+                                "available_memory_mb": 8192,
+                                "memory_bandwidth_gbps": 760.0
+                            }
                         },
-                        "rendering_performance": {
-                            "shader_compilation_time": 2.5,
-                            "draw_call_performance": 95.2,
-                            "fps_benchmark": 144.0
+                        # CPU Performance Analysis (from Phase 1.1 methods)
+                        "cpu_analysis": {
+                            "architecture_detection": {
+                                "vendor": "Intel-like",
+                                "family": "x64",
+                                "instruction_sets": ["SSE4.2", "AVX2", "AES-NI"],
+                                "core_count_estimate": 8
+                            },
+                            "performance_benchmarks": {
+                                "integer_performance": 95.2,
+                                "floating_point_performance": 87.4,
+                                "vector_operations": 92.1,
+                                "cache_performance": 85.6
+                            },
+                            "thermal_analysis": {
+                                "throttling_detected": False,
+                                "performance_consistency": 0.98,
+                                "sustained_performance": 94.1
+                            }
                         },
-                        "gpu_memory_estimate": {
-                            "total_memory_mb": 10240,
-                            "available_memory_mb": 8192,
-                            "memory_bandwidth_gbps": 760.0
-                        }
-                    },
-                    # CPU Performance Analysis (from Phase 1.1 methods)
-                    "cpu_analysis": {
-                        "architecture_detection": {
-                            "vendor": "Intel-like",
-                            "family": "x64",
-                            "instruction_sets": ["SSE4.2", "AVX2", "AES-NI"],
-                            "core_count_estimate": 8
+                        # Memory and Storage Analysis (from Phase 1.1 methods)
+                        "memory_storage": {
+                            "system_memory_estimate": {
+                                "total_memory_gb": 16.0,
+                                "available_memory_gb": 12.4,
+                                "memory_bandwidth_gbps": 51.2
+                            },
+                            "storage_performance": {
+                                "sequential_read_mbps": 3500.0,
+                                "sequential_write_mbps": 3000.0,
+                                "random_read_iops": 500000,
+                                "storage_type": "NVMe SSD"
+                            },
+                            "cache_hierarchy": {
+                                "l1_cache_kb": 32,
+                                "l2_cache_kb": 256,
+                                "l3_cache_mb": 16
+                            }
                         },
-                        "performance_benchmarks": {
-                            "integer_performance": 95.2,
-                            "floating_point_performance": 87.4,
-                            "vector_operations": 92.1,
-                            "cache_performance": 85.6
-                        },
-                        "thermal_analysis": {
-                            "throttling_detected": False,
-                            "performance_consistency": 0.98,
-                            "sustained_performance": 94.1
-                        }
-                    },
-                    # Memory and Storage Analysis (from Phase 1.1 methods)
-                    "memory_storage": {
-                        "system_memory_estimate": {
-                            "total_memory_gb": 16.0,
-                            "available_memory_gb": 12.4,
-                            "memory_bandwidth_gbps": 51.2
-                        },
-                        "storage_performance": {
-                            "sequential_read_mbps": 3500.0,
-                            "sequential_write_mbps": 3000.0,
-                            "random_read_iops": 500000,
-                            "storage_type": "NVMe SSD"
-                        },
-                        "cache_hierarchy": {
-                            "l1_cache_kb": 32,
-                            "l2_cache_kb": 256,
-                            "l3_cache_mb": 16
-                        }
-                    },
-                    # Screen Analysis (from Phase 1.1 methods)
-                    "display_analysis": {
-                        "color_profile": {
-                            "color_gamut": "sRGB",
-                            "hdr_support": False,
-                            "wide_gamut": False,
-                            "bit_depth": 8
-                        },
-                        "display_capabilities": {
-                            "refresh_rate": 144,
-                            "variable_refresh": True,
-                            "display_technology": "LCD",
-                            "pixel_density": 91.79
-                        },
-                        "multi_monitor": {
-                            "screen_count": 1,
-                            "primary_display": True,
-                            "extended_desktop": False
+                        # Screen Analysis (from Phase 1.1 methods)
+                        "display_analysis": {
+                            "color_profile": {
+                                "color_gamut": "sRGB",
+                                "hdr_support": False,
+                                "wide_gamut": False,
+                                "bit_depth": 8
+                            },
+                            "display_capabilities": {
+                                "refresh_rate": 144,
+                                "variable_refresh": True,
+                                "display_technology": "LCD",
+                                "pixel_density": 91.79
+                            },
+                            "multi_monitor": {
+                                "screen_count": 1,
+                                "primary_display": True,
+                                "extended_desktop": False
+                            }
                         }
                     }
                 },
