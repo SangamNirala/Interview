@@ -20623,5 +20623,153 @@ def _calculate_session_risk_score(device_fingerprint, vm_detection, hardware_ana
         logging.error(f"Error calculating session risk score: {str(e)}")
         return 0.0
 
+# ===== PHASE 3.2: ADVANCED BROWSER & ENVIRONMENT ANALYSIS ENDPOINTS =====
+
+@api_router.post("/session-fingerprinting/analyze-browser-fingerprint")
+async def analyze_browser_fingerprint(request: BrowserFingerprintRequest):
+    """
+    🔍 ANALYZE BROWSER FINGERPRINT
+    Comprehensive browser fingerprinting analysis including user agent validation,
+    plugin enumeration, JavaScript engine characteristics, rendering engine fingerprinting,
+    and browser configuration inconsistency detection
+    
+    Expected browser_data format:
+    {
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...",
+        "browser_name": "Chrome",
+        "browser_version": "119.0.0.0",
+        "engine_name": "Blink", 
+        "engine_version": "119.0.0.0",
+        "plugins": [
+            {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": true},
+            {"name": "Native Client", "version": "119.0.0.0", "enabled": true}
+        ],
+        "mime_types": [
+            {"type": "application/pdf", "description": "Portable Document Format", "suffixes": "pdf"}
+        ],
+        "languages": ["en-US", "en", "es"],
+        "cookie_enabled": true,
+        "local_storage": true,
+        "session_storage": true,
+        "webgl_support": true,
+        "canvas_support": true,
+        "css3_support": true,
+        "svg_support": true,
+        "javascript_features": {
+            "async_support": true,
+            "webworker_support": true,
+            "websocket_support": true
+        }
+    }
+    """
+    try:
+        logging.info(f"Analyzing browser fingerprint for session: {request.session_id}")
+        
+        # Perform browser fingerprint analysis using the environment analyzer
+        result = environment_analyzer.analyze_browser_fingerprint(request.browser_data)
+        
+        if result.get('success'):
+            # Store browser analysis results in MongoDB
+            browser_analysis_doc = {
+                "session_id": request.session_id,
+                "browser_fingerprint_analysis": convert_numeric_keys_to_strings(result['browser_fingerprint_analysis']),
+                "analysis_summary": result['analysis_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into browser_fingerprint_analyses collection
+            await db.browser_fingerprint_analyses.insert_one(browser_analysis_doc)
+            
+            logging.info(f"Browser fingerprint analysis completed for session: {request.session_id}")
+            
+            return {
+                "success": True,
+                "browser_fingerprint_analysis": result,
+                "storage_confirmation": "Browser fingerprint analysis stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Browser fingerprint analysis failed'))
+        
+    except Exception as e:
+        logging.error(f"Error analyzing browser fingerprint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Browser fingerprint analysis failed: {str(e)}")
+
+@api_router.post("/session-fingerprinting/detect-automation-tools")
+async def detect_automation_tools(request: AutomationDetectionRequest):
+    """
+    🤖 DETECT AUTOMATION TOOLS
+    Advanced automation tool detection including Selenium, Puppeteer, Playwright,
+    WebDriver properties, automation framework signatures, mouse movement patterns,
+    timing analysis, and JavaScript execution anomaly detection
+    
+    Expected browser_data format (same as browser fingerprint analysis):
+    {
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...",
+        "browser_name": "Chrome",
+        "webdriver": false,
+        "webdriver_properties": ["window.navigator.webdriver"],
+        "plugins": [...],
+        "user_gestures": true,
+        "async_execution": true,
+        "event_properties": {
+            "isTrusted": true,
+            "timeStamp": 1234567890,
+            "bubbles": true,
+            "cancelable": true
+        }
+    }
+    
+    Expected behavioral_data format:
+    {
+        "mouse_data": {
+            "movements": [
+                {"x": 100, "y": 150, "timestamp": 1634567890123},
+                {"x": 102, "y": 152, "timestamp": 1634567890140}
+            ],
+            "clicks": [
+                {"target_x": 200, "target_y": 300, "actual_x": 201, "actual_y": 299, "timestamp": 1634567890500}
+            ]
+        },
+        "timing_data": {
+            "intervals": [16.7, 33.4, 50.1, 66.8],
+            "keypress_timings": [1634567890100, 1634567890200, 1634567890350]
+        }
+    }
+    """
+    try:
+        logging.info(f"Detecting automation tools for session: {request.session_id}")
+        
+        # Perform automation detection analysis using the environment analyzer
+        result = environment_analyzer.detect_automation_tools(
+            browser_data=request.browser_data,
+            behavioral_data=request.behavioral_data
+        )
+        
+        if result.get('success'):
+            # Store automation detection results in MongoDB
+            automation_detection_doc = {
+                "session_id": request.session_id,
+                "automation_detection": convert_numeric_keys_to_strings(result['automation_detection']),
+                "detection_summary": result['detection_summary'],
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert into automation_detection_analyses collection
+            await db.automation_detection_analyses.insert_one(automation_detection_doc)
+            
+            logging.info(f"Automation detection completed for session: {request.session_id} - Tools detected: {result['detection_summary']['detected_tools_count']}")
+            
+            return {
+                "success": True,
+                "automation_detection": result,
+                "storage_confirmation": "Automation detection results stored successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Automation detection failed'))
+        
+    except Exception as e:
+        logging.error(f"Error detecting automation tools: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Automation detection failed: {str(e)}")
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
