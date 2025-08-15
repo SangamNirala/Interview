@@ -699,7 +699,7 @@ class Phase32BrowserEnvironmentTester:
         # Authenticate first
         if not self.authenticate_admin():
             print("❌ Authentication failed. Cannot proceed with tests.")
-            return
+            return 0, 0
         
         # Run all tests
         tests = [
