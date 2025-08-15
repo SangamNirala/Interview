@@ -249,6 +249,7 @@ class EnhancedFingerprintingBackendTest:
             # Enhanced browser fingerprint data
             browser_data = {
                 "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+                "session_id": str(uuid.uuid4()),
                 "browser_data": {
                     "browser_characteristics": {
                         # Enhanced browser identification (from helper methods)
