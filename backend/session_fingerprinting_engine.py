@@ -5258,7 +5258,9 @@ device_fingerprinting_engine = DeviceFingerprintingEngine()
 # Export main class for use in server.py
 __all__ = [
     'DeviceFingerprintingEngine',
-    'DeviceFingerprint',
+    'DeviceFingerprint', 
     'DeviceTrackingRecord',
-    'device_fingerprinting_engine'
+    'device_fingerprinting_engine',
+    'EnvironmentAnalyzer',
+    'environment_analyzer'
 ]
