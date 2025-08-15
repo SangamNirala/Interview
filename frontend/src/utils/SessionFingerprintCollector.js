@@ -13737,9 +13737,11 @@ class SessionFingerprintCollector {
     
     async testGyroscopeSensor() {
         try {
-            const sensor = new Gyroscope({ frequency: 60 });
-            
-            return await new Promise((resolve, reject) => {
+            // Check if Gyroscope is available in window
+            if (typeof window !== 'undefined' && 'Gyroscope' in window) {
+                const sensor = new window.Gyroscope({ frequency: 60 });
+                
+                return await new Promise((resolve, reject) => {
                 let readings = [];
                 const timeout = setTimeout(() => reject(new Error('Gyroscope timeout')), 2000);
                 
