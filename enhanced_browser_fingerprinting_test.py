@@ -21,6 +21,10 @@ import uuid
 import time
 from datetime import datetime
 import sys
+import urllib3
+
+# Disable SSL warnings for testing
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Backend URL from environment
 BACKEND_URL = "https://browser-dna-collect.preview.emergentagent.com/api"
