@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://fingerprint-cluster.preview.emergentagent.com
+URL: https://fprintshield.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 
