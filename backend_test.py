@@ -1,5 +1,755 @@
 #!/usr/bin/env python3
 """
+🎯 PHASE 3.2: ADVANCED BROWSER & ENVIRONMENT ANALYSIS TESTING
+Comprehensive testing of Browser Fingerprint Analysis and Automation Tools Detection endpoints
+
+Test Coverage:
+1. Browser Fingerprint Analysis (POST /api/session-fingerprinting/analyze-browser-fingerprint)
+2. Automation Tools Detection (POST /api/session-fingerprinting/detect-automation-tools)
+
+Testing Scenarios:
+- Normal browser fingerprints vs suspicious ones
+- Clean browser sessions vs automation tool signatures  
+- Various browser types (Chrome, Firefox, Safari, Edge)
+- Different automation tools and patterns
+- Edge cases with malformed data
+"""
+
+import requests
+import json
+import uuid
+from datetime import datetime
+import time
+
+# Configuration
+BACKEND_URL = "https://tracking-backend.preview.emergentagent.com/api"
+ADMIN_PASSWORD = "Game@1234"
+
+class Phase32BrowserEnvironmentTester:
+    def __init__(self):
+        self.session = requests.Session()
+        self.test_results = []
+        self.session_id = str(uuid.uuid4())
+        
+    def log_result(self, test_name, success, details, response_data=None):
+        """Log test result with details"""
+        result = {
+            "test": test_name,
+            "success": success,
+            "details": details,
+            "timestamp": datetime.now().isoformat(),
+            "response_data": response_data
+        }
+        self.test_results.append(result)
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status} {test_name}: {details}")
+        
+    def authenticate_admin(self):
+        """Authenticate as admin"""
+        try:
+            response = self.session.post(
+                f"{BACKEND_URL}/admin/login",
+                json={"password": ADMIN_PASSWORD}
+            )
+            
+            if response.status_code == 200:
+                self.log_result("Admin Authentication", True, f"Successfully authenticated (Status: {response.status_code})")
+                return True
+            else:
+                self.log_result("Admin Authentication", False, f"Authentication failed (Status: {response.status_code})")
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Authentication", False, f"Authentication error: {str(e)}")
+            return False
+
+    def test_browser_fingerprint_analysis_normal_chrome(self):
+        """Test browser fingerprint analysis with normal Chrome browser data"""
+        try:
+            # Normal Chrome browser fingerprint data
+            browser_data = {
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "browser_name": "Chrome",
+                "browser_version": "119.0.0.0",
+                "engine_name": "Blink",
+                "engine_version": "119.0.0.0",
+                "plugins": [
+                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True},
+                    {"name": "Native Client", "version": "119.0.0.0", "enabled": True},
+                    {"name": "Widevine Content Decryption Module", "version": "4.10.2557.0", "enabled": True}
+                ],
+                "mime_types": [
+                    {"type": "application/pdf", "description": "Portable Document Format", "suffixes": "pdf"},
+                    {"type": "text/html", "description": "HTML Document", "suffixes": "html,htm"},
+                    {"type": "image/jpeg", "description": "JPEG Image", "suffixes": "jpg,jpeg"}
+                ],
+                "languages": ["en-US", "en", "es"],
+                "cookie_enabled": True,
+                "local_storage": True,
+                "session_storage": True,
+                "webgl_support": True,
+                "canvas_support": True,
+                "css3_support": True,
+                "svg_support": True,
+                "javascript_features": {
+                    "async_support": True,
+                    "webworker_support": True,
+                    "websocket_support": True,
+                    "es6_support": True,
+                    "fetch_api": True
+                },
+                "screen_resolution": "1920x1080",
+                "color_depth": 24,
+                "timezone": "America/New_York",
+                "platform": "Win32"
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_chrome_normal",
+                "browser_data": browser_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    analysis = data.get('browser_fingerprint_analysis', {})
+                    self.log_result(
+                        "Browser Fingerprint Analysis - Normal Chrome", 
+                        True, 
+                        f"Analysis completed successfully. Analysis keys: {list(analysis.keys())}"
+                    )
+                    return True
+                else:
+                    self.log_result("Browser Fingerprint Analysis - Normal Chrome", False, f"Analysis failed: {data}")
+                    return False
+            else:
+                self.log_result("Browser Fingerprint Analysis - Normal Chrome", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Browser Fingerprint Analysis - Normal Chrome", False, f"Exception: {str(e)}")
+            return False
+
+    def test_browser_fingerprint_analysis_suspicious_firefox(self):
+        """Test browser fingerprint analysis with suspicious Firefox browser data"""
+        try:
+            # Suspicious Firefox browser fingerprint with inconsistencies
+            browser_data = {
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
+                "browser_name": "Firefox",
+                "browser_version": "119.0",
+                "engine_name": "Gecko",
+                "engine_version": "109.0",
+                "plugins": [
+                    # Suspicious: Chrome plugins in Firefox
+                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True},
+                    {"name": "Native Client", "version": "119.0.0.0", "enabled": True}
+                ],
+                "mime_types": [
+                    {"type": "application/pdf", "description": "Portable Document Format", "suffixes": "pdf"},
+                    {"type": "text/html", "description": "HTML Document", "suffixes": "html,htm"}
+                ],
+                "languages": ["en-US", "en"],
+                "cookie_enabled": True,
+                "local_storage": True,
+                "session_storage": True,
+                "webgl_support": False,  # Suspicious: WebGL disabled
+                "canvas_support": False,  # Suspicious: Canvas disabled
+                "css3_support": True,
+                "svg_support": True,
+                "javascript_features": {
+                    "async_support": True,
+                    "webworker_support": False,  # Suspicious: WebWorker disabled
+                    "websocket_support": True,
+                    "es6_support": True,
+                    "fetch_api": True
+                },
+                "screen_resolution": "800x600",  # Suspicious: Low resolution
+                "color_depth": 16,  # Suspicious: Low color depth
+                "timezone": "UTC",  # Suspicious: Generic timezone
+                "platform": "Linux x86_64"  # Inconsistent with Windows user agent
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_firefox_suspicious",
+                "browser_data": browser_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    analysis = data.get('browser_fingerprint_analysis', {})
+                    self.log_result(
+                        "Browser Fingerprint Analysis - Suspicious Firefox", 
+                        True, 
+                        f"Suspicious analysis completed. Analysis keys: {list(analysis.keys())}"
+                    )
+                    return True
+                else:
+                    self.log_result("Browser Fingerprint Analysis - Suspicious Firefox", False, f"Analysis failed: {data}")
+                    return False
+            else:
+                self.log_result("Browser Fingerprint Analysis - Suspicious Firefox", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Browser Fingerprint Analysis - Suspicious Firefox", False, f"Exception: {str(e)}")
+            return False
+
+    def test_browser_fingerprint_analysis_safari(self):
+        """Test browser fingerprint analysis with Safari browser data"""
+        try:
+            # Safari browser fingerprint data
+            browser_data = {
+                "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+                "browser_name": "Safari",
+                "browser_version": "17.1",
+                "engine_name": "WebKit",
+                "engine_version": "605.1.15",
+                "plugins": [
+                    {"name": "WebKit built-in PDF", "version": "17.1", "enabled": True}
+                ],
+                "mime_types": [
+                    {"type": "application/pdf", "description": "Portable Document Format", "suffixes": "pdf"},
+                    {"type": "text/html", "description": "HTML Document", "suffixes": "html,htm"},
+                    {"type": "image/png", "description": "PNG Image", "suffixes": "png"}
+                ],
+                "languages": ["en-US", "en"],
+                "cookie_enabled": True,
+                "local_storage": True,
+                "session_storage": True,
+                "webgl_support": True,
+                "canvas_support": True,
+                "css3_support": True,
+                "svg_support": True,
+                "javascript_features": {
+                    "async_support": True,
+                    "webworker_support": True,
+                    "websocket_support": True,
+                    "es6_support": True,
+                    "fetch_api": True
+                },
+                "screen_resolution": "2560x1600",
+                "color_depth": 24,
+                "timezone": "America/Los_Angeles",
+                "platform": "MacIntel"
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_safari_normal",
+                "browser_data": browser_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    analysis = data.get('browser_fingerprint_analysis', {})
+                    self.log_result(
+                        "Browser Fingerprint Analysis - Safari", 
+                        True, 
+                        f"Safari analysis completed. Analysis keys: {list(analysis.keys())}"
+                    )
+                    return True
+                else:
+                    self.log_result("Browser Fingerprint Analysis - Safari", False, f"Analysis failed: {data}")
+                    return False
+            else:
+                self.log_result("Browser Fingerprint Analysis - Safari", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Browser Fingerprint Analysis - Safari", False, f"Exception: {str(e)}")
+            return False
+
+    def test_automation_detection_clean_session(self):
+        """Test automation detection with clean human-like session data"""
+        try:
+            # Clean browser data (no automation signatures)
+            browser_data = {
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "browser_name": "Chrome",
+                "webdriver": False,
+                "webdriver_properties": [],
+                "plugins": [
+                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True},
+                    {"name": "Native Client", "version": "119.0.0.0", "enabled": True}
+                ],
+                "user_gestures": True,
+                "async_execution": True,
+                "event_properties": {
+                    "isTrusted": True,
+                    "timeStamp": 1634567890123,
+                    "bubbles": True,
+                    "cancelable": True
+                },
+                "navigator_properties": {
+                    "webdriver": False,
+                    "permissions": True,
+                    "notification": True
+                }
+            }
+            
+            # Human-like behavioral data
+            behavioral_data = {
+                "mouse_data": {
+                    "movements": [
+                        {"x": 100, "y": 150, "timestamp": 1634567890123},
+                        {"x": 102, "y": 152, "timestamp": 1634567890140},
+                        {"x": 105, "y": 155, "timestamp": 1634567890157},
+                        {"x": 108, "y": 158, "timestamp": 1634567890174},
+                        {"x": 112, "y": 162, "timestamp": 1634567890191}
+                    ],
+                    "clicks": [
+                        {"target_x": 200, "target_y": 300, "actual_x": 201, "actual_y": 299, "timestamp": 1634567890500}
+                    ]
+                },
+                "timing_data": {
+                    "intervals": [16.7, 33.4, 50.1, 66.8, 83.5],  # Natural human timing
+                    "keypress_timings": [1634567890100, 1634567890200, 1634567890350, 1634567890520]
+                }
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_clean_session",
+                "browser_data": browser_data,
+                "behavioral_data": behavioral_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    detection = data.get('automation_detection', {})
+                    self.log_result(
+                        "Automation Detection - Clean Session", 
+                        True, 
+                        f"Clean session analysis completed. Detection keys: {list(detection.keys())}"
+                    )
+                    return True
+                else:
+                    self.log_result("Automation Detection - Clean Session", False, f"Detection failed: {data}")
+                    return False
+            else:
+                self.log_result("Automation Detection - Clean Session", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Automation Detection - Clean Session", False, f"Exception: {str(e)}")
+            return False
+
+    def test_automation_detection_selenium_signatures(self):
+        """Test automation detection with Selenium automation signatures"""
+        try:
+            # Browser data with Selenium signatures
+            browser_data = {
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "browser_name": "Chrome",
+                "webdriver": True,  # Selenium signature
+                "webdriver_properties": [
+                    "window.navigator.webdriver",
+                    "window.chrome.runtime",
+                    "window.callPhantom"
+                ],
+                "plugins": [
+                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True}
+                ],
+                "user_gestures": False,  # Automation signature
+                "async_execution": False,  # Automation signature
+                "event_properties": {
+                    "isTrusted": False,  # Automation signature
+                    "timeStamp": 1634567890123,
+                    "bubbles": True,
+                    "cancelable": True
+                },
+                "navigator_properties": {
+                    "webdriver": True,  # Selenium signature
+                    "permissions": False,
+                    "notification": False
+                },
+                "automation_indicators": [
+                    "selenium",
+                    "webdriver",
+                    "chrome_driver"
+                ]
+            }
+            
+            # Robotic behavioral data
+            behavioral_data = {
+                "mouse_data": {
+                    "movements": [
+                        {"x": 100, "y": 150, "timestamp": 1634567890123},
+                        {"x": 200, "y": 300, "timestamp": 1634567890124},  # Instant movement
+                        {"x": 300, "y": 450, "timestamp": 1634567890125}   # Instant movement
+                    ],
+                    "clicks": [
+                        {"target_x": 200, "target_y": 300, "actual_x": 200, "actual_y": 300, "timestamp": 1634567890500}  # Perfect accuracy
+                    ]
+                },
+                "timing_data": {
+                    "intervals": [16.0, 16.0, 16.0, 16.0],  # Perfect timing (robotic)
+                    "keypress_timings": [1634567890100, 1634567890200, 1634567890300, 1634567890400]  # Regular intervals
+                }
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_selenium_session",
+                "browser_data": browser_data,
+                "behavioral_data": behavioral_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    detection = data.get('automation_detection', {})
+                    self.log_result(
+                        "Automation Detection - Selenium Signatures", 
+                        True, 
+                        f"Selenium detection completed. Detection keys: {list(detection.keys())}"
+                    )
+                    return True
+                else:
+                    self.log_result("Automation Detection - Selenium Signatures", False, f"Detection failed: {data}")
+                    return False
+            else:
+                self.log_result("Automation Detection - Selenium Signatures", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Automation Detection - Selenium Signatures", False, f"Exception: {str(e)}")
+            return False
+
+    def test_automation_detection_puppeteer_signatures(self):
+        """Test automation detection with Puppeteer automation signatures"""
+        try:
+            # Browser data with Puppeteer signatures
+            browser_data = {
+                "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/119.0.0.0 Safari/537.36",
+                "browser_name": "Chrome",
+                "webdriver": False,
+                "webdriver_properties": [
+                    "window.chrome.app",
+                    "window.chrome.runtime"
+                ],
+                "plugins": [],  # Headless Chrome has no plugins
+                "user_gestures": False,
+                "async_execution": True,
+                "event_properties": {
+                    "isTrusted": False,
+                    "timeStamp": 1634567890123,
+                    "bubbles": True,
+                    "cancelable": True
+                },
+                "navigator_properties": {
+                    "webdriver": False,
+                    "permissions": False,
+                    "notification": False,
+                    "headless": True  # Puppeteer signature
+                },
+                "automation_indicators": [
+                    "puppeteer",
+                    "headless_chrome",
+                    "chrome_headless"
+                ]
+            }
+            
+            # Puppeteer-like behavioral data
+            behavioral_data = {
+                "mouse_data": {
+                    "movements": [],  # No mouse movements in headless
+                    "clicks": [
+                        {"target_x": 200, "target_y": 300, "actual_x": 200, "actual_y": 300, "timestamp": 1634567890500}
+                    ]
+                },
+                "timing_data": {
+                    "intervals": [0, 0, 0, 0],  # No timing variation
+                    "keypress_timings": [1634567890100, 1634567890101, 1634567890102, 1634567890103]  # Rapid succession
+                }
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_puppeteer_session",
+                "browser_data": browser_data,
+                "behavioral_data": behavioral_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    detection = data.get('automation_detection', {})
+                    self.log_result(
+                        "Automation Detection - Puppeteer Signatures", 
+                        True, 
+                        f"Puppeteer detection completed. Detection keys: {list(detection.keys())}"
+                    )
+                    return True
+                else:
+                    self.log_result("Automation Detection - Puppeteer Signatures", False, f"Detection failed: {data}")
+                    return False
+            else:
+                self.log_result("Automation Detection - Puppeteer Signatures", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Automation Detection - Puppeteer Signatures", False, f"Exception: {str(e)}")
+            return False
+
+    def test_automation_detection_playwright_signatures(self):
+        """Test automation detection with Playwright automation signatures"""
+        try:
+            # Browser data with Playwright signatures
+            browser_data = {
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "browser_name": "Chrome",
+                "webdriver": False,
+                "webdriver_properties": [
+                    "window.playwright",
+                    "window.__playwright"
+                ],
+                "plugins": [
+                    {"name": "Chrome PDF Plugin", "version": "119.0.0.0", "enabled": True}
+                ],
+                "user_gestures": False,
+                "async_execution": True,
+                "event_properties": {
+                    "isTrusted": False,
+                    "timeStamp": 1634567890123,
+                    "bubbles": True,
+                    "cancelable": True
+                },
+                "navigator_properties": {
+                    "webdriver": False,
+                    "permissions": True,
+                    "notification": True,
+                    "playwright": True  # Playwright signature
+                },
+                "automation_indicators": [
+                    "playwright",
+                    "pw_automation"
+                ]
+            }
+            
+            # Playwright-like behavioral data
+            behavioral_data = {
+                "mouse_data": {
+                    "movements": [
+                        {"x": 100, "y": 150, "timestamp": 1634567890123},
+                        {"x": 200, "y": 300, "timestamp": 1634567890200}  # Linear movement
+                    ],
+                    "clicks": [
+                        {"target_x": 200, "target_y": 300, "actual_x": 200, "actual_y": 300, "timestamp": 1634567890500}
+                    ]
+                },
+                "timing_data": {
+                    "intervals": [100, 100, 100, 100],  # Consistent timing
+                    "keypress_timings": [1634567890100, 1634567890200, 1634567890300, 1634567890400]
+                }
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_playwright_session",
+                "browser_data": browser_data,
+                "behavioral_data": behavioral_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
+                json=payload
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    detection = data.get('automation_detection', {})
+                    self.log_result(
+                        "Automation Detection - Playwright Signatures", 
+                        True, 
+                        f"Playwright detection completed. Detection keys: {list(detection.keys())}"
+                    )
+                    return True
+                else:
+                    self.log_result("Automation Detection - Playwright Signatures", False, f"Detection failed: {data}")
+                    return False
+            else:
+                self.log_result("Automation Detection - Playwright Signatures", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Automation Detection - Playwright Signatures", False, f"Exception: {str(e)}")
+            return False
+
+    def test_browser_fingerprint_edge_cases(self):
+        """Test browser fingerprint analysis with malformed/edge case data"""
+        try:
+            # Malformed browser data
+            browser_data = {
+                "user_agent": "",  # Empty user agent
+                "browser_name": None,  # Null browser name
+                "browser_version": "invalid_version",
+                "plugins": "not_an_array",  # Wrong type
+                "mime_types": [],  # Empty array
+                "languages": None,  # Null languages
+                "javascript_features": {
+                    "invalid_feature": "invalid_value"
+                }
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_edge_case",
+                "browser_data": browser_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
+                json=payload
+            )
+            
+            # Should handle gracefully (either 200 with error handling or 500 with proper error)
+            if response.status_code in [200, 500]:
+                self.log_result(
+                    "Browser Fingerprint Analysis - Edge Cases", 
+                    True, 
+                    f"Edge case handled gracefully (Status: {response.status_code})"
+                )
+                return True
+            else:
+                self.log_result("Browser Fingerprint Analysis - Edge Cases", False, f"Unexpected status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Browser Fingerprint Analysis - Edge Cases", False, f"Exception: {str(e)}")
+            return False
+
+    def test_automation_detection_edge_cases(self):
+        """Test automation detection with malformed/edge case data"""
+        try:
+            # Malformed data
+            browser_data = {
+                "user_agent": 12345,  # Wrong type
+                "webdriver": "maybe",  # Wrong type
+                "plugins": None,  # Null plugins
+                "event_properties": "not_an_object"  # Wrong type
+            }
+            
+            behavioral_data = {
+                "mouse_data": "invalid",  # Wrong type
+                "timing_data": None  # Null timing data
+            }
+            
+            payload = {
+                "session_id": self.session_id + "_automation_edge_case",
+                "browser_data": browser_data,
+                "behavioral_data": behavioral_data
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/session-fingerprinting/detect-automation-tools",
+                json=payload
+            )
+            
+            # Should handle gracefully
+            if response.status_code in [200, 500]:
+                self.log_result(
+                    "Automation Detection - Edge Cases", 
+                    True, 
+                    f"Edge case handled gracefully (Status: {response.status_code})"
+                )
+                return True
+            else:
+                self.log_result("Automation Detection - Edge Cases", False, f"Unexpected status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Automation Detection - Edge Cases", False, f"Exception: {str(e)}")
+            return False
+
+    def run_all_tests(self):
+        """Run all Phase 3.2 browser and environment analysis tests"""
+        print("🎯 STARTING PHASE 3.2: ADVANCED BROWSER & ENVIRONMENT ANALYSIS TESTING")
+        print("=" * 80)
+        
+        # Authenticate first
+        if not self.authenticate_admin():
+            print("❌ Authentication failed. Cannot proceed with tests.")
+            return
+        
+        # Run all tests
+        tests = [
+            self.test_browser_fingerprint_analysis_normal_chrome,
+            self.test_browser_fingerprint_analysis_suspicious_firefox,
+            self.test_browser_fingerprint_analysis_safari,
+            self.test_automation_detection_clean_session,
+            self.test_automation_detection_selenium_signatures,
+            self.test_automation_detection_puppeteer_signatures,
+            self.test_automation_detection_playwright_signatures,
+            self.test_browser_fingerprint_edge_cases,
+            self.test_automation_detection_edge_cases
+        ]
+        
+        passed = 0
+        total = len(tests)
+        
+        for test in tests:
+            if test():
+                passed += 1
+            time.sleep(1)  # Brief pause between tests
+        
+        # Print summary
+        print("\n" + "=" * 80)
+        print("🎯 PHASE 3.2 TESTING SUMMARY")
+        print("=" * 80)
+        print(f"Total Tests: {total}")
+        print(f"Passed: {passed}")
+        print(f"Failed: {total - passed}")
+        print(f"Success Rate: {(passed/total)*100:.1f}%")
+        
+        # Print detailed results
+        print("\n📊 DETAILED TEST RESULTS:")
+        for result in self.test_results:
+            status = "✅" if result['success'] else "❌"
+            print(f"{status} {result['test']}: {result['details']}")
+        
+        return passed, total
+
+if __name__ == "__main__":
+    tester = Phase32BrowserEnvironmentTester()
+    passed, total = tester.run_all_tests()
+    
+    if passed == total:
+        print(f"\n🎉 ALL TESTS PASSED! Phase 3.2 functionality is working perfectly.")
+    else:
+        print(f"\n⚠️  {total - passed} test(s) failed. Please review the results above.")
+
+#!/usr/bin/env python3
+"""
 Comprehensive Backend Testing for Placement Preparation Assessment Reports and Token-Based Visibility Logic
 Testing the complete end-to-end workflow for placement preparation vs admin token separation
 """
