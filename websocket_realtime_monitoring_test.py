@@ -785,7 +785,7 @@ class WebSocketRealTimeMonitoringTester:
             try:
                 invalid_ws_url = f"{self.ws_base_url}/ws/fingerprinting/invalid_session_123"
                 websocket = await asyncio.wait_for(
-                    websockets.connect(invalid_ws_url, timeout=5),
+                    websockets.connect(invalid_ws_url),
                     timeout=10.0
                 )
                 
