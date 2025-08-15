@@ -941,6 +941,402 @@ class SessionFingerprintCollector {
     }
     
     /**
+     * Font Rendering Analysis Methods
+     */
+    async enumerateSystemFonts() {
+        try {
+            const fontEnumeration = {
+                detected_fonts: [],
+                font_families: {},
+                web_fonts: [],
+                system_font_characteristics: {},
+                font_loading_behavior: {}
+            };
+            
+            // Standard font detection using canvas measurements
+            const testFonts = [
+                // System fonts
+                'Arial', 'Helvetica', 'Times New Roman', 'Times', 'Courier New', 'Courier',
+                'Verdana', 'Georgia', 'Palatino', 'Garamond', 'Bookman', 'Comic Sans MS',
+                'Trebuchet MS', 'Arial Black', 'Impact', 'Lucida Sans Unicode', 'Tahoma',
+                'Lucida Console', 'Monaco', 'Bradley Hand ITC',
+                
+                // Platform specific
+                'Segoe UI', 'Microsoft Sans Serif', 'Calibri', 'Cambria', 'Consolas', // Windows
+                'Helvetica Neue', 'Menlo', 'SF Pro Display', 'SF Pro Text', // macOS
+                'DejaVu Sans', 'Ubuntu', 'Liberation Sans', 'Noto Sans', // Linux
+                
+                // Mobile fonts
+                'Roboto', 'Droid Sans', 'Noto Color Emoji', 'Apple Color Emoji',
+                
+                // Asian fonts
+                'Hiragino Sans', 'Yu Gothic', 'Meiryo', 'SimSun', 'Microsoft YaHei',
+                'Malgun Gothic', 'Gulim', 'Dotum'
+            ];
+            
+            // Font detection through measurement differences
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const testString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            
+            // Baseline measurements with generic fonts
+            const baselineFonts = ['serif', 'sans-serif', 'monospace'];
+            const baselines = {};
+            
+            for (const baseline of baselineFonts) {
+                ctx.font = `72px ${baseline}`;
+                baselines[baseline] = ctx.measureText(testString).width;
+            }
+            
+            // Test each font
+            for (const font of testFonts) {
+                try {
+                    ctx.font = `72px "${font}", sans-serif`;
+                    const width = ctx.measureText(testString).width;
+                    
+                    // Compare with baseline to detect font presence
+                    const isAvailable = width !== baselines['sans-serif'];
+                    if (isAvailable) {
+                        fontEnumeration.detected_fonts.push({
+                            name: font,
+                            width: width,
+                            baseline_difference: width - baselines['sans-serif']
+                        });
+                    }
+                } catch (e) {
+                    // Font test failed
+                }
+            }
+            
+            // Font family classification
+            fontEnumeration.font_families = this.classifyFontFamilies(fontEnumeration.detected_fonts);
+            
+            // Web font detection
+            fontEnumeration.web_fonts = await this.detectWebFonts();
+            
+            // System font characteristics
+            fontEnumeration.system_font_characteristics = await this.analyzeSystemFontCharacteristics();
+            
+            // Font loading behavior
+            fontEnumeration.font_loading_behavior = await this.analyzeFontLoadingBehavior();
+            
+            canvas.remove();
+            return fontEnumeration;
+            
+        } catch (error) {
+            return { error: error.message, detected_fonts: [] };
+        }
+    }
+    
+    async analyzeFontRendering() {
+        try {
+            const rendering = {
+                subpixel_rendering: {},
+                antialiasing_analysis: {},
+                hinting_characteristics: {},
+                font_smoothing: {},
+                color_emoji_support: {}
+            };
+            
+            // Subpixel rendering analysis
+            rendering.subpixel_rendering = await this.analyzeSubpixelRendering();
+            
+            // Antialiasing detection
+            rendering.antialiasing_analysis = await this.analyzeAntialiasing();
+            
+            // Font hinting characteristics
+            rendering.hinting_characteristics = await this.analyzeHinting();
+            
+            // Font smoothing detection
+            rendering.font_smoothing = await this.analyzeFontSmoothing();
+            
+            // Color emoji support
+            rendering.color_emoji_support = await this.analyzeColorEmojiSupport();
+            
+            return rendering;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async measureTextPrecision() {
+        try {
+            const precision = {
+                measurement_consistency: {},
+                fractional_metrics: {},
+                kerning_analysis: {},
+                ligature_support: {},
+                baseline_metrics: {}
+            };
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Measurement consistency test
+            const testText = 'The quick brown fox jumps over the lazy dog';
+            const measurements = [];
+            
+            for (let i = 0; i < 10; i++) {
+                ctx.font = '16px Arial';
+                measurements.push(ctx.measureText(testText).width);
+            }
+            
+            precision.measurement_consistency = {
+                measurements: measurements,
+                is_consistent: measurements.every(m => m === measurements[0]),
+                variance: this.calculateVariance(measurements),
+                coefficient_of_variation: this.calculateCoefficientOfVariation(measurements)
+            };
+            
+            // Fractional metrics test
+            precision.fractional_metrics = await this.testFractionalMetrics(ctx);
+            
+            // Kerning analysis
+            precision.kerning_analysis = await this.analyzeKerning(ctx);
+            
+            // Ligature support test
+            precision.ligature_support = await this.testLigatureSupport(ctx);
+            
+            // Baseline metrics
+            precision.baseline_metrics = await this.analyzeBaselineMetrics(ctx);
+            
+            canvas.remove();
+            return precision;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async analyzeFontSubstitution() {
+        try {
+            const substitution = {
+                fallback_behavior: {},
+                missing_glyph_handling: {},
+                unicode_support: {},
+                font_matching_algorithm: {}
+            };
+            
+            // Fallback behavior test
+            substitution.fallback_behavior = await this.testFallbackBehavior();
+            
+            // Missing glyph handling
+            substitution.missing_glyph_handling = await this.testMissingGlyphHandling();
+            
+            // Unicode support analysis
+            substitution.unicode_support = await this.analyzeUnicodeSupport();
+            
+            // Font matching algorithm characteristics
+            substitution.font_matching_algorithm = await this.analyzeFontMatching();
+            
+            return substitution;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
+     * API Availability Profiling Methods
+     */
+    async scanWebAPIs() {
+        try {
+            const apiScan = {
+                core_apis: {},
+                experimental_apis: {},
+                deprecated_apis: {},
+                vendor_prefixed_apis: {},
+                permission_apis: {}
+            };
+            
+            // Core Web APIs
+            apiScan.core_apis = {
+                // Storage APIs
+                localStorage: 'localStorage' in window,
+                sessionStorage: 'sessionStorage' in window,
+                indexedDB: 'indexedDB' in window,
+                webSQL: 'openDatabase' in window,
+                cacheAPI: 'caches' in window,
+                
+                // Network APIs
+                fetch: 'fetch' in window,
+                xmlHttpRequest: 'XMLHttpRequest' in window,
+                webSocket: 'WebSocket' in window,
+                serverSentEvents: 'EventSource' in window,
+                webRTC: 'RTCPeerConnection' in window,
+                
+                // Graphics APIs
+                canvas2D: this.testCanvas2DSupport(),
+                webGL: this.testWebGLSupport(),
+                webGL2: this.testWebGL2Support(),
+                webGPU: 'gpu' in navigator,
+                
+                // Audio/Video APIs
+                webAudio: 'AudioContext' in window || 'webkitAudioContext' in window,
+                mediaDevices: 'mediaDevices' in navigator,
+                mediaRecorder: 'MediaRecorder' in window,
+                webRTCMedia: 'getUserMedia' in navigator || 'webkitGetUserMedia' in navigator,
+                
+                // Worker APIs
+                webWorkers: 'Worker' in window,
+                sharedWorkers: 'SharedWorker' in window,
+                serviceWorkers: 'serviceWorker' in navigator,
+                
+                // Crypto APIs
+                cryptoSubtle: 'crypto' in window && 'subtle' in crypto,
+                webCrypto: 'crypto' in window,
+                
+                // File APIs
+                fileAPI: 'File' in window,
+                fileReader: 'FileReader' in window,
+                blob: 'Blob' in window,
+                
+                // Geolocation
+                geolocation: 'geolocation' in navigator,
+                
+                // Notifications
+                notifications: 'Notification' in window,
+                
+                // Payment APIs
+                paymentRequest: 'PaymentRequest' in window,
+                
+                // WebAssembly
+                webAssembly: 'WebAssembly' in window
+            };
+            
+            // Experimental APIs
+            apiScan.experimental_apis = await this.scanExperimentalAPIs();
+            
+            // Deprecated APIs
+            apiScan.deprecated_apis = await this.scanDeprecatedAPIs();
+            
+            // Vendor-prefixed APIs
+            apiScan.vendor_prefixed_apis = await this.scanVendorPrefixedAPIs();
+            
+            // Permission APIs
+            apiScan.permission_apis = await this.scanPermissionAPIs();
+            
+            return apiScan;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async detectExperimentalFeatures() {
+        try {
+            const experimental = {
+                origin_trials: {},
+                flag_enabled_features: {},
+                webkit_experimental: {},
+                mozilla_experimental: {},
+                chromium_experimental: {}
+            };
+            
+            // Origin Trials (Chrome/Edge)
+            experimental.origin_trials = await this.detectOriginTrials();
+            
+            // Flag-enabled features
+            experimental.flag_enabled_features = await this.detectFlagEnabledFeatures();
+            
+            // WebKit experimental features
+            experimental.webkit_experimental = await this.detectWebKitExperimental();
+            
+            // Mozilla experimental features
+            experimental.mozilla_experimental = await this.detectMozillaExperimental();
+            
+            // Chromium experimental features
+            experimental.chromium_experimental = await this.detectChromiumExperimental();
+            
+            return experimental;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    async analyzePermissionAPI() {
+        try {
+            const permissionAnalysis = {
+                permission_support: false,
+                available_permissions: [],
+                permission_states: {},
+                permission_behavior: {}
+            };
+            
+            if ('permissions' in navigator) {
+                permissionAnalysis.permission_support = true;
+                
+                // Test various permissions
+                const testPermissions = [
+                    'geolocation', 'notifications', 'camera', 'microphone', 
+                    'midi', 'persistent-storage', 'push', 'background-sync'
+                ];
+                
+                for (const permission of testPermissions) {
+                    try {
+                        const result = await navigator.permissions.query({ name: permission });
+                        permissionAnalysis.available_permissions.push(permission);
+                        permissionAnalysis.permission_states[permission] = result.state;
+                    } catch (e) {
+                        // Permission not supported or query failed
+                    }
+                }
+                
+                // Analyze permission behavior
+                permissionAnalysis.permission_behavior = await this.analyzePermissionBehavior();
+            }
+            
+            return permissionAnalysis;
+            
+        } catch (error) {
+            return { error: error.message, permission_support: false };
+        }
+    }
+    
+    async analyzeFeaturePolicy() {
+        try {
+            const featurePolicyAnalysis = {
+                feature_policy_support: false,
+                permissions_policy_support: false,
+                allowed_features: [],
+                feature_policy_behavior: {}
+            };
+            
+            // Feature Policy (deprecated)
+            if ('featurePolicy' in document) {
+                featurePolicyAnalysis.feature_policy_support = true;
+                try {
+                    const allowedFeatures = document.featurePolicy.allowedFeatures();
+                    featurePolicyAnalysis.allowed_features = allowedFeatures;
+                } catch (e) {
+                    // Method not available
+                }
+            }
+            
+            // Permissions Policy (modern)
+            if ('permissionsPolicy' in document) {
+                featurePolicyAnalysis.permissions_policy_support = true;
+                try {
+                    const allowedFeatures = document.permissionsPolicy.allowedFeatures();
+                    featurePolicyAnalysis.allowed_features = allowedFeatures;
+                } catch (e) {
+                    // Method not available
+                }
+            }
+            
+            // Feature policy behavior analysis
+            featurePolicyAnalysis.feature_policy_behavior = await this.analyzeFeaturePolicyBehavior();
+            
+            return featurePolicyAnalysis;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    /**
      * Get WebGL supported formats
      */
     getWebGLSupportedFormats(gl) {
