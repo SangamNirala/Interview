@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Device Fingerprint Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-left: 4px solid #007cba; background: #f5f5f5; }
+        .success { border-color: #28a745; }
+        .error { border-color: #dc3545; }
+        .log { background: #000; color: #00ff00; padding: 15px; margin: 10px 0; height: 300px; overflow-y: auto; }
+        button { padding: 10px 20px; background: #007cba; color: white; border: none; cursor: pointer; }
+        button:hover { background: #005a8b; }
+    </style>
+</head>
+<body>
+    <h1>🔧 PHASE 1.1: Enhanced Device Fingerprint Test</h1>
+    <p>This page tests the enhanced collectDeviceFingerprint() method implementation.</p>
+    
+    <button onclick="runTest()">🚀 Run Enhanced Device Fingerprint Test</button>
+    <button onclick="clearLog()">🗑️ Clear Log</button>
+    
+    <div id="results"></div>
+    <div id="log" class="log"></div>
+    
+    <script type="module">
+        import SessionFingerprintCollector from './frontend/src/utils/SessionFingerprintCollector.js';
+        
+        let logElement;
+        
+        function log(message, type = 'info') {
+            if (!logElement) logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff4444' : type === 'success' ? '#44ff44' : '#00ff00';
+            logElement.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function clearLog() {
+            if (logElement) logElement.innerHTML = '';
+        }
+        
+        async function runTest() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            clearLog();
+            
+            try {
+                log('🔧 Starting Enhanced Device Fingerprint Test...', 'info');
+                
+                const collector = new SessionFingerprintCollector();
+                log('✅ SessionFingerprintCollector instance created', 'success');
+                
+                log('🏃 Running collectDeviceFingerprint()...', 'info');
+                const startTime = performance.now();
+                const deviceFingerprint = await collector.collectDeviceFingerprint();
+                const endTime = performance.now();
+                
+                log(`✅ Device fingerprint collection completed in ${(endTime - startTime).toFixed(2)}ms`, 'success');
+                
+                // Analyze results
+                const results = analyzeResults(deviceFingerprint);
+                displayResults(results);
+                
+                log(`📊 Analysis complete. Found ${results.categoriesImplemented} implemented categories`, 'success');
+                
+            } catch (error) {
+                log(`❌ Test failed: ${error.message}`, 'error');
+                console.error('Full error:', error);
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'test-result error';
+                errorDiv.innerHTML = `<strong>❌ Test Failed:</strong> ${error.message}`;
+                resultsDiv.appendChild(errorDiv);
+            }
+        }
+        
+        function analyzeResults(deviceFingerprint) {
+            const results = {
+                categoriesImplemented: 0,
+                totalCategories: 5,
+                categories: {},
+                metadata: deviceFingerprint.collection_metadata || {}
+            };
+            
+            // Analyze hardware enumeration
+            if (deviceFingerprint.hardware_enumeration) {
+                results.categories.hardware_enumeration = {
+                    implemented: true,
+                    subCategories: Object.keys(deviceFingerprint.hardware_enumeration).length,
+                    details: deviceFingerprint.hardware_enumeration
+                };
+                results.categoriesImplemented++;
+                log(`✅ Hardware Enumeration: ${results.categories.hardware_enumeration.subCategories} sub-categories`, 'success');
+            }
+            
+            // Analyze screen analysis
+            if (deviceFingerprint.enhanced_screen_analysis) {
+                results.categories.enhanced_screen_analysis = {
+                    implemented: true,
+                    subCategories: Object.keys(deviceFingerprint.enhanced_screen_analysis).length,
+                    details: deviceFingerprint.enhanced_screen_analysis
+                };
+                results.categoriesImplemented++;
+                log(`✅ Enhanced Screen Analysis: ${results.categories.enhanced_screen_analysis.subCategories} sub-categories`, 'success');
+            }
+            
+            // Analyze CPU profiling
+            if (deviceFingerprint.cpu_performance_profiling) {
+                results.categories.cpu_performance_profiling = {
+                    implemented: true,
+                    subCategories: Object.keys(deviceFingerprint.cpu_performance_profiling).length,
+                    details: deviceFingerprint.cpu_performance_profiling
+                };
+                results.categoriesImplemented++;
+                log(`✅ CPU Performance Profiling: ${results.categories.cpu_performance_profiling.subCategories} sub-categories`, 'success');
+            }
+            
+            // Analyze memory/storage
+            if (deviceFingerprint.memory_storage_analysis) {
+                results.categories.memory_storage_analysis = {
+                    implemented: true,
+                    subCategories: Object.keys(deviceFingerprint.memory_storage_analysis).length,
+                    details: deviceFingerprint.memory_storage_analysis
+                };
+                results.categoriesImplemented++;
+                log(`✅ Memory & Storage Analysis: ${results.categories.memory_storage_analysis.subCategories} sub-categories`, 'success');
+            }
+            
+            // Analyze sensors
+            if (deviceFingerprint.device_sensor_enumeration) {
+                results.categories.device_sensor_enumeration = {
+                    implemented: true,
+                    subCategories: Object.keys(deviceFingerprint.device_sensor_enumeration).length,
+                    details: deviceFingerprint.device_sensor_enumeration
+                };
+                results.categoriesImplemented++;
+                log(`✅ Device Sensor Enumeration: ${results.categories.device_sensor_enumeration.subCategories} sub-categories`, 'success');
+            }
+            
+            return results;
+        }
+        
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            
+            // Overall summary
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = `test-result ${results.categoriesImplemented === results.totalCategories ? 'success' : 'error'}`;
+            summaryDiv.innerHTML = `
+                <h3>📊 Test Results Summary</h3>
+                <p><strong>Implementation Progress:</strong> ${results.categoriesImplemented}/${results.totalCategories} categories implemented</p>
+                <p><strong>Success Rate:</strong> ${((results.categoriesImplemented / results.totalCategories) * 100).toFixed(1)}%</p>
+                <p><strong>Phase:</strong> ${results.metadata.implementation_phase || 'Unknown'}</p>
+                <p><strong>Version:</strong> ${results.metadata.fingerprint_version || 'Unknown'}</p>
+            `;
+            resultsDiv.appendChild(summaryDiv);
+            
+            // Category details
+            for (const [categoryName, categoryData] of Object.entries(results.categories)) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = `test-result ${categoryData.implemented ? 'success' : 'error'}`;
+                
+                const categoryTitle = categoryName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                categoryDiv.innerHTML = `
+                    <h4>${categoryData.implemented ? '✅' : '❌'} ${categoryTitle}</h4>
+                    <p>Sub-categories: ${categoryData.subCategories}</p>
+                    <details>
+                        <summary>View Details</summary>
+                        <pre>${JSON.stringify(categoryData.details, null, 2)}</pre>
+                    </details>
+                `;
+                resultsDiv.appendChild(categoryDiv);
+            }
+        }
+        
+        // Make functions globally available
+        window.runTest = runTest;
+        window.clearLog = clearLog;
+        
+        log('🔧 Enhanced Device Fingerprint Test Ready', 'success');
+        log('Click "Run Enhanced Device Fingerprint Test" to start', 'info');
+        
+    </script>
+</body>
+</html>
