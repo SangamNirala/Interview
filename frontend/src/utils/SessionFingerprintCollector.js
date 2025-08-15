@@ -2398,22 +2398,43 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Get display capability analysis
+     * PHASE 1.1.2: Comprehensive display capability analysis
      */
-    async getDisplayCapabilityAnalysis() {
+    getDisplayCapabilityAnalysis() {
         try {
             const displayCapabilities = {
-                // Resolution information
-                physical_resolution: {
-                    width: screen.width,
-                    height: screen.height,
-                    available_width: screen.availWidth,
-                    available_height: screen.availHeight
-                },
+                // Refresh Rate Detection
+                refresh_rate: this.detectRefreshRate(),
                 
-                // Pixel density
-                device_pixel_ratio: window.devicePixelRatio || 1,
-                pixel_density_analysis: this.analyzePixelDensity(),
+                // Variable Refresh Rate Support
+                vrr_support: this.detectVariableRefreshRate(),
+                
+                // Display Technology Detection
+                display_technology: this.detectDisplayTechnology(),
+                
+                // Pixel Density Analysis
+                pixel_density: this.calculateAdvancedPixelDensity(),
+                
+                // Aspect Ratio Analysis
+                aspect_ratio_analysis: this.analyzeAspectRatioSupport(),
+                
+                // Orientation Capabilities
+                orientation_capabilities: this.analyzeOrientationCapabilities(),
+                
+                // Multi-Display Detection
+                multi_display: this.detectMultiDisplayConfiguration(),
+                
+                // Screen Scaling Detection
+                scaling_analysis: this.analyzeScreenScaling()
+            };
+            
+            return displayCapabilities;
+            
+        } catch (error) {
+            this.logger.error("Error analyzing display capabilities:", error);
+            return { error: error.message, basic_display_info: this.getBasicDisplayInfo() };
+        }
+    }
                 
                 // Refresh rate detection
                 refresh_rate: await this.detectRefreshRate(),
