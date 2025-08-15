@@ -20278,6 +20278,22 @@ class TimezoneAnalysisRequest(BaseModel):
     timezone_data: Dict[str, Any]
     session_id: str
 
+class SessionContinuityRequest(BaseModel):
+    session_data: Dict[str, Any]
+    session_id: str
+
+class SessionManipulationRequest(BaseModel):
+    session_data: Dict[str, Any]
+    session_id: str
+
+class SessionAuthenticityRequest(BaseModel):
+    session_data: Dict[str, Any]
+    session_id: str
+
+class SessionAnomalyRequest(BaseModel):
+    session_data: Dict[str, Any]
+    session_id: str
+
 @api_router.post("/session-fingerprinting/generate-device-signature")
 async def generate_device_signature(request: DeviceFingerprintRequest):
     """
