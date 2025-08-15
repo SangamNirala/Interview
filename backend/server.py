@@ -20270,6 +20270,14 @@ class AutomationDetectionRequest(BaseModel):
     behavioral_data: Optional[Dict[str, Any]] = None
     session_id: str
 
+class NetworkAnalysisRequest(BaseModel):
+    network_data: Dict[str, Any]
+    session_id: str
+
+class TimezoneAnalysisRequest(BaseModel):
+    timezone_data: Dict[str, Any]
+    session_id: str
+
 @api_router.post("/session-fingerprinting/generate-device-signature")
 async def generate_device_signature(request: DeviceFingerprintRequest):
     """
