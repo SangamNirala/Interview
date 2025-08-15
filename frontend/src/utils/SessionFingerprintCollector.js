@@ -9223,63 +9223,374 @@ class SessionFingerprintCollector {
     
     async detectBrowserBuild() {
         try {
-            const buildInfo = {
-                build_id: 'unknown',
-                build_date: null,
-                version_details: {},
-                browser_specific: {}
+            const buildDetection = {
+                // Build Number Extraction
+                build_number: await this.extractBuildNumber(),
+                
+                // Compilation Flags Detection
+                compilation_flags: await this.detectCompilationFlags(),
+                
+                // Debug vs Release Detection
+                build_type: await this.detectBuildType(),
+                
+                // Browser Channel Detection (stable, beta, dev, canary)
+                release_channel: await this.detectReleaseChannel(),
+                
+                // Custom Build Detection
+                custom_build: await this.detectCustomBuild(),
+                
+                // Enterprise Build Detection
+                enterprise_build: await this.detectEnterpriseBuild(),
+                
+                // Build Date Estimation
+                build_date: await this.estimateBuildDate()
             };
             
-            // Chrome-specific build detection
-            if (window.chrome) {
-                buildInfo.browser_specific.chrome = {
-                    runtime_version: window.chrome.runtime ? 'present' : 'absent',
-                    csi_info: window.chrome.csi ? await this.analyzeChromeCSI() : null,
-                    load_times: window.chrome.loadTimes ? window.chrome.loadTimes() : null
-                };
-            }
-            
-            // Firefox-specific build detection
-            if (navigator.userAgent.includes('Firefox')) {
-                buildInfo.browser_specific.firefox = {
-                    build_id: navigator.buildID || 'unknown',
-                    oscpu: navigator.oscpu || 'unknown',
-                    product_sub: navigator.productSub || 'unknown'
-                };
-            }
-            
-            // Safari-specific build detection
-            if (navigator.userAgent.includes('Safari')) {
-                buildInfo.browser_specific.safari = {
-                    webkit_version: this.extractWebKitVersion(),
-                    safari_version: this.extractSafariVersion(),
-                    apple_specific: 'ApplePaySession' in window
-                };
-            }
-            
-            // Edge-specific build detection
-            if (navigator.userAgent.includes('Edg')) {
-                buildInfo.browser_specific.edge = {
-                    edge_html_version: navigator.userAgent.match(/Edge\/([0-9.]+)/),
-                    chromium_based: navigator.userAgent.includes('Edg/'),
-                    webview: 'Windows' in window
-                };
-            }
-            
-            // General version detection through feature support
-            buildInfo.version_details = {
-                es6_support: this.detectES6Support(),
-                webgl_version: this.getWebGLVersion(),
-                canvas_api_level: this.getCanvasAPILevel(),
-                fetch_api: 'fetch' in window,
-                promise_support: 'Promise' in window,
-                async_await: this.detectAsyncAwaitSupport()
-            };
-            
-            return buildInfo;
+            return buildDetection;
             
         } catch (error) {
-            return { error: error.message, build_id: 'detection_failed' };
+            this.logger.error("Error detecting browser build:", error);
+            return { error: error.message, build_info: "unknown" };
+        }
+    }
+    
+    // Extract Build Number
+    async extractBuildNumber() {
+        try {
+            const ua = navigator.userAgent;
+            
+            // Chrome build number extraction
+            const chromeMatch = ua.match(/Chrome\/([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)/);
+            if (chromeMatch) {
+                return {
+                    browser: 'chrome',
+                    major: chromeMatch[1],
+                    minor: chromeMatch[2],  
+                    build: chromeMatch[3],
+                    patch: chromeMatch[4],
+                    full_version: `${chromeMatch[1]}.${chromeMatch[2]}.${chromeMatch[3]}.${chromeMatch[4]}`
+                };
+            }
+            
+            // Firefox build number
+            const firefoxMatch = ua.match(/Firefox\/([0-9]+)\.([0-9]+)/);
+            if (firefoxMatch && navigator.buildID) {
+                return {
+                    browser: 'firefox',
+                    version: `${firefoxMatch[1]}.${firefoxMatch[2]}`,
+                    build_id: navigator.buildID,
+                    build_date: this.parseBuildID(navigator.buildID)
+                };
+            }
+            
+            // Safari build extraction
+            const safariMatch = ua.match(/Version\/([0-9]+)\.([0-9]+)\.?([0-9]+)?.*Safari\/([0-9]+\.?[0-9]*)/);
+            if (safariMatch) {
+                return {
+                    browser: 'safari',
+                    version: `${safariMatch[1]}.${safariMatch[2]}.${safariMatch[3] || '0'}`,
+                    webkit_build: safariMatch[4]
+                };
+            }
+            
+            return { browser: 'unknown', extraction_method: 'user_agent_parsing' };
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Compilation Flags
+    async detectCompilationFlags() {
+        try {
+            const flags = {
+                debug_mode: false,
+                optimization_level: 'unknown',
+                feature_flags: [],
+                experimental_features: []
+            };
+            
+            // Debug mode detection
+            if (typeof __DEV__ !== 'undefined' || window.chrome?.runtime?.lastError) {
+                flags.debug_mode = true;
+            }
+            
+            // V8 optimization detection
+            if (window.performance?.mark && window.performance?.measure) {
+                try {
+                    window.performance.mark('optimization-test');
+                    flags.optimization_level = 'optimized';
+                } catch (e) {
+                    flags.optimization_level = 'basic';
+                }
+            }
+            
+            // Feature flag detection
+            if ('OffscreenCanvas' in window) flags.feature_flags.push('offscreen_canvas');
+            if ('SharedArrayBuffer' in window) flags.feature_flags.push('shared_array_buffer');
+            if ('BigInt' in window) flags.feature_flags.push('big_int');
+            if ('WeakRef' in window) flags.experimental_features.push('weak_ref');
+            if ('FinalizationRegistry' in window) flags.experimental_features.push('finalization_registry');
+            
+            return flags;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Build Type
+    async detectBuildType() {
+        try {
+            const indicators = {
+                is_debug: false,
+                is_release: false,
+                is_development: false,
+                confidence: 0,
+                detection_methods: []
+            };
+            
+            // Debug build indicators
+            if (window.console?.debug?.toString().includes('native')) {
+                indicators.is_debug = true;
+                indicators.detection_methods.push('native_console_debug');
+                indicators.confidence += 0.3;
+            }
+            
+            // Development indicators
+            if (window.location.hostname === 'localhost' || window.location.hostname.includes('dev')) {
+                indicators.is_development = true;
+                indicators.detection_methods.push('development_hostname');
+                indicators.confidence += 0.2;
+            }
+            
+            // Release build indicators (performance optimizations)
+            if (typeof __PRODUCTION__ !== 'undefined' || !window.console?.trace) {
+                indicators.is_release = true;
+                indicators.detection_methods.push('production_optimizations');
+                indicators.confidence += 0.4;
+            }
+            
+            // Source map detection
+            try {
+                const error = new Error();
+                if (error.stack && error.stack.includes('.js:')) {
+                    indicators.is_development = true;
+                    indicators.detection_methods.push('source_maps_present');
+                    indicators.confidence += 0.3;
+                }
+            } catch (e) {}
+            
+            return indicators;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Release Channel
+    async detectReleaseChannel() {
+        try {
+            const ua = navigator.userAgent;
+            const channels = {
+                channel: 'stable',
+                confidence: 0.5,
+                indicators: []
+            };
+            
+            // Chrome channel detection
+            if (ua.includes('Chrome')) {
+                if (ua.includes('dev')) {
+                    channels.channel = 'dev';
+                    channels.confidence = 0.9;
+                    channels.indicators.push('dev_user_agent');
+                } else if (ua.includes('beta')) {
+                    channels.channel = 'beta';
+                    channels.confidence = 0.9;
+                    channels.indicators.push('beta_user_agent');
+                } else if (ua.includes('canary')) {
+                    channels.channel = 'canary';
+                    channels.confidence = 0.9;
+                    channels.indicators.push('canary_user_agent');
+                } else {
+                    // Check for unstable version numbers
+                    const version = ua.match(/Chrome\/([0-9]+)/);
+                    if (version && parseInt(version[1]) > 120) {
+                        channels.channel = 'beta';
+                        channels.confidence = 0.6;
+                        channels.indicators.push('high_version_number');
+                    }
+                }
+            }
+            
+            // Firefox channel detection
+            if (ua.includes('Firefox')) {
+                if (navigator.buildID) {
+                    const buildDate = this.parseBuildID(navigator.buildID);
+                    const daysSinceBuild = (new Date() - buildDate) / (1000 * 60 * 60 * 24);
+                    
+                    if (daysSinceBuild < 7) {
+                        channels.channel = 'nightly';
+                        channels.confidence = 0.8;
+                        channels.indicators.push('recent_build_date');
+                    } else if (daysSinceBuild < 30) {
+                        channels.channel = 'beta';
+                        channels.confidence = 0.7;
+                        channels.indicators.push('moderate_build_age');
+                    }
+                }
+            }
+            
+            return channels;
+            
+        } catch (error) {
+            return { error: error.message, channel: 'unknown' };
+        }
+    }
+    
+    // Detect Custom Build
+    async detectCustomBuild() {
+        try {
+            const customIndicators = {
+                is_custom: false,
+                confidence: 0,
+                indicators: [],
+                build_source: 'official'
+            };
+            
+            const ua = navigator.userAgent;
+            
+            // Custom build patterns
+            const customPatterns = [
+                /Chromium/,
+                /Ungoogled/,
+                /Iridium/,
+                /SRWare/,
+                /Vivaldi/,
+                /Brave/
+            ];
+            
+            for (const pattern of customPatterns) {
+                if (pattern.test(ua)) {
+                    customIndicators.is_custom = true;
+                    customIndicators.confidence += 0.8;
+                    customIndicators.indicators.push(`custom_browser_${pattern.source}`);
+                    customIndicators.build_source = 'third_party';
+                }
+            }
+            
+            // Check for missing standard features that indicate custom builds
+            if (navigator.userAgent.includes('Chrome') && !window.chrome) {
+                customIndicators.is_custom = true;
+                customIndicators.confidence += 0.6;
+                customIndicators.indicators.push('missing_chrome_object');
+            }
+            
+            // Check for additional custom properties
+            if (window.opr) {
+                customIndicators.indicators.push('opera_custom_object');
+                customIndicators.confidence += 0.3;
+            }
+            
+            return customIndicators;
+            
+        } catch (error) {
+            return { error: error.message, is_custom: false };
+        }
+    }
+    
+    // Detect Enterprise Build
+    async detectEnterpriseBuild() {
+        try {
+            const enterpriseIndicators = {
+                is_enterprise: false,
+                confidence: 0,
+                indicators: [],
+                enterprise_features: []
+            };
+            
+            // Chrome Enterprise indicators
+            if (window.chrome?.enterprise) {
+                enterpriseIndicators.is_enterprise = true;
+                enterpriseIndicators.confidence += 0.9;
+                enterpriseIndicators.indicators.push('chrome_enterprise_api');
+            }
+            
+            // Policy-controlled features
+            if (document.featurePolicy || document.permissionsPolicy) {
+                const policies = document.featurePolicy?.getAllowlistForFeature?.('camera') || [];
+                if (policies.length > 0) {
+                    enterpriseIndicators.enterprise_features.push('feature_policy_restrictions');
+                    enterpriseIndicators.confidence += 0.3;
+                }
+            }
+            
+            // Enterprise extension detection
+            try {
+                if (window.chrome?.runtime?.getManifest) {
+                    enterpriseIndicators.enterprise_features.push('enterprise_extension_api');
+                    enterpriseIndicators.confidence += 0.4;
+                }
+            } catch (e) {}
+            
+            // Domain-based detection
+            if (window.location.hostname.includes('corp') || 
+                window.location.hostname.includes('enterprise') ||
+                window.location.hostname.includes('company')) {
+                enterpriseIndicators.indicators.push('enterprise_domain');
+                enterpriseIndicators.confidence += 0.2;
+            }
+            
+            return enterpriseIndicators;
+            
+        } catch (error) {
+            return { error: error.message, is_enterprise: false };
+        }
+    }
+    
+    // Estimate Build Date
+    async estimateBuildDate() {
+        try {
+            const estimation = {
+                estimated_date: null,
+                confidence: 0,
+                estimation_method: 'unknown',
+                sources: []
+            };
+            
+            // Firefox build ID parsing
+            if (navigator.buildID) {
+                estimation.estimated_date = this.parseBuildID(navigator.buildID);
+                estimation.confidence = 0.9;
+                estimation.estimation_method = 'firefox_build_id';
+                estimation.sources.push('navigator.buildID');
+            }
+            
+            // Chrome version-based estimation
+            const ua = navigator.userAgent;
+            const chromeMatch = ua.match(/Chrome\/([0-9]+)/);
+            if (chromeMatch) {
+                const majorVersion = parseInt(chromeMatch[1]);
+                estimation.estimated_date = this.estimateChromeBuildDate(majorVersion);
+                estimation.confidence = 0.7;
+                estimation.estimation_method = 'chrome_version_mapping';
+                estimation.sources.push('chrome_version');
+            }
+            
+            // WebKit build date estimation for Safari
+            const webkitMatch = ua.match(/WebKit\/([0-9]+)/);
+            if (webkitMatch) {
+                const buildNumber = parseInt(webkitMatch[1]);
+                estimation.estimated_date = this.estimateWebKitBuildDate(buildNumber);
+                estimation.confidence = 0.6;
+                estimation.estimation_method = 'webkit_build_number';
+                estimation.sources.push('webkit_version');
+            }
+            
+            return estimation;
+            
+        } catch (error) {
+            return { error: error.message, estimated_date: null };
         }
     }
     
