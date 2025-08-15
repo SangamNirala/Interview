@@ -4022,6 +4022,1236 @@ class DeviceFingerprintingEngine:
         return 0.85
 
 
+class EnvironmentAnalyzer:
+    """
+    🌐 PHASE 3.2: ADVANCED BROWSER & ENVIRONMENT ANALYSIS
+    Advanced Browser and Environment Analysis for enhanced session fingerprinting
+    
+    This class provides comprehensive analysis of browser characteristics and automation detection
+    to identify sophisticated evasion techniques and fraudulent session behavior.
+    """
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        
+        # Browser fingerprinting patterns and signatures
+        self.browser_patterns = {
+            'user_agent_inconsistencies': [
+                'Chrome.*Safari.*Edge',  # Inconsistent browser claims
+                'Mozilla.*Firefox.*Chrome',  # Mixed browser signatures
+                'Windows.*Linux',  # OS inconsistencies in UA
+                'Mobile.*Desktop',  # Device type inconsistencies
+            ],
+            'plugin_signatures': {
+                'chrome': [
+                    'Chrome PDF Plugin', 'Native Client', 'Widevine Content Decryption Module'
+                ],
+                'firefox': [
+                    'Shockwave Flash', 'Java(TM) Platform', 'Windows Media Player'
+                ],
+                'safari': [
+                    'QuickTime Plug-in', 'Java Applet Plug-in', 'Silverlight Plug-in'
+                ],
+                'edge': [
+                    'Microsoft Edge PDF Plugin', 'Windows Media Player'
+                ]
+            },
+            'javascript_engines': {
+                'chrome': 'V8',
+                'firefox': 'SpiderMonkey', 
+                'safari': 'JavaScriptCore',
+                'edge': 'Chakra'
+            },
+            'rendering_engines': {
+                'chrome': 'Blink',
+                'firefox': 'Gecko',
+                'safari': 'WebKit',
+                'edge': 'EdgeHTML'
+            }
+        }
+        
+        # Automation tool detection patterns
+        self.automation_signatures = {
+            'selenium_indicators': [
+                'webdriver', 'selenium', 'phantomjs', 'chromedriver', 'geckodriver',
+                'selenium-webdriver', 'webdriver-manager', '__selenium_unwrapped',
+                '__webdriver_script_fn', '__driver_evaluate', '__webdriver_evaluate',
+                '_selenium', 'calledSelenium', '_Selenium_IDE_Recorder'
+            ],
+            'puppeteer_indicators': [
+                'puppeteer', 'headless', '__puppeteer_evaluation_script__',
+                'Runtime.evaluate', 'Page.addScriptTag', 'chromium',
+                '__nightmare', 'HeadlessChrome'
+            ],
+            'playwright_indicators': [
+                'playwright', '__playwright', 'pwBrowserContext',
+                'pwPage', 'pwFrame', 'pwWorker', 'pwConsoleAPI'
+            ],
+            'webdriver_properties': [
+                'window.navigator.webdriver',
+                'window.chrome.runtime.onConnect',
+                'window.chrome.runtime.onMessage', 
+                'document.$cdc_asdjflasutopfhvcZLmcfl_',
+                'window.callPhantom', 'window._phantom'
+            ],
+            'automation_behavior_patterns': {
+                'mouse_patterns': {
+                    'linear_movement': {'threshold': 0.95, 'risk': 'high'},
+                    'perfect_clicks': {'threshold': 0.90, 'risk': 'medium'},
+                    'no_acceleration': {'threshold': 0.85, 'risk': 'high'},
+                    'instant_hover': {'threshold': 0.80, 'risk': 'medium'}
+                },
+                'timing_patterns': {
+                    'uniform_intervals': {'threshold': 0.90, 'risk': 'high'},
+                    'no_human_delay': {'threshold': 0.85, 'risk': 'high'},
+                    'perfect_typing': {'threshold': 0.75, 'risk': 'medium'}
+                },
+                'javascript_execution': {
+                    'synchronous_only': {'threshold': 0.80, 'risk': 'medium'},
+                    'no_user_gestures': {'threshold': 0.70, 'risk': 'low'},
+                    'missing_event_properties': {'threshold': 0.85, 'risk': 'high'}
+                }
+            }
+        }
+        
+        self.logger.info("EnvironmentAnalyzer initialized successfully")
+    
+    def analyze_browser_fingerprint(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        🔍 ANALYZE BROWSER FINGERPRINT
+        Comprehensive browser fingerprinting analysis including user agent validation,
+        plugin enumeration, JavaScript engine characteristics, and configuration consistency
+        
+        Args:
+            browser_data: Dictionary containing browser characteristics
+            
+        Returns:
+            Dict containing comprehensive browser fingerprint analysis
+        """
+        try:
+            self.logger.info("Starting comprehensive browser fingerprint analysis")
+            
+            analysis_result = {
+                'browser_identification': {},
+                'user_agent_analysis': {},
+                'plugin_analysis': {},
+                'javascript_engine_analysis': {},
+                'rendering_engine_analysis': {},
+                'configuration_consistency': {},
+                'fingerprint_uniqueness': {},
+                'risk_assessment': {},
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            # 1. User Agent Analysis and Validation
+            user_agent_analysis = self._analyze_user_agent(browser_data.get('user_agent', ''))
+            analysis_result['user_agent_analysis'] = user_agent_analysis
+            
+            # 2. Browser Plugin and Extension Enumeration
+            plugin_analysis = self._analyze_browser_plugins(browser_data.get('plugins', []))
+            analysis_result['plugin_analysis'] = plugin_analysis
+            
+            # 3. JavaScript Engine Characteristics
+            js_engine_analysis = self._analyze_javascript_engine(browser_data)
+            analysis_result['javascript_engine_analysis'] = js_engine_analysis
+            
+            # 4. Rendering Engine Fingerprinting
+            rendering_analysis = self._analyze_rendering_engine(browser_data)
+            analysis_result['rendering_engine_analysis'] = rendering_analysis
+            
+            # 5. Browser Configuration Inconsistency Detection
+            consistency_analysis = self._detect_browser_inconsistencies(browser_data)
+            analysis_result['configuration_consistency'] = consistency_analysis
+            
+            # 6. Browser Identification and Classification
+            browser_id = self._identify_browser_type(browser_data)
+            analysis_result['browser_identification'] = browser_id
+            
+            # 7. Fingerprint Uniqueness and Entropy Calculation
+            uniqueness_score = self._calculate_fingerprint_uniqueness(browser_data)
+            analysis_result['fingerprint_uniqueness'] = uniqueness_score
+            
+            # 8. Risk Assessment and Threat Classification
+            risk_assessment = self._assess_browser_fingerprint_risk(analysis_result)
+            analysis_result['risk_assessment'] = risk_assessment
+            
+            self.logger.info(f"Browser fingerprint analysis completed successfully with risk level: {risk_assessment.get('risk_level', 'UNKNOWN')}")
+            
+            return {
+                'success': True,
+                'browser_fingerprint_analysis': analysis_result,
+                'analysis_summary': {
+                    'browser_type': browser_id.get('detected_browser', 'Unknown'),
+                    'trust_score': risk_assessment.get('trust_score', 0.5),
+                    'risk_level': risk_assessment.get('risk_level', 'MEDIUM'),
+                    'inconsistencies_found': consistency_analysis.get('inconsistency_count', 0),
+                    'unique_characteristics': uniqueness_score.get('unique_features', 0)
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing browser fingerprint: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    def detect_automation_tools(self, browser_data: Dict[str, Any] = None, 
+                              behavioral_data: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        🤖 DETECT AUTOMATION TOOLS
+        Advanced automation tool detection including Selenium, Puppeteer, Playwright,
+        WebDriver properties, framework signatures, and behavioral pattern analysis
+        
+        Args:
+            browser_data: Browser characteristics and properties
+            behavioral_data: Mouse movement, timing, and interaction patterns
+            
+        Returns:
+            Dict containing comprehensive automation detection analysis
+        """
+        try:
+            self.logger.info("Starting comprehensive automation tool detection")
+            
+            detection_result = {
+                'automation_detected': False,
+                'detected_tools': [],
+                'webdriver_analysis': {},
+                'framework_signatures': {},
+                'behavioral_analysis': {},
+                'mouse_pattern_analysis': {},
+                'timing_pattern_analysis': {},
+                'javascript_execution_analysis': {},
+                'confidence_score': 0.0,
+                'risk_level': 'LOW',
+                'detection_details': [],
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+            
+            automation_indicators = []
+            confidence_scores = []
+            
+            # 1. Selenium Detection
+            selenium_detection = self._detect_selenium_automation(browser_data or {})
+            if selenium_detection['detected']:
+                automation_indicators.append('Selenium')
+                confidence_scores.append(selenium_detection['confidence'])
+                detection_result['detected_tools'].append(selenium_detection)
+            
+            # 2. Puppeteer Detection
+            puppeteer_detection = self._detect_puppeteer_automation(browser_data or {})
+            if puppeteer_detection['detected']:
+                automation_indicators.append('Puppeteer')
+                confidence_scores.append(puppeteer_detection['confidence'])
+                detection_result['detected_tools'].append(puppeteer_detection)
+            
+            # 3. Playwright Detection
+            playwright_detection = self._detect_playwright_automation(browser_data or {})
+            if playwright_detection['detected']:
+                automation_indicators.append('Playwright')
+                confidence_scores.append(playwright_detection['confidence'])
+                detection_result['detected_tools'].append(playwright_detection)
+            
+            # 4. WebDriver Property Analysis
+            webdriver_analysis = self._analyze_webdriver_properties(browser_data or {})
+            detection_result['webdriver_analysis'] = webdriver_analysis
+            if webdriver_analysis['webdriver_detected']:
+                automation_indicators.append('WebDriver')
+                confidence_scores.append(webdriver_analysis['confidence'])
+            
+            # 5. Automation Framework Signatures
+            framework_analysis = self._detect_automation_frameworks(browser_data or {})
+            detection_result['framework_signatures'] = framework_analysis
+            if framework_analysis['frameworks_detected']:
+                automation_indicators.extend(framework_analysis['detected_frameworks'])
+                confidence_scores.extend(framework_analysis['confidence_scores'])
+            
+            # 6. Mouse Movement and Timing Pattern Analysis
+            behavioral_analysis = self._analyze_automation_behavior(behavioral_data or {})
+            detection_result['behavioral_analysis'] = behavioral_analysis
+            detection_result['mouse_pattern_analysis'] = behavioral_analysis.get('mouse_analysis', {})
+            detection_result['timing_pattern_analysis'] = behavioral_analysis.get('timing_analysis', {})
+            
+            if behavioral_analysis.get('automation_detected', False):
+                automation_indicators.append('Behavioral Patterns')
+                confidence_scores.append(behavioral_analysis.get('confidence', 0.0))
+            
+            # 7. JavaScript Execution Anomaly Detection
+            js_execution_analysis = self._analyze_javascript_execution_anomalies(browser_data or {})
+            detection_result['javascript_execution_analysis'] = js_execution_analysis
+            if js_execution_analysis.get('anomalies_detected', False):
+                automation_indicators.append('JavaScript Anomalies')
+                confidence_scores.append(js_execution_analysis.get('confidence', 0.0))
+            
+            # 8. Calculate Overall Automation Detection Results
+            detection_result['automation_detected'] = len(automation_indicators) > 0
+            detection_result['confidence_score'] = statistics.mean(confidence_scores) if confidence_scores else 0.0
+            
+            # Risk level classification
+            if detection_result['confidence_score'] > 0.8:
+                detection_result['risk_level'] = 'CRITICAL'
+            elif detection_result['confidence_score'] > 0.6:
+                detection_result['risk_level'] = 'HIGH'
+            elif detection_result['confidence_score'] > 0.4:
+                detection_result['risk_level'] = 'MEDIUM'
+            else:
+                detection_result['risk_level'] = 'LOW'
+            
+            # Detection summary
+            detection_result['detection_details'] = [
+                f"Detected {len(automation_indicators)} automation indicators",
+                f"Confidence score: {detection_result['confidence_score']:.3f}",
+                f"Risk level: {detection_result['risk_level']}",
+                f"Tools detected: {', '.join(automation_indicators) if automation_indicators else 'None'}"
+            ]
+            
+            self.logger.info(f"Automation detection completed - Tools found: {automation_indicators}, Confidence: {detection_result['confidence_score']:.3f}")
+            
+            return {
+                'success': True,
+                'automation_detection': detection_result,
+                'detection_summary': {
+                    'automation_detected': detection_result['automation_detected'],
+                    'detected_tools_count': len(automation_indicators),
+                    'primary_tool': automation_indicators[0] if automation_indicators else None,
+                    'confidence_score': detection_result['confidence_score'],
+                    'risk_level': detection_result['risk_level']
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting automation tools: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            }
+    
+    # ===== BROWSER FINGERPRINT ANALYSIS HELPER METHODS =====
+    
+    def _analyze_user_agent(self, user_agent: str) -> Dict[str, Any]:
+        """Analyze and validate user agent string for inconsistencies"""
+        try:
+            analysis = {
+                'user_agent_string': user_agent,
+                'parsed_components': {},
+                'inconsistencies': [],
+                'validation_score': 1.0,
+                'suspected_spoofing': False
+            }
+            
+            if not user_agent:
+                analysis['inconsistencies'].append('Empty user agent string')
+                analysis['validation_score'] = 0.0
+                return analysis
+            
+            # Parse user agent components
+            analysis['parsed_components'] = self._parse_user_agent_components(user_agent)
+            
+            # Check for inconsistencies
+            for pattern in self.browser_patterns['user_agent_inconsistencies']:
+                if re.search(pattern, user_agent, re.IGNORECASE):
+                    analysis['inconsistencies'].append(f"Inconsistent pattern: {pattern}")
+                    analysis['validation_score'] -= 0.2
+            
+            # Check for common spoofing indicators
+            spoofing_indicators = [
+                'HeadlessChrome', 'PhantomJS', 'SlimerJS', 'Selenium',
+                'WebDriver', 'Automation', 'Bot', 'Crawler'
+            ]
+            
+            for indicator in spoofing_indicators:
+                if indicator.lower() in user_agent.lower():
+                    analysis['inconsistencies'].append(f"Automation indicator: {indicator}")
+                    analysis['suspected_spoofing'] = True
+                    analysis['validation_score'] -= 0.3
+            
+            analysis['validation_score'] = max(0.0, analysis['validation_score'])
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing user agent: {str(e)}")
+            return {'error': str(e), 'validation_score': 0.0}
+    
+    def _parse_user_agent_components(self, user_agent: str) -> Dict[str, Any]:
+        """Parse user agent string into components"""
+        components = {
+            'browser_name': 'Unknown',
+            'browser_version': 'Unknown',
+            'os_name': 'Unknown',
+            'os_version': 'Unknown',
+            'device_type': 'Desktop'
+        }
+        
+        # Simple parsing logic (in production, use a proper UA parsing library)
+        if 'Chrome' in user_agent:
+            components['browser_name'] = 'Chrome'
+            chrome_match = re.search(r'Chrome/(\d+\.\d+)', user_agent)
+            if chrome_match:
+                components['browser_version'] = chrome_match.group(1)
+        elif 'Firefox' in user_agent:
+            components['browser_name'] = 'Firefox'
+            firefox_match = re.search(r'Firefox/(\d+\.\d+)', user_agent)
+            if firefox_match:
+                components['browser_version'] = firefox_match.group(1)
+        elif 'Safari' in user_agent and 'Chrome' not in user_agent:
+            components['browser_name'] = 'Safari'
+        
+        # OS detection
+        if 'Windows NT' in user_agent:
+            components['os_name'] = 'Windows'
+            windows_match = re.search(r'Windows NT (\d+\.\d+)', user_agent)
+            if windows_match:
+                components['os_version'] = windows_match.group(1)
+        elif 'Mac OS X' in user_agent:
+            components['os_name'] = 'macOS'
+        elif 'Linux' in user_agent:
+            components['os_name'] = 'Linux'
+        
+        # Device type
+        if any(mobile in user_agent for mobile in ['Mobile', 'Android', 'iPhone', 'iPad']):
+            components['device_type'] = 'Mobile'
+        
+        return components
+    
+    def _analyze_browser_plugins(self, plugins: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze browser plugins and extensions for fingerprinting"""
+        try:
+            analysis = {
+                'plugin_count': len(plugins),
+                'plugin_list': plugins,
+                'plugin_signatures': {},
+                'consistency_score': 1.0,
+                'suspicious_plugins': [],
+                'missing_expected_plugins': []
+            }
+            
+            plugin_names = [plugin.get('name', '').lower() for plugin in plugins]
+            
+            # Check against known browser plugin signatures
+            for browser, expected_plugins in self.browser_patterns['plugin_signatures'].items():
+                matches = sum(1 for expected in expected_plugins 
+                            if any(expected.lower() in name for name in plugin_names))
+                total_expected = len(expected_plugins)
+                match_ratio = matches / total_expected if total_expected > 0 else 0
+                
+                analysis['plugin_signatures'][browser] = {
+                    'matches': matches,
+                    'expected': total_expected,
+                    'match_ratio': match_ratio,
+                    'likely_browser': match_ratio > 0.5
+                }
+            
+            # Check for suspicious plugins
+            suspicious_keywords = ['selenium', 'webdriver', 'automation', 'phantom', 'headless']
+            for plugin in plugins:
+                plugin_name = plugin.get('name', '').lower()
+                if any(keyword in plugin_name for keyword in suspicious_keywords):
+                    analysis['suspicious_plugins'].append(plugin)
+                    analysis['consistency_score'] -= 0.2
+            
+            analysis['consistency_score'] = max(0.0, analysis['consistency_score'])
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing browser plugins: {str(e)}")
+            return {'error': str(e), 'consistency_score': 0.0}
+    
+    def _analyze_javascript_engine(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze JavaScript engine characteristics"""
+        try:
+            analysis = {
+                'detected_engine': 'Unknown',
+                'engine_version': 'Unknown',
+                'engine_features': [],
+                'performance_characteristics': {},
+                'consistency_with_browser': True,
+                'anomalies': []
+            }
+            
+            browser_name = browser_data.get('browser_name', '').lower()
+            
+            # Map browser to expected JavaScript engine
+            expected_engine = self.browser_patterns['javascript_engines'].get(browser_name, 'Unknown')
+            analysis['expected_engine'] = expected_engine
+            
+            # Analyze JavaScript capabilities and features
+            js_features = browser_data.get('javascript_features', {})
+            if js_features:
+                analysis['engine_features'] = list(js_features.keys())
+                
+                # Check for engine-specific features
+                if 'v8' in str(js_features).lower():
+                    analysis['detected_engine'] = 'V8'
+                elif 'spidermonkey' in str(js_features).lower():
+                    analysis['detected_engine'] = 'SpiderMonkey'
+                elif 'javascriptcore' in str(js_features).lower():
+                    analysis['detected_engine'] = 'JavaScriptCore'
+            
+            # Check consistency between browser and JavaScript engine
+            if analysis['detected_engine'] != 'Unknown' and expected_engine != 'Unknown':
+                if analysis['detected_engine'] != expected_engine:
+                    analysis['consistency_with_browser'] = False
+                    analysis['anomalies'].append(f"Engine mismatch: Expected {expected_engine}, detected {analysis['detected_engine']}")
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing JavaScript engine: {str(e)}")
+            return {'error': str(e), 'consistency_with_browser': False}
+    
+    def _analyze_rendering_engine(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze rendering engine fingerprinting characteristics"""
+        try:
+            analysis = {
+                'detected_engine': browser_data.get('engine_name', 'Unknown'),
+                'engine_version': browser_data.get('engine_version', 'Unknown'),
+                'expected_engine': 'Unknown',
+                'rendering_capabilities': {},
+                'consistency_score': 1.0,
+                'inconsistencies': []
+            }
+            
+            browser_name = browser_data.get('browser_name', '').lower()
+            expected_engine = self.browser_patterns['rendering_engines'].get(browser_name, 'Unknown')
+            analysis['expected_engine'] = expected_engine
+            
+            # Check rendering capabilities
+            canvas_support = browser_data.get('canvas_support', False)
+            webgl_support = browser_data.get('webgl_support', False)
+            
+            analysis['rendering_capabilities'] = {
+                'canvas_support': canvas_support,
+                'webgl_support': webgl_support,
+                'css3_support': browser_data.get('css3_support', True),
+                'svg_support': browser_data.get('svg_support', True)
+            }
+            
+            # Check engine consistency
+            if analysis['detected_engine'] != 'Unknown' and expected_engine != 'Unknown':
+                if analysis['detected_engine'].lower() != expected_engine.lower():
+                    analysis['inconsistencies'].append(f"Rendering engine mismatch: Expected {expected_engine}, got {analysis['detected_engine']}")
+                    analysis['consistency_score'] -= 0.3
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing rendering engine: {str(e)}")
+            return {'error': str(e), 'consistency_score': 0.0}
+    
+    def _detect_browser_inconsistencies(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect browser configuration inconsistencies that may indicate spoofing"""
+        try:
+            inconsistencies = []
+            consistency_score = 1.0
+            
+            # Check user agent vs. declared browser name
+            user_agent = browser_data.get('user_agent', '')
+            declared_browser = browser_data.get('browser_name', '')
+            
+            if declared_browser and user_agent:
+                if declared_browser.lower() not in user_agent.lower():
+                    inconsistencies.append("Browser name doesn't match user agent")
+                    consistency_score -= 0.2
+            
+            # Check plugin consistency with browser type
+            plugins = browser_data.get('plugins', [])
+            if plugins and declared_browser:
+                plugin_analysis = self._analyze_browser_plugins(plugins)
+                browser_match = plugin_analysis.get('plugin_signatures', {}).get(declared_browser.lower(), {})
+                
+                if browser_match.get('match_ratio', 0) < 0.3:
+                    inconsistencies.append("Plugins don't match declared browser type")
+                    consistency_score -= 0.3
+            
+            # Check JavaScript engine consistency
+            js_analysis = self._analyze_javascript_engine(browser_data)
+            if not js_analysis.get('consistency_with_browser', True):
+                inconsistencies.append("JavaScript engine inconsistent with browser type")
+                consistency_score -= 0.2
+            
+            # Check rendering engine consistency
+            rendering_analysis = self._analyze_rendering_engine(browser_data)
+            if rendering_analysis.get('consistency_score', 1.0) < 0.7:
+                inconsistencies.append("Rendering engine inconsistent with browser type")
+                consistency_score -= 0.2
+            
+            consistency_score = max(0.0, consistency_score)
+            
+            return {
+                'inconsistency_count': len(inconsistencies),
+                'inconsistencies': inconsistencies,
+                'consistency_score': consistency_score,
+                'likely_spoofed': consistency_score < 0.5,
+                'trust_level': 'HIGH' if consistency_score > 0.8 else 'MEDIUM' if consistency_score > 0.5 else 'LOW'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting browser inconsistencies: {str(e)}")
+            return {'error': str(e), 'consistency_score': 0.0}
+    
+    def _identify_browser_type(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Identify and classify browser type based on multiple indicators"""
+        try:
+            detection_scores = {}
+            
+            # User agent analysis
+            user_agent = browser_data.get('user_agent', '')
+            ua_scores = self._score_browser_from_user_agent(user_agent)
+            
+            # Plugin analysis
+            plugins = browser_data.get('plugins', [])
+            plugin_scores = self._score_browser_from_plugins(plugins)
+            
+            # Combine scores
+            all_browsers = set(ua_scores.keys()) | set(plugin_scores.keys())
+            for browser in all_browsers:
+                ua_score = ua_scores.get(browser, 0.0)
+                plugin_score = plugin_scores.get(browser, 0.0)
+                detection_scores[browser] = (ua_score * 0.7) + (plugin_score * 0.3)
+            
+            # Determine most likely browser
+            detected_browser = max(detection_scores.keys(), key=lambda k: detection_scores[k]) if detection_scores else 'Unknown'
+            confidence = detection_scores.get(detected_browser, 0.0)
+            
+            return {
+                'detected_browser': detected_browser,
+                'confidence': confidence,
+                'detection_scores': detection_scores,
+                'declared_browser': browser_data.get('browser_name', 'Unknown'),
+                'match_declared': detected_browser.lower() == browser_data.get('browser_name', '').lower()
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error identifying browser type: {str(e)}")
+            return {'error': str(e), 'detected_browser': 'Unknown'}
+    
+    def _score_browser_from_user_agent(self, user_agent: str) -> Dict[str, float]:
+        """Score browser likelihood from user agent string"""
+        scores = {}
+        
+        if 'Chrome' in user_agent and 'Edg' not in user_agent:
+            scores['chrome'] = 0.9
+        if 'Firefox' in user_agent:
+            scores['firefox'] = 0.9
+        if 'Safari' in user_agent and 'Chrome' not in user_agent:
+            scores['safari'] = 0.9
+        if 'Edg' in user_agent:
+            scores['edge'] = 0.9
+        
+        return scores
+    
+    def _score_browser_from_plugins(self, plugins: List[Dict[str, Any]]) -> Dict[str, float]:
+        """Score browser likelihood from plugin analysis"""
+        plugin_analysis = self._analyze_browser_plugins(plugins)
+        scores = {}
+        
+        for browser, signature in plugin_analysis.get('plugin_signatures', {}).items():
+            scores[browser] = signature.get('match_ratio', 0.0)
+        
+        return scores
+    
+    def _calculate_fingerprint_uniqueness(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate browser fingerprint uniqueness and entropy"""
+        try:
+            # Calculate entropy based on various characteristics
+            characteristics = []
+            
+            # User agent entropy
+            user_agent = browser_data.get('user_agent', '')
+            if user_agent:
+                characteristics.append(user_agent)
+            
+            # Plugin list entropy
+            plugins = browser_data.get('plugins', [])
+            plugin_string = json.dumps(sorted([p.get('name', '') for p in plugins]))
+            characteristics.append(plugin_string)
+            
+            # Browser capabilities
+            capabilities = {
+                'canvas': browser_data.get('canvas_support', False),
+                'webgl': browser_data.get('webgl_support', False),
+                'local_storage': browser_data.get('local_storage', False),
+                'session_storage': browser_data.get('session_storage', False),
+                'cookie_enabled': browser_data.get('cookie_enabled', False)
+            }
+            characteristics.append(json.dumps(capabilities, sort_keys=True))
+            
+            # Language preferences
+            languages = browser_data.get('languages', [])
+            characteristics.append(json.dumps(sorted(languages)))
+            
+            # Calculate combined fingerprint hash
+            combined_fingerprint = ''.join(characteristics)
+            fingerprint_hash = hashlib.sha256(combined_fingerprint.encode()).hexdigest()
+            
+            # Estimate uniqueness (simplified calculation)
+            unique_features = len([c for c in characteristics if c and len(c) > 10])
+            estimated_uniqueness = min(1.0, unique_features / 10.0)
+            
+            # Calculate entropy
+            entropy = len(set(combined_fingerprint)) / len(combined_fingerprint) if combined_fingerprint else 0
+            
+            return {
+                'fingerprint_hash': fingerprint_hash,
+                'unique_features': unique_features,
+                'estimated_uniqueness': estimated_uniqueness,
+                'entropy_score': entropy,
+                'characteristics_analyzed': len(characteristics),
+                'fingerprint_strength': 'STRONG' if estimated_uniqueness > 0.7 else 'MEDIUM' if estimated_uniqueness > 0.4 else 'WEAK'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error calculating fingerprint uniqueness: {str(e)}")
+            return {'error': str(e), 'estimated_uniqueness': 0.0}
+    
+    def _assess_browser_fingerprint_risk(self, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess overall risk level based on browser fingerprint analysis"""
+        try:
+            risk_factors = []
+            risk_score = 0.0
+            
+            # User agent analysis risk
+            ua_analysis = analysis_result.get('user_agent_analysis', {})
+            ua_score = ua_analysis.get('validation_score', 1.0)
+            if ua_score < 0.7:
+                risk_factors.append('Suspicious user agent')
+                risk_score += (1.0 - ua_score) * 0.3
+            
+            # Configuration consistency risk
+            consistency = analysis_result.get('configuration_consistency', {})
+            consistency_score = consistency.get('consistency_score', 1.0)
+            if consistency_score < 0.7:
+                risk_factors.append('Browser configuration inconsistencies')
+                risk_score += (1.0 - consistency_score) * 0.4
+            
+            # Plugin analysis risk
+            plugin_analysis = analysis_result.get('plugin_analysis', {})
+            if plugin_analysis.get('suspicious_plugins', []):
+                risk_factors.append('Suspicious browser plugins detected')
+                risk_score += 0.3
+            
+            # Fingerprint uniqueness risk (too unique might be suspicious)
+            uniqueness = analysis_result.get('fingerprint_uniqueness', {})
+            uniqueness_score = uniqueness.get('estimated_uniqueness', 0.5)
+            if uniqueness_score > 0.95:  # Extremely unique might indicate manipulation
+                risk_factors.append('Extremely unique fingerprint (possible manipulation)')
+                risk_score += 0.2
+            
+            # Calculate trust score (inverse of risk)
+            risk_score = min(1.0, risk_score)
+            trust_score = 1.0 - risk_score
+            
+            # Risk level classification
+            if risk_score > 0.7:
+                risk_level = 'HIGH'
+            elif risk_score > 0.4:
+                risk_level = 'MEDIUM'
+            elif risk_score > 0.2:
+                risk_level = 'LOW'
+            else:
+                risk_level = 'MINIMAL'
+            
+            return {
+                'risk_score': risk_score,
+                'trust_score': trust_score,
+                'risk_level': risk_level,
+                'risk_factors': risk_factors,
+                'risk_factor_count': len(risk_factors),
+                'recommendation': self._generate_risk_recommendation(risk_level, risk_factors)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error assessing browser fingerprint risk: {str(e)}")
+            return {'error': str(e), 'risk_level': 'MEDIUM'}
+    
+    def _generate_risk_recommendation(self, risk_level: str, risk_factors: List[str]) -> str:
+        """Generate risk-based recommendations"""
+        if risk_level == 'HIGH':
+            return "High-risk browser fingerprint detected. Consider additional verification steps or blocking session."
+        elif risk_level == 'MEDIUM':
+            return "Medium-risk browser fingerprint. Monitor session closely and apply additional security measures."
+        elif risk_level == 'LOW':
+            return "Low-risk browser fingerprint. Standard monitoring sufficient."
+        else:
+            return "Minimal risk browser fingerprint. Standard session handling appropriate."
+    
+    # ===== AUTOMATION DETECTION HELPER METHODS =====
+    
+    def _detect_selenium_automation(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect Selenium automation indicators"""
+        try:
+            selenium_indicators = []
+            confidence = 0.0
+            
+            # Check user agent
+            user_agent = browser_data.get('user_agent', '').lower()
+            for indicator in self.automation_signatures['selenium_indicators']:
+                if indicator in user_agent:
+                    selenium_indicators.append(f"User agent contains: {indicator}")
+                    confidence += 0.2
+            
+            # Check for Selenium-specific properties (if available in browser_data)
+            selenium_properties = browser_data.get('webdriver_properties', [])
+            for prop in selenium_properties:
+                if any(sel_indicator in prop.lower() for sel_indicator in self.automation_signatures['selenium_indicators']):
+                    selenium_indicators.append(f"WebDriver property: {prop}")
+                    confidence += 0.3
+            
+            # Check plugins for Selenium-related entries
+            plugins = browser_data.get('plugins', [])
+            for plugin in plugins:
+                plugin_name = plugin.get('name', '').lower()
+                if any(indicator in plugin_name for indicator in ['selenium', 'webdriver', 'chromedriver']):
+                    selenium_indicators.append(f"Selenium plugin: {plugin.get('name')}")
+                    confidence += 0.4
+            
+            confidence = min(1.0, confidence)
+            detected = confidence > 0.3
+            
+            return {
+                'tool': 'Selenium',
+                'detected': detected,
+                'confidence': confidence,
+                'indicators': selenium_indicators,
+                'indicator_count': len(selenium_indicators)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting Selenium: {str(e)}")
+            return {'tool': 'Selenium', 'detected': False, 'error': str(e)}
+    
+    def _detect_puppeteer_automation(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect Puppeteer automation indicators"""
+        try:
+            puppeteer_indicators = []
+            confidence = 0.0
+            
+            # Check user agent for headless indicators
+            user_agent = browser_data.get('user_agent', '').lower()
+            for indicator in self.automation_signatures['puppeteer_indicators']:
+                if indicator in user_agent:
+                    puppeteer_indicators.append(f"User agent contains: {indicator}")
+                    confidence += 0.3
+            
+            # Check for headless Chrome indicators
+            if 'headlesschrome' in user_agent:
+                puppeteer_indicators.append("HeadlessChrome detected in user agent")
+                confidence += 0.5
+            
+            # Check browser name
+            browser_name = browser_data.get('browser_name', '').lower()
+            if 'headless' in browser_name or 'puppeteer' in browser_name:
+                puppeteer_indicators.append(f"Suspicious browser name: {browser_name}")
+                confidence += 0.4
+            
+            # Check for missing plugins (headless browsers often have no plugins)
+            plugins = browser_data.get('plugins', [])
+            if len(plugins) == 0 and 'chrome' in user_agent:
+                puppeteer_indicators.append("No plugins in Chrome browser (possible headless)")
+                confidence += 0.2
+            
+            confidence = min(1.0, confidence)
+            detected = confidence > 0.3
+            
+            return {
+                'tool': 'Puppeteer',
+                'detected': detected,
+                'confidence': confidence,
+                'indicators': puppeteer_indicators,
+                'indicator_count': len(puppeteer_indicators)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting Puppeteer: {str(e)}")
+            return {'tool': 'Puppeteer', 'detected': False, 'error': str(e)}
+    
+    def _detect_playwright_automation(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect Playwright automation indicators"""
+        try:
+            playwright_indicators = []
+            confidence = 0.0
+            
+            # Check user agent
+            user_agent = browser_data.get('user_agent', '').lower()
+            for indicator in self.automation_signatures['playwright_indicators']:
+                if indicator in user_agent:
+                    playwright_indicators.append(f"User agent contains: {indicator}")
+                    confidence += 0.3
+            
+            # Check for Playwright-specific properties
+            playwright_properties = browser_data.get('playwright_properties', [])
+            for prop in playwright_properties:
+                playwright_indicators.append(f"Playwright property: {prop}")
+                confidence += 0.4
+            
+            # Check browser engine for Playwright modifications
+            engine_name = browser_data.get('engine_name', '').lower()
+            if 'playwright' in engine_name:
+                playwright_indicators.append("Playwright detected in engine name")
+                confidence += 0.5
+            
+            confidence = min(1.0, confidence)
+            detected = confidence > 0.3
+            
+            return {
+                'tool': 'Playwright',
+                'detected': detected,
+                'confidence': confidence,
+                'indicators': playwright_indicators,
+                'indicator_count': len(playwright_indicators)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting Playwright: {str(e)}")
+            return {'tool': 'Playwright', 'detected': False, 'error': str(e)}
+    
+    def _analyze_webdriver_properties(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze WebDriver-specific properties and indicators"""
+        try:
+            webdriver_indicators = []
+            confidence = 0.0
+            
+            # Check for explicit webdriver indicators
+            webdriver_detected = browser_data.get('webdriver', False)
+            if webdriver_detected:
+                webdriver_indicators.append("navigator.webdriver is true")
+                confidence += 0.8
+            
+            # Check for WebDriver properties
+            for prop in self.automation_signatures['webdriver_properties']:
+                if prop in str(browser_data):
+                    webdriver_indicators.append(f"WebDriver property detected: {prop}")
+                    confidence += 0.3
+            
+            # Check for missing properties that should exist in real browsers
+            expected_properties = [
+                'chrome.runtime.onConnect', 'chrome.runtime.onMessage',
+                'chrome.csi', 'chrome.loadTimes'
+            ]
+            
+            for prop in expected_properties:
+                if f"missing_{prop}" in browser_data:
+                    webdriver_indicators.append(f"Missing expected property: {prop}")
+                    confidence += 0.2
+            
+            confidence = min(1.0, confidence)
+            
+            return {
+                'webdriver_detected': confidence > 0.4,
+                'confidence': confidence,
+                'indicators': webdriver_indicators,
+                'indicator_count': len(webdriver_indicators)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing WebDriver properties: {str(e)}")
+            return {'webdriver_detected': False, 'error': str(e)}
+    
+    def _detect_automation_frameworks(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect various automation framework signatures"""
+        try:
+            detected_frameworks = []
+            confidence_scores = []
+            
+            # Check for framework-specific indicators
+            all_indicators = (
+                self.automation_signatures['selenium_indicators'] +
+                self.automation_signatures['puppeteer_indicators'] +
+                self.automation_signatures['playwright_indicators']
+            )
+            
+            browser_string = str(browser_data).lower()
+            
+            for indicator in all_indicators:
+                if indicator in browser_string:
+                    detected_frameworks.append(indicator)
+                    confidence_scores.append(0.3)
+            
+            # Remove duplicates
+            detected_frameworks = list(set(detected_frameworks))
+            
+            return {
+                'frameworks_detected': len(detected_frameworks) > 0,
+                'detected_frameworks': detected_frameworks,
+                'framework_count': len(detected_frameworks),
+                'confidence_scores': confidence_scores
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting automation frameworks: {str(e)}")
+            return {'frameworks_detected': False, 'error': str(e)}
+    
+    def _analyze_automation_behavior(self, behavioral_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze behavioral patterns for automation indicators"""
+        try:
+            analysis = {
+                'automation_detected': False,
+                'confidence': 0.0,
+                'mouse_analysis': {},
+                'timing_analysis': {},
+                'behavior_anomalies': []
+            }
+            
+            if not behavioral_data:
+                return analysis
+            
+            # Analyze mouse movement patterns
+            mouse_analysis = self._analyze_mouse_patterns(behavioral_data.get('mouse_data', {}))
+            analysis['mouse_analysis'] = mouse_analysis
+            
+            # Analyze timing patterns
+            timing_analysis = self._analyze_timing_patterns(behavioral_data.get('timing_data', {}))
+            analysis['timing_analysis'] = timing_analysis
+            
+            # Combine analysis results
+            mouse_score = mouse_analysis.get('automation_score', 0.0)
+            timing_score = timing_analysis.get('automation_score', 0.0)
+            
+            analysis['confidence'] = (mouse_score + timing_score) / 2
+            analysis['automation_detected'] = analysis['confidence'] > 0.5
+            
+            # Collect all anomalies
+            analysis['behavior_anomalies'].extend(mouse_analysis.get('anomalies', []))
+            analysis['behavior_anomalies'].extend(timing_analysis.get('anomalies', []))
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing automation behavior: {str(e)}")
+            return {'automation_detected': False, 'error': str(e)}
+    
+    def _analyze_mouse_patterns(self, mouse_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze mouse movement patterns for automation indicators"""
+        try:
+            analysis = {
+                'automation_score': 0.0,
+                'anomalies': [],
+                'pattern_analysis': {}
+            }
+            
+            if not mouse_data:
+                return analysis
+            
+            movements = mouse_data.get('movements', [])
+            clicks = mouse_data.get('clicks', [])
+            
+            if movements:
+                # Check for linear movement patterns
+                linear_score = self._check_linear_movement(movements)
+                if linear_score > 0.8:
+                    analysis['anomalies'].append("Highly linear mouse movements detected")
+                    analysis['automation_score'] += 0.3
+                
+                # Check for instant movements (no acceleration)
+                instant_score = self._check_instant_movement(movements)
+                if instant_score > 0.7:
+                    analysis['anomalies'].append("Instant mouse movements without acceleration")
+                    analysis['automation_score'] += 0.4
+            
+            if clicks:
+                # Check for perfect click accuracy
+                accuracy_score = self._check_click_accuracy(clicks)
+                if accuracy_score > 0.9:
+                    analysis['anomalies'].append("Perfect click accuracy (suspicious)")
+                    analysis['automation_score'] += 0.3
+            
+            analysis['automation_score'] = min(1.0, analysis['automation_score'])
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing mouse patterns: {str(e)}")
+            return {'automation_score': 0.0, 'error': str(e)}
+    
+    def _analyze_timing_patterns(self, timing_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze timing patterns for automation indicators"""
+        try:
+            analysis = {
+                'automation_score': 0.0,
+                'anomalies': [],
+                'timing_analysis': {}
+            }
+            
+            if not timing_data:
+                return analysis
+            
+            intervals = timing_data.get('intervals', [])
+            keypress_timings = timing_data.get('keypress_timings', [])
+            
+            if intervals:
+                # Check for uniform timing intervals
+                uniformity_score = self._check_timing_uniformity(intervals)
+                if uniformity_score > 0.8:
+                    analysis['anomalies'].append("Highly uniform timing intervals")
+                    analysis['automation_score'] += 0.4
+            
+            if keypress_timings:
+                # Check for robotic typing patterns
+                typing_score = self._check_robotic_typing(keypress_timings)
+                if typing_score > 0.7:
+                    analysis['anomalies'].append("Robotic typing patterns detected")
+                    analysis['automation_score'] += 0.3
+            
+            analysis['automation_score'] = min(1.0, analysis['automation_score'])
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing timing patterns: {str(e)}")
+            return {'automation_score': 0.0, 'error': str(e)}
+    
+    def _analyze_javascript_execution_anomalies(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze JavaScript execution patterns for automation anomalies"""
+        try:
+            analysis = {
+                'anomalies_detected': False,
+                'confidence': 0.0,
+                'anomalies': []
+            }
+            
+            # Check for missing user gesture events
+            user_gestures = browser_data.get('user_gestures', True)
+            if not user_gestures:
+                analysis['anomalies'].append("Missing user gesture events")
+                analysis['confidence'] += 0.3
+            
+            # Check for synchronous-only JavaScript execution
+            async_support = browser_data.get('async_execution', True)
+            if not async_support:
+                analysis['anomalies'].append("Only synchronous JavaScript execution")
+                analysis['confidence'] += 0.4
+            
+            # Check for missing event properties
+            event_properties = browser_data.get('event_properties', {})
+            expected_properties = ['isTrusted', 'timeStamp', 'bubbles', 'cancelable']
+            missing_properties = [prop for prop in expected_properties if prop not in event_properties]
+            
+            if missing_properties:
+                analysis['anomalies'].append(f"Missing event properties: {missing_properties}")
+                analysis['confidence'] += 0.2 * len(missing_properties)
+            
+            analysis['confidence'] = min(1.0, analysis['confidence'])
+            analysis['anomalies_detected'] = analysis['confidence'] > 0.3
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing JavaScript execution anomalies: {str(e)}")
+            return {'anomalies_detected': False, 'error': str(e)}
+    
+    # ===== BEHAVIORAL PATTERN ANALYSIS HELPER METHODS =====
+    
+    def _check_linear_movement(self, movements: List[Dict[str, Any]]) -> float:
+        """Check for linear mouse movement patterns"""
+        if len(movements) < 3:
+            return 0.0
+        
+        # Calculate linearity score based on movement vectors
+        linear_count = 0
+        total_segments = len(movements) - 1
+        
+        for i in range(1, len(movements)):
+            prev_move = movements[i-1]
+            curr_move = movements[i]
+            
+            # Calculate movement vector
+            dx = curr_move.get('x', 0) - prev_move.get('x', 0)
+            dy = curr_move.get('y', 0) - prev_move.get('y', 0)
+            
+            # Check if movement is perfectly linear (simplified check)
+            if abs(dx) == abs(dy) or dx == 0 or dy == 0:
+                linear_count += 1
+        
+        return linear_count / total_segments if total_segments > 0 else 0.0
+    
+    def _check_instant_movement(self, movements: List[Dict[str, Any]]) -> float:
+        """Check for instant mouse movements without acceleration"""
+        if len(movements) < 2:
+            return 0.0
+        
+        instant_count = 0
+        
+        for i in range(1, len(movements)):
+            prev_move = movements[i-1]
+            curr_move = movements[i]
+            
+            # Check timestamp difference
+            prev_time = prev_move.get('timestamp', 0)
+            curr_time = curr_move.get('timestamp', 0)
+            time_diff = curr_time - prev_time
+            
+            # If movement happens in exactly same millisecond, it's suspicious
+            if time_diff == 0:
+                instant_count += 1
+        
+        return instant_count / len(movements) if movements else 0.0
+    
+    def _check_click_accuracy(self, clicks: List[Dict[str, Any]]) -> float:
+        """Check for suspiciously perfect click accuracy"""
+        if not clicks:
+            return 0.0
+        
+        # In real usage, clicks have some variation from target centers
+        # Perfect center clicks are suspicious
+        perfect_clicks = 0
+        
+        for click in clicks:
+            target_x = click.get('target_x', 0)
+            target_y = click.get('target_y', 0)
+            actual_x = click.get('actual_x', 0)
+            actual_y = click.get('actual_y', 0)
+            
+            # Check if click is exactly on target (suspicious)
+            if target_x == actual_x and target_y == actual_y:
+                perfect_clicks += 1
+        
+        return perfect_clicks / len(clicks)
+    
+    def _check_timing_uniformity(self, intervals: List[float]) -> float:
+        """Check for uniform timing intervals (indication of automation)"""
+        if len(intervals) < 3:
+            return 0.0
+        
+        # Calculate standard deviation of intervals
+        mean_interval = statistics.mean(intervals)
+        variance = statistics.variance(intervals)
+        std_dev = math.sqrt(variance) if variance > 0 else 0
+        
+        # Very low standard deviation indicates uniform timing
+        coefficient_of_variation = std_dev / mean_interval if mean_interval > 0 else 0
+        
+        # Return inverse of variation (high uniformity = high automation score)
+        return max(0.0, 1.0 - coefficient_of_variation * 10)
+    
+    def _check_robotic_typing(self, keypress_timings: List[float]) -> float:
+        """Check for robotic typing patterns"""
+        if len(keypress_timings) < 5:
+            return 0.0
+        
+        # Check for perfectly consistent typing intervals
+        intervals = [keypress_timings[i+1] - keypress_timings[i] for i in range(len(keypress_timings)-1)]
+        
+        if not intervals:
+            return 0.0
+        
+        # Calculate consistency of intervals
+        mean_interval = statistics.mean(intervals)
+        std_dev = statistics.stdev(intervals) if len(intervals) > 1 else 0
+        
+        # Very consistent timing is suspicious
+        consistency_score = 1.0 - (std_dev / mean_interval) if mean_interval > 0 else 0
+        
+        return max(0.0, min(1.0, consistency_score))
+
+
+# Initialize global EnvironmentAnalyzer instance
+environment_analyzer = EnvironmentAnalyzer()
+
+
 # Initialize global instance
 device_fingerprinting_engine = DeviceFingerprintingEngine()
 
