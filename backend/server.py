@@ -7018,6 +7018,287 @@ async def get_fingerprinting_database_stats():
         )
 
 
+# Database Performance Optimization Endpoints
+@api_router.post("/admin/database/create-compound-indexes")
+async def create_compound_indexes_endpoint():
+    """
+    Create advanced compound indexes for complex multi-field queries
+    
+    Admin endpoint to create optimized compound indexes across all
+    fingerprinting collections for improved query performance.
+    
+    Returns:
+        Dict: Compound index creation status and performance details
+    """
+    try:
+        logging.info("Admin triggered compound index creation")
+        result = await create_compound_indexes()
+        
+        return {
+            "success": result['success'],
+            "message": "Compound index creation completed",
+            "details": {
+                "compound_indexes_created": result['compound_indexes_created'],
+                "collections_processed": result['collections_processed'],
+                "index_status": result['index_status'],
+                "database": result['database'],
+                "timestamp": result['timestamp']
+            },
+            "errors": result.get('errors', [])
+        }
+        
+    except Exception as e:
+        logging.error(f"Compound index creation error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to create compound indexes: {str(e)}"
+        )
+
+@api_router.post("/admin/database/setup-ttl-indexes")
+async def setup_ttl_indexes_endpoint():
+    """
+    Set up TTL (Time To Live) indexes for automatic data expiration
+    
+    Admin endpoint to configure automatic data cleanup based on privacy
+    compliance requirements and data retention policies.
+    
+    Returns:
+        Dict: TTL index setup status and retention configuration
+    """
+    try:
+        logging.info("Admin triggered TTL index setup")
+        result = await setup_ttl_indexes()
+        
+        return {
+            "success": result['success'],
+            "message": "TTL index setup completed",
+            "details": {
+                "ttl_indexes_created": result['ttl_indexes_created'],
+                "collections_processed": result['collections_processed'],
+                "ttl_status": result['ttl_status'],
+                "database": result['database'],
+                "timestamp": result['timestamp']
+            },
+            "errors": result.get('errors', [])
+        }
+        
+    except Exception as e:
+        logging.error(f"TTL index setup error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to setup TTL indexes: {str(e)}"
+        )
+
+@api_router.post("/admin/database/create-aggregation-pipelines")
+async def create_aggregation_pipelines_endpoint():
+    """
+    Create pre-built optimized aggregation pipelines for analytics
+    
+    Admin endpoint to create and validate optimized aggregation pipelines
+    for common analytics queries with performance monitoring.
+    
+    Returns:
+        Dict: Aggregation pipeline creation status and performance metrics
+    """
+    try:
+        logging.info("Admin triggered aggregation pipeline creation")
+        result = await create_aggregation_pipelines()
+        
+        return {
+            "success": result['success'],
+            "message": "Aggregation pipeline creation completed",
+            "details": {
+                "pipelines_created": result['pipelines_created'],
+                "pipeline_details": result['pipeline_details'],
+                "database": result['database'],
+                "timestamp": result['timestamp']
+            },
+            "errors": result.get('errors', [])
+        }
+        
+    except Exception as e:
+        logging.error(f"Aggregation pipeline creation error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to create aggregation pipelines: {str(e)}"
+        )
+
+@api_router.post("/admin/database/optimize-connection-pool")
+async def optimize_connection_pool_endpoint():
+    """
+    Optimize MongoDB connection pool settings for maximum performance
+    
+    Admin endpoint to test and validate optimal connection pool configuration
+    based on system resources and load patterns.
+    
+    Returns:
+        Dict: Connection pool optimization results and recommendations
+    """
+    try:
+        logging.info("Admin triggered connection pool optimization")
+        result = await optimize_connection_pool()
+        
+        return {
+            "success": result['success'],
+            "message": "Connection pool optimization completed",
+            "details": {
+                "optimizations_applied": result['optimizations_applied'],
+                "connection_tests": result['connection_tests'],
+                "recommendations": result['recommendations'],
+                "performance_metrics": result['performance_metrics'],
+                "timestamp": result['timestamp']
+            },
+            "errors": result.get('errors', [])
+        }
+        
+    except Exception as e:
+        logging.error(f"Connection pool optimization error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to optimize connection pool: {str(e)}"
+        )
+
+@api_router.get("/admin/database/query-performance")
+async def get_query_performance_metrics():
+    """
+    Get comprehensive query performance monitoring metrics
+    
+    Admin endpoint to retrieve query performance statistics, slow query
+    analysis, index usage metrics, and optimization recommendations.
+    
+    Returns:
+        Dict: Query performance metrics and optimization recommendations
+    """
+    try:
+        logging.info("Admin requested query performance metrics")
+        
+        # Get performance summary from global monitor
+        summary = performance_monitor.get_performance_summary()
+        recommendations = performance_monitor.get_optimization_recommendations()
+        
+        return {
+            "success": True,
+            "message": "Query performance metrics retrieved",
+            "details": {
+                "performance_summary": summary,
+                "optimization_recommendations": recommendations,
+                "monitor_status": {
+                    "slow_query_threshold": performance_monitor.slow_query_threshold,
+                    "max_tracked_queries": 10000,
+                    "current_tracked_queries": len(performance_monitor.query_metrics)
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"Query performance metrics error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to get query performance metrics: {str(e)}"
+        )
+
+@api_router.post("/admin/database/optimize-all")
+async def optimize_all_database_performance():
+    """
+    Run comprehensive database performance optimization
+    
+    Admin endpoint to execute all optimization tasks including compound indexes,
+    TTL setup, aggregation pipelines, and connection pool optimization.
+    
+    Returns:
+        Dict: Comprehensive optimization results across all areas
+    """
+    try:
+        logging.info("Admin triggered comprehensive database optimization")
+        
+        optimization_results = {
+            "success": True,
+            "optimizations_completed": 0,
+            "total_optimizations": 4,
+            "results": {},
+            "errors": [],
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Run compound index creation
+        try:
+            compound_result = await create_compound_indexes()
+            optimization_results["results"]["compound_indexes"] = {
+                "success": compound_result["success"],
+                "indexes_created": compound_result["compound_indexes_created"],
+                "collections_processed": compound_result["collections_processed"]
+            }
+            if compound_result["success"]:
+                optimization_results["optimizations_completed"] += 1
+            else:
+                optimization_results["errors"].extend(compound_result.get("errors", []))
+        except Exception as e:
+            optimization_results["errors"].append(f"Compound index creation failed: {str(e)}")
+        
+        # Run TTL index setup
+        try:
+            ttl_result = await setup_ttl_indexes()
+            optimization_results["results"]["ttl_indexes"] = {
+                "success": ttl_result["success"],
+                "indexes_created": ttl_result["ttl_indexes_created"],
+                "retention_policies": len(ttl_result.get("ttl_status", {}))
+            }
+            if ttl_result["success"]:
+                optimization_results["optimizations_completed"] += 1
+            else:
+                optimization_results["errors"].extend(ttl_result.get("errors", []))
+        except Exception as e:
+            optimization_results["errors"].append(f"TTL index setup failed: {str(e)}")
+        
+        # Run aggregation pipeline creation
+        try:
+            pipeline_result = await create_aggregation_pipelines()
+            optimization_results["results"]["aggregation_pipelines"] = {
+                "success": pipeline_result["success"],
+                "pipelines_created": pipeline_result["pipelines_created"]
+            }
+            if pipeline_result["success"]:
+                optimization_results["optimizations_completed"] += 1
+            else:
+                optimization_results["errors"].extend(pipeline_result.get("errors", []))
+        except Exception as e:
+            optimization_results["errors"].append(f"Aggregation pipeline creation failed: {str(e)}")
+        
+        # Run connection pool optimization
+        try:
+            pool_result = await optimize_connection_pool()
+            optimization_results["results"]["connection_pool"] = {
+                "success": pool_result["success"],
+                "recommendations_count": len(pool_result.get("recommendations", []))
+            }
+            if pool_result["success"]:
+                optimization_results["optimizations_completed"] += 1
+            else:
+                optimization_results["errors"].extend(pool_result.get("errors", []))
+        except Exception as e:
+            optimization_results["errors"].append(f"Connection pool optimization failed: {str(e)}")
+        
+        # Determine overall success
+        if optimization_results["optimizations_completed"] < optimization_results["total_optimizations"]:
+            optimization_results["success"] = False
+        
+        success_rate = (optimization_results["optimizations_completed"] / optimization_results["total_optimizations"]) * 100
+        
+        return {
+            "success": optimization_results["success"],
+            "message": f"Comprehensive database optimization completed ({success_rate:.1f}% success rate)",
+            "details": optimization_results
+        }
+        
+    except Exception as e:
+        logging.error(f"Comprehensive optimization error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to run comprehensive database optimization: {str(e)}"
+        )
+
+
 # Placement Preparation Dedicated Endpoints
 
 # ===== Aptitude: Core API Endpoints (Phase 1 - Part 4) =====
