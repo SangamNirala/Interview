@@ -7,7 +7,7 @@ import requests
 import json
 import uuid
 
-BACKEND_URL = "https://biometric-engine.preview.emergentagent.com"
+BACKEND_URL = "https://security-keystroke.preview.emergentagent.com"
 BASE_URL = f"{BACKEND_URL}/api"
 
 def test_vm_detection():

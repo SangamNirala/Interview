@@ -18,7 +18,7 @@ import tempfile
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://biometric-engine.preview.emergentagent.com/api"
+BASE_URL = "https://security-keystroke.preview.emergentagent.com/api"
 
 class PersonalizedInterviewTester:
     def __init__(self):

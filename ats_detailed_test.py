@@ -10,7 +10,7 @@ import tempfile
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://biometric-engine.preview.emergentagent.com"
+BACKEND_URL = "https://security-keystroke.preview.emergentagent.com"
 ATS_ENDPOINT = f"{BACKEND_URL}/api/placement-preparation/ats-score-calculate"
 
 def create_comprehensive_resume():
