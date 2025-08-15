@@ -17,7 +17,7 @@ import uuid
 import math
 
 # Configuration
-BACKEND_URL = "https://advanced-hardware.preview.emergentagent.com/api"
+BACKEND_URL = "https://deviceprint.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class IRTCalibrationTester:

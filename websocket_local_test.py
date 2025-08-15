@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class WebSocketRealTimeMonitoringTester:
     def __init__(self):
         # External API URL for HTTP endpoints
-        self.backend_url = "https://advanced-hardware.preview.emergentagent.com"
+        self.backend_url = "https://deviceprint.preview.emergentagent.com"
         self.api_base_url = f"{self.backend_url}/api"
         
         # Local WebSocket URL for WebSocket connections

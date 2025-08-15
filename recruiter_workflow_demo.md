@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://advanced-hardware.preview.emergentagent.com
+URL: https://deviceprint.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

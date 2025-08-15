@@ -11,7 +11,7 @@ import time
 import random
 
 # Configuration
-BACKEND_URL = "https://advanced-hardware.preview.emergentagent.com/api"
+BACKEND_URL = "https://deviceprint.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 def test_session_analysis_endpoint():
