@@ -457,50 +457,61 @@ class EnhancedFingerprintingTester:
             return False
 
     def test_fingerprint_anomaly_detection(self):
-        """Test fingerprint anomaly detection"""
+        """Test virtual machine detection"""
         try:
-            anomaly_data = {
+            vm_detection_data = {
                 "session_id": self.session_id,
-                "fingerprint_data": {
-                    "browser_inconsistencies": ["user_agent_mismatch", "plugin_anomaly"],
-                    "hardware_inconsistencies": ["resolution_change", "gpu_switch"],
-                    "behavioral_anomalies": ["typing_pattern_change", "mouse_behavior_shift"]
-                },
-                "baseline_fingerprint": {
-                    "device_id": str(uuid.uuid4()),
-                    "established_patterns": {
-                        "typing_rhythm": 0.85,
-                        "mouse_velocity": 150,
+                "system_info": {
+                    "hardware_signatures": {
+                        "cpu_vendor": "GenuineIntel",
+                        "cpu_model": "Intel Core i7-12700K",
+                        "gpu_vendor": "NVIDIA Corporation",
+                        "gpu_renderer": "NVIDIA GeForce RTX 4080",
+                        "memory_total": 16384,
                         "screen_resolution": "2560x1440"
+                    },
+                    "virtualization_indicators": {
+                        "hypervisor_present": False,
+                        "vm_artifacts": [],
+                        "suspicious_drivers": [],
+                        "timing_anomalies": False,
+                        "hardware_inconsistencies": []
+                    },
+                    "browser_environment": {
+                        "webdriver_present": False,
+                        "automation_tools": [],
+                        "headless_indicators": [],
+                        "plugin_anomalies": []
                     }
                 },
+                "confidence_level": 0.95,
                 "detection_sensitivity": "high"
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/fingerprinting/detect-anomalies",
-                json=anomaly_data
+                f"{BACKEND_URL}/session-fingerprinting/detect-virtual-machines",
+                json=vm_detection_data
             )
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
-                    anomalies = data.get('anomalies', {})
+                    detection = data.get('vm_detection', {})
                     self.log_result(
-                        "Fingerprint Anomaly Detection", 
+                        "Virtual Machine Detection", 
                         True, 
-                        f"Anomaly detection completed. Anomalies Found: {anomalies.get('anomaly_count', 'N/A')}, Risk Level: {anomalies.get('risk_level', 'N/A')}"
+                        f"VM detection completed. Is VM: {detection.get('is_virtual_machine', 'N/A')}, Confidence: {detection.get('confidence_score', 'N/A')}"
                     )
                     return True
                 else:
-                    self.log_result("Fingerprint Anomaly Detection", False, f"Detection failed: {data}")
+                    self.log_result("Virtual Machine Detection", False, f"Detection failed: {data}")
                     return False
             else:
-                self.log_result("Fingerprint Anomaly Detection", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Virtual Machine Detection", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Fingerprint Anomaly Detection", False, f"Exception: {str(e)}")
+            self.log_result("Virtual Machine Detection", False, f"Exception: {str(e)}")
             return False
 
     def test_comprehensive_fingerprint_analysis(self):
