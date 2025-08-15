@@ -2862,21 +2862,40 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Enumerate environmental sensors
+     * PHASE 1.1.5: Environmental sensor enumeration and capabilities
      */
     async enumerateEnvironmentalSensors() {
         try {
             const environmentalSensors = {
                 // Ambient Light Sensor
-                ambient_light_support: 'AmbientLightSensor' in window,
-                ambient_light_reading: await this.getAmbientLightReading(),
+                ambient_light: await this.analyzeAmbientLightSensor(),
                 
                 // Proximity Sensor
-                proximity_sensor_support: 'ProximitySensor' in window,
-                proximity_reading: await this.getProximityReading(),
+                proximity: await this.analyzeProximitySensor(),
                 
-                // Temperature sensors
-                temperature_sensor_support: 'TemperatureSensor' in window,
+                // Temperature Sensor Detection
+                temperature: await this.analyzeTemperatureSensor(),
+                
+                // Pressure Sensor Detection
+                pressure: await this.analyzePressureSensor(),
+                
+                // Humidity Sensor Detection
+                humidity: await this.analyzeHumiditySensor(),
+                
+                // UV Sensor Detection
+                uv_sensor: await this.analyzeUVSensor(),
+                
+                // Air Quality Sensor Detection
+                air_quality: await this.analyzeAirQualitySensor()
+            };
+            
+            return environmentalSensors;
+            
+        } catch (error) {
+            this.logger.error("Error enumerating environmental sensors:", error);
+            return { error: error.message, environmental_sensors: "unknown" };
+        }
+    }
                 
                 // Humidity sensors
                 humidity_sensor_support: 'HumiditySensor' in window,
