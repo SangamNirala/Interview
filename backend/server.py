@@ -1291,6 +1291,11 @@ class BiometricConfigRequest(BaseModel):
     real_time_analysis: bool = True
     intervention_enabled: bool = True
 
+class MultiDeviceUsageRequest(BaseModel):
+    session_id: str
+    user_id: str
+    session_data: Dict[str, Any]
+
 # ===== PHASE 2: AI SCREENING & SHORTLISTING MODELS =====
 
 class JobRequirements(BaseModel):
