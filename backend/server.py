@@ -22114,5 +22114,220 @@ async def comprehensive_ml_analysis(
         logging.error(f"Error in comprehensive ML analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Comprehensive analysis failed: {str(e)}")
 
+
+# ========================================
+# REAL-TIME VIOLATION ALERTS SYSTEM ENDPOINTS
+# ========================================
+
+class ViolationProcessingRequest(BaseModel):
+    violation_data: Dict[str, Any] = Field(..., description="Violation data from detection systems")
+
+class ViolationEscalationRequest(BaseModel):
+    violation_data: Dict[str, Any] = Field(..., description="Violation data requiring escalation")
+
+class AlertThresholdConfigRequest(BaseModel):
+    thresholds: Dict[str, Any] = Field(..., description="Alert threshold configuration data")
+
+@api_router.post("/real-time-alerts/process-violation")
+async def process_violation_alert(request: ViolationProcessingRequest):
+    """
+    Process and route violation alerts
+    
+    Processes security violations detected by fingerprinting, ML clustering,
+    or other security systems and routes alerts through appropriate channels.
+    """
+    try:
+        logging.info(f"Processing violation alert for session: {request.violation_data.get('session_id', 'unknown')}")
+        
+        result = await real_time_alert_system.process_violation(request.violation_data)
+        
+        return {
+            "success": True,
+            "message": "Violation alert processed successfully",
+            "processing_results": result,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error processing violation alert: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Violation alert processing failed: {str(e)}")
+
+@api_router.post("/real-time-alerts/escalate-violation")
+async def escalate_critical_violation(request: ViolationEscalationRequest):
+    """
+    Handle critical violation escalation
+    
+    Escalates security violations to higher severity levels and triggers
+    enhanced notification protocols for critical incidents.
+    """
+    try:
+        violation_id = request.violation_data.get('violation_id', 'unknown')
+        logging.info(f"Escalating critical violation: {violation_id}")
+        
+        result = await real_time_alert_system.escalate_critical_violations(request.violation_data)
+        
+        if result.get('success', False):
+            return {
+                "success": True,
+                "message": "Violation escalated successfully",
+                "escalation_results": result,
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result.get('error', 'Escalation failed'))
+        
+    except Exception as e:
+        logging.error(f"Error escalating violation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Violation escalation failed: {str(e)}")
+
+@api_router.get("/real-time-alerts/dashboard-data")
+async def get_alert_dashboard_data():
+    """
+    Generate real-time dashboard data
+    
+    Provides comprehensive real-time monitoring data including alert statistics,
+    trends, top risk sessions, and system health metrics for security dashboards.
+    """
+    try:
+        logging.info("Generating real-time alert dashboard data")
+        
+        result = await real_time_alert_system.generate_alert_dashboard_data()
+        
+        if result.get('success', False):
+            return {
+                "success": True,
+                "message": "Dashboard data generated successfully",
+                "dashboard_data": result['dashboard_data'],
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Dashboard data generation failed'))
+        
+    except Exception as e:
+        logging.error(f"Error generating dashboard data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Dashboard data generation failed: {str(e)}")
+
+@api_router.post("/real-time-alerts/configure-thresholds")
+async def configure_alert_thresholds(request: AlertThresholdConfigRequest):
+    """
+    Configure dynamic alert thresholds
+    
+    Allows dynamic configuration of alert thresholds for different violation types,
+    severity levels, and time windows to customize the alert system behavior.
+    """
+    try:
+        logging.info(f"Configuring alert thresholds: {len(request.thresholds.get('thresholds', []))} thresholds")
+        
+        result = await real_time_alert_system.configure_alert_thresholds(request.thresholds)
+        
+        return {
+            "success": True,
+            "message": "Alert thresholds configured successfully",
+            "configuration_results": result,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error configuring alert thresholds: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Alert threshold configuration failed: {str(e)}")
+
+@api_router.get("/real-time-alerts/system-performance")
+async def get_alert_system_performance():
+    """
+    Get comprehensive alert system performance summary
+    
+    Returns detailed performance metrics including processing statistics,
+    channel delivery rates, escalation metrics, and system health indicators.
+    """
+    try:
+        performance_summary = real_time_alert_system.get_system_performance_summary()
+        
+        return {
+            "success": True,
+            "message": "System performance summary retrieved",
+            "performance_data": performance_summary,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting alert system performance: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve system performance: {str(e)}")
+
+@api_router.post("/real-time-alerts/simulate-violation")
+async def simulate_security_violation(
+    violation_type: str = "SUSPICIOUS_PATTERN",
+    severity: str = "MEDIUM",
+    confidence_score: float = 0.75,
+    session_id: str = None
+):
+    """
+    Simulate security violation for testing
+    
+    Creates a simulated security violation for testing alert system functionality,
+    routing, escalation, and dashboard integration capabilities.
+    """
+    try:
+        if not session_id:
+            session_id = f"sim_session_{str(uuid.uuid4())[:8]}"
+        
+        # Create simulated violation data
+        violation_data = {
+            'violation_id': str(uuid.uuid4()),
+            'session_id': session_id,
+            'user_id': f"sim_user_{str(uuid.uuid4())[:8]}",
+            'violation_type': violation_type,
+            'severity': severity,
+            'confidence_score': confidence_score,
+            'detected_at': datetime.now().isoformat(),
+            'description': f"Simulated {violation_type.lower().replace('_', ' ')} violation for testing",
+            'technical_details': {
+                'simulation': True,
+                'test_timestamp': datetime.now().isoformat(),
+                'generated_by': 'alert_system_api'
+            },
+            'device_info': {
+                'device_id': f"sim_device_{str(uuid.uuid4())[:8]}",
+                'user_agent': 'Mozilla/5.0 (Test) Chrome/119.0',
+                'ip_address': '192.168.1.100'
+            },
+            'behavioral_context': {
+                'unusual_patterns': ['consistent_timing', 'robotic_behavior'],
+                'timing_analysis': {'avg_response_time': 250, 'std_dev': 15}
+            },
+            'risk_factors': ['Automated behavior detected', 'Suspicious timing patterns'],
+            'ml_analysis': {
+                'fraud_probability': confidence_score,
+                'anomaly_score': confidence_score * 0.8,
+                'cluster_analysis': {'device_cluster': -1, 'behavior_cluster': 2}
+            },
+            'fingerprint_data': {
+                'canvas_hash': 'sim_canvas_12345',
+                'webgl_hash': 'sim_webgl_67890',
+                'audio_hash': 'sim_audio_54321'
+            },
+            'location_info': {
+                'country': 'Test Country',
+                'region': 'Test Region',
+                'timezone': 'UTC'
+            }
+        }
+        
+        logging.info(f"Simulating {violation_type} violation with {severity} severity")
+        
+        # Process the simulated violation
+        result = await real_time_alert_system.process_violation(violation_data)
+        
+        return {
+            "success": True,
+            "message": f"Simulated {violation_type} violation processed successfully",
+            "simulation_data": violation_data,
+            "processing_results": result,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error simulating security violation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Violation simulation failed: {str(e)}")
+
 # Include the router in the main app after all routes are defined
 app.include_router(api_router)
