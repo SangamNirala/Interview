@@ -3622,11 +3622,239 @@ class SessionFingerprintCollector {
     async analyzePerformanceConsistency() { return { consistency_score: 0.8 }; }
     async detectThermalThrottlingIndicators() { return { throttling_detected: false }; }
     
-    // GPU Memory Estimation Stubs  
-    async estimateGPUMemoryViaTextures() { return 0; }
-    async estimateGPUMemoryViaPerformance() { return 0; }
-    estimateGPUMemoryViaCapabilities() { return 0; }
-    estimateGPUMemoryViaRenderer() { return 0; }
+    // GPU Memory Estimation - Enhanced Implementation
+    async estimateGPUMemoryViaTextures() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) return 0;
+            
+            // Test texture allocation capabilities
+            let maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+            let textureUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+            
+            // Estimate memory based on maximum texture capabilities
+            // Assumption: 4 bytes per pixel (RGBA), square textures
+            let bytesPerTexture = maxTextureSize * maxTextureSize * 4;
+            let estimatedMemoryBytes = bytesPerTexture * textureUnits * 0.1; // Conservative estimate
+            
+            // Test actual texture creation to validate estimate
+            try {
+                const testTexture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, testTexture);
+                
+                // Try to allocate progressively smaller textures to find memory limit
+                const testSizes = [4096, 2048, 1024, 512];
+                let successfulSize = 0;
+                
+                for (let size of testSizes) {
+                    try {
+                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                        if (gl.getError() === gl.NO_ERROR) {
+                            successfulSize = size;
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                
+                gl.deleteTexture(testTexture);
+                
+                if (successfulSize > 0) {
+                    // Refine estimate based on successful allocation
+                    let refinedEstimate = (successfulSize * successfulSize * 4 * textureUnits * 0.3) / (1024 * 1024);
+                    return Math.max(refinedEstimate, estimatedMemoryBytes / (1024 * 1024));
+                }
+                
+            } catch (textureError) {
+                // Fallback to capability-based estimate
+            }
+            
+            return estimatedMemoryBytes / (1024 * 1024); // Convert to MB
+            
+        } catch (error) {
+            return 0;
+        }
+    }
+    
+    async estimateGPUMemoryViaPerformance() {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) return 0;
+            
+            // Perform rendering operations and measure performance degradation
+            const performanceTests = [];
+            const testCounts = [100, 500, 1000, 2000];
+            
+            for (let count of testCounts) {
+                const startTime = performance.now();
+                
+                // Create multiple textures and render operations
+                const textures = [];
+                for (let i = 0; i < count; i++) {
+                    const texture = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 64, 64, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                    textures.push(texture);
+                }
+                
+                // Cleanup
+                textures.forEach(texture => gl.deleteTexture(texture));
+                
+                const endTime = performance.now();
+                performanceTests.push({
+                    count: count,
+                    time: endTime - startTime,
+                    timePerTexture: (endTime - startTime) / count
+                });
+            }
+            
+            // Analyze performance degradation pattern to estimate memory limits
+            let degradationPoint = null;
+            for (let i = 1; i < performanceTests.length; i++) {
+                const prevTest = performanceTests[i-1];
+                const currTest = performanceTests[i];
+                
+                // Check for significant performance degradation (>2x slower per texture)
+                if (currTest.timePerTexture > prevTest.timePerTexture * 2) {
+                    degradationPoint = prevTest.count;
+                    break;
+                }
+            }
+            
+            if (degradationPoint) {
+                // Estimate memory based on degradation point
+                // Assumption: degradation occurs when GPU memory is stressed
+                const estimatedMemoryMB = (degradationPoint * 64 * 64 * 4 * 2) / (1024 * 1024);
+                return Math.min(estimatedMemoryMB, 8192); // Cap at reasonable limit
+            }
+            
+            // Fallback estimate based on best performance
+            const bestPerf = performanceTests[0];
+            return Math.max(256, (bestPerf.count * 64 * 64 * 4) / (1024 * 1024));
+            
+        } catch (error) {
+            return 0;
+        }
+    }
+    
+    estimateGPUMemoryViaCapabilities() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) return 0;
+            
+            // Get WebGL capability parameters
+            const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+            const maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+            const maxTextureUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+            const maxVertexAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+            const maxFragmentUniforms = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
+            const maxVertexUniforms = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
+            
+            // Calculate memory estimate based on capabilities
+            let textureMemoryEstimate = (maxTextureSize * maxTextureSize * 4 * maxTextureUnits * 0.1) / (1024 * 1024);
+            let renderbufferEstimate = (maxRenderbufferSize * maxRenderbufferSize * 4) / (1024 * 1024);
+            let uniformMemoryEstimate = ((maxFragmentUniforms + maxVertexUniforms) * 16) / (1024 * 1024);
+            
+            // Get WebGL version specific capabilities
+            let versionMultiplier = 1;
+            if (gl instanceof WebGL2RenderingContext) {
+                versionMultiplier = 1.5; // WebGL2 typically indicates more capable hardware
+                
+                try {
+                    const max3DTextureSize = gl.getParameter(gl.MAX_3D_TEXTURE_SIZE);
+                    if (max3DTextureSize) {
+                        textureMemoryEstimate += (max3DTextureSize ** 3 * 4 * 0.05) / (1024 * 1024);
+                    }
+                } catch (e) {
+                    // 3D texture not supported
+                }
+            }
+            
+            const totalEstimate = (textureMemoryEstimate + renderbufferEstimate + uniformMemoryEstimate) * versionMultiplier;
+            
+            // Apply realistic bounds based on common hardware capabilities
+            return Math.max(128, Math.min(totalEstimate, 16384)); // 128MB to 16GB range
+            
+        } catch (error) {
+            return 256; // Default fallback estimate
+        }
+    }
+    
+    estimateGPUMemoryViaRenderer() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) return 0;
+            
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (!debugInfo) return 0;
+            
+            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+            
+            // GPU memory estimation based on known renderer patterns
+            const memoryPatterns = [
+                // NVIDIA patterns
+                { pattern: /RTX 40(90|80|70|60)/i, memory: [24576, 16384, 12288, 8192] },
+                { pattern: /RTX 30(90|80|70|60)/i, memory: [24576, 10240, 8192, 8192] },
+                { pattern: /RTX 20(80|70|60)/i, memory: [11264, 8192, 6144] },
+                { pattern: /GTX 16(60|50)/i, memory: [6144, 4096] },
+                { pattern: /GTX 10(80|70|60)/i, memory: [8192, 8192, 6144] },
+                
+                // AMD patterns  
+                { pattern: /RX 7(900|800|700|600)/i, memory: [24576, 16384, 12288, 8192] },
+                { pattern: /RX 6(950|900|800|700|600)/i, memory: [16384, 16384, 12288, 12288, 8192] },
+                { pattern: /RX 5(700|600|500)/i, memory: [8192, 6144, 4096] },
+                
+                // Intel patterns
+                { pattern: /Xe Graphics/i, memory: [1024, 2048] },
+                { pattern: /UHD Graphics/i, memory: [512, 1024] },
+                { pattern: /HD Graphics/i, memory: [256, 512] },
+                
+                // Mobile patterns
+                { pattern: /Adreno (7|6)/i, memory: [1024, 2048] },
+                { pattern: /Mali/i, memory: [512, 1024] },
+                { pattern: /PowerVR/i, memory: [256, 512] },
+                
+                // Apple Silicon
+                { pattern: /Apple M[123]/i, memory: [8192, 16384, 32768] },
+            ];
+            
+            for (let pattern of memoryPatterns) {
+                if (pattern.pattern.test(renderer)) {
+                    // Extract model number or use middle estimate
+                    const memoryEstimates = pattern.memory;
+                    return memoryEstimates[Math.floor(memoryEstimates.length / 2)];
+                }
+            }
+            
+            // Vendor-based fallback estimates
+            if (/nvidia/i.test(vendor)) {
+                return 4096; // Default NVIDIA estimate
+            } else if (/amd|ati/i.test(vendor)) {
+                return 6144; // Default AMD estimate  
+            } else if (/intel/i.test(vendor)) {
+                return 1024; // Default Intel integrated estimate
+            } else if (/apple/i.test(vendor)) {
+                return 8192; // Default Apple Silicon estimate
+            }
+            
+            return 2048; // Generic fallback estimate
+            
+        } catch (error) {
+            return 1024; // Conservative fallback
+        }
+    }
     
     // Canvas Analysis Stubs
     detectSubpixelRendering(ctx, canvas) { return { subpixel_rendering: 'unknown' }; }
