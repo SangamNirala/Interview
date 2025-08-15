@@ -5191,7 +5191,6 @@ class SessionFingerprintCollector {
     async measureConnectionReliability() { return 'unknown'; }
     async measureLatencyJitter() { return 0; }
 }
-}
 
 // Export the class
 export default SessionFingerprintCollector;
