@@ -86,70 +86,77 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * PHASE 3.4: ENHANCED DEVICE FINGERPRINT COLLECTION
-     * Collect comprehensive device hardware fingerprint including:
+     * ENHANCED: collectDeviceFingerprint() - Advanced Hardware Enumeration
+     * Requirements per original plan:
      * - Hardware enumeration via WebGL and Canvas
-     * - Screen characteristics and color profile  
+     * - Screen characteristics and color profile
      * - CPU architecture and performance benchmarking
      * - Memory and storage capacity detection
      * - Device sensor availability and characteristics
      */
     async collectDeviceFingerprint() {
         try {
-            this.logger.info("🔧 Starting enhanced device fingerprint collection");
+            this.logger.info("🔧 Starting PHASE 1.1 enhanced device fingerprint collection");
             
+            // Implement comprehensive hardware detection matching backend expectations
             const deviceFingerprint = {
-                // Enhanced hardware enumeration via WebGL and Canvas
-                hardware_enumeration: await this.collectHardwareEnumeration(),
-                
-                // Enhanced screen characteristics and color profile
-                screen_characteristics: await this.collectScreenCharacteristics(),
-                
-                // Enhanced CPU architecture and performance benchmarking  
-                cpu_architecture: await this.getCPUCharacteristics(),
-                
-                // Enhanced memory and storage capacity detection
-                memory_storage: {
-                    memory: await this.getMemoryCharacteristics(),
-                    storage: await this.getStorageCharacteristics()
+                hardware_enumeration: {
+                    webgl_analysis: await this.getAdvancedWebGLHardwareInfo(),
+                    canvas_hardware_detection: await this.getCanvasBasedHardwareInfo(),
+                    gpu_memory_estimation: await this.estimateGPUMemory(),
+                    rendering_performance_profile: await this.profileRenderingPerformance()
+                },
+                enhanced_screen_analysis: {
+                    color_profile_detection: this.getColorProfileCharacteristics(),
+                    display_capabilities: this.getDisplayCapabilityAnalysis(),
+                    multi_monitor_setup: this.detectMultiMonitorConfiguration(),
+                    hdr_wide_gamut_support: this.detectHDRWideGamutSupport()
+                },
+                cpu_performance_profiling: {
+                    architecture_detection: await this.detectDetailedCPUArchitecture(),
+                    performance_benchmarking: await this.runCPUPerformanceBenchmarks(),
+                    instruction_set_analysis: await this.analyzeInstructionSetSupport(),
+                    thermal_throttling_detection: await this.detectThermalThrottling()
+                },
+                memory_storage_analysis: {
+                    memory_capacity_estimation: await this.estimateSystemMemory(),
+                    storage_performance_profiling: await this.profileStoragePerformance(),
+                    cache_hierarchy_analysis: await this.analyzeCacheHierarchy(),
+                    virtual_memory_detection: await this.detectVirtualMemoryUsage()
+                },
+                device_sensor_enumeration: {
+                    motion_sensors: await this.enumerateMotionSensors(),
+                    environmental_sensors: await this.enumerateEnvironmentalSensors(),
+                    biometric_sensors: await this.enumerateBiometricSensors(),
+                    connectivity_sensors: await this.enumerateConnectivitySensors()
                 },
                 
-                // Enhanced device sensor availability and characteristics
-                device_sensors: await this.getSensorCharacteristics(),
-                
-                // Additional device identifiers
-                device_identifiers: {
+                // Legacy compatibility data
+                legacy_device_data: {
                     hardware_concurrency: navigator.hardwareConcurrency || 0,
                     device_memory_gb: navigator.deviceMemory || 0,
                     platform: navigator.platform,
                     user_agent_platform: this.extractPlatformFromUserAgent(),
                     max_touch_points: navigator.maxTouchPoints || 0,
-                    connection_type: this.getConnectionType()
+                    canvas_fingerprint: await this.generateCanvasFingerprint(),
+                    webgl_fingerprint: await this.generateWebGLFingerprint()
                 },
-                
-                // Performance benchmarking results
-                performance_benchmarks: await this.collectDevicePerformanceBenchmarks(),
-                
-                // Canvas fingerprinting
-                canvas_fingerprint: await this.generateCanvasFingerprint(),
-                
-                // WebGL fingerprinting
-                webgl_fingerprint: await this.generateWebGLFingerprint(),
                 
                 // Collection metadata
                 collection_metadata: {
                     timestamp: new Date().toISOString(),
                     collection_id: this.generateUniqueId(),
-                    fingerprint_version: "3.4_enhanced",
-                    collection_method: "comprehensive_hardware_enumeration"
+                    fingerprint_version: "3.4_enhanced_device_phase1.1",
+                    collection_method: "comprehensive_hardware_enumeration_advanced",
+                    implementation_phase: "PHASE_1.1_DEVICE_ENHANCEMENT"
                 }
             };
             
-            this.logger.info("✅ Device fingerprint collection completed successfully");
+            this.logger.info("✅ PHASE 1.1 Device fingerprint collection completed successfully");
             return deviceFingerprint;
             
         } catch (error) {
-            this.logger.error("❌ Error collecting enhanced device fingerprint:", error);
+            this.logger.error("❌ Error collecting PHASE 1.1 enhanced device fingerprint:", error);
             return this.getFallbackDeviceFingerprint();
         }
     }
