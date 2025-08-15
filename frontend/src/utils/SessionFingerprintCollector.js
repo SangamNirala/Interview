@@ -2235,7 +2235,7 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Get canvas-based hardware detection
+     * PHASE 1.1.1: Canvas-based hardware detection through rendering analysis
      */
     async getCanvasBasedHardwareInfo() {
         try {
@@ -2244,16 +2244,40 @@ class SessionFingerprintCollector {
             canvas.height = 256;
             const ctx = canvas.getContext('2d');
             
-            if (!ctx) {
-                return { canvas_supported: false };
-            }
-            
-            // Hardware-specific canvas rendering tests
             const hardwareInfo = {
-                // Canvas capabilities
-                max_canvas_size: this.getMaxCanvasSize(),
+                // Rendering Performance Analysis
+                rendering_speed: await this.measureCanvasRenderingSpeed(ctx),
                 
-                // Font rendering analysis
+                // Text Rendering Characteristics
+                text_rendering: await this.analyzeTextRenderingCharacteristics(ctx),
+                
+                // Image Processing Capabilities
+                image_processing: await this.analyzeImageProcessingCapabilities(ctx),
+                
+                // Color Space and Precision
+                color_analysis: await this.analyzeCanvasColorCapabilities(ctx),
+                
+                // Anti-aliasing and Smoothing
+                antialiasing_analysis: await this.analyzeAntialiasingCapabilities(ctx),
+                
+                // Pattern and Gradient Rendering
+                pattern_analysis: await this.analyzePatternRenderingCapabilities(ctx),
+                
+                // Composite Operations
+                composite_analysis: this.analyzeCompositeOperations(ctx),
+                
+                // Canvas Fingerprint Generation
+                canvas_fingerprint: await this.generateAdvancedCanvasFingerprint(ctx)
+            };
+            
+            canvas.remove();
+            return hardwareInfo;
+            
+        } catch (error) {
+            this.logger.error("Error in canvas hardware analysis:", error);
+            return { error: error.message, basic_canvas: this.getBasicCanvasInfo() };
+        }
+    }
                 font_rendering_analysis: await this.analyzeCanvasFontRendering(ctx, canvas),
                 
                 // Graphics acceleration detection
