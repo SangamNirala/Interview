@@ -90,8 +90,12 @@ class EnhancedFingerprintingTester:
             # Create comprehensive enhanced browser fingerprint data
             enhanced_fingerprint_data = {
                 "session_id": self.session_id,
-                "fingerprint_data": {
+                "browser_data": {
                     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "browser_name": "Chrome",
+                    "browser_version": "120.0.6099.109",
+                    "engine_name": "Blink",
+                    "engine_version": "120.0.6099.109",
                     "screen_resolution": "2560x1440",
                     "color_depth": 24,
                     "timezone": "America/New_York",
@@ -101,16 +105,19 @@ class EnhancedFingerprintingTester:
                     "webgl_fingerprint": "webgl_hash_12345",
                     "audio_fingerprint": "audio_hash_54321",
                     "font_fingerprint": "font_hash_98765",
+                    "plugins": [
+                        {"name": "Chrome PDF Plugin", "version": "120.0.0.0", "enabled": True},
+                        {"name": "Native Client", "version": "120.0.0.0", "enabled": True}
+                    ],
+                    "mime_types": [
+                        {"type": "application/pdf", "description": "Portable Document Format", "suffixes": "pdf"}
+                    ],
                     
                     # Enhanced browser identification
                     "enhanced_browser_identification": {
                         "detailed_user_agent_analysis": {
-                            "browser_name": "Chrome",
-                            "browser_version": "120.0.6099.109",
                             "browser_major_version": 120,
                             "browser_minor_version": "0.6099.109",
-                            "engine_name": "Blink",
-                            "engine_version": "120.0.6099.109",
                             "os_name": "Windows",
                             "os_version": "10.0",
                             "device_type": "desktop",
@@ -185,8 +192,6 @@ class EnhancedFingerprintingTester:
                     # Rendering engine analysis
                     "rendering_engine_analysis": {
                         "layout_engine_fingerprinting": {
-                            "engine_name": "Blink",
-                            "engine_version": "120.0.6099.109",
                             "layout_algorithm": "LayoutNG",
                             "text_rendering": "DirectWrite",
                             "font_rendering": "ClearType",
