@@ -4851,6 +4851,8 @@ class SessionFingerprintCollector {
             trend_direction: slope > 0.1 ? 'degrading' : slope < -0.1 ? 'improving' : 'stable'
         };
     }
+    
+    async checkDeviceOrientationPermission() {
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
             try {
                 const permission = await DeviceOrientationEvent.requestPermission();
