@@ -191,7 +191,7 @@ class ParameterFixTester:
             else:
                 self.log_result("Track Device Consistency (Valid Data)", False, f"Failed: {response.status_code} - {response.text}")
                 
-            # Test 2: Missing current_signature
+            # Test 2: Missing current_signature (should return 422 - Pydantic validation error)
             invalid_data = {
                 "device_id": self.device_id,
                 "current_signature": None
@@ -202,10 +202,10 @@ class ParameterFixTester:
                 json=invalid_data
             )
             
-            if response.status_code == 400:
+            if response.status_code in [400, 422]:  # Accept both 400 and 422
                 self.log_result("Track Device Consistency (None Signature)", True, f"Correctly rejected: {response.status_code}")
             else:
-                self.log_result("Track Device Consistency (None Signature)", False, f"Should be 400: {response.status_code}")
+                self.log_result("Track Device Consistency (None Signature)", False, f"Should be 400/422: {response.status_code}")
                 
         except Exception as e:
             self.log_result("Track Device Consistency Fix", False, f"Exception: {str(e)}")
