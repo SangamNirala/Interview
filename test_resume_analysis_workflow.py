@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://netdata-collector.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://hw-detection.preview.emergentagent.com')
 
 def test_resume_analysis_workflow():
     """Test the resume analysis workflow"""

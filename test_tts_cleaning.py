@@ -2,7 +2,7 @@
 import requests
 import json
 
-BASE_URL = 'https://netdata-collector.preview.emergentagent.com/api'
+BASE_URL = 'https://hw-detection.preview.emergentagent.com/api'
 
 def test_tts_text_cleaning():
     session = requests.Session()

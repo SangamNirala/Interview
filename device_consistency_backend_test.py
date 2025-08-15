@@ -29,7 +29,7 @@ from datetime import datetime, timedelta
 import random
 
 # Configuration
-BACKEND_URL = "https://netdata-collector.preview.emergentagent.com/api"
+BACKEND_URL = "https://hw-detection.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class DeviceConsistencyTester:

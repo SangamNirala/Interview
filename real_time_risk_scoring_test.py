@@ -31,7 +31,7 @@ from typing import Dict, List, Any
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://netdata-collector.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://hw-detection.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class RealTimeRiskScoringTester:

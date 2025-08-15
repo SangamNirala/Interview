@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://netdata-collector.preview.emergentagent.com/api"
+BACKEND_URL = "https://hw-detection.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 def test_detailed_network_analysis():

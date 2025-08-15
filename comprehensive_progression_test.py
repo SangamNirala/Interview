@@ -9,7 +9,7 @@ import json
 import io
 import time
 
-BASE_URL = "https://netdata-collector.preview.emergentagent.com/api"
+BASE_URL = "https://hw-detection.preview.emergentagent.com/api"
 
 class ComprehensiveProgressionTest:
     def __init__(self):
