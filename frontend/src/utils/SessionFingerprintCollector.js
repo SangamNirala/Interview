@@ -86,28 +86,71 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Collect device hardware fingerprint
-     * Enumerates hardware via WebGL, Canvas, and Performance APIs
+     * PHASE 3.4: ENHANCED DEVICE FINGERPRINT COLLECTION
+     * Collect comprehensive device hardware fingerprint including:
+     * - Hardware enumeration via WebGL and Canvas
+     * - Screen characteristics and color profile  
+     * - CPU architecture and performance benchmarking
+     * - Memory and storage capacity detection
+     * - Device sensor availability and characteristics
      */
     async collectDeviceFingerprint() {
         try {
+            this.logger.info("🔧 Starting enhanced device fingerprint collection");
+            
             const deviceFingerprint = {
-                cpu: await this.getCPUCharacteristics(),
-                gpu: await this.getGPUCharacteristics(),
-                memory: await this.getMemoryCharacteristics(),
-                storage: await this.getStorageCharacteristics(),
-                sensors: await this.getSensorCharacteristics(),
-                hardware_concurrency: navigator.hardwareConcurrency || 0,
-                device_memory: navigator.deviceMemory || 0,
-                connection_type: this.getConnectionType(),
-                collection_timestamp: new Date().toISOString()
+                // Enhanced hardware enumeration via WebGL and Canvas
+                hardware_enumeration: await this.collectHardwareEnumeration(),
+                
+                // Enhanced screen characteristics and color profile
+                screen_characteristics: await this.collectScreenCharacteristics(),
+                
+                // Enhanced CPU architecture and performance benchmarking  
+                cpu_architecture: await this.getCPUCharacteristics(),
+                
+                // Enhanced memory and storage capacity detection
+                memory_storage: {
+                    memory: await this.getMemoryCharacteristics(),
+                    storage: await this.getStorageCharacteristics()
+                },
+                
+                // Enhanced device sensor availability and characteristics
+                device_sensors: await this.getSensorCharacteristics(),
+                
+                // Additional device identifiers
+                device_identifiers: {
+                    hardware_concurrency: navigator.hardwareConcurrency || 0,
+                    device_memory_gb: navigator.deviceMemory || 0,
+                    platform: navigator.platform,
+                    user_agent_platform: this.extractPlatformFromUserAgent(),
+                    max_touch_points: navigator.maxTouchPoints || 0,
+                    connection_type: this.getConnectionType()
+                },
+                
+                // Performance benchmarking results
+                performance_benchmarks: await this.collectDevicePerformanceBenchmarks(),
+                
+                // Canvas fingerprinting
+                canvas_fingerprint: await this.generateCanvasFingerprint(),
+                
+                // WebGL fingerprinting
+                webgl_fingerprint: await this.generateWebGLFingerprint(),
+                
+                // Collection metadata
+                collection_metadata: {
+                    timestamp: new Date().toISOString(),
+                    collection_id: this.generateUniqueId(),
+                    fingerprint_version: "3.4_enhanced",
+                    collection_method: "comprehensive_hardware_enumeration"
+                }
             };
             
+            this.logger.info("✅ Device fingerprint collection completed successfully");
             return deviceFingerprint;
             
         } catch (error) {
-            this.logger.error("Error collecting device fingerprint:", error);
-            return {};
+            this.logger.error("❌ Error collecting enhanced device fingerprint:", error);
+            return this.getFallbackDeviceFingerprint();
         }
     }
     
