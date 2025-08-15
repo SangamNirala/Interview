@@ -9823,6 +9823,418 @@ class SessionFingerprintCollector {
             return { error: error.message };
         }
     }
+    
+    // ===== SUPPORTING HELPER METHODS FOR BROWSER CHARACTERISTICS =====
+    
+    // Enhanced Browser Identification Helper Methods
+    detectV8Engine() {
+        return !!(window.chrome || Error.captureStackTrace || (typeof process !== 'undefined' && process.versions && process.versions.v8));
+    }
+    
+    detectSpiderMonkeyEngine() {
+        return navigator.userAgent.includes('Firefox') || 'mozInnerScreenX' in window || 'InstallTrigger' in window;
+    }
+    
+    detectJavaScriptCoreEngine() {
+        return /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) || 'WebKitCSSMatrix' in window;
+    }
+    
+    async analyzeChromeCSI() {
+        if (window.chrome && window.chrome.csi) {
+            return window.chrome.csi();
+        }
+        return null;
+    }
+    
+    extractWebKitVersion() {
+        const match = navigator.userAgent.match(/WebKit\/([0-9.]+)/);
+        return match ? match[1] : 'unknown';
+    }
+    
+    extractSafariVersion() {
+        const match = navigator.userAgent.match(/Safari\/([0-9.]+)/);
+        return match ? match[1] : 'unknown';
+    }
+    
+    detectES6Support() {
+        try {
+            eval('(x => x)(1)'); // Arrow function test
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    getWebGLVersion() {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+            const version = gl.getParameter(gl.VERSION);
+            canvas.remove();
+            return version;
+        }
+        canvas.remove();
+        return 'not_supported';
+    }
+    
+    getCanvasAPILevel() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let level = 'basic';
+        
+        if (ctx) {
+            if ('filter' in ctx) level = 'advanced';
+            if ('resetTransform' in ctx) level = 'modern';
+        }
+        
+        canvas.remove();
+        return level;
+    }
+    
+    detectAsyncAwaitSupport() {
+        try {
+            eval('async function test() { await 1; }');
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    // JavaScript Engine Version Indicators
+    async getV8VersionIndicators() {
+        return {
+            error_stack_api: Error.captureStackTrace ? true : false,
+            weak_ref: 'WeakRef' in window,
+            finalization_registry: 'FinalizationRegistry' in window,
+            logical_assignment: this.testLogicalAssignment(),
+            numeric_separators: this.testNumericSeparators(),
+            optional_chaining: this.testOptionalChaining(),
+            nullish_coalescing: this.testNullishCoalescing()
+        };
+    }
+    
+    async getSpiderMonkeyVersionIndicators() {
+        return {
+            build_id: navigator.buildID || 'unknown',
+            moz_specific: 'mozInnerScreenX' in window,
+            install_trigger: 'InstallTrigger' in window,
+            moz_connection: 'mozConnection' in navigator,
+            moz_battery: 'mozBattery' in navigator
+        };
+    }
+    
+    async getJavaScriptCoreVersionIndicators() {
+        return {
+            webkit_css_matrix: 'WebKitCSSMatrix' in window,
+            webkit_point: 'WebKitPoint' in window,
+            webkit_url: 'webkitURL' in window,
+            safari_specific: /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
+        };
+    }
+    
+    // Performance Measurement Helper Methods
+    async measureFunctionCallOverhead() {
+        const iterations = 100000;
+        const testFunction = () => { return 1; };
+        
+        const start = performance.now();
+        for (let i = 0; i < iterations; i++) {
+            testFunction();
+        }
+        const end = performance.now();
+        
+        return (end - start) / iterations;
+    }
+    
+    async measureObjectCreationSpeed() {
+        const iterations = 50000;
+        const start = performance.now();
+        
+        for (let i = 0; i < iterations; i++) {
+            const obj = { prop1: i, prop2: i * 2, prop3: 'test' + i };
+        }
+        
+        const end = performance.now();
+        return (end - start) / iterations;
+    }
+    
+    async measureArrayOperationsSpeed() {
+        const size = 10000;
+        const array = new Array(size).fill(0).map((_, i) => i);
+        
+        const start = performance.now();
+        
+        // Test various array operations
+        array.map(x => x * 2);
+        array.filter(x => x > 5000);
+        array.reduce((acc, val) => acc + val, 0);
+        
+        const end = performance.now();
+        return end - start;
+    }
+    
+    async measureStringOperationsSpeed() {
+        const iterations = 10000;
+        let testString = 'test string for performance measurement';
+        
+        const start = performance.now();
+        
+        for (let i = 0; i < iterations; i++) {
+            testString += i;
+            testString = testString.substring(0, 100);
+            testString.replace('test', 'best');
+        }
+        
+        const end = performance.now();
+        return end - start;
+    }
+    
+    async measureMathOperationsSpeed() {
+        const iterations = 100000;
+        let result = 0;
+        
+        const start = performance.now();
+        
+        for (let i = 0; i < iterations; i++) {
+            result += Math.sin(i) * Math.cos(i) + Math.sqrt(i);
+        }
+        
+        const end = performance.now();
+        return end - start;
+    }
+    
+    // Layout Engine Detection
+    detectLayoutEngine() {
+        const ua = navigator.userAgent;
+        
+        if (ua.includes('Chrome') || ua.includes('Chromium')) return 'Blink';
+        if (ua.includes('Firefox')) return 'Gecko';
+        if (ua.includes('Safari') && !ua.includes('Chrome')) return 'WebKit';
+        if (ua.includes('Edge')) return ua.includes('Edg/') ? 'Blink' : 'EdgeHTML';
+        if (ua.includes('Opera')) return 'Blink';
+        if (ua.includes('MSIE') || ua.includes('Trident')) return 'Trident';
+        
+        return 'Unknown';
+    }
+    
+    // Font Analysis Helper Methods
+    classifyFontFamilies(detectedFonts) {
+        const families = {
+            serif: [],
+            sans_serif: [],
+            monospace: [],
+            display: [],
+            script: []
+        };
+        
+        const serifFonts = ['Times New Roman', 'Times', 'Georgia', 'Palatino', 'Garamond'];
+        const sansSerifFonts = ['Arial', 'Helvetica', 'Verdana', 'Calibri', 'Segoe UI'];
+        const monospaceFonts = ['Courier New', 'Courier', 'Monaco', 'Consolas', 'Menlo'];
+        const displayFonts = ['Impact', 'Arial Black', 'Bradley Hand ITC'];
+        const scriptFonts = ['Comic Sans MS'];
+        
+        for (const font of detectedFonts) {
+            if (serifFonts.includes(font.name)) families.serif.push(font);
+            else if (sansSerifFonts.includes(font.name)) families.sans_serif.push(font);
+            else if (monospaceFonts.includes(font.name)) families.monospace.push(font);
+            else if (displayFonts.includes(font.name)) families.display.push(font);
+            else if (scriptFonts.includes(font.name)) families.script.push(font);
+        }
+        
+        return families;
+    }
+    
+    async detectWebFonts() {
+        const webFonts = [];
+        
+        // Check for common web font indicators
+        const stylesheets = document.styleSheets;
+        for (let i = 0; i < stylesheets.length; i++) {
+            try {
+                const rules = stylesheets[i].cssRules || stylesheets[i].rules;
+                for (let j = 0; j < rules.length; j++) {
+                    if (rules[j].type === CSSRule.FONT_FACE_RULE) {
+                        webFonts.push({
+                            family: rules[j].style.fontFamily,
+                            source: rules[j].style.src
+                        });
+                    }
+                }
+            } catch (e) {
+                // Cross-origin or other access issues
+            }
+        }
+        
+        return webFonts;
+    }
+    
+    // Simple statistical helper methods
+    calculateVariance(numbers) {
+        if (numbers.length === 0) return 0;
+        const mean = numbers.reduce((a, b) => a + b, 0) / numbers.length;
+        return numbers.reduce((sum, num) => sum + Math.pow(num - mean, 2), 0) / numbers.length;
+    }
+    
+    calculateCoefficientOfVariation(numbers) {
+        if (numbers.length === 0) return 0;
+        const mean = numbers.reduce((a, b) => a + b, 0) / numbers.length;
+        const variance = this.calculateVariance(numbers);
+        return mean !== 0 ? (Math.sqrt(variance) / mean) * 100 : 0;
+    }
+    
+    // Feature testing helper methods
+    testLogicalAssignment() {
+        try {
+            eval('let a = 1; a ||= 2;');
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    testNumericSeparators() {
+        try {
+            eval('const num = 1_000_000;');
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    testOptionalChaining() {
+        try {
+            eval('const obj = {}; obj?.prop?.method?.();');
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    testNullishCoalescing() {
+        try {
+            eval('const val = null ?? "default";');
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    // Canvas and graphics helper methods
+    testCanvas2DSupport() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.remove();
+            return !!ctx;
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    isSoftwareRenderer(gl) {
+        const renderer = gl.getParameter(gl.RENDERER);
+        return renderer.toLowerCase().includes('software') || 
+               renderer.toLowerCase().includes('swiftshader') ||
+               renderer.toLowerCase().includes('llvmpipe');
+    }
+    
+    // Stub methods for complex implementations (to be implemented as needed)
+    async analyzeSystemFontCharacteristics() { return {}; }
+    async analyzeFontLoadingBehavior() { return {}; }
+    async analyzeSubpixelRendering() { return {}; }
+    async analyzeAntialiasing() { return {}; }
+    async analyzeHinting() { return {}; }
+    async analyzeFontSmoothing() { return {}; }
+    async analyzeColorEmojiSupport() { return {}; }
+    async testFractionalMetrics(ctx) { return {}; }
+    async analyzeKerning(ctx) { return {}; }
+    async testLigatureSupport(ctx) { return {}; }
+    async analyzeBaselineMetrics(ctx) { return {}; }
+    async testFallbackBehavior() { return {}; }
+    async testMissingGlyphHandling() { return {}; }
+    async analyzeUnicodeSupport() { return {}; }
+    async analyzeFontMatching() { return {}; }
+    async scanExperimentalAPIs() { return {}; }
+    async scanDeprecatedAPIs() { return {}; }
+    async scanVendorPrefixedAPIs() { return {}; }
+    async scanPermissionAPIs() { return {}; }
+    async detectOriginTrials() { return {}; }
+    async detectFlagEnabledFeatures() { return {}; }
+    async detectWebKitExperimental() { return {}; }
+    async detectMozillaExperimental() { return {}; }
+    async detectChromiumExperimental() { return {}; }
+    async analyzePermissionBehavior() { return {}; }
+    async analyzeFeaturePolicyBehavior() { return {}; }
+    async analyzeLayoutCharacteristics() { return {}; }
+    async detectCSSEngineQuirks() { return {}; }
+    async measureRenderingPerformance() { return {}; }
+    async detectLayoutQuirks() { return []; }
+    async detectPaintingQuirks() { return []; }
+    async detectFontRenderingQuirks() { return []; }
+    async detectColorHandlingQuirks() { return []; }
+    async detectAnimationQuirks() { return []; }
+    async detectHardwareAcceleration() { return false; }
+    async testCanvas2DAcceleration() { return false; }
+    async testCSSTransformAcceleration() { return false; }
+    async testVideoAcceleration() { return false; }
+    async measureAccelerationPerformance() { return {}; }
+    async runAccelerationCapabilityTests() { return {}; }
+    
+    // JavaScript Engine specific methods (stubs)
+    async detectV8HarmonyFeatures() { return {}; }
+    async detectTurboFanOptimizations() { return {}; }
+    async detectIgnitionInterpreter() { return {}; }
+    async detectConcurrentMarking() { return {}; }
+    async analyzeHiddenClasses() { return {}; }
+    async analyzeInlineCaching() { return {}; }
+    async analyzeEscapeAnalysis() { return {}; }
+    async analyzeLoopOptimization() { return {}; }
+    detectHeapSnapshotSupport() { return false; }
+    async analyzeGCScheduling() { return {}; }
+    async analyzeMemorySegments() { return {}; }
+    async measureFunctionCallPerformance() { return 0; }
+    async measureObjectOperationPerformance() { return 0; }
+    async measureArrayPerformance() { return 0; }
+    async measureStringPerformance() { return 0; }
+    async measureMathPerformance() { return 0; }
+    async measureRegExpPerformance() { return 0; }
+    async measureAllocationSpeed() { return 0; }
+    async measureGCFrequency() { return 0; }
+    async measureMemoryFragmentation() { return 0; }
+    async measureObjectPoolingEfficiency() { return 0; }
+    async detectHotFunctionOptimization() { return {}; }
+    async detectDeoptimizationTriggers() { return {}; }
+    async analyzeTypeFeedback() { return {}; }
+    async detectSpeculativeOptimization() { return {}; }
+    async measureParseTime() { return 0; }
+    async measureCompilationTime() { return 0; }
+    async measureTierTransitions() { return 0; }
+    async analyzeBytecodeExecution() { return {}; }
+    async analyzeGarbageCollectionBehavior() { return {}; }
+    async detectMemoryPressure() { return []; }
+    async detectAllocationFailures() { return []; }
+    async detectMemoryWarnings() { return []; }
+    async measureObjectAllocationRate() { return 0; }
+    async analyzeArrayAllocationPatterns() { return {}; }
+    async analyzeStringAllocationBehavior() { return {}; }
+    async analyzeClosureAllocation() { return {}; }
+    async identifyCompilationTiers() { return []; }
+    async measureOptimizationThresholds() { return {}; }
+    async analyzeDeoptimizationPatterns() { return {}; }
+    async identifyInlineCandidates() { return []; }
+    async measureInliningEffectiveness() { return 0; }
+    async analyzePolymorphicInlineCache() { return {}; }
+    async detectMegamorphicCallSites() { return []; }
+    async detectUnreachableCodeOptimization() { return false; }
+    async detectUnusedVariableElimination() { return false; }
+    async detectDeadStoreElimination() { return false; }
+    async detectConstantFolding() { return false; }
+    async detectConstantPropagation() { return false; }
+    async detectStrengthReduction() { return false; }
+    async detectLoopUnrolling() { return false; }
+    async detectLoopInvariantMotion() { return false; }
+    async detectVectorization() { return false; }
+    async detectLoopPeeling() { return false; }
 }
 
 // Export the class
