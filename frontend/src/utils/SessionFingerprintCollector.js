@@ -13498,7 +13498,7 @@ class SessionFingerprintCollector {
         try {
             if ('Accelerometer' in window) {
                 try {
-                    const sensor = new Accelerometer({ frequency: 60 });
+                    const sensor = new window.Accelerometer({ frequency: 60 });
                     
                     return await new Promise((resolve, reject) => {
                         let readings = [];
