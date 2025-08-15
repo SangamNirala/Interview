@@ -838,6 +838,46 @@ async def startup_websocket_manager():
         else:
             print(f"⚠️  Collection verification issues: {verification_result.get('collections_missing', [])}")
             logging.warning(f"⚠️  Collection verification issues: {verification_result.get('collections_missing', [])}")
+        
+        # Run database performance optimization
+        print("🔧 Running database performance optimization...")
+        logging.info("🔧 Running database performance optimization...")
+        
+        try:
+            # Create compound indexes
+            compound_result = await create_compound_indexes()
+            if compound_result['success']:
+                print(f"✅ Compound indexes created: {compound_result['compound_indexes_created']}")
+                logging.info(f"✅ Compound indexes created: {compound_result['compound_indexes_created']}")
+            else:
+                print(f"⚠️  Compound index creation issues: {len(compound_result.get('errors', []))} errors")
+                logging.warning(f"⚠️  Compound index creation issues")
+            
+            # Setup TTL indexes
+            ttl_result = await setup_ttl_indexes()
+            if ttl_result['success']:
+                print(f"✅ TTL indexes configured: {ttl_result['ttl_indexes_created']} (auto-cleanup enabled)")
+                logging.info(f"✅ TTL indexes configured: {ttl_result['ttl_indexes_created']}")
+            else:
+                print(f"⚠️  TTL index setup issues")
+                logging.warning(f"⚠️  TTL index setup issues")
+            
+            # Create aggregation pipelines
+            pipeline_result = await create_aggregation_pipelines()
+            if pipeline_result['success']:
+                print(f"✅ Aggregation pipelines ready: {pipeline_result['pipelines_created']}")
+                logging.info(f"✅ Aggregation pipelines ready: {pipeline_result['pipelines_created']}")
+            else:
+                print(f"⚠️  Aggregation pipeline setup issues")
+                logging.warning(f"⚠️  Aggregation pipeline setup issues")
+                
+            print("✅ Database performance optimization completed!")
+            logging.info("✅ Database performance optimization completed!")
+                
+        except Exception as opt_e:
+            print(f"⚠️  Database optimization warning: {opt_e}")
+            logging.warning(f"⚠️  Database optimization warning: {opt_e}")
+            # Continue startup even if optimization has issues
             
     except Exception as e:
         print(f"❌ Failed to initialize fingerprinting collections: {e}")
