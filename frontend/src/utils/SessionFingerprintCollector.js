@@ -2896,32 +2896,9 @@ class SessionFingerprintCollector {
             return { error: error.message, environmental_sensors: "unknown" };
         }
     }
-                
-                // Humidity sensors
-                humidity_sensor_support: 'HumiditySensor' in window,
-                
-                // Pressure sensors
-                pressure_sensor_support: 'PressureSensor' in window,
-                
-                // UV sensors
-                uv_sensor_support: 'UVSensor' in window,
-                
-                // Air quality sensors
-                air_quality_sensor_support: 'AirQualitySensor' in window,
-                
-                // Environmental context analysis
-                environmental_context: await this.analyzeEnvironmentalContext()
-            };
-            
-            return environmentalSensors;
-            
-        } catch (error) {
-            return { error: error.message };
-        }
-    }
-    
+
     /**
-     * Enumerate biometric sensors
+     * PHASE 1.1.5: Biometric sensor capabilities detection
      */
     async enumerateBiometricSensors() {
         try {
