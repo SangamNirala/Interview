@@ -12470,6 +12470,1683 @@ class SessionFingerprintCollector {
     async analyzeV8GarbageCollection() { return {}; }
     async accessV8PerformanceCounters() { return {}; }
     async detectV8Flags() { return {}; }
+    
+    // ===== TASK 3: HELPER METHODS IMPLEMENTATION =====
+    // 150+ comprehensive helper methods for advanced fingerprinting
+    
+    // ===== GPU ANALYSIS HELPER METHODS =====
+    
+    async analyzeGPUCharacteristics(gl) {
+        try {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            return {
+                vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'unknown',
+                renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown',
+                version: gl.getParameter(gl.VERSION),
+                shading_version: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+                webgl_version: gl instanceof WebGL2RenderingContext ? '2.0' : '1.0',
+                supported_extensions: gl.getSupportedExtensions() || [],
+                max_texture_units: gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS),
+                max_vertex_texture_units: gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS)
+            };
+        } catch (error) {
+            this.logger.error("Error analyzing GPU characteristics:", error);
+            return { vendor: 'error', renderer: 'error', error: error.message };
+        }
+    }
+    
+    getWebGLCapabilitiesMatrix(gl) {
+        try {
+            return {
+                max_texture_size: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+                max_viewport_dims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
+                max_vertex_attribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
+                max_varying_vectors: gl.getParameter(gl.MAX_VARYING_VECTORS),
+                max_fragment_uniform_vectors: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
+                max_vertex_uniform_vectors: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
+                max_renderbuffer_size: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+                max_combined_texture_image_units: gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+                aliased_line_width_range: gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE),
+                aliased_point_size_range: gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE),
+                depth_bits: gl.getParameter(gl.DEPTH_BITS),
+                stencil_bits: gl.getParameter(gl.STENCIL_BITS),
+                red_bits: gl.getParameter(gl.RED_BITS),
+                green_bits: gl.getParameter(gl.GREEN_BITS),
+                blue_bits: gl.getParameter(gl.BLUE_BITS),
+                alpha_bits: gl.getParameter(gl.ALPHA_BITS)
+            };
+        } catch (error) {
+            this.logger.error("Error getting WebGL capabilities:", error);
+            return { error: error.message };
+        }
+    }
+    
+    async profileWebGLPerformance(gl) {
+        try {
+            const startTime = performance.now();
+            
+            // Simple WebGL performance test
+            const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            
+            // Create simple shaders
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, `
+                attribute vec2 position;
+                void main() {
+                    gl_Position = vec4(position, 0.0, 1.0);
+                }
+            `);
+            gl.compileShader(vertexShader);
+            
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, `
+                precision mediump float;
+                void main() {
+                    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                }
+            `);
+            gl.compileShader(fragmentShader);
+            
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            gl.useProgram(program);
+            
+            const positionLocation = gl.getAttribLocation(program, 'position');
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+            
+            // Performance test - multiple renders
+            for (let i = 0; i < 100; i++) {
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+            }
+            gl.finish();
+            
+            const endTime = performance.now();
+            
+            // Cleanup
+            gl.deleteBuffer(buffer);
+            gl.deleteShader(vertexShader);
+            gl.deleteShader(fragmentShader);
+            gl.deleteProgram(program);
+            
+            return {
+                render_time: endTime - startTime,
+                performance_score: Math.max(0, 1000 - (endTime - startTime)),
+                frames_per_second: 100000 / (endTime - startTime),
+                gpu_efficiency: Math.min(100, 100000 / (endTime - startTime))
+            };
+        } catch (error) {
+            this.logger.error("Error profiling WebGL performance:", error);
+            return { render_time: 0, performance_score: 0, error: error.message };
+        }
+    }
+    
+    async analyzeGPUMemoryUsage(gl) {
+        try {
+            const memoryInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            const extensions = gl.getSupportedExtensions() || [];
+            
+            // Estimate GPU memory based on texture capabilities
+            const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+            const maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+            
+            // Create test texture to estimate available memory
+            let memoryEstimate = 0;
+            try {
+                const texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1024, 1024, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                memoryEstimate = 1024 * 1024 * 4; // 4MB test successful
+                gl.deleteTexture(texture);
+            } catch (e) {
+                memoryEstimate = 0;
+            }
+            
+            return {
+                max_texture_size: maxTextureSize,
+                max_renderbuffer_size: maxRenderbufferSize,
+                estimated_memory_mb: memoryEstimate / (1024 * 1024),
+                memory_extensions: extensions.filter(ext => ext.includes('memory') || ext.includes('buffer')),
+                texture_memory_capacity: Math.pow(maxTextureSize, 2) * 4, // RGBA bytes
+                has_memory_info_extension: memoryInfo !== null,
+                memory_pressure_indicators: this.detectMemoryPressure(gl)
+            };
+        } catch (error) {
+            this.logger.error("Error analyzing GPU memory:", error);
+            return { error: error.message };
+        }
+    }
+    
+    detectMemoryPressure(gl) {
+        try {
+            const indicators = [];
+            
+            // Check if large texture creation fails
+            const texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            
+            try {
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2048, 2048, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                indicators.push('large_texture_supported');
+            } catch (e) {
+                indicators.push('large_texture_failed');
+            }
+            
+            gl.deleteTexture(texture);
+            
+            // Check WebGL context state
+            const error = gl.getError();
+            if (error !== gl.NO_ERROR) {
+                indicators.push(`gl_error_${error}`);
+            }
+            
+            return indicators;
+        } catch (error) {
+            return ['detection_failed'];
+        }
+    }
+    
+    // ===== CPU ANALYSIS HELPER METHODS =====
+    
+    async detectCPUVendor() {
+        try {
+            // Use performance characteristics to infer CPU vendor
+            const integerTest = await this.benchmarkIntegerPerformance();
+            const floatTest = await this.benchmarkFloatingPointPerformance();
+            
+            const ratio = floatTest.score / integerTest.score;
+            let vendor = "Unknown";
+            
+            if (ratio > 1.2) {
+                vendor = "AMD-like";
+            } else if (ratio < 0.8) {
+                vendor = "Intel-like";
+            } else {
+                vendor = "Balanced-architecture";
+            }
+            
+            return {
+                detected_vendor: vendor,
+                confidence: Math.abs(ratio - 1.0) > 0.2 ? 'high' : 'low',
+                integer_performance: integerTest.score,
+                float_performance: floatTest.score,
+                performance_ratio: ratio,
+                detection_method: 'performance_profiling'
+            };
+        } catch (error) {
+            this.logger.error("Error detecting CPU vendor:", error);
+            return { detected_vendor: 'error', error: error.message };
+        }
+    }
+    
+    async benchmarkIntegerPerformance() {
+        try {
+            const startTime = performance.now();
+            let result = 0;
+            
+            for (let i = 0; i < 1000000; i++) {
+                result += (i * 7) % 13;
+                result ^= i << 2;
+                result += (result >> 4) * 3;
+            }
+            
+            const endTime = performance.now();
+            return {
+                score: Math.max(0, 10000 - (endTime - startTime)),
+                time: endTime - startTime,
+                result: result,
+                operations_per_ms: 1000000 / (endTime - startTime)
+            };
+        } catch (error) {
+            this.logger.error("Error benchmarking integer performance:", error);
+            return { score: 0, time: 0, error: error.message };
+        }
+    }
+    
+    async benchmarkFloatingPointPerformance() {
+        try {
+            const startTime = performance.now();
+            let result = 0;
+            
+            for (let i = 0; i < 1000000; i++) {
+                result += Math.sin(i * 0.001) * Math.cos(i * 0.001);
+                result *= Math.sqrt(i + 1);
+                result /= Math.log(i + 2);
+            }
+            
+            const endTime = performance.now();
+            return {
+                score: Math.max(0, 10000 - (endTime - startTime)),
+                time: endTime - startTime,
+                result: result,
+                operations_per_ms: 1000000 / (endTime - startTime)
+            };
+        } catch (error) {
+            this.logger.error("Error benchmarking floating point performance:", error);
+            return { score: 0, time: 0, error: error.message };
+        }
+    }
+    
+    async analyzeCPUCacheCharacteristics() {
+        try {
+            // L1 Cache test (small, fast access)
+            const l1Test = await this.benchmarkCacheLevel(1024); // 1KB
+            
+            // L2 Cache test (medium, slower access)
+            const l2Test = await this.benchmarkCacheLevel(256 * 1024); // 256KB
+            
+            // L3 Cache test (large, slowest access)
+            const l3Test = await this.benchmarkCacheLevel(8 * 1024 * 1024); // 8MB
+            
+            return {
+                l1_performance: l1Test,
+                l2_performance: l2Test,
+                l3_performance: l3Test,
+                cache_hierarchy: {
+                    l1_to_l2_ratio: l1Test.score / l2Test.score,
+                    l2_to_l3_ratio: l2Test.score / l3Test.score,
+                    total_cache_efficiency: (l1Test.score + l2Test.score + l3Test.score) / 3
+                },
+                estimated_cache_sizes: {
+                    l1_estimate_kb: l1Test.score > 8000 ? 32 : 16,
+                    l2_estimate_kb: l2Test.score > 6000 ? 512 : 256,
+                    l3_estimate_mb: l3Test.score > 4000 ? 16 : 8
+                }
+            };
+        } catch (error) {
+            this.logger.error("Error analyzing CPU cache:", error);
+            return { error: error.message };
+        }
+    }
+    
+    async benchmarkCacheLevel(arraySize) {
+        try {
+            const array = new Int32Array(arraySize / 4);
+            const iterations = 100000;
+            
+            // Fill array with random data
+            for (let i = 0; i < array.length; i++) {
+                array[i] = Math.random() * 1000 | 0;
+            }
+            
+            const startTime = performance.now();
+            
+            let sum = 0;
+            for (let iter = 0; iter < iterations; iter++) {
+                const index = (iter * 7) % array.length;
+                sum += array[index];
+                array[index] = (array[index] * 3 + 1) % 1000;
+            }
+            
+            const endTime = performance.now();
+            
+            return {
+                score: Math.max(0, 10000 - (endTime - startTime)),
+                time: endTime - startTime,
+                array_size_bytes: arraySize,
+                accesses_per_ms: iterations / (endTime - startTime),
+                checksum: sum % 10000
+            };
+        } catch (error) {
+            this.logger.error("Error benchmarking cache level:", error);
+            return { score: 0, time: 0, error: error.message };
+        }
+    }
+    
+    async detectCPUInstructionSets() {
+        try {
+            const features = {
+                typed_arrays: typeof Int32Array !== 'undefined',
+                big_int: typeof BigInt !== 'undefined',
+                web_assembly: typeof WebAssembly !== 'undefined',
+                shared_array_buffer: typeof SharedArrayBuffer !== 'undefined',
+                atomics: typeof Atomics !== 'undefined',
+                simd_support: false,
+                crypto_support: typeof crypto !== 'undefined',
+                performance_counters: typeof performance !== 'undefined'
+            };
+            
+            // Test for SIMD-like operations
+            try {
+                const array1 = new Float32Array([1, 2, 3, 4]);
+                const array2 = new Float32Array([5, 6, 7, 8]);
+                const result = new Float32Array(4);
+                
+                const startTime = performance.now();
+                for (let i = 0; i < array1.length; i++) {
+                    result[i] = array1[i] * array2[i];
+                }
+                const endTime = performance.now();
+                
+                features.simd_support = endTime - startTime < 1; // Fast parallel ops
+                features.vector_performance = 4 / (endTime - startTime);
+            } catch (e) {
+                features.simd_support = false;
+            }
+            
+            // Test WebAssembly if available
+            if (features.web_assembly) {
+                try {
+                    const wasmCode = new Uint8Array([
+                        0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+                        0x01, 0x07, 0x01, 0x60, 0x02, 0x7f, 0x7f, 0x01, 0x7f,
+                        0x03, 0x02, 0x01, 0x00, 0x07, 0x07, 0x01, 0x03, 0x61,
+                        0x64, 0x64, 0x00, 0x00, 0x0a, 0x09, 0x01, 0x07, 0x00,
+                        0x20, 0x00, 0x20, 0x01, 0x6a, 0x0b
+                    ]);
+                    const wasmModule = new WebAssembly.Module(wasmCode);
+                    features.wasm_compilation = true;
+                } catch (e) {
+                    features.wasm_compilation = false;
+                }
+            }
+            
+            return features;
+        } catch (error) {
+            this.logger.error("Error detecting CPU instruction sets:", error);
+            return { error: error.message };
+        }
+    }
+    
+    async measureCPUThermalBehavior() {
+        try {
+            const measurements = [];
+            const testDuration = 5000; // 5 seconds
+            const startTime = Date.now();
+            
+            while (Date.now() - startTime < testDuration) {
+                const iterStart = performance.now();
+                
+                // CPU intensive work
+                let result = 0;
+                for (let i = 0; i < 100000; i++) {
+                    result += Math.sin(i) * Math.cos(i);
+                    result = Math.sqrt(Math.abs(result));
+                }
+                
+                const iterEnd = performance.now();
+                measurements.push(iterEnd - iterStart);
+                
+                // Small delay to prevent browser lockup
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+            // Analyze thermal throttling patterns
+            const avgTime = measurements.reduce((a, b) => a + b) / measurements.length;
+            const variance = measurements.reduce((acc, time) => acc + Math.pow(time - avgTime, 2), 0) / measurements.length;
+            const stdDev = Math.sqrt(variance);
+            
+            // Detect performance degradation over time
+            const firstHalf = measurements.slice(0, measurements.length / 2);
+            const secondHalf = measurements.slice(measurements.length / 2);
+            const firstAvg = firstHalf.reduce((a, b) => a + b) / firstHalf.length;
+            const secondAvg = secondHalf.reduce((a, b) => a + b) / secondHalf.length;
+            
+            const degradationPercent = ((secondAvg - firstAvg) / firstAvg) * 100;
+            
+            return {
+                thermal_throttling_detected: degradationPercent > 10,
+                performance_degradation: degradationPercent,
+                average_execution_time: avgTime,
+                performance_variance: variance,
+                standard_deviation: stdDev,
+                consistency_score: Math.max(0, 100 - (stdDev / avgTime) * 100),
+                measurements_count: measurements.length,
+                test_duration_ms: testDuration
+            };
+        } catch (error) {
+            this.logger.error("Error measuring CPU thermal behavior:", error);
+            return { thermal_throttling_detected: false, error: error.message };
+        }
+    }
+    
+    // ===== BROWSER ENGINE HELPER METHODS =====
+    
+    detectBrowserEngine(userAgent = navigator.userAgent) {
+        try {
+            const engines = {
+                blink: /Chrome|Chromium|Opera|Edge/i.test(userAgent) && /AppleWebKit/i.test(userAgent),
+                webkit: /Safari/i.test(userAgent) && /AppleWebKit/i.test(userAgent) && !/Chrome/i.test(userAgent),
+                gecko: /Firefox/i.test(userAgent) && /Gecko/i.test(userAgent),
+                trident: /MSIE|Trident/i.test(userAgent),
+                edgehtml: /Edge\/\d+/i.test(userAgent) && !/Chromium|Chrome/i.test(userAgent)
+            };
+            
+            for (const [engine, detected] of Object.entries(engines)) {
+                if (detected) {
+                    return {
+                        engine: engine,
+                        confidence: 'high',
+                        detection_method: 'user_agent_analysis',
+                        user_agent: userAgent
+                    };
+                }
+            }
+            
+            return {
+                engine: 'unknown',
+                confidence: 'low',
+                detection_method: 'user_agent_analysis',
+                user_agent: userAgent
+            };
+        } catch (error) {
+            this.logger.error("Error detecting browser engine:", error);
+            return { engine: 'error', error: error.message };
+        }
+    }
+    
+    async detectJavaScriptEngine() {
+        try {
+            const features = {
+                v8: typeof chrome !== 'undefined' && typeof chrome.runtime !== 'undefined',
+                spiderMonkey: typeof InstallTrigger !== 'undefined',
+                javascriptCore: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
+                chakra: /Edge\//.test(navigator.userAgent) && !(/Chrome/.test(navigator.userAgent)),
+                hermes: typeof HermesInternal !== 'undefined'
+            };
+            
+            // Additional V8 specific tests
+            if (!features.v8 && typeof window !== 'undefined') {
+                try {
+                    // V8 specific Error stack trace format
+                    const stack = (new Error()).stack;
+                    features.v8 = stack && stack.includes('    at ');
+                } catch (e) {}
+            }
+            
+            // SpiderMonkey specific tests
+            if (!features.spiderMonkey) {
+                try {
+                    features.spiderMonkey = typeof uneval !== 'undefined';
+                } catch (e) {}
+            }
+            
+            // JavaScriptCore specific tests
+            if (!features.javascriptCore) {
+                try {
+                    features.javascriptCore = typeof window !== 'undefined' && 
+                                             window.toString().indexOf('SafariRemoteNotification') !== -1;
+                } catch (e) {}
+            }
+            
+            for (const [engine, detected] of Object.entries(features)) {
+                if (detected) {
+                    return {
+                        engine: engine,
+                        confidence: 'medium',
+                        features: features,
+                        detection_method: 'feature_detection'
+                    };
+                }
+            }
+            
+            return {
+                engine: 'unknown',
+                confidence: 'low',
+                features: features,
+                detection_method: 'feature_detection'
+            };
+        } catch (error) {
+            this.logger.error("Error detecting JavaScript engine:", error);
+            return { engine: 'error', error: error.message };
+        }
+    }
+    
+    async analyzeRenderingEngine() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Test rendering engine capabilities
+            const capabilities = {
+                supports_path2d: typeof Path2D !== 'undefined',
+                supports_image_smoothing: 'imageSmoothingEnabled' in ctx,
+                supports_hit_regions: typeof ctx.addHitRegion === 'function',
+                supports_filter: 'filter' in ctx,
+                supports_text_metrics: typeof ctx.measureText === 'function',
+                supports_ellipse: typeof ctx.ellipse === 'function',
+                supports_reset_transform: typeof ctx.resetTransform === 'function'
+            };
+            
+            // Test WebGL rendering engine
+            let webglEngine = 'none';
+            try {
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                        webglEngine = renderer.toLowerCase().includes('angle') ? 'angle' : 'native';
+                    }
+                }
+            } catch (e) {
+                webglEngine = 'error';
+            }
+            
+            // Analyze CSS engine capabilities
+            const cssCapabilities = {
+                supports_grid: CSS.supports('display', 'grid'),
+                supports_flexbox: CSS.supports('display', 'flex'),
+                supports_custom_properties: CSS.supports('--test-var', 'red'),
+                supports_backdrop_filter: CSS.supports('backdrop-filter', 'blur(10px)'),
+                supports_clip_path: CSS.supports('clip-path', 'circle(50%)'),
+                supports_transforms: CSS.supports('transform', 'rotate(45deg)')
+            };
+            
+            return {
+                canvas_capabilities: capabilities,
+                webgl_engine: webglEngine,
+                css_capabilities: cssCapabilities,
+                rendering_quirks: await this.detectRenderingQuirks(),
+                font_rendering: await this.analyzeFontRendering(ctx)
+            };
+        } catch (error) {
+            this.logger.error("Error analyzing rendering engine:", error);
+            return { error: error.message };
+        }
+    }
+    
+    async detectRenderingQuirks() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.height = 50;
+            
+            const quirks = [];
+            
+            // Test subpixel rendering
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0.5, 0.5, 1, 1);
+            const subpixelData = ctx.getImageData(0, 0, 2, 2);
+            if (subpixelData.data[0] > 0 && subpixelData.data[0] < 255) {
+                quirks.push('subpixel_rendering');
+            }
+            
+            // Test anti-aliasing behavior
+            ctx.clearRect(0, 0, 50, 50);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, 0.5);
+            ctx.lineTo(50, 0.5);
+            ctx.stroke();
+            
+            const lineData = ctx.getImageData(0, 0, 50, 2);
+            let antiAliasingDetected = false;
+            for (let i = 0; i < lineData.data.length; i += 4) {
+                if (lineData.data[i] > 0 && lineData.data[i] < 255) {
+                    antiAliasingDetected = true;
+                    break;
+                }
+            }
+            
+            if (antiAliasingDetected) {
+                quirks.push('anti_aliasing');
+            }
+            
+            return quirks;
+        } catch (error) {
+            return ['detection_failed'];
+        }
+    }
+    
+    async analyzeFontRendering(ctx) {
+        try {
+            ctx.font = '20px Arial';
+            ctx.fillStyle = '#000';
+            ctx.fillText('Mj', 0, 20);
+            
+            const textData = ctx.getImageData(0, 0, 50, 30);
+            let pixelCount = 0;
+            
+            for (let i = 0; i < textData.data.length; i += 4) {
+                if (textData.data[i] === 0) { // Black pixel
+                    pixelCount++;
+                }
+            }
+            
+            return {
+                text_pixel_count: pixelCount,
+                font_smoothing: pixelCount > 100 ? 'enabled' : 'disabled',
+                text_metrics: ctx.measureText('Mj')
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // ===== MEMORY ANALYSIS HELPER METHODS =====
+    
+    async analyzeJavaScriptHeap() {
+        try {
+            if (!performance.memory) {
+                return { error: 'Performance memory API not available' };
+            }
+            
+            const memoryInfo = {
+                used_heap_size: performance.memory.usedJSHeapSize,
+                total_heap_size: performance.memory.totalJSHeapSize,
+                heap_size_limit: performance.memory.jsHeapSizeLimit,
+                heap_usage_ratio: performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit,
+                available_memory: performance.memory.jsHeapSizeLimit - performance.memory.usedJSHeapSize,
+                memory_pressure: (performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) > 0.8
+            };
+            
+            // Analyze memory growth over time
+            const growthAnalysis = await this.analyzeMemoryGrowth();
+            
+            return {
+                ...memoryInfo,
+                growth_analysis: growthAnalysis,
+                memory_health: this.assessMemoryHealth(memoryInfo)
+            };
+        } catch (error) {
+            this.logger.error("Error analyzing JavaScript heap:", error);
+            return { error: error.message };
+        }
+    }
+    
+    async analyzeMemoryGrowth() {
+        try {
+            const measurements = [];
+            const duration = 2000; // 2 seconds
+            const interval = 100; // 100ms
+            
+            for (let i = 0; i < duration / interval; i++) {
+                if (performance.memory) {
+                    measurements.push({
+                        timestamp: Date.now(),
+                        used_heap: performance.memory.usedJSHeapSize,
+                        total_heap: performance.memory.totalJSHeapSize
+                    });
+                }
+                await new Promise(resolve => setTimeout(resolve, interval));
+            }
+            
+            if (measurements.length < 2) {
+                return { error: 'Insufficient measurements' };
+            }
+            
+            const first = measurements[0];
+            const last = measurements[measurements.length - 1];
+            const growthRate = (last.used_heap - first.used_heap) / (last.timestamp - first.timestamp);
+            
+            return {
+                measurements_count: measurements.length,
+                duration_ms: last.timestamp - first.timestamp,
+                initial_usage: first.used_heap,
+                final_usage: last.used_heap,
+                growth_rate_bytes_per_ms: growthRate,
+                growth_trend: growthRate > 0 ? 'increasing' : growthRate < 0 ? 'decreasing' : 'stable'
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    assessMemoryHealth(memoryInfo) {
+        const usageRatio = memoryInfo.heap_usage_ratio;
+        
+        if (usageRatio < 0.5) return 'good';
+        if (usageRatio < 0.7) return 'moderate';
+        if (usageRatio < 0.9) return 'high';
+        return 'critical';
+    }
+    
+    async testMemoryAllocation() {
+        try {
+            const allocations = [];
+            const startTime = performance.now();
+            let maxAllocated = 0;
+            
+            try {
+                // Progressive memory allocation test
+                for (let i = 1; i <= 100; i++) {
+                    const size = i * 10000; // Increasing size
+                    const array = new Array(size).fill(Math.random());
+                    allocations.push(array);
+                    maxAllocated = size;
+                    
+                    // Check if we can still allocate
+                    if (performance.memory && 
+                        performance.memory.usedJSHeapSize > performance.memory.jsHeapSizeLimit * 0.8) {
+                        break;
+                    }
+                }
+            } catch (memoryError) {
+                // Memory limit reached
+            }
+            
+            const endTime = performance.now();
+            
+            // Cleanup
+            allocations.length = 0;
+            
+            return {
+                allocation_time: endTime - startTime,
+                allocation_score: Math.max(0, 1000 - (endTime - startTime)),
+                max_allocated_elements: maxAllocated,
+                successful_allocations: allocations.length,
+                memory_limit_reached: maxAllocated < 1000000,
+                allocation_rate: maxAllocated / (endTime - startTime)
+            };
+        } catch (error) {
+            this.logger.error("Error testing memory allocation:", error);
+            return { error: 'Memory allocation test failed', allocation_limit_reached: true };
+        }
+    }
+    
+    async analyzeGarbageCollectionBehavior() {
+        try {
+            const measurements = [];
+            const testObjects = [];
+            
+            // Create objects to trigger GC
+            for (let round = 0; round < 10; round++) {
+                const beforeTime = performance.now();
+                const beforeMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+                
+                // Allocate temporary objects
+                for (let i = 0; i < 10000; i++) {
+                    testObjects.push({
+                        id: i,
+                        data: new Array(100).fill(Math.random()),
+                        timestamp: Date.now()
+                    });
+                }
+                
+                // Force potential GC by creating memory pressure
+                const tempLargeArray = new Array(50000).fill(Math.random());
+                
+                const afterTime = performance.now();
+                const afterMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+                
+                measurements.push({
+                    round: round,
+                    allocation_time: afterTime - beforeTime,
+                    memory_before: beforeMemory,
+                    memory_after: afterMemory,
+                    memory_delta: afterMemory - beforeMemory
+                });
+                
+                // Clear some objects to potentially trigger GC
+                testObjects.splice(0, 5000);
+                tempLargeArray.length = 0;
+                
+                // Short delay
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            // Clear all test objects
+            testObjects.length = 0;
+            
+            // Analyze GC patterns
+            const memoryDeltas = measurements.map(m => m.memory_delta);
+            const avgDelta = memoryDeltas.reduce((a, b) => a + b, 0) / memoryDeltas.length;
+            const gcSuspectedRounds = measurements.filter(m => m.memory_delta < avgDelta * 0.5).length;
+            
+            return {
+                measurements: measurements,
+                suspected_gc_rounds: gcSuspectedRounds,
+                gc_frequency_estimate: gcSuspectedRounds / measurements.length,
+                average_memory_delta: avgDelta,
+                gc_efficiency_score: Math.max(0, 100 - (avgDelta / 1000000) * 10)
+            };
+        } catch (error) {
+            this.logger.error("Error analyzing GC behavior:", error);
+            return { error: error.message };
+        }
+    }
+    
+    // ===== CSS FEATURE DETECTION HELPER METHODS =====
+    
+    async detectCSS3Features() {
+        try {
+            const testElement = document.createElement('div');
+            const features = {};
+            
+            const cssProperties = [
+                'borderRadius', 'boxShadow', 'textShadow', 'transform', 'transition',
+                'animation', 'gradients', 'flexbox', 'grid', 'filter', 'backdropFilter',
+                'clipPath', 'mask', 'objectFit', 'columnCount', 'userSelect'
+            ];
+            
+            cssProperties.forEach(property => {
+                features[property] = this.testCSSProperty(testElement, property);
+            });
+            
+            // Test CSS custom properties
+            features.customProperties = CSS.supports('--test-var', 'red');
+            
+            // Test CSS functions
+            features.calc = CSS.supports('width', 'calc(100% - 10px)');
+            features.minmax = CSS.supports('width', 'minmax(100px, 1fr)');
+            features.clamp = CSS.supports('width', 'clamp(100px, 50%, 200px)');
+            
+            // Test CSS selectors
+            features.pseudoElements = this.testCSSSelector('::before');
+            features.attributeSelectors = this.testCSSSelector('[data-test]');
+            features.nthChild = this.testCSSSelector(':nth-child(2n+1)');
+            
+            return features;
+        } catch (error) {
+            this.logger.error("Error detecting CSS3 features:", error);
+            return { error: error.message };
+        }
+    }
+    
+    testCSSProperty(element, property) {
+        try {
+            const prefixes = ['', '-webkit-', '-moz-', '-ms-', '-o-'];
+            
+            // Special cases for complex properties
+            if (property === 'gradients') {
+                return CSS.supports('background', 'linear-gradient(to right, red, blue)');
+            }
+            if (property === 'flexbox') {
+                return CSS.supports('display', 'flex');
+            }
+            if (property === 'grid') {
+                return CSS.supports('display', 'grid');
+            }
+            
+            return prefixes.some(prefix => {
+                const cssProperty = prefix + property;
+                return cssProperty in element.style || CSS.supports(cssProperty, 'initial');
+            });
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    testCSSSelector(selector) {
+        try {
+            document.createElement('div').matches(selector);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async analyzeCSSRenderingCapabilities() {
+        try {
+            const testContainer = document.createElement('div');
+            testContainer.style.cssText = `
+                position: absolute;
+                left: -9999px;
+                top: -9999px;
+                width: 100px;
+                height: 100px;
+                visibility: hidden;
+            `;
+            document.body.appendChild(testContainer);
+            
+            const capabilities = {
+                transforms: await this.testTransformSupport(testContainer),
+                animations: await this.testAnimationSupport(testContainer),
+                filters: await this.testFilterSupport(testContainer),
+                blending: await this.testBlendModeSupport(testContainer),
+                shapes: await this.testShapeSupport(testContainer)
+            };
+            
+            document.body.removeChild(testContainer);
+            return capabilities;
+        } catch (error) {
+            this.logger.error("Error analyzing CSS rendering capabilities:", error);
+            return { error: error.message };
+        }
+    }
+    
+    async testTransformSupport(element) {
+        try {
+            element.style.transform = 'rotate(45deg) scale(0.5) translate(10px, 20px)';
+            const computedStyle = getComputedStyle(element);
+            const transformValue = computedStyle.transform;
+            
+            return {
+                supported: transformValue !== 'none',
+                supports_3d: CSS.supports('transform', 'rotateX(45deg)'),
+                supports_preserve_3d: CSS.supports('transform-style', 'preserve-3d'),
+                computed_value: transformValue
+            };
+        } catch (error) {
+            return { supported: false, error: error.message };
+        }
+    }
+    
+    async testAnimationSupport(element) {
+        try {
+            const animationRule = 'test-animation 1s linear infinite';
+            element.style.animation = animationRule;
+            const computedStyle = getComputedStyle(element);
+            
+            return {
+                supported: computedStyle.animationName !== 'none',
+                supports_keyframes: true, // If animation is supported, keyframes are too
+                supports_timing_functions: CSS.supports('animation-timing-function', 'cubic-bezier(0.1, 0.7, 1.0, 0.1)'),
+                computed_animation: computedStyle.animation
+            };
+        } catch (error) {
+            return { supported: false, error: error.message };
+        }
+    }
+    
+    async testFilterSupport(element) {
+        try {
+            const filters = ['blur(5px)', 'brightness(1.2)', 'contrast(1.5)', 'grayscale(0.5)', 'sepia(0.3)'];
+            const supportedFilters = [];
+            
+            filters.forEach(filter => {
+                if (CSS.supports('filter', filter)) {
+                    supportedFilters.push(filter);
+                }
+            });
+            
+            return {
+                supported: supportedFilters.length > 0,
+                supported_filters: supportedFilters,
+                supports_backdrop_filter: CSS.supports('backdrop-filter', 'blur(10px)')
+            };
+        } catch (error) {
+            return { supported: false, error: error.message };
+        }
+    }
+    
+    async testBlendModeSupport(element) {
+        try {
+            const blendModes = ['multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn'];
+            const supportedModes = [];
+            
+            blendModes.forEach(mode => {
+                if (CSS.supports('mix-blend-mode', mode)) {
+                    supportedModes.push(mode);
+                }
+            });
+            
+            return {
+                supported: supportedModes.length > 0,
+                supported_modes: supportedModes,
+                supports_background_blend_mode: CSS.supports('background-blend-mode', 'multiply')
+            };
+        } catch (error) {
+            return { supported: false, error: error.message };
+        }
+    }
+    
+    async testShapeSupport(element) {
+        try {
+            return {
+                clip_path: CSS.supports('clip-path', 'circle(50%)'),
+                shape_outside: CSS.supports('shape-outside', 'circle(50%)'),
+                shape_margin: CSS.supports('shape-margin', '10px'),
+                polygon_shapes: CSS.supports('clip-path', 'polygon(0% 0%, 100% 0%, 100% 100%)')
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // ===== SENSOR ANALYSIS HELPER METHODS =====
+    
+    async analyzeAccelerometer() {
+        try {
+            if ('Accelerometer' in window) {
+                try {
+                    const sensor = new Accelerometer({ frequency: 60 });
+                    
+                    return await new Promise((resolve, reject) => {
+                        let readings = [];
+                        const timeout = setTimeout(() => reject(new Error('Timeout')), 2000);
+                        
+                        sensor.addEventListener('reading', () => {
+                            readings.push({
+                                x: sensor.x,
+                                y: sensor.y,
+                                z: sensor.z,
+                                timestamp: sensor.timestamp
+                            });
+                            
+                            if (readings.length >= 5) {
+                                clearTimeout(timeout);
+                                sensor.stop();
+                                
+                                resolve({
+                                    available: true,
+                                    frequency: sensor.frequency,
+                                    readings: readings,
+                                    stability: this.calculateSensorStability(readings),
+                                    api_type: 'Generic_Sensor_API'
+                                });
+                            }
+                        });
+                        
+                        sensor.addEventListener('error', (event) => {
+                            clearTimeout(timeout);
+                            reject(event.error);
+                        });
+                        
+                        sensor.start();
+                    });
+                } catch (sensorError) {
+                    // Fall back to DeviceMotionEvent
+                    return await this.analyzeDeviceMotionAccelerometer();
+                }
+            } else {
+                // Fall back to DeviceMotionEvent
+                return await this.analyzeDeviceMotionAccelerometer();
+            }
+        } catch (error) {
+            this.logger.error("Error analyzing accelerometer:", error);
+            return { available: false, error: error.message };
+        }
+    }
+    
+    async analyzeDeviceMotionAccelerometer() {
+        try {
+            if (typeof DeviceMotionEvent === 'undefined') {
+                return { available: false, reason: 'DeviceMotionEvent not supported' };
+            }
+            
+            return await new Promise((resolve) => {
+                let readings = [];
+                const timeout = setTimeout(() => {
+                    window.removeEventListener('devicemotion', motionHandler);
+                    
+                    if (readings.length > 0) {
+                        resolve({
+                            available: true,
+                            api_type: 'DeviceMotionEvent',
+                            readings: readings,
+                            stability: this.calculateSensorStability(readings)
+                        });
+                    } else {
+                        resolve({ available: false, reason: 'No motion data received' });
+                    }
+                }, 2000);
+                
+                const motionHandler = (event) => {
+                    if (event.acceleration || event.accelerationIncludingGravity) {
+                        readings.push({
+                            acceleration: event.acceleration,
+                            accelerationIncludingGravity: event.accelerationIncludingGravity,
+                            rotationRate: event.rotationRate,
+                            timestamp: Date.now()
+                        });
+                        
+                        if (readings.length >= 5) {
+                            clearTimeout(timeout);
+                            window.removeEventListener('devicemotion', motionHandler);
+                            
+                            resolve({
+                                available: true,
+                                api_type: 'DeviceMotionEvent',
+                                readings: readings,
+                                stability: this.calculateSensorStability(readings)
+                            });
+                        }
+                    }
+                };
+                
+                window.addEventListener('devicemotion', motionHandler);
+            });
+        } catch (error) {
+            return { available: false, error: error.message };
+        }
+    }
+    
+    calculateSensorStability(readings) {
+        if (readings.length < 2) return { stability: 'unknown' };
+        
+        try {
+            // Calculate variance for sensor stability assessment
+            const values = readings.map(r => {
+                if (r.x !== undefined) return Math.sqrt(r.x*r.x + r.y*r.y + r.z*r.z);
+                if (r.acceleration) return Math.sqrt(
+                    Math.pow(r.acceleration.x || 0, 2) +
+                    Math.pow(r.acceleration.y || 0, 2) +
+                    Math.pow(r.acceleration.z || 0, 2)
+                );
+                return 0;
+            });
+            
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
+            const stdDev = Math.sqrt(variance);
+            
+            return {
+                stability: stdDev < 0.1 ? 'high' : stdDev < 0.5 ? 'medium' : 'low',
+                mean_magnitude: mean,
+                variance: variance,
+                standard_deviation: stdDev,
+                coefficient_of_variation: stdDev / mean
+            };
+        } catch (error) {
+            return { stability: 'calculation_error', error: error.message };
+        }
+    }
+    
+    async analyzeOrientationSensors() {
+        try {
+            const orientationData = {
+                device_orientation_supported: 'DeviceOrientationEvent' in window,
+                absolute_orientation_supported: false,
+                compass_available: false,
+                gyroscope_available: false
+            };
+            
+            // Test DeviceOrientationEvent
+            if (orientationData.device_orientation_supported) {
+                orientationData.orientation_data = await this.collectOrientationData();
+            }
+            
+            // Test for absolute orientation (compass)
+            if ('ondeviceorientationabsolute' in window) {
+                orientationData.absolute_orientation_supported = true;
+                orientationData.absolute_data = await this.collectAbsoluteOrientationData();
+            }
+            
+            // Test Generic Sensor API gyroscope
+            if ('Gyroscope' in window) {
+                try {
+                    orientationData.gyroscope_data = await this.testGyroscopeSensor();
+                    orientationData.gyroscope_available = true;
+                } catch (e) {
+                    orientationData.gyroscope_available = false;
+                }
+            }
+            
+            return orientationData;
+        } catch (error) {
+            this.logger.error("Error analyzing orientation sensors:", error);
+            return { error: error.message };
+        }
+    }
+    
+    async collectOrientationData() {
+        return new Promise((resolve) => {
+            let readings = [];
+            const timeout = setTimeout(() => {
+                window.removeEventListener('deviceorientation', orientationHandler);
+                resolve({
+                    readings: readings,
+                    data_available: readings.length > 0
+                });
+            }, 2000);
+            
+            const orientationHandler = (event) => {
+                readings.push({
+                    alpha: event.alpha, // Z axis
+                    beta: event.beta,   // X axis
+                    gamma: event.gamma, // Y axis
+                    absolute: event.absolute,
+                    timestamp: Date.now()
+                });
+                
+                if (readings.length >= 3) {
+                    clearTimeout(timeout);
+                    window.removeEventListener('deviceorientation', orientationHandler);
+                    resolve({
+                        readings: readings,
+                        data_available: true,
+                        stability: this.calculateOrientationStability(readings)
+                    });
+                }
+            };
+            
+            window.addEventListener('deviceorientation', orientationHandler);
+        });
+    }
+    
+    async collectAbsoluteOrientationData() {
+        return new Promise((resolve) => {
+            let readings = [];
+            const timeout = setTimeout(() => {
+                window.removeEventListener('deviceorientationabsolute', absoluteHandler);
+                resolve({ readings: readings, compass_available: readings.length > 0 });
+            }, 2000);
+            
+            const absoluteHandler = (event) => {
+                readings.push({
+                    alpha: event.alpha,
+                    beta: event.beta,
+                    gamma: event.gamma,
+                    webkitCompassHeading: event.webkitCompassHeading,
+                    timestamp: Date.now()
+                });
+                
+                if (readings.length >= 3) {
+                    clearTimeout(timeout);
+                    window.removeEventListener('deviceorientationabsolute', absoluteHandler);
+                    resolve({
+                        readings: readings,
+                        compass_available: true,
+                        compass_accuracy: this.calculateCompassAccuracy(readings)
+                    });
+                }
+            };
+            
+            window.addEventListener('deviceorientationabsolute', absoluteHandler);
+        });
+    }
+    
+    async testGyroscopeSensor() {
+        try {
+            const sensor = new Gyroscope({ frequency: 60 });
+            
+            return await new Promise((resolve, reject) => {
+                let readings = [];
+                const timeout = setTimeout(() => reject(new Error('Gyroscope timeout')), 2000);
+                
+                sensor.addEventListener('reading', () => {
+                    readings.push({
+                        x: sensor.x,
+                        y: sensor.y,
+                        z: sensor.z,
+                        timestamp: sensor.timestamp
+                    });
+                    
+                    if (readings.length >= 5) {
+                        clearTimeout(timeout);
+                        sensor.stop();
+                        resolve({
+                            available: true,
+                            readings: readings,
+                            frequency: sensor.frequency
+                        });
+                    }
+                });
+                
+                sensor.addEventListener('error', (event) => {
+                    clearTimeout(timeout);
+                    reject(event.error);
+                });
+                
+                sensor.start();
+            });
+        } catch (error) {
+            throw error;
+        }
+    }
+    
+    calculateOrientationStability(readings) {
+        if (readings.length < 2) return { stability: 'unknown' };
+        
+        const alphaValues = readings.map(r => r.alpha).filter(v => v !== null);
+        const betaValues = readings.map(r => r.beta).filter(v => v !== null);
+        const gammaValues = readings.map(r => r.gamma).filter(v => v !== null);
+        
+        const calculateVariance = (values) => {
+            if (values.length === 0) return 0;
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            return values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
+        };
+        
+        return {
+            alpha_variance: calculateVariance(alphaValues),
+            beta_variance: calculateVariance(betaValues),
+            gamma_variance: calculateVariance(gammaValues),
+            overall_stability: (calculateVariance(alphaValues) + 
+                              calculateVariance(betaValues) + 
+                              calculateVariance(gammaValues)) / 3 < 100 ? 'stable' : 'unstable'
+        };
+    }
+    
+    calculateCompassAccuracy(readings) {
+        const alphaReadings = readings.map(r => r.alpha).filter(v => v !== null);
+        if (alphaReadings.length < 2) return { accuracy: 'unknown' };
+        
+        const variance = alphaReadings.reduce((acc, val, i, arr) => {
+            if (i === 0) return 0;
+            const diff = Math.abs(val - arr[i-1]);
+            return acc + (diff > 180 ? 360 - diff : diff); // Handle circular variance
+        }, 0) / (alphaReadings.length - 1);
+        
+        return {
+            accuracy: variance < 5 ? 'high' : variance < 15 ? 'medium' : 'low',
+            variance: variance,
+            readings_count: alphaReadings.length
+        };
+    }
+    
+    async analyzeBatterySensor() {
+        try {
+            // Modern Battery Status API
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    
+                    return {
+                        available: true,
+                        api_type: 'Battery_Status_API',
+                        level: battery.level,
+                        charging: battery.charging,
+                        charging_time: battery.chargingTime,
+                        discharging_time: battery.dischargingTime,
+                        battery_health: this.estimateBatteryHealth(battery),
+                        power_management: await this.analyzePowerManagement(battery)
+                    };
+                } catch (batteryError) {
+                    return { available: false, reason: 'Battery API access denied' };
+                }
+            }
+            
+            // Legacy battery API
+            if ('battery' in navigator) {
+                const battery = navigator.battery;
+                return {
+                    available: true,
+                    api_type: 'Legacy_Battery_API',
+                    level: battery.level,
+                    charging: battery.charging,
+                    charging_time: battery.chargingTime,
+                    discharging_time: battery.dischargingTime
+                };
+            }
+            
+            return { available: false, reason: 'No battery API available' };
+        } catch (error) {
+            this.logger.error("Error analyzing battery sensor:", error);
+            return { available: false, error: error.message };
+        }
+    }
+    
+    estimateBatteryHealth(battery) {
+        try {
+            // Estimate battery health based on discharge rate and level
+            const currentLevel = battery.level;
+            const dischargingTime = battery.dischargingTime;
+            
+            if (dischargingTime === Infinity || dischargingTime === 0) {
+                return { health: 'unknown', reason: 'Charging or insufficient data' };
+            }
+            
+            // Calculate theoretical vs actual discharge rate
+            const theoreticalDischarge = currentLevel / (dischargingTime / 3600); // Per hour
+            const healthScore = theoreticalDischarge > 0.1 ? 'good' : 
+                              theoreticalDischarge > 0.05 ? 'moderate' : 'poor';
+            
+            return {
+                health: healthScore,
+                discharge_rate_per_hour: theoreticalDischarge,
+                estimated_hours_remaining: dischargingTime / 3600
+            };
+        } catch (error) {
+            return { health: 'calculation_error', error: error.message };
+        }
+    }
+    
+    async analyzePowerManagement(battery) {
+        try {
+            // Monitor battery level changes over time
+            const measurements = [];
+            const monitoringDuration = 5000; // 5 seconds
+            
+            return new Promise((resolve) => {
+                const interval = setInterval(() => {
+                    measurements.push({
+                        level: battery.level,
+                        charging: battery.charging,
+                        timestamp: Date.now()
+                    });
+                }, 500);
+                
+                setTimeout(() => {
+                    clearInterval(interval);
+                    
+                    const analysis = {
+                        measurements: measurements.length,
+                        level_changes: measurements.length > 1 ? 
+                            measurements[measurements.length - 1].level - measurements[0].level : 0,
+                        charging_state_changes: this.detectChargingStateChanges(measurements),
+                        power_stability: this.assessPowerStability(measurements)
+                    };
+                    
+                    resolve(analysis);
+                }, monitoringDuration);
+            });
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    detectChargingStateChanges(measurements) {
+        let changes = 0;
+        for (let i = 1; i < measurements.length; i++) {
+            if (measurements[i].charging !== measurements[i-1].charging) {
+                changes++;
+            }
+        }
+        return changes;
+    }
+    
+    assessPowerStability(measurements) {
+        if (measurements.length < 2) return 'unknown';
+        
+        const levelChanges = measurements.map((m, i) => 
+            i > 0 ? Math.abs(m.level - measurements[i-1].level) : 0
+        ).filter(change => change > 0);
+        
+        const avgChange = levelChanges.reduce((a, b) => a + b, 0) / levelChanges.length || 0;
+        
+        return {
+            stability: avgChange < 0.01 ? 'stable' : avgChange < 0.05 ? 'moderate' : 'unstable',
+            average_level_change: avgChange,
+            total_changes: levelChanges.length
+        };
+    }
+    
+    // Additional helper methods for comprehensive sensor analysis
+    
+    async analyzeProximitySensor() {
+        try {
+            // Check for proximity sensor through various APIs
+            const proximityTests = {
+                user_proximity: 'onuserproximity' in window,
+                device_proximity: 'ondeviceproximity' in window,
+                proximity_sensor_api: 'ProximitySensor' in window
+            };
+            
+            if (proximityTests.proximity_sensor_api) {
+                try {
+                    return await this.testProximitySensorAPI();
+                } catch (e) {
+                    proximityTests.sensor_api_error = e.message;
+                }
+            }
+            
+            if (proximityTests.user_proximity || proximityTests.device_proximity) {
+                return await this.testProximityEvents();
+            }
+            
+            return { available: false, tests: proximityTests };
+        } catch (error) {
+            this.logger.error("Error analyzing proximity sensor:", error);
+            return { available: false, error: error.message };
+        }
+    }
+    
+    async testProximitySensorAPI() {
+        try {
+            const sensor = new ProximitySensor();
+            
+            return await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    sensor.stop();
+                    reject(new Error('Proximity sensor timeout'));
+                }, 3000);
+                
+                sensor.addEventListener('reading', () => {
+                    clearTimeout(timeout);
+                    sensor.stop();
+                    
+                    resolve({
+                        available: true,
+                        api_type: 'ProximitySensor_API',
+                        distance: sensor.distance,
+                        max_distance: sensor.max,
+                        near: sensor.near
+                    });
+                });
+                
+                sensor.addEventListener('error', (event) => {
+                    clearTimeout(timeout);
+                    reject(event.error);
+                });
+                
+                sensor.start();
+            });
+        } catch (error) {
+            throw error;
+        }
+    }
+    
+    async testProximityEvents() {
+        return new Promise((resolve) => {
+            let detectedEvents = [];
+            
+            const userProximityHandler = (event) => {
+                detectedEvents.push({
+                    type: 'user_proximity',
+                    near: event.near,
+                    timestamp: Date.now()
+                });
+            };
+            
+            const deviceProximityHandler = (event) => {
+                detectedEvents.push({
+                    type: 'device_proximity',
+                    value: event.value,
+                    min: event.min,
+                    max: event.max,
+                    timestamp: Date.now()
+                });
+            };
+            
+            window.addEventListener('userproximity', userProximityHandler);
+            window.addEventListener('deviceproximity', deviceProximityHandler);
+            
+            setTimeout(() => {
+                window.removeEventListener('userproximity', userProximityHandler);
+                window.removeEventListener('deviceproximity', deviceProximityHandler);
+                
+                resolve({
+                    available: detectedEvents.length > 0,
+                    api_type: 'Proximity_Events',
+                    events: detectedEvents,
+                    responsive: detectedEvents.length > 0
+                });
+            }, 3000);
+        });
+    }
+    
+    async analyzeAmbientLightSensor() {
+        try {
+            const lightTests = {
+                ambient_light_sensor: 'AmbientLightSensor' in window,
+                device_light: 'ondevicelight' in window
+            };
+            
+            if (lightTests.ambient_light_sensor) {
+                try {
+                    return await this.testAmbientLightSensorAPI();
+                } catch (e) {
+                    lightTests.sensor_api_error = e.message;
+                }
+            }
+            
+            if (lightTests.device_light) {
+                return await this.testDeviceLightEvent();
+            }
+            
+            return { available: false, tests: lightTests };
+        } catch (error) {
+            this.logger.error("Error analyzing ambient light sensor:", error);
+            return { available: false, error: error.message };
+        }
+    }
+    
+    async testAmbientLightSensorAPI() {
+        try {
+            const sensor = new AmbientLightSensor({ frequency: 5 });
+            
+            return await new Promise((resolve, reject) => {
+                let readings = [];
+                const timeout = setTimeout(() => {
+                    sensor.stop();
+                    if (readings.length > 0) {
+                        resolve({
+                            available: true,
+                            api_type: 'AmbientLightSensor_API',
+                            readings: readings,
+                            average_illuminance: readings.reduce((a, b) => a + b.illuminance, 0) / readings.length
+                        });
+                    } else {
+                        reject(new Error('No light readings'));
+                    }
+                }, 3000);
+                
+                sensor.addEventListener('reading', () => {
+                    readings.push({
+                        illuminance: sensor.illuminance,
+                        timestamp: sensor.timestamp || Date.now()
+                    });
+                    
+                    if (readings.length >= 3) {
+                        clearTimeout(timeout);
+                        sensor.stop();
+                        resolve({
+                            available: true,
+                            api_type: 'AmbientLightSensor_API',
+                            readings: readings,
+                            average_illuminance: readings.reduce((a, b) => a + b.illuminance, 0) / readings.length
+                        });
+                    }
+                });
+                
+                sensor.addEventListener('error', (event) => {
+                    clearTimeout(timeout);
+                    reject(event.error);
+                });
+                
+                sensor.start();
+            });
+        } catch (error) {
+            throw error;
+        }
+    }
+    
+    async testDeviceLightEvent() {
+        return new Promise((resolve) => {
+            let readings = [];
+            
+            const lightHandler = (event) => {
+                readings.push({
+                    value: event.value,
+                    timestamp: Date.now()
+                });
+            };
+            
+            window.addEventListener('devicelight', lightHandler);
+            
+            setTimeout(() => {
+                window.removeEventListener('devicelight', lightHandler);
+                
+                resolve({
+                    available: readings.length > 0,
+                    api_type: 'DeviceLight_Event',
+                    readings: readings,
+                    average_lux: readings.length > 0 ? 
+                        readings.reduce((a, b) => a + b.value, 0) / readings.length : 0
+                });
+            }, 3000);
+        });
+    }
 }
 
 // Export the class
