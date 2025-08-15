@@ -12471,7 +12471,6 @@ class SessionFingerprintCollector {
     async accessV8PerformanceCounters() { return {}; }
     async detectV8Flags() { return {}; }
 }
-}
 
 // Export the class
 export default SessionFingerprintCollector;
