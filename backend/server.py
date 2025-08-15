@@ -1521,6 +1521,46 @@ class MultiDeviceUsageRequest(BaseModel):
     user_id: str
     session_data: Dict[str, Any]
 
+# ===== TASK 4.2: ADVANCED BEHAVIORAL BIOMETRICS REQUEST MODELS =====
+
+class AdvancedKeystrokeAnalysisRequest(BaseModel):
+    session_id: str
+    keystroke_data: List[Dict[str, Any]]
+    analysis_options: Optional[Dict[str, Any]] = {}
+
+class AdvancedMouseBehaviorRequest(BaseModel):
+    session_id: str
+    mouse_data: List[Dict[str, Any]]
+    analysis_options: Optional[Dict[str, Any]] = {}
+
+class TouchPatternAnalysisRequest(BaseModel):
+    session_id: str
+    touch_data: List[Dict[str, Any]]
+    analysis_options: Optional[Dict[str, Any]] = {}
+
+class ScrollingPatternAnalysisRequest(BaseModel):
+    session_id: str
+    scroll_data: List[Dict[str, Any]]
+    analysis_options: Optional[Dict[str, Any]] = {}
+
+class InteractionTimingAnalysisRequest(BaseModel):
+    session_id: str
+    interaction_data: List[Dict[str, Any]]
+    analysis_options: Optional[Dict[str, Any]] = {}
+
+class AdvancedAutomationDetectionRequest(BaseModel):
+    session_id: str
+    interaction_data: Dict[str, Any]  # Contains multiple data types: keystroke, mouse, touch, scroll, timing
+    detection_sensitivity: Optional[str] = "medium"  # low, medium, high
+    analysis_options: Optional[Dict[str, Any]] = {}
+
+class ComprehensiveBiometricRequest(BaseModel):
+    session_id: str
+    session_data: Dict[str, Any]  # Complete session behavioral data
+    generate_fingerprint: bool = True
+    compare_with_baseline: bool = False
+    baseline_session_id: Optional[str] = None
+
 # ===== PHASE 2: AI SCREENING & SHORTLISTING MODELS =====
 
 class JobRequirements(BaseModel):
