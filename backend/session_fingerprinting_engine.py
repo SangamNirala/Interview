@@ -7701,6 +7701,1280 @@ class SessionIntegrityMonitor:
             recommendations.append('Additional behavioral verification recommended')
         
         return recommendations
+    
+    # ===== SESSION MANIPULATION DETECTION HELPER METHODS =====
+    
+    def _detect_session_replay_attacks(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect session replay attack patterns"""
+        try:
+            request_history = session_data.get('request_history', [])
+            
+            detection = {
+                'replay_detected': False,
+                'replay_indicators': [],
+                'threat_score': 0.0,
+                'duplicate_sequences': [],
+                'suspicious_patterns': []
+            }
+            
+            if len(request_history) < 5:
+                return detection
+            
+            # Check for identical request sequences
+            duplicate_sequences = self._find_duplicate_request_sequences(request_history)
+            if duplicate_sequences:
+                detection['replay_detected'] = True
+                detection['replay_indicators'].append('identical_request_sequences')
+                detection['duplicate_sequences'] = duplicate_sequences
+                detection['threat_score'] += 0.6
+            
+            # Check for timestamp anomalies
+            timestamp_anomalies = self._detect_timestamp_anomalies(request_history)
+            if timestamp_anomalies:
+                detection['replay_indicators'].append('timestamp_anomalies')
+                detection['threat_score'] += 0.4
+            
+            # Check for out-of-order requests
+            order_anomalies = self._detect_out_of_order_requests(request_history)
+            if order_anomalies:
+                detection['replay_indicators'].append('out_of_order_requests')
+                detection['threat_score'] += 0.3
+            
+            detection['threat_score'] = min(1.0, detection['threat_score'])
+            
+            return detection
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting session replay attacks: {str(e)}")
+            return {'error': str(e), 'threat_score': 0.0}
+    
+    def _find_duplicate_request_sequences(self, request_history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Find duplicate request sequences indicating replay attacks"""
+        try:
+            duplicates = []
+            
+            # Simple duplicate detection - compare request signatures
+            request_signatures = []
+            for request in request_history:
+                signature = f"{request.get('method', '')}:{request.get('path', '')}:{request.get('body_hash', '')}"
+                request_signatures.append(signature)
+            
+            # Find exact duplicate sequences of length 3 or more
+            sequence_length = 3
+            for i in range(len(request_signatures) - sequence_length + 1):
+                sequence = request_signatures[i:i + sequence_length]
+                
+                # Look for this sequence later in the history
+                for j in range(i + sequence_length, len(request_signatures) - sequence_length + 1):
+                    compare_sequence = request_signatures[j:j + sequence_length]
+                    
+                    if sequence == compare_sequence:
+                        duplicates.append({
+                            'original_start': i,
+                            'duplicate_start': j,
+                            'sequence_length': sequence_length,
+                            'sequence': sequence
+                        })
+            
+            return duplicates
+            
+        except Exception:
+            return []
+    
+    def _detect_timestamp_anomalies(self, request_history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Detect timestamp manipulation in request history"""
+        try:
+            anomalies = []
+            
+            for i, request in enumerate(request_history):
+                timestamp = request.get('timestamp', 0)
+                
+                if i > 0:
+                    prev_timestamp = request_history[i-1].get('timestamp', 0)
+                    
+                    # Check for negative time progression
+                    if timestamp < prev_timestamp:
+                        anomalies.append({
+                            'type': 'negative_time_progression',
+                            'request_index': i,
+                            'timestamp': timestamp,
+                            'previous_timestamp': prev_timestamp
+                        })
+                    
+                    # Check for unrealistic time jumps
+                    time_diff = timestamp - prev_timestamp
+                    if time_diff > 3600:  # More than 1 hour between requests
+                        anomalies.append({
+                            'type': 'unrealistic_time_jump',
+                            'request_index': i,
+                            'time_difference': time_diff
+                        })
+            
+            return anomalies
+            
+        except Exception:
+            return []
+    
+    def _detect_out_of_order_requests(self, request_history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Detect out-of-order requests indicating replay attacks"""
+        try:
+            anomalies = []
+            
+            # Check for requests with sequence numbers out of order
+            for i in range(1, len(request_history)):
+                current_seq = request_history[i].get('sequence_number', i)
+                prev_seq = request_history[i-1].get('sequence_number', i-1)
+                
+                if current_seq <= prev_seq:
+                    anomalies.append({
+                        'type': 'out_of_order_sequence',
+                        'request_index': i,
+                        'current_sequence': current_seq,
+                        'previous_sequence': prev_seq
+                    })
+            
+            return anomalies
+            
+        except Exception:
+            return []
+    
+    def _analyze_timestamp_manipulation(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze timestamp manipulation patterns"""
+        try:
+            timestamps = session_data.get('timestamps', [])
+            server_times = session_data.get('server_timestamps', [])
+            
+            analysis = {
+                'manipulation_detected': False,
+                'manipulation_score': 0.0,
+                'manipulation_indicators': [],
+                'clock_skew_analysis': {},
+                'precision_analysis': {}
+            }
+            
+            if len(timestamps) < 2:
+                return analysis
+            
+            # Analyze clock skew
+            clock_skew = self._analyze_clock_skew(timestamps, server_times)
+            analysis['clock_skew_analysis'] = clock_skew
+            
+            if clock_skew.get('excessive_skew', False):
+                analysis['manipulation_indicators'].append('excessive_clock_skew')
+                analysis['manipulation_score'] += 0.4
+            
+            # Analyze timestamp precision
+            precision_analysis = self._analyze_timestamp_precision(timestamps)
+            analysis['precision_analysis'] = precision_analysis
+            
+            if precision_analysis.get('suspicious_precision', False):
+                analysis['manipulation_indicators'].append('suspicious_precision')
+                analysis['manipulation_score'] += 0.3
+            
+            # Check for future timestamps
+            future_timestamps = self._detect_future_timestamps(timestamps)
+            if future_timestamps:
+                analysis['manipulation_indicators'].append('future_timestamps')
+                analysis['manipulation_score'] += 0.5
+            
+            analysis['manipulation_detected'] = analysis['manipulation_score'] > 0.3
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing timestamp manipulation: {str(e)}")
+            return {'error': str(e), 'manipulation_score': 0.0}
+    
+    def _analyze_clock_skew(self, client_times: List[float], server_times: List[float]) -> Dict[str, Any]:
+        """Analyze clock skew between client and server timestamps"""
+        try:
+            if len(client_times) != len(server_times) or len(client_times) < 2:
+                return {'excessive_skew': False}
+            
+            skew_values = []
+            for client_time, server_time in zip(client_times, server_times):
+                skew = abs(client_time - server_time)
+                skew_values.append(skew)
+            
+            avg_skew = statistics.mean(skew_values)
+            max_skew = max(skew_values)
+            
+            analysis = {
+                'average_skew': avg_skew,
+                'maximum_skew': max_skew,
+                'excessive_skew': max_skew > self.manipulation_signatures['timestamp_manipulation']['clock_skew_threshold'],
+                'skew_consistency': statistics.stdev(skew_values) if len(skew_values) > 1 else 0
+            }
+            
+            return analysis
+            
+        except Exception:
+            return {'excessive_skew': False}
+    
+    def _analyze_timestamp_precision(self, timestamps: List[float]) -> Dict[str, Any]:
+        """Analyze timestamp precision for manipulation indicators"""
+        try:
+            precision_analysis = {
+                'suspicious_precision': False,
+                'precision_patterns': [],
+                'precision_score': 0.0
+            }
+            
+            # Check for unnaturally high precision (microsecond level)
+            microsecond_precision_count = 0
+            for timestamp in timestamps:
+                # Check if timestamp has microsecond precision
+                if timestamp % 0.001 != 0:  # Has sub-millisecond precision
+                    microsecond_precision_count += 1
+            
+            if len(timestamps) > 0:
+                microsecond_ratio = microsecond_precision_count / len(timestamps)
+                if microsecond_ratio > 0.8:  # More than 80% have microsecond precision
+                    precision_analysis['suspicious_precision'] = True
+                    precision_analysis['precision_patterns'].append('excessive_microsecond_precision')
+            
+            # Check for rounded timestamps (indicating artificial generation)
+            rounded_count = 0
+            for timestamp in timestamps:
+                if timestamp % 1.0 == 0:  # Exactly rounded to seconds
+                    rounded_count += 1
+            
+            if len(timestamps) > 0:
+                rounded_ratio = rounded_count / len(timestamps)
+                if rounded_ratio > 0.7:  # More than 70% are exactly rounded
+                    precision_analysis['suspicious_precision'] = True
+                    precision_analysis['precision_patterns'].append('excessive_rounding')
+            
+            return precision_analysis
+            
+        except Exception:
+            return {'suspicious_precision': False}
+    
+    def _detect_future_timestamps(self, timestamps: List[float]) -> List[Dict[str, Any]]:
+        """Detect timestamps that are in the future"""
+        try:
+            current_time = datetime.utcnow().timestamp()
+            future_threshold = self.manipulation_signatures['timestamp_manipulation']['future_timestamp_threshold']
+            
+            future_timestamps = []
+            for i, timestamp in enumerate(timestamps):
+                if timestamp > current_time + future_threshold:
+                    future_timestamps.append({
+                        'index': i,
+                        'timestamp': timestamp,
+                        'seconds_in_future': timestamp - current_time
+                    })
+            
+            return future_timestamps
+            
+        except Exception:
+            return []
+    
+    def _validate_session_data_integrity(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate session data integrity"""
+        try:
+            integrity_config = self.manipulation_signatures['session_data_integrity']
+            
+            validation = {
+                'integrity_valid': True,
+                'integrity_violation_score': 0.0,
+                'missing_fields': [],
+                'modified_immutable_fields': [],
+                'validation_errors': []
+            }
+            
+            # Check for required fields
+            for field in integrity_config['required_fields']:
+                if field not in session_data or not session_data[field]:
+                    validation['missing_fields'].append(field)
+                    validation['integrity_violation_score'] += 0.2
+            
+            # Check for modifications to immutable fields
+            original_data = session_data.get('original_session_data', {})
+            if original_data:
+                for field in integrity_config['immutable_fields']:
+                    if (field in original_data and field in session_data and 
+                        original_data[field] != session_data[field]):
+                        validation['modified_immutable_fields'].append(field)
+                        validation['integrity_violation_score'] += 0.4
+            
+            # Check data checksums if available
+            if integrity_config['validation_checksums']:
+                checksum_validation = self._validate_data_checksums(session_data)
+                if not checksum_validation['valid']:
+                    validation['validation_errors'].append('checksum_mismatch')
+                    validation['integrity_violation_score'] += 0.3
+            
+            validation['integrity_valid'] = validation['integrity_violation_score'] < 0.3
+            
+            return validation
+            
+        except Exception as e:
+            self.logger.error(f"Error validating session data integrity: {str(e)}")
+            return {'error': str(e), 'integrity_violation_score': 0.5}
+    
+    def _validate_data_checksums(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate data checksums for integrity verification"""
+        try:
+            # Simplified checksum validation
+            expected_checksum = session_data.get('data_checksum', '')
+            
+            if not expected_checksum:
+                return {'valid': True}  # No checksum to validate
+            
+            # Calculate current checksum (simplified implementation)
+            data_to_hash = json.dumps(session_data.get('core_data', {}), sort_keys=True)
+            current_checksum = hashlib.md5(data_to_hash.encode()).hexdigest()
+            
+            return {
+                'valid': current_checksum == expected_checksum,
+                'expected': expected_checksum,
+                'actual': current_checksum
+            }
+            
+        except Exception:
+            return {'valid': False}
+    
+    def _analyze_cross_session_correlation(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze cross-session correlation patterns"""
+        try:
+            user_id = session_data.get('user_id', '')
+            session_id = session_data.get('session_id', '')
+            
+            analysis = {
+                'anomaly_score': 0.0,
+                'correlation_anomalies': [],
+                'concurrent_sessions': 0,
+                'session_overlap_analysis': {},
+                'device_consistency': True
+            }
+            
+            if not user_id:
+                return analysis
+            
+            # Get user's other sessions
+            user_sessions = self.user_sessions.get(user_id, [])
+            active_sessions = [sid for sid in user_sessions if sid in self.active_sessions]
+            
+            analysis['concurrent_sessions'] = len(active_sessions)
+            
+            # Check for too many concurrent sessions
+            max_concurrent = self.manipulation_signatures['cross_session_correlation']['max_concurrent_sessions']
+            if analysis['concurrent_sessions'] > max_concurrent:
+                analysis['correlation_anomalies'].append('excessive_concurrent_sessions')
+                analysis['anomaly_score'] += 0.4
+            
+            # Check device consistency across sessions
+            device_consistency = self._check_cross_session_device_consistency(session_data, active_sessions)
+            analysis['device_consistency'] = device_consistency
+            
+            if not device_consistency:
+                analysis['correlation_anomalies'].append('device_inconsistency')
+                analysis['anomaly_score'] += 0.3
+            
+            # Analyze session overlap patterns
+            overlap_analysis = self._analyze_session_overlaps(session_id, active_sessions)
+            analysis['session_overlap_analysis'] = overlap_analysis
+            
+            if overlap_analysis.get('suspicious_overlaps', False):
+                analysis['correlation_anomalies'].append('suspicious_session_overlaps')
+                analysis['anomaly_score'] += 0.2
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing cross-session correlation: {str(e)}")
+            return {'error': str(e), 'anomaly_score': 0.0}
+    
+    def _check_cross_session_device_consistency(self, session_data: Dict[str, Any], active_sessions: List[str]) -> bool:
+        """Check device consistency across user's active sessions"""
+        try:
+            current_device = session_data.get('device_fingerprint', {})
+            
+            if not current_device or not active_sessions:
+                return True
+            
+            # Compare with other active sessions
+            for session_id in active_sessions:
+                if session_id in self.active_sessions:
+                    other_session = self.active_sessions[session_id]['session_data']
+                    other_device = other_session.get('device_fingerprint', {})
+                    
+                    if other_device:
+                        # Check key device attributes
+                        key_attrs = ['screen_resolution', 'user_agent', 'timezone']
+                        for attr in key_attrs:
+                            if (current_device.get(attr) != other_device.get(attr) and
+                                current_device.get(attr) and other_device.get(attr)):
+                                return False
+            
+            return True
+            
+        except Exception:
+            return True
+    
+    def _analyze_session_overlaps(self, session_id: str, active_sessions: List[str]) -> Dict[str, Any]:
+        """Analyze session overlap patterns for anomalies"""
+        try:
+            overlap_analysis = {
+                'suspicious_overlaps': False,
+                'overlap_score': 0.0,
+                'overlapping_sessions': []
+            }
+            
+            # Simplified overlap analysis
+            if len(active_sessions) > 2:  # More than 2 concurrent sessions is suspicious
+                overlap_analysis['suspicious_overlaps'] = True
+                overlap_analysis['overlap_score'] = len(active_sessions) / 5.0  # Normalize
+            
+            overlap_analysis['overlapping_sessions'] = active_sessions
+            
+            return overlap_analysis
+            
+        except Exception:
+            return {'suspicious_overlaps': False}
+    
+    def _recognize_manipulation_patterns(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Recognize manipulation patterns in session data"""
+        try:
+            pattern_recognition = {
+                'patterns_detected': [],
+                'pattern_score': 0.0,
+                'manipulation_techniques': [],
+                'confidence_level': 0.0
+            }
+            
+            # Check for known manipulation patterns
+            patterns = []
+            
+            # Pattern 1: Automated request generation
+            if self._detect_automated_patterns(session_data):
+                patterns.append('automated_request_generation')
+                pattern_recognition['manipulation_techniques'].append('automation')
+                pattern_recognition['pattern_score'] += 0.4
+            
+            # Pattern 2: Session token reuse
+            if self._detect_token_reuse_patterns(session_data):
+                patterns.append('session_token_reuse')
+                pattern_recognition['manipulation_techniques'].append('token_manipulation')
+                pattern_recognition['pattern_score'] += 0.5
+            
+            # Pattern 3: Data replay attacks
+            if self._detect_data_replay_patterns(session_data):
+                patterns.append('data_replay_attack')
+                pattern_recognition['manipulation_techniques'].append('replay_attack')
+                pattern_recognition['pattern_score'] += 0.6
+            
+            pattern_recognition['patterns_detected'] = patterns
+            pattern_recognition['confidence_level'] = min(1.0, pattern_recognition['pattern_score'])
+            
+            return pattern_recognition
+            
+        except Exception as e:
+            self.logger.error(f"Error recognizing manipulation patterns: {str(e)}")
+            return {'error': str(e), 'pattern_score': 0.0}
+    
+    def _detect_automated_patterns(self, session_data: Dict[str, Any]) -> bool:
+        """Detect automated request generation patterns"""
+        try:
+            request_intervals = session_data.get('request_intervals', [])
+            
+            if len(request_intervals) < 5:
+                return False
+            
+            # Check for very consistent intervals (automation indicator)
+            if len(set(request_intervals)) == 1:  # All intervals identical
+                return True
+            
+            # Check for extremely regular patterns
+            variance = statistics.stdev(request_intervals) if len(request_intervals) > 1 else 0
+            mean_interval = statistics.mean(request_intervals)
+            
+            # Very low variance indicates automation
+            coefficient_of_variation = variance / mean_interval if mean_interval > 0 else 0
+            return coefficient_of_variation < 0.1
+            
+        except Exception:
+            return False
+    
+    def _detect_token_reuse_patterns(self, session_data: Dict[str, Any]) -> bool:
+        """Detect session token reuse patterns"""
+        try:
+            token_history = session_data.get('token_history', [])
+            
+            if len(token_history) < 2:
+                return False
+            
+            # Check for duplicate tokens
+            unique_tokens = set(token_history)
+            return len(unique_tokens) < len(token_history)
+            
+        except Exception:
+            return False
+    
+    def _detect_data_replay_patterns(self, session_data: Dict[str, Any]) -> bool:
+        """Detect data replay attack patterns"""
+        try:
+            request_signatures = session_data.get('request_signatures', [])
+            
+            if len(request_signatures) < 3:
+                return False
+            
+            # Check for repeated request signatures
+            signature_counts = {}
+            for signature in request_signatures:
+                signature_counts[signature] = signature_counts.get(signature, 0) + 1
+            
+            # If any signature appears more than twice, it might be a replay
+            return any(count > 2 for count in signature_counts.values())
+            
+        except Exception:
+            return False
+    
+    def _assess_manipulation_risk(self, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess overall manipulation risk"""
+        try:
+            risk_factors = []
+            risk_score = 0.0
+            
+            # Check replay attack detection
+            replay = analysis_result.get('replay_attack_detection', {})
+            if replay.get('replay_detected', False):
+                risk_factors.extend(replay.get('replay_indicators', []))
+                risk_score += replay.get('threat_score', 0.0)
+            
+            # Check timestamp manipulation
+            timestamp = analysis_result.get('timestamp_manipulation', {})
+            if timestamp.get('manipulation_detected', False):
+                risk_factors.extend(timestamp.get('manipulation_indicators', []))
+                risk_score += timestamp.get('manipulation_score', 0.0)
+            
+            # Check data integrity violations
+            integrity = analysis_result.get('data_integrity_validation', {})
+            if not integrity.get('integrity_valid', True):
+                risk_factors.append('data_integrity_violation')
+                risk_score += integrity.get('integrity_violation_score', 0.0)
+            
+            # Check cross-session anomalies
+            cross_session = analysis_result.get('cross_session_correlation', {})
+            if cross_session.get('anomaly_score', 0.0) > 0.5:
+                risk_factors.extend(cross_session.get('correlation_anomalies', []))
+                risk_score += cross_session.get('anomaly_score', 0.0) * 0.5
+            
+            # Normalize risk score
+            risk_score = min(1.0, risk_score)
+            
+            # Determine risk level
+            if risk_score > 0.8:
+                risk_level = 'CRITICAL'
+            elif risk_score > 0.6:
+                risk_level = 'HIGH'
+            elif risk_score > 0.4:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
+            return {
+                'risk_score': risk_score,
+                'risk_level': risk_level,
+                'risk_factors': risk_factors,
+                'recommendations': self._generate_manipulation_risk_recommendations(risk_factors)
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error assessing manipulation risk: {str(e)}")
+            return {'risk_score': 0.5, 'risk_level': 'MEDIUM', 'error': str(e)}
+    
+    def _generate_manipulation_risk_recommendations(self, risk_factors: List[str]) -> List[str]:
+        """Generate manipulation risk mitigation recommendations"""
+        recommendations = []
+        
+        if 'identical_request_sequences' in risk_factors:
+            recommendations.append('CRITICAL: Replay attack detected - invalidate session immediately')
+        if 'timestamp_anomalies' in risk_factors:
+            recommendations.append('HIGH: Timestamp manipulation detected - verify request authenticity')
+        if 'data_integrity_violation' in risk_factors:
+            recommendations.append('CRITICAL: Data integrity compromised - session validation required')
+        if 'excessive_concurrent_sessions' in risk_factors:
+            recommendations.append('Monitor concurrent sessions and implement session limits')
+        if 'device_inconsistency' in risk_factors:
+            recommendations.append('Device fingerprint mismatch - require additional authentication')
+        
+        return recommendations
+    
+    def _identify_primary_manipulation_threat(self, analysis_result: Dict[str, Any]) -> str:
+        """Identify the primary manipulation threat type"""
+        try:
+            threat_scores = {
+                'replay_attack': analysis_result.get('replay_attack_detection', {}).get('threat_score', 0.0),
+                'timestamp_manipulation': analysis_result.get('timestamp_manipulation', {}).get('manipulation_score', 0.0),
+                'data_integrity_violation': analysis_result.get('data_integrity_validation', {}).get('integrity_violation_score', 0.0),
+                'cross_session_anomaly': analysis_result.get('cross_session_correlation', {}).get('anomaly_score', 0.0)
+            }
+            
+            # Find the highest threat score
+            primary_threat = max(threat_scores.items(), key=lambda x: x[1])
+            
+            return primary_threat[0] if primary_threat[1] > 0.3 else 'none'
+            
+        except Exception:
+            return 'unknown'
+    
+    def _collect_threat_indicators(self, analysis_result: Dict[str, Any]) -> List[str]:
+        """Collect all threat indicators from analysis"""
+        indicators = []
+        
+        # Replay attack indicators
+        replay_indicators = analysis_result.get('replay_attack_detection', {}).get('replay_indicators', [])
+        indicators.extend(replay_indicators)
+        
+        # Timestamp manipulation indicators
+        timestamp_indicators = analysis_result.get('timestamp_manipulation', {}).get('manipulation_indicators', [])
+        indicators.extend(timestamp_indicators)
+        
+        # Data integrity violations
+        integrity = analysis_result.get('data_integrity_validation', {})
+        if integrity.get('missing_fields'):
+            indicators.append('missing_required_fields')
+        if integrity.get('modified_immutable_fields'):
+            indicators.append('immutable_field_modifications')
+        
+        # Cross-session anomalies
+        cross_session_anomalies = analysis_result.get('cross_session_correlation', {}).get('correlation_anomalies', [])
+        indicators.extend(cross_session_anomalies)
+        
+        return indicators
+    
+    def _recommend_security_action(self, analysis_result: Dict[str, Any]) -> str:
+        """Recommend security action based on manipulation analysis"""
+        try:
+            manipulation_score = analysis_result.get('manipulation_score', 0.0)
+            
+            if manipulation_score > 0.8:
+                return 'TERMINATE_SESSION'
+            elif manipulation_score > 0.6:
+                return 'REQUIRE_REAUTHENTICATION'
+            elif manipulation_score > 0.4:
+                return 'ENHANCED_MONITORING'
+            else:
+                return 'CONTINUE_NORMAL'
+                
+        except Exception:
+            return 'ENHANCED_MONITORING'
+    
+    # ===== SESSION AUTHENTICITY VALIDATION HELPER METHODS =====
+    
+    def _validate_authentication_credentials(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate authentication credentials"""
+        try:
+            auth_data = session_data.get('authentication_data', {})
+            
+            validation = {
+                'authentication_valid': True,
+                'validity_score': 1.0,
+                'validation_issues': []
+            }
+            
+            # Check if authentication data is present
+            if not auth_data:
+                validation['authentication_valid'] = False
+                validation['validity_score'] = 0.0
+                validation['validation_issues'].append('missing_authentication_data')
+                return validation
+            
+            # Check authentication method
+            auth_method = auth_data.get('method', '')
+            if auth_method not in ['password', 'token', 'biometric', 'multi_factor']:
+                validation['validation_issues'].append('unsupported_auth_method')
+                validation['validity_score'] -= 0.3
+            
+            # Check credential expiry
+            expires_at = auth_data.get('expires_at', 0)
+            current_time = datetime.utcnow().timestamp()
+            
+            if expires_at > 0 and current_time > expires_at:
+                validation['authentication_valid'] = False
+                validation['validation_issues'].append('expired_credentials')
+                validation['validity_score'] -= 0.5
+            
+            return validation
+            
+        except Exception as e:
+            self.logger.error(f"Error validating authentication credentials: {str(e)}")
+            return {'error': str(e), 'validity_score': 0.0}
+    
+    def _validate_user_identity_consistency(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate user identity consistency"""
+        try:
+            user_id = session_data.get('user_id', '')
+            claimed_identity = session_data.get('claimed_identity', {})
+            
+            validation = {
+                'identity_verified': True,
+                'consistency_score': 1.0,
+                'identity_issues': []
+            }
+            
+            if not user_id or not claimed_identity:
+                validation['identity_verified'] = False
+                validation['consistency_score'] = 0.0
+                validation['identity_issues'].append('insufficient_identity_data')
+                return validation
+            
+            # Check identity attributes consistency
+            identity_attrs = ['username', 'email', 'phone_number']
+            
+            for attr in identity_attrs:
+                claimed_value = claimed_identity.get(attr, '')
+                
+                # In production, this would check against user database
+                if claimed_value and not self._validate_identity_attribute(attr, claimed_value):
+                    validation['identity_issues'].append(f'invalid_{attr}')
+                    validation['consistency_score'] -= 0.2
+            
+            validation['identity_verified'] = validation['consistency_score'] > 0.6
+            
+            return validation
+            
+        except Exception as e:
+            self.logger.error(f"Error validating user identity consistency: {str(e)}")
+            return {'error': str(e), 'consistency_score': 0.0}
+    
+    def _validate_identity_attribute(self, attribute: str, value: str) -> bool:
+        """Validate individual identity attribute"""
+        try:
+            if attribute == 'email':
+                # Basic email format validation
+                import re
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                return re.match(email_pattern, value) is not None
+            
+            elif attribute == 'username':
+                # Basic username validation
+                return len(value) >= 3 and value.isalnum()
+            
+            elif attribute == 'phone_number':
+                # Basic phone number validation
+                return len(value) >= 10 and value.replace('+', '').replace('-', '').isdigit()
+            
+            return True
+            
+        except Exception:
+            return False
+    
+    def _validate_biometric_consistency(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate biometric consistency"""
+        try:
+            biometric_data = session_data.get('biometric_data', {})
+            
+            validation = {
+                'biometric_valid': True,
+                'validation_score': 1.0,
+                'biometric_issues': []
+            }
+            
+            if not biometric_data:
+                # No biometric data available - not an issue
+                validation['validation_score'] = 0.5
+                return validation
+            
+            # Check biometric template consistency
+            current_template = biometric_data.get('current_template', '')
+            reference_template = biometric_data.get('reference_template', '')
+            
+            if current_template and reference_template:
+                # Simplified biometric comparison
+                similarity_score = self._calculate_biometric_similarity(current_template, reference_template)
+                
+                if similarity_score < 0.7:  # Below acceptable threshold
+                    validation['biometric_valid'] = False
+                    validation['biometric_issues'].append('biometric_mismatch')
+                    validation['validation_score'] = similarity_score
+            
+            return validation
+            
+        except Exception as e:
+            self.logger.error(f"Error validating biometric consistency: {str(e)}")
+            return {'error': str(e), 'validation_score': 0.5}
+    
+    def _calculate_biometric_similarity(self, template1: str, template2: str) -> float:
+        """Calculate biometric template similarity (simplified implementation)"""
+        try:
+            # Simplified similarity calculation
+            # In production, this would use proper biometric matching algorithms
+            
+            if template1 == template2:
+                return 1.0
+            
+            # Calculate string similarity as a proxy
+            max_len = max(len(template1), len(template2))
+            if max_len == 0:
+                return 0.0
+            
+            # Simple character-by-character comparison
+            matches = sum(1 for a, b in zip(template1, template2) if a == b)
+            similarity = matches / max_len
+            
+            return similarity
+            
+        except Exception:
+            return 0.0
+    
+    def _validate_authentication_token_integrity(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate authentication token integrity"""
+        try:
+            token_data = session_data.get('auth_token_data', {})
+            
+            validation = {
+                'token_valid': True,
+                'integrity_score': 1.0,
+                'token_issues': []
+            }
+            
+            if not token_data:
+                validation['token_valid'] = False
+                validation['integrity_score'] = 0.0
+                validation['token_issues'].append('missing_token_data')
+                return validation
+            
+            # Check token format
+            token = token_data.get('token', '')
+            if not self._validate_token_format(token):
+                validation['token_issues'].append('invalid_token_format')
+                validation['integrity_score'] -= 0.4
+            
+            # Check token signature (simplified)
+            if not self._validate_token_signature(token_data):
+                validation['token_issues'].append('invalid_token_signature')
+                validation['integrity_score'] -= 0.5
+            
+            # Check token expiry
+            if not self._check_token_expiry(token_data):
+                validation['token_valid'] = False
+                validation['token_issues'].append('token_expired')
+                validation['integrity_score'] -= 0.6
+            
+            validation['token_valid'] = validation['integrity_score'] > 0.5
+            
+            return validation
+            
+        except Exception as e:
+            self.logger.error(f"Error validating authentication token integrity: {str(e)}")
+            return {'error': str(e), 'integrity_score': 0.0}
+    
+    def _validate_token_signature(self, token_data: Dict[str, Any]) -> bool:
+        """Validate token signature (simplified implementation)"""
+        try:
+            # In production, this would verify JWT signatures or similar
+            signature = token_data.get('signature', '')
+            payload = token_data.get('payload', '')
+            
+            if not signature or not payload:
+                return False
+            
+            # Simplified signature validation
+            expected_signature = hashlib.sha256(payload.encode()).hexdigest()[:16]
+            
+            return signature == expected_signature
+            
+        except Exception:
+            return False
+    
+    def _collect_failed_validations(self, analysis_result: Dict[str, Any]) -> List[str]:
+        """Collect all failed validation methods"""
+        failed_validations = []
+        
+        auth_validation = analysis_result.get('authentication_validation', {})
+        if not auth_validation.get('authentication_valid', True):
+            failed_validations.append('authentication')
+        
+        identity_validation = analysis_result.get('identity_consistency', {})
+        if not identity_validation.get('identity_verified', True):
+            failed_validations.append('identity')
+        
+        biometric_validation = analysis_result.get('biometric_validation', {})
+        if not biometric_validation.get('biometric_valid', True):
+            failed_validations.append('biometric')
+        
+        token_validation = analysis_result.get('token_integrity', {})
+        if not token_validation.get('token_valid', True):
+            failed_validations.append('token')
+        
+        return failed_validations
+    
+    # ===== SESSION ANOMALY TRACKING HELPER METHODS =====
+    
+    def _detect_unusual_session_patterns(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect unusual session patterns"""
+        try:
+            session_duration = self._calculate_session_duration(session_data)
+            activity_count = len(session_data.get('activity_log', []))
+            
+            detection = {
+                'anomaly_score': 0.0,
+                'unusual_patterns': [],
+                'pattern_details': {}
+            }
+            
+            # Check for unusually long sessions
+            if session_duration > 14400:  # More than 4 hours
+                detection['unusual_patterns'].append('extremely_long_session')
+                detection['anomaly_score'] += 0.3
+            
+            # Check for unusually short sessions with high activity
+            if session_duration < 60 and activity_count > 50:  # Less than 1 minute, more than 50 activities
+                detection['unusual_patterns'].append('rapid_fire_activity')
+                detection['anomaly_score'] += 0.4
+            
+            # Check for sessions with no activity
+            if session_duration > 300 and activity_count == 0:  # More than 5 minutes, no activity
+                detection['unusual_patterns'].append('inactive_long_session')
+                detection['anomaly_score'] += 0.2
+            
+            # Check for irregular activity intervals
+            activity_intervals = self._calculate_activity_intervals(session_data.get('activity_log', []))
+            if activity_intervals and self._detect_irregular_intervals(activity_intervals):
+                detection['unusual_patterns'].append('irregular_activity_intervals')
+                detection['anomaly_score'] += 0.3
+            
+            detection['pattern_details'] = {
+                'session_duration': session_duration,
+                'activity_count': activity_count,
+                'avg_activity_interval': statistics.mean(activity_intervals) if activity_intervals else 0
+            }
+            
+            return detection
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting unusual session patterns: {str(e)}")
+            return {'error': str(e), 'anomaly_score': 0.0}
+    
+    def _detect_irregular_intervals(self, intervals: List[float]) -> bool:
+        """Detect irregular activity intervals"""
+        try:
+            if len(intervals) < 5:
+                return False
+            
+            # Check for extremely regular intervals (automation)
+            if len(set(intervals)) <= 2:  # Only 1 or 2 unique intervals
+                return True
+            
+            # Check for extremely irregular intervals
+            std_dev = statistics.stdev(intervals)
+            mean_interval = statistics.mean(intervals)
+            
+            # If standard deviation is more than 200% of mean, it's irregular
+            return std_dev > (mean_interval * 2)
+            
+        except Exception:
+            return False
+    
+    def _detect_behavioral_anomalies(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect behavioral anomalies in session"""
+        try:
+            behavioral_data = session_data.get('behavioral_data', {})
+            
+            detection = {
+                'anomaly_score': 0.0,
+                'behavioral_anomalies': [],
+                'anomaly_details': {}
+            }
+            
+            # Mouse behavior anomalies
+            mouse_anomalies = self._detect_mouse_behavioral_anomalies(behavioral_data.get('mouse_data', {}))
+            if mouse_anomalies:
+                detection['behavioral_anomalies'].extend(mouse_anomalies)
+                detection['anomaly_score'] += 0.3
+            
+            # Keyboard behavior anomalies
+            keyboard_anomalies = self._detect_keyboard_behavioral_anomalies(behavioral_data.get('keyboard_data', {}))
+            if keyboard_anomalies:
+                detection['behavioral_anomalies'].extend(keyboard_anomalies)
+                detection['anomaly_score'] += 0.2
+            
+            # Navigation behavior anomalies
+            nav_anomalies = self._detect_navigation_behavioral_anomalies(behavioral_data.get('navigation_data', {}))
+            if nav_anomalies:
+                detection['behavioral_anomalies'].extend(nav_anomalies)
+                detection['anomaly_score'] += 0.2
+            
+            detection['anomaly_details'] = {
+                'mouse_anomalies': mouse_anomalies,
+                'keyboard_anomalies': keyboard_anomalies,
+                'navigation_anomalies': nav_anomalies
+            }
+            
+            return detection
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting behavioral anomalies: {str(e)}")
+            return {'error': str(e), 'anomaly_score': 0.0}
+    
+    def _detect_mouse_behavioral_anomalies(self, mouse_data: Dict[str, Any]) -> List[str]:
+        """Detect mouse behavior anomalies"""
+        anomalies = []
+        
+        try:
+            movements = mouse_data.get('movements', [])
+            clicks = mouse_data.get('clicks', [])
+            
+            if len(movements) > 10:
+                # Check for perfectly straight movements (automation indicator)
+                straight_movements = sum(1 for move in movements if move.get('linearity', 0) > 0.95)
+                if straight_movements / len(movements) > 0.8:
+                    anomalies.append('excessive_linear_movements')
+            
+            if len(clicks) > 5:
+                # Check for perfect click accuracy (automation indicator)
+                accurate_clicks = sum(1 for click in clicks if click.get('accuracy', 0) > 0.98)
+                if accurate_clicks / len(clicks) > 0.9:
+                    anomalies.append('perfect_click_accuracy')
+        
+        except Exception:
+            pass
+        
+        return anomalies
+    
+    def _detect_keyboard_behavioral_anomalies(self, keyboard_data: Dict[str, Any]) -> List[str]:
+        """Detect keyboard behavior anomalies"""
+        anomalies = []
+        
+        try:
+            keystrokes = keyboard_data.get('keystrokes', [])
+            
+            if len(keystrokes) > 10:
+                # Check for extremely consistent typing speed
+                intervals = []
+                for i in range(1, len(keystrokes)):
+                    interval = keystrokes[i].get('timestamp', 0) - keystrokes[i-1].get('timestamp', 0)
+                    intervals.append(interval)
+                
+                if intervals:
+                    std_dev = statistics.stdev(intervals) if len(intervals) > 1 else 0
+                    mean_interval = statistics.mean(intervals)
+                    
+                    # Very consistent typing is suspicious
+                    if std_dev < (mean_interval * 0.1):
+                        anomalies.append('robotic_typing_pattern')
+        
+        except Exception:
+            pass
+        
+        return anomalies
+    
+    def _detect_navigation_behavioral_anomalies(self, navigation_data: Dict[str, Any]) -> List[str]:
+        """Detect navigation behavior anomalies"""
+        anomalies = []
+        
+        try:
+            page_visits = navigation_data.get('page_visits', [])
+            
+            if len(page_visits) > 5:
+                # Check for extremely fast page navigation
+                fast_navigations = sum(1 for visit in page_visits if visit.get('time_on_page', 0) < 1.0)
+                if fast_navigations / len(page_visits) > 0.7:
+                    anomalies.append('rapid_page_navigation')
+        
+        except Exception:
+            pass
+        
+        return anomalies
+    
+    def _analyze_session_duration_anomalies(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze session duration for anomalies"""
+        try:
+            session_duration = self._calculate_session_duration(session_data)
+            
+            analysis = {
+                'anomaly_score': 0.0,
+                'duration_anomalies': [],
+                'duration_classification': 'NORMAL'
+            }
+            
+            # Classify session duration
+            if session_duration < 30:
+                analysis['duration_classification'] = 'VERY_SHORT'
+                analysis['duration_anomalies'].append('extremely_short_session')
+                analysis['anomaly_score'] += 0.2
+            elif session_duration > 28800:  # More than 8 hours
+                analysis['duration_classification'] = 'EXTREMELY_LONG'
+                analysis['duration_anomalies'].append('extremely_long_session')
+                analysis['anomaly_score'] += 0.4
+            elif session_duration > 14400:  # More than 4 hours
+                analysis['duration_classification'] = 'VERY_LONG'
+                analysis['duration_anomalies'].append('very_long_session')
+                analysis['anomaly_score'] += 0.2
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing session duration anomalies: {str(e)}")
+            return {'error': str(e), 'anomaly_score': 0.0}
+    
+    def _monitor_access_patterns(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Monitor access patterns for anomalies"""
+        try:
+            access_log = session_data.get('access_log', [])
+            
+            monitoring = {
+                'anomaly_score': 0.0,
+                'access_anomalies': [],
+                'pattern_analysis': {}
+            }
+            
+            if not access_log:
+                return monitoring
+            
+            # Analyze access frequency
+            access_frequency = len(access_log) / max(self._calculate_session_duration(session_data) / 60, 1)  # per minute
+            
+            if access_frequency > 10:  # More than 10 accesses per minute
+                monitoring['access_anomalies'].append('high_frequency_access')
+                monitoring['anomaly_score'] += 0.3
+            
+            # Analyze access pattern regularity
+            access_times = [access.get('timestamp', 0) for access in access_log]
+            if len(access_times) > 5:
+                intervals = [access_times[i] - access_times[i-1] for i in range(1, len(access_times))]
+                
+                if intervals:
+                    # Check for extremely regular access patterns
+                    std_dev = statistics.stdev(intervals) if len(intervals) > 1 else 0
+                    mean_interval = statistics.mean(intervals)
+                    
+                    if std_dev < (mean_interval * 0.1):
+                        monitoring['access_anomalies'].append('robotic_access_pattern')
+                        monitoring['anomaly_score'] += 0.4
+            
+            monitoring['pattern_analysis'] = {
+                'access_frequency': access_frequency,
+                'total_accesses': len(access_log),
+                'session_duration': self._calculate_session_duration(session_data)
+            }
+            
+            return monitoring
+            
+        except Exception as e:
+            self.logger.error(f"Error monitoring access patterns: {str(e)}")
+            return {'error': str(e), 'anomaly_score': 0.0}
+    
+    def _classify_anomaly_risk(self, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Classify anomaly risk level"""
+        try:
+            anomaly_score = analysis_result.get('anomaly_score', 0.0)
+            
+            if anomaly_score > 0.8:
+                risk_level = 'CRITICAL'
+                monitoring_action = 'IMMEDIATE_REVIEW'
+            elif anomaly_score > 0.6:
+                risk_level = 'HIGH'
+                monitoring_action = 'ENHANCED_MONITORING'
+            elif anomaly_score > 0.4:
+                risk_level = 'MEDIUM'
+                monitoring_action = 'INCREASED_MONITORING'
+            else:
+                risk_level = 'LOW'
+                monitoring_action = 'STANDARD_MONITORING'
+            
+            return {
+                'risk_level': risk_level,
+                'monitoring_action': monitoring_action,
+                'risk_score': anomaly_score
+            }
+            
+        except Exception:
+            return {'risk_level': 'MEDIUM', 'monitoring_action': 'STANDARD_MONITORING'}
+    
+    def _count_detected_anomalies(self, analysis_result: Dict[str, Any]) -> int:
+        """Count total number of detected anomalies"""
+        anomaly_count = 0
+        
+        # Count unusual patterns
+        unusual_patterns = analysis_result.get('unusual_patterns', {}).get('unusual_patterns', [])
+        anomaly_count += len(unusual_patterns)
+        
+        # Count behavioral anomalies
+        behavioral_anomalies = analysis_result.get('behavioral_anomalies', {}).get('behavioral_anomalies', [])
+        anomaly_count += len(behavioral_anomalies)
+        
+        # Count duration anomalies
+        duration_anomalies = analysis_result.get('duration_analysis', {}).get('duration_anomalies', [])
+        anomaly_count += len(duration_anomalies)
+        
+        # Count access pattern anomalies
+        access_anomalies = analysis_result.get('access_pattern_monitoring', {}).get('access_anomalies', [])
+        anomaly_count += len(access_anomalies)
+        
+        return anomaly_count
+    
+    def _identify_primary_anomaly(self, analysis_result: Dict[str, Any]) -> str:
+        """Identify the primary type of anomaly"""
+        try:
+            anomaly_scores = {
+                'unusual_patterns': analysis_result.get('unusual_patterns', {}).get('anomaly_score', 0.0),
+                'behavioral_anomalies': analysis_result.get('behavioral_anomalies', {}).get('anomaly_score', 0.0),
+                'duration_anomalies': analysis_result.get('duration_analysis', {}).get('anomaly_score', 0.0),
+                'access_patterns': analysis_result.get('access_pattern_monitoring', {}).get('anomaly_score', 0.0)
+            }
+            
+            primary_anomaly = max(anomaly_scores.items(), key=lambda x: x[1])
+            
+            return primary_anomaly[0] if primary_anomaly[1] > 0.3 else 'none'
+            
+        except Exception:
+            return 'unknown'
+    
+    def _classify_anomaly_severity(self, anomaly_score: float) -> str:
+        """Classify anomaly severity based on score"""
+        if anomaly_score > 0.8:
+            return 'CRITICAL'
+        elif anomaly_score > 0.6:
+            return 'HIGH'
+        elif anomaly_score > 0.4:
+            return 'MEDIUM'
+        else:
+            return 'LOW'
+    
+    def _recommend_monitoring_level(self, analysis_result: Dict[str, Any]) -> str:
+        """Recommend monitoring level based on anomalies"""
+        try:
+            anomaly_count = self._count_detected_anomalies(analysis_result)
+            anomaly_score = analysis_result.get('anomaly_score', 0.0)
+            
+            if anomaly_count > 5 or anomaly_score > 0.7:
+                return 'INTENSIVE'
+            elif anomaly_count > 2 or anomaly_score > 0.5:
+                return 'ENHANCED'
+            elif anomaly_count > 0 or anomaly_score > 0.3:
+                return 'INCREASED'
+            else:
+                return 'STANDARD'
+                
+        except Exception:
+            return 'STANDARD'
+    
+    def _update_anomaly_tracking(self, session_id: str, analysis_result: Dict[str, Any]):
+        """Update anomaly tracking data structures"""
+        try:
+            if session_id not in self.session_anomalies:
+                self.session_anomalies[session_id] = []
+            
+            anomaly_record = {
+                'timestamp': datetime.utcnow(),
+                'anomaly_score': analysis_result.get('anomaly_score', 0.0),
+                'anomaly_count': self._count_detected_anomalies(analysis_result),
+                'primary_anomaly': self._identify_primary_anomaly(analysis_result),
+                'monitoring_level': self._recommend_monitoring_level(analysis_result)
+            }
+            
+            self.session_anomalies[session_id].append(anomaly_record)
+            
+            # Keep only last 10 anomaly records per session
+            if len(self.session_anomalies[session_id]) > 10:
+                self.session_anomalies[session_id] = self.session_anomalies[session_id][-10:]
+            
+        except Exception as e:
+            self.logger.error(f"Error updating anomaly tracking: {str(e)}")
 
 
 # Initialize global SessionIntegrityMonitor instance
