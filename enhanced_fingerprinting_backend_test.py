@@ -464,7 +464,7 @@ class EnhancedFingerprintingTester:
         try:
             vm_detection_data = {
                 "session_id": self.session_id,
-                "system_info": {
+                "device_data": {
                     "hardware_signatures": {
                         "cpu_vendor": "GenuineIntel",
                         "cpu_model": "Intel Core i7-12700K",
@@ -485,10 +485,10 @@ class EnhancedFingerprintingTester:
                         "automation_tools": [],
                         "headless_indicators": [],
                         "plugin_anomalies": []
-                    }
-                },
-                "confidence_level": 0.95,
-                "detection_sensitivity": "high"
+                    },
+                    "confidence_level": 0.95,
+                    "detection_sensitivity": "high"
+                }
             }
             
             response = self.session.post(
