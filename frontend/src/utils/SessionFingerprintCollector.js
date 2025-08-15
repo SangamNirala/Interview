@@ -10766,52 +10766,235 @@ class SessionFingerprintCollector {
     
     async profileJSPerformance() {
         try {
-            const performanceProfile = {
-                execution_speed: {},
-                memory_efficiency: {},
-                optimization_indicators: {},
-                compilation_characteristics: {}
+            const jsPerformance = {
+                // Execution Speed Analysis
+                execution_speed: await this.analyzeExecutionSpeed(),
+                
+                // Memory Allocation Speed
+                allocation_speed: await this.analyzeMemoryAllocationSpeed(),
+                
+                // Function Call Overhead
+                call_overhead: await this.analyzeFunctionCallOverhead(),
+                
+                // Object Creation Performance
+                object_creation: await this.analyzeObjectCreationPerformance(),
+                
+                // Array Operations Performance
+                array_operations: await this.analyzeArrayOperationsPerformance(),
+                
+                // String Operations Performance
+                string_operations: await this.analyzeStringOperationsPerformance(),
+                
+                // Mathematical Operations Performance
+                math_operations: await this.analyzeMathOperationsPerformance(),
+                
+                // Asynchronous Operations Performance
+                async_performance: await this.analyzeAsyncPerformance()
             };
             
-            // Execution speed tests
-            performanceProfile.execution_speed = {
-                function_calls: await this.measureFunctionCallPerformance(),
-                object_operations: await this.measureObjectOperationPerformance(),
-                array_operations: await this.measureArrayPerformance(),
-                string_operations: await this.measureStringPerformance(),
-                math_operations: await this.measureMathPerformance(),
-                regexp_operations: await this.measureRegExpPerformance()
+            // Calculate overall JS performance score
+            jsPerformance.overall_performance = this.calculateJSPerformanceScore(jsPerformance);
+            jsPerformance.performance_category = this.categorizeJSPerformance(jsPerformance.overall_performance);
+            
+            return jsPerformance;
+            
+        } catch (error) {
+            this.logger.error("Error profiling JS performance:", error);
+            return { error: error.message, js_performance: "unknown" };
+        }
+    }
+    
+    // Analyze Execution Speed
+    async analyzeExecutionSpeed() {
+        try {
+            const iterations = 100000;
+            const tests = {
+                arithmetic: await this.measureArithmeticSpeed(iterations),
+                loop_performance: await this.measureLoopSpeed(iterations),
+                function_calls: await this.measureFunctionCallSpeed(iterations),
+                conditional_logic: await this.measureConditionalLogicSpeed(iterations),
+                property_access: await this.measurePropertyAccessSpeed(iterations)
             };
             
-            // Memory efficiency tests
-            performanceProfile.memory_efficiency = {
-                allocation_speed: await this.measureAllocationSpeed(),
-                gc_frequency: await this.measureGCFrequency(),
-                memory_fragmentation: await this.measureMemoryFragmentation(),
-                object_pooling_efficiency: await this.measureObjectPoolingEfficiency()
-            };
+            // Calculate aggregate speed score
+            const scores = Object.values(tests);
+            tests.aggregate_speed = scores.reduce((a, b) => a + b, 0) / scores.length;
             
-            // Optimization indicators
-            performanceProfile.optimization_indicators = {
-                hot_function_detection: await this.detectHotFunctionOptimization(),
-                deoptimization_triggers: await this.detectDeoptimizationTriggers(),
-                type_feedback: await this.analyzeTypeFeedback(),
-                speculative_optimization: await this.detectSpeculativeOptimization()
-            };
-            
-            // Compilation characteristics
-            performanceProfile.compilation_characteristics = {
-                parse_time: await this.measureParseTime(),
-                compilation_time: await this.measureCompilationTime(),
-                execution_tier_transitions: await this.measureTierTransitions(),
-                bytecode_analysis: await this.analyzeBytecodeExecution()
-            };
-            
-            return performanceProfile;
+            return tests;
             
         } catch (error) {
             return { error: error.message };
         }
+    }
+    
+    // Analyze Memory Allocation Speed
+    async analyzeMemoryAllocationSpeed() {
+        try {
+            const allocationTests = {
+                object_allocation: await this.measureObjectAllocationSpeed(),
+                array_allocation: await this.measureArrayAllocationSpeed(),
+                string_allocation: await this.measureStringAllocationSpeed(),
+                buffer_allocation: await this.measureBufferAllocationSpeed(),
+                mixed_allocation: await this.measureMixedAllocationSpeed()
+            };
+            
+            return allocationTests;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Function Call Overhead
+    async analyzeFunctionCallOverhead() {
+        try {
+            const callTests = {
+                native_function_calls: await this.measureNativeFunctionCalls(),
+                user_function_calls: await this.measureUserFunctionCalls(),
+                method_calls: await this.measureMethodCalls(),
+                constructor_calls: await this.measureConstructorCalls(),
+                arrow_function_calls: await this.measureArrowFunctionCalls(),
+                closure_calls: await this.measureClosureCalls()
+            };
+            
+            return callTests;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Object Creation Performance
+    async analyzeObjectCreationPerformance() {
+        try {
+            const objectTests = {
+                literal_creation: await this.measureLiteralObjectCreation(),
+                constructor_creation: await this.measureConstructorObjectCreation(),
+                class_instantiation: await this.measureClassInstantiation(),
+                prototype_creation: await this.measurePrototypeObjectCreation(),
+                factory_creation: await this.measureFactoryObjectCreation()
+            };
+            
+            return objectTests;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Array Operations Performance
+    async analyzeArrayOperationsPerformance() {
+        try {
+            const arrayTests = {
+                array_creation: await this.measureArrayCreation(),
+                array_iteration: await this.measureArrayIteration(),
+                array_manipulation: await this.measureArrayManipulation(),
+                array_searching: await this.measureArraySearching(),
+                array_sorting: await this.measureArraySorting(),
+                typed_arrays: await this.measureTypedArrayPerformance()
+            };
+            
+            return arrayTests;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze String Operations Performance
+    async analyzeStringOperationsPerformance() {
+        try {
+            const stringTests = {
+                string_creation: await this.measureStringCreation(),
+                string_concatenation: await this.measureStringConcatenation(),
+                string_manipulation: await this.measureStringManipulation(),
+                regular_expressions: await this.measureRegexPerformance(),
+                string_searching: await this.measureStringSearching(),
+                unicode_handling: await this.measureUnicodeHandling()
+            };
+            
+            return stringTests;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Math Operations Performance
+    async analyzeMathOperationsPerformance() {
+        try {
+            const mathTests = {
+                basic_arithmetic: await this.measureBasicArithmetic(),
+                floating_point: await this.measureFloatingPointOps(),
+                integer_operations: await this.measureIntegerOperations(),
+                bitwise_operations: await this.measureBitwiseOperations(),
+                math_functions: await this.measureMathFunctions(),
+                trigonometric: await this.measureTrigonometricOps()
+            };
+            
+            return mathTests;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Analyze Async Performance
+    async analyzeAsyncPerformance() {
+        try {
+            const asyncTests = {
+                promise_creation: await this.measurePromiseCreation(),
+                promise_resolution: await this.measurePromiseResolution(),
+                async_await: await this.measureAsyncAwaitPerformance(),
+                settimeout_overhead: await this.measureSetTimeoutOverhead(),
+                microtask_performance: await this.measureMicrotaskPerformance(),
+                concurrent_operations: await this.measureConcurrentOperations()
+            };
+            
+            return asyncTests;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Calculate JS Performance Score
+    calculateJSPerformanceScore(jsPerformance) {
+        try {
+            const categories = ['execution_speed', 'allocation_speed', 'call_overhead', 'object_creation', 
+                              'array_operations', 'string_operations', 'math_operations', 'async_performance'];
+            
+            let totalScore = 0;
+            let validCategories = 0;
+            
+            categories.forEach(category => {
+                if (jsPerformance[category] && typeof jsPerformance[category].aggregate_speed === 'number') {
+                    totalScore += jsPerformance[category].aggregate_speed;
+                    validCategories++;
+                } else if (jsPerformance[category] && typeof jsPerformance[category] === 'object') {
+                    // Calculate average for this category if it has multiple sub-tests
+                    const subTests = Object.values(jsPerformance[category]).filter(val => typeof val === 'number');
+                    if (subTests.length > 0) {
+                        totalScore += subTests.reduce((a, b) => a + b, 0) / subTests.length;
+                        validCategories++;
+                    }
+                }
+            });
+            
+            return validCategories > 0 ? totalScore / validCategories : 0;
+            
+        } catch (error) {
+            return 0;
+        }
+    }
+    
+    // Categorize JS Performance
+    categorizeJSPerformance(score) {
+        if (score >= 90) return 'excellent';
+        if (score >= 75) return 'good';
+        if (score >= 60) return 'average';
+        if (score >= 45) return 'below_average';
+        return 'poor';
     }
     
     async analyzeJSMemoryManagement() {
