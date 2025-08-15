@@ -2903,33 +2903,30 @@ class SessionFingerprintCollector {
     async enumerateBiometricSensors() {
         try {
             const biometricSensors = {
-                // WebAuthn API
-                webauthn_support: 'PublicKeyCredential' in window,
-                webauthn_capabilities: await this.analyzeWebAuthnCapabilities(),
+                // Fingerprint Sensor Detection
+                fingerprint: await this.analyzeFingerprintSensor(),
                 
-                // Face detection
-                face_detection_support: 'FaceDetector' in window,
+                // Face Recognition Capabilities
+                face_recognition: await this.analyzeFaceRecognition(),
                 
-                // Fingerprint sensors
-                fingerprint_sensor_hints: await this.detectFingerprintSensorHints(),
+                // Voice Recognition Capabilities
+                voice_recognition: await this.analyzeVoiceRecognition(),
                 
-                // Heart rate sensors
-                heart_rate_sensor_support: 'HeartRateSensor' in window,
+                // Heart Rate Sensor Detection
+                heart_rate: await this.analyzeHeartRateSensor(),
                 
-                // Biometric authentication availability
-                biometric_auth_availability: await this.analyzeBiometricAuthAvailability(),
+                // Eye Tracking Capabilities
+                eye_tracking: await this.analyzeEyeTracking(),
                 
-                // Touch ID / Face ID hints
-                platform_biometrics: await this.detectPlatformBiometrics(),
-                
-                // Behavioral biometrics capabilities
-                behavioral_biometrics: await this.analyzeBehavioralBiometrics()
+                // Gesture Recognition
+                gesture_recognition: await this.analyzeGestureRecognition()
             };
             
             return biometricSensors;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error enumerating biometric sensors:", error);
+            return { error: error.message, biometric_sensors: "unknown" };
         }
     }
     
