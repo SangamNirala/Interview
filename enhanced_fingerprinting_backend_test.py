@@ -254,52 +254,59 @@ class EnhancedFingerprintingTester:
             return False
 
     def test_device_fingerprint_storage(self):
-        """Test device fingerprint storage endpoint"""
+        """Test device fingerprint generation and signature"""
         try:
-            device_fingerprint_data = {
-                "device_id": str(uuid.uuid4()),
+            device_signature_data = {
                 "session_id": self.session_id,
-                "hardware_signature": {
-                    "cpu_cores": 8,
-                    "memory_gb": 16,
-                    "gpu_info": "NVIDIA GeForce RTX 4080",
-                    "screen_resolution": "2560x1440",
-                    "webgl_fingerprint": "webgl_hash_12345"
+                "device_data": {
+                    "hardware_info": {
+                        "cpu_cores": 8,
+                        "memory_gb": 16,
+                        "gpu_info": "NVIDIA GeForce RTX 4080",
+                        "screen_resolution": "2560x1440",
+                        "webgl_fingerprint": "webgl_hash_12345"
+                    },
+                    "browser_info": {
+                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        "browser_version": "120.0.6099.109",
+                        "engine_version": "120.0.6099.109",
+                        "plugins": ["Chrome PDF Plugin", "Native Client"],
+                        "extensions": []
+                    },
+                    "network_info": {
+                        "ip_address": "192.168.1.100",
+                        "connection_type": "ethernet",
+                        "timezone": "America/New_York"
+                    }
                 },
-                "browser_signature": {
-                    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                    "browser_version": "120.0.6099.109",
-                    "engine_version": "120.0.6099.109",
-                    "plugins": ["Chrome PDF Plugin", "Native Client"],
-                    "extensions": []
-                },
-                "confidence_score": 0.95,
-                "created_at": datetime.now().isoformat()
+                "signature_algorithm": "sha256",
+                "include_behavioral_data": True
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/fingerprinting/store-device-fingerprint",
-                json=device_fingerprint_data
+                f"{BACKEND_URL}/session-fingerprinting/generate-device-signature",
+                json=device_signature_data
             )
             
             if response.status_code == 200:
                 data = response.json()
                 if data.get('success'):
+                    signature = data.get('device_signature', {})
                     self.log_result(
-                        "Device Fingerprint Storage", 
+                        "Device Fingerprint Generation", 
                         True, 
-                        f"Device fingerprint stored successfully. ID: {data.get('fingerprint_id', 'N/A')}"
+                        f"Device signature generated successfully. Signature: {signature.get('signature_hash', 'N/A')[:16]}..., Confidence: {signature.get('confidence_score', 'N/A')}"
                     )
                     return True
                 else:
-                    self.log_result("Device Fingerprint Storage", False, f"Storage failed: {data}")
+                    self.log_result("Device Fingerprint Generation", False, f"Generation failed: {data}")
                     return False
             else:
-                self.log_result("Device Fingerprint Storage", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_result("Device Fingerprint Generation", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("Device Fingerprint Storage", False, f"Exception: {str(e)}")
+            self.log_result("Device Fingerprint Generation", False, f"Exception: {str(e)}")
             return False
 
     def test_session_fingerprint_collection(self):
