@@ -21329,6 +21329,10 @@ async def generate_device_signature(request: DeviceFingerprintRequest):
     try:
         logging.info(f"Generating device signature for session: {request.session_id}")
         
+        # Validate device_data is not None
+        if request.device_data is None:
+            raise HTTPException(status_code=400, detail="device_data is required and cannot be None")
+        
         # Generate device signature using the engine
         result = device_fingerprinting_engine.generate_device_signature(request.device_data)
         
