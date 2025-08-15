@@ -420,94 +420,38 @@ class SessionFingerprintCollector {
                     feature_policy_analysis: await this.analyzeFeaturePolicy()
                 },
                 
-                // Plugin and extension analysis
-                plugins_extensions: {
+                // Legacy compatibility data
+                legacy_browser_data: {
                     plugins: this.getPluginInfo(),
                     mime_types: this.getMimeTypes(),
                     plugin_count: navigator.plugins.length,
-                    mime_count: navigator.mimeTypes.length
-                },
-                
-                // Language and localization
-                localization: {
+                    mime_count: navigator.mimeTypes.length,
+                    user_agent: navigator.userAgent,
+                    browser_name: this.getBrowserName(),
+                    browser_version: this.getBrowserVersion(),
+                    platform: navigator.platform,
                     language: navigator.language,
                     languages: navigator.languages || [],
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    timezone_offset: new Date().getTimezoneOffset(),
-                    number_format: this.detectNumberFormat(),
-                    date_format: this.detectDateFormat(),
-                    currency: this.detectCurrency()
-                },
-                
-                // Security and privacy settings
-                security_privacy: {
                     cookie_enabled: navigator.cookieEnabled,
                     do_not_track: navigator.doNotTrack,
-                    java_enabled: navigator.javaEnabled ? navigator.javaEnabled() : false,
-                    pdf_viewer_enabled: navigator.pdfViewerEnabled || false,
-                    webdriver_present: navigator.webdriver || false
+                    java_enabled: navigator.javaEnabled ? navigator.javaEnabled() : false
                 },
-                
-                // Storage capabilities
-                storage_capabilities: {
-                    local_storage: this.testLocalStorage(),
-                    session_storage: this.testSessionStorage(),
-                    indexed_db: this.testIndexedDB(),
-                    web_sql: 'openDatabase' in window,
-                    cache_api: 'caches' in window,
-                    storage_estimate: await this.getStorageEstimate()
-                },
-                
-                // Media and input capabilities
-                media_input: {
-                    audio_support: this.testAudioSupport(),
-                    video_support: this.testVideoSupport(),
-                    media_devices: await this.enumerateMediaDevices(),
-                    touch_support: 'ontouchstart' in window,
-                    max_touch_points: navigator.maxTouchPoints || 0,
-                    pointer_events: 'PointerEvent' in window,
-                    mouse_events: 'MouseEvent' in window,
-                    keyboard_events: 'KeyboardEvent' in window
-                },
-                
-                // Advanced web APIs
-                web_apis: {
-                    geolocation: 'geolocation' in navigator,
-                    notifications: 'Notification' in window,
-                    service_worker: 'serviceWorker' in navigator,
-                    web_assembly: 'WebAssembly' in window,
-                    webgl_support: this.testWebGLSupport(),
-                    webgl2_support: this.testWebGL2Support(),
-                    canvas_support: this.testCanvasSupport(),
-                    web_rtc: 'RTCPeerConnection' in window,
-                    websockets: 'WebSocket' in window,
-                    shared_workers: 'SharedWorker' in window,
-                    dedicated_workers: 'Worker' in window,
-                    crypto_subtle: 'crypto' in window && 'subtle' in crypto,
-                    fetch_api: 'fetch' in window,
-                    streams_api: 'ReadableStream' in window
-                },
-                
-                // Performance and capabilities testing
-                performance_capabilities: await this.collectBrowserPerformanceInfo(),
-                
-                // Browser fingerprinting via rendering
-                rendering_fingerprint: await this.generateBrowserRenderingFingerprint(),
                 
                 // Collection metadata
                 collection_metadata: {
                     timestamp: new Date().toISOString(),
                     collection_id: this.generateUniqueId(),
-                    fingerprint_version: "3.4_enhanced",
-                    user_agent_hash: await this.hashSensitiveData(navigator.userAgent)
+                    fingerprint_version: "3.4_enhanced_browser_phase1.2",
+                    collection_method: "comprehensive_browser_fingerprinting_advanced",
+                    implementation_phase: "PHASE_1.2_BROWSER_ENHANCEMENT"
                 }
             };
             
-            this.logger.info("✅ Browser characteristics collection completed successfully");
+            this.logger.info("✅ PHASE 1.2 Browser characteristics collection completed successfully");
             return browserData;
             
         } catch (error) {
-            this.logger.error("❌ Error collecting enhanced browser characteristics:", error);
+            this.logger.error("❌ Error collecting PHASE 1.2 enhanced browser characteristics:", error);
             return this.getFallbackBrowserFingerprint();
         }
     }
