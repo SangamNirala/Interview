@@ -10763,38 +10763,6 @@ class SessionFingerprintCollector {
             return { error: error.message };
         }
     }
-                
-                // V8 specific features
-                v8Features.v8_specific_features = {
-                    harmony_features: await this.detectV8HarmonyFeatures(),
-                    turbofan_optimizations: await this.detectTurboFanOptimizations(),
-                    ignition_interpreter: await this.detectIgnitionInterpreter(),
-                    concurrent_marking: await this.detectConcurrentMarking()
-                };
-                
-                // Performance optimizations
-                v8Features.performance_optimizations = {
-                    hidden_classes: await this.analyzeHiddenClasses(),
-                    inline_caching: await this.analyzeInlineCaching(),
-                    escape_analysis: await this.analyzeEscapeAnalysis(),
-                    loop_optimization: await this.analyzeLoopOptimization()
-                };
-                
-                // Memory management
-                v8Features.memory_management = {
-                    heap_snapshot_support: this.detectHeapSnapshotSupport(),
-                    memory_pressure_api: 'memory' in performance,
-                    gc_scheduling: await this.analyzeGCScheduling(),
-                    memory_segments: await this.analyzeMemorySegments()
-                };
-            }
-            
-            return v8Features;
-            
-        } catch (error) {
-            return { error: error.message, engine_detected: false };
-        }
-    }
     
     async profileJSPerformance() {
         try {
