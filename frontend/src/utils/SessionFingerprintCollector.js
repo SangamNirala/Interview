@@ -12085,6 +12085,18 @@ class SessionFingerprintCollector {
         return mean !== 0 ? (Math.sqrt(variance) / mean) * 100 : 0;
     }
     
+    // Measure function execution time
+    measureFunctionTime(func, iterations = 1000) {
+        const startTime = performance.now();
+        
+        for (let i = 0; i < iterations; i++) {
+            func(i);
+        }
+        
+        const endTime = performance.now();
+        return endTime - startTime;
+    }
+    
     // Feature testing helper methods
     testLogicalAssignment() {
         try {
