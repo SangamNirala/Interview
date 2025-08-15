@@ -10965,6 +10965,206 @@ class SessionIntegrityMonitor:
         except Exception as e:
             self.logger.error(f"Error updating multi-device tracking: {str(e)}")
 
+    def _analyze_device_usage_patterns(self, session_data: Dict[str, Any], analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze device usage patterns from multi-device session data
+        
+        Args:
+            session_data: Dictionary containing multi-device session information
+            analysis_result: Current analysis results to enhance
+            
+        Returns:
+            Dict containing device usage pattern analysis
+        """
+        try:
+            self.logger.info("Analyzing device usage patterns")
+            
+            active_sessions = session_data.get('active_sessions', [])
+            device_activity = session_data.get('device_activity', [])
+            session_history = session_data.get('session_history', [])
+            
+            analysis = {
+                'device_count': len(active_sessions),
+                'activity_count': len(device_activity),
+                'usage_patterns': {},
+                'device_roles': {},
+                'activity_distribution': {},
+                'temporal_patterns': {},
+                'risk_indicators': []
+            }
+            
+            # Analyze device roles and usage patterns
+            device_roles = {}
+            activity_by_device = {}
+            
+            for activity in device_activity:
+                device_id = activity.get('device_id', 'unknown')
+                activity_type = activity.get('activity_type', 'unknown')
+                
+                if device_id not in activity_by_device:
+                    activity_by_device[device_id] = []
+                activity_by_device[device_id].append(activity)
+                
+                # Determine device role based on activity patterns
+                if device_id not in device_roles:
+                    device_roles[device_id] = self._determine_device_role(activity)
+            
+            analysis['device_roles'] = device_roles
+            
+            # Analyze activity distribution
+            activity_types = {}
+            for activity in device_activity:
+                activity_type = activity.get('activity_type', 'unknown')
+                activity_types[activity_type] = activity_types.get(activity_type, 0) + 1
+            
+            analysis['activity_distribution'] = activity_types
+            
+            # Analyze temporal patterns
+            if device_activity:
+                timestamps = [activity.get('timestamp', '') for activity in device_activity if activity.get('timestamp')]
+                if timestamps:
+                    analysis['temporal_patterns'] = {
+                        'activity_timespan': self._calculate_activity_timespan(timestamps),
+                        'activity_frequency': len(timestamps) / max(1, len(set(timestamps))),
+                        'peak_activity_periods': self._identify_peak_activity_periods(timestamps)
+                    }
+            
+            # Identify risk indicators
+            risk_indicators = []
+            
+            # High concurrent device usage
+            if len(active_sessions) > 3:
+                risk_indicators.append(f"High concurrent device count: {len(active_sessions)}")
+            
+            # Rapid device switching
+            device_switches = self._count_device_switches(device_activity)
+            if device_switches > 10:
+                risk_indicators.append(f"Frequent device switching: {device_switches} switches")
+            
+            # Unusual activity patterns
+            if 'data_export' in activity_types and activity_types['data_export'] > 5:
+                risk_indicators.append(f"High data export activity: {activity_types['data_export']} exports")
+            
+            analysis['risk_indicators'] = risk_indicators
+            
+            # Calculate usage pattern risk score
+            risk_score = 0.0
+            
+            # Risk from concurrent devices
+            if len(active_sessions) > 2:
+                risk_score += min((len(active_sessions) - 2) * 0.1, 0.3)
+            
+            # Risk from device switching
+            if device_switches > 5:
+                risk_score += min((device_switches - 5) * 0.05, 0.2)
+            
+            # Risk from suspicious activities
+            suspicious_activities = ['data_export', 'bulk_download', 'admin_access']
+            for activity_type in suspicious_activities:
+                if activity_type in activity_types:
+                    risk_score += min(activity_types[activity_type] * 0.1, 0.2)
+            
+            analysis['risk_score'] = min(risk_score, 1.0)
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing device usage patterns: {str(e)}")
+            return {'risk_score': 0.5, 'error': str(e)}
+    
+    def _determine_device_role(self, activity: Dict[str, Any]) -> str:
+        """Determine the role of a device based on its activity"""
+        activity_type = activity.get('activity_type', '').lower()
+        action_type = activity.get('action_type', '').lower()
+        
+        if 'input' in activity_type or 'creation' in action_type:
+            return 'primary_input'
+        elif 'search' in activity_type or 'search' in action_type:
+            return 'research_assistant'
+        elif 'view' in activity_type or 'review' in action_type:
+            return 'viewer'
+        elif 'export' in activity_type or 'download' in action_type:
+            return 'data_extractor'
+        else:
+            return 'general_purpose'
+    
+    def _calculate_activity_timespan(self, timestamps: List[str]) -> float:
+        """Calculate the timespan of activities in minutes"""
+        try:
+            if len(timestamps) < 2:
+                return 0.0
+            
+            # Parse timestamps and calculate span
+            parsed_timestamps = []
+            for ts in timestamps:
+                try:
+                    if 'T' in ts:
+                        parsed_ts = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                    else:
+                        parsed_ts = datetime.fromtimestamp(float(ts))
+                    parsed_timestamps.append(parsed_ts)
+                except:
+                    continue
+            
+            if len(parsed_timestamps) < 2:
+                return 0.0
+            
+            timespan = max(parsed_timestamps) - min(parsed_timestamps)
+            return timespan.total_seconds() / 60.0  # Return in minutes
+            
+        except Exception:
+            return 0.0
+    
+    def _identify_peak_activity_periods(self, timestamps: List[str]) -> List[str]:
+        """Identify periods of peak activity"""
+        try:
+            # Simple implementation - identify hours with most activity
+            hour_counts = {}
+            
+            for ts in timestamps:
+                try:
+                    if 'T' in ts:
+                        parsed_ts = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+                        hour = parsed_ts.hour
+                        hour_counts[hour] = hour_counts.get(hour, 0) + 1
+                except:
+                    continue
+            
+            if not hour_counts:
+                return []
+            
+            # Find hours with above-average activity
+            avg_activity = sum(hour_counts.values()) / len(hour_counts)
+            peak_hours = [f"{hour:02d}:00" for hour, count in hour_counts.items() if count > avg_activity]
+            
+            return sorted(peak_hours)
+            
+        except Exception:
+            return []
+    
+    def _count_device_switches(self, device_activity: List[Dict[str, Any]]) -> int:
+        """Count the number of device switches in the activity log"""
+        try:
+            if len(device_activity) < 2:
+                return 0
+            
+            switches = 0
+            current_device = None
+            
+            # Sort activities by timestamp
+            sorted_activities = sorted(device_activity, key=lambda x: x.get('timestamp', ''))
+            
+            for activity in sorted_activities:
+                device_id = activity.get('device_id')
+                if current_device is not None and device_id != current_device:
+                    switches += 1
+                current_device = device_id
+            
+            return switches
+            
+        except Exception:
+            return 0
+
 
         except Exception as e:
             self.logger.error(f"Error updating anomaly tracking: {str(e)}")
