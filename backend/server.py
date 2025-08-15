@@ -20231,7 +20231,9 @@ try:
         DeviceTrackingRecord,
         device_fingerprinting_engine,
         EnvironmentAnalyzer,
-        environment_analyzer
+        environment_analyzer,
+        SessionIntegrityMonitor,
+        session_integrity_monitor
     )
     print("✅ Device Fingerprinting Engine loaded successfully")
 except Exception as e:
