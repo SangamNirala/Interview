@@ -2317,40 +2317,42 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Profile rendering performance for hardware detection
+     * PHASE 1.1.1: Comprehensive rendering performance profiling
      */
     async profileRenderingPerformance() {
         try {
             const performanceProfile = {
-                // Canvas 2D performance
+                // Canvas 2D Performance
                 canvas_2d_performance: await this.benchmarkCanvas2DPerformance(),
                 
-                // WebGL performance
+                // WebGL Performance
                 webgl_performance: await this.benchmarkWebGLPerformance(),
                 
-                // CSS3D performance
-                css3d_performance: await this.benchmarkCSS3DPerformance(),
+                // GPU Compute Performance
+                gpu_compute: await this.benchmarkGPUComputePerformance(),
                 
-                // Animation performance
-                animation_performance: await this.benchmarkAnimationPerformance(),
+                // Memory Transfer Performance
+                memory_transfer: await this.benchmarkMemoryTransferPerformance(),
                 
-                // Composite performance
-                composite_performance: await this.benchmarkCompositePerformance(),
+                // Shader Compilation Performance
+                shader_performance: await this.benchmarkShaderPerformance(),
                 
-                // Hardware acceleration indicators
-                hardware_acceleration_indicators: this.detectHardwareAccelerationIndicators(),
+                // Frame Rate Analysis
+                frame_rate_analysis: await this.analyzeFrameRateCapabilities(),
                 
-                // Performance consistency
-                performance_consistency: await this.analyzePerformanceConsistency(),
-                
-                // Thermal throttling indicators
-                thermal_indicators: await this.detectThermalThrottlingIndicators()
+                // Thermal Throttling Detection
+                thermal_analysis: await this.detectRenderingThermalThrottling()
             };
+            
+            // Calculate overall performance score
+            performanceProfile.overall_performance_score = this.calculateRenderingPerformanceScore(performanceProfile);
+            performanceProfile.performance_category = this.categorizeRenderingPerformance(performanceProfile.overall_performance_score);
             
             return performanceProfile;
             
         } catch (error) {
-            return { error: error.message };
+            this.logger.error("Error profiling rendering performance:", error);
+            return { error: error.message, performance_level: "unknown" };
         }
     }
     
