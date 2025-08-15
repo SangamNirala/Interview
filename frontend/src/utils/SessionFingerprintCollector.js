@@ -11280,52 +11280,336 @@ class SessionFingerprintCollector {
     async detectJSOptimizations() {
         try {
             const optimizations = {
-                jit_compilation: {},
-                inlining_analysis: {},
-                dead_code_elimination: {},
-                constant_folding: {},
-                loop_optimizations: {}
-            };
-            
-            // JIT compilation detection
-            optimizations.jit_compilation = {
-                compilation_detected: await this.detectJITCompilation(),
-                compilation_tiers: await this.identifyCompilationTiers(),
-                optimization_thresholds: await this.measureOptimizationThresholds(),
-                deoptimization_patterns: await this.analyzeDeoptimizationPatterns()
-            };
-            
-            // Function inlining analysis
-            optimizations.inlining_analysis = {
-                inline_candidates: await this.identifyInlineCandidates(),
-                inlining_effectiveness: await this.measureInliningEffectiveness(),
-                polymorphic_inline_cache: await this.analyzePolymorphicInlineCache(),
-                megamorphic_detection: await this.detectMegamorphicCallSites()
-            };
-            
-            // Dead code elimination
-            optimizations.dead_code_elimination = {
-                unreachable_code_detection: await this.detectUnreachableCodeOptimization(),
-                unused_variable_elimination: await this.detectUnusedVariableElimination(),
-                dead_store_elimination: await this.detectDeadStoreElimination()
-            };
-            
-            // Constant folding and propagation
-            optimizations.constant_folding = {
-                compile_time_evaluation: await this.detectConstantFolding(),
-                constant_propagation: await this.detectConstantPropagation(),
-                strength_reduction: await this.detectStrengthReduction()
-            };
-            
-            // Loop optimizations
-            optimizations.loop_optimizations = {
-                loop_unrolling: await this.detectLoopUnrolling(),
-                loop_invariant_motion: await this.detectLoopInvariantMotion(),
-                vectorization: await this.detectVectorization(),
-                loop_peeling: await this.detectLoopPeeling()
+                // JIT Compilation Detection
+                jit_compilation: await this.detectJITCompilation(),
+                
+                // Inlining Optimization Detection
+                inlining: await this.detectInliningOptimization(),
+                
+                // Dead Code Elimination Detection
+                dead_code_elimination: await this.detectDeadCodeElimination(),
+                
+                // Loop Optimization Detection
+                loop_optimization: await this.detectLoopOptimization(),
+                
+                // Type Optimization Detection
+                type_optimization: await this.detectTypeOptimization(),
+                
+                // Constant Folding Detection
+                constant_folding: await this.detectConstantFolding(),
+                
+                // Profile-Guided Optimization
+                pgo: await this.detectProfileGuidedOptimization()
             };
             
             return optimizations;
+            
+        } catch (error) {
+            this.logger.error("Error detecting JS optimizations:", error);
+            return { error: error.message, optimizations: "unknown" };
+        }
+    }
+    
+    // Detect JIT Compilation
+    async detectJITCompilation() {
+        try {
+            const jitDetection = {
+                jit_available: false,
+                compilation_tiers: [],
+                optimization_indicators: [],
+                performance_characteristics: {}
+            };
+            
+            // Test function that should trigger JIT compilation
+            const testFunction = function(x) {
+                return x * x + x + 1;
+            };
+            
+            // Warm up the function (trigger compilation)
+            for (let i = 0; i < 10000; i++) {
+                testFunction(i);
+            }
+            
+            // Measure optimized vs unoptimized performance
+            const optimizedTime = this.measureFunctionTime(testFunction, 100000);
+            
+            // Create a similar function that won't be optimized
+            const unoptimizedFunction = new Function('x', 'return x * x + x + 1');
+            const unoptimizedTime = this.measureFunctionTime(unoptimizedFunction, 100000);
+            
+            // JIT detection based on performance difference
+            if (optimizedTime < unoptimizedTime * 0.8) {
+                jitDetection.jit_available = true;
+                jitDetection.optimization_indicators.push('performance_improvement');
+            }
+            
+            // Check for JIT-specific features
+            try {
+                if (typeof %OptimizeFunctionOnNextCall === 'function') {
+                    jitDetection.compilation_tiers.push('v8_optimization_functions');
+                }
+            } catch (e) {
+                // V8 optimization functions not available
+            }
+            
+            jitDetection.performance_characteristics = {
+                optimized_time: optimizedTime,
+                unoptimized_time: unoptimizedTime,
+                improvement_ratio: unoptimizedTime / optimizedTime
+            };
+            
+            return jitDetection;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Inlining Optimization
+    async detectInliningOptimization() {
+        try {
+            const inlining = {
+                inlining_available: false,
+                inlining_effectiveness: 0,
+                inlined_functions: []
+            };
+            
+            // Test small function that should be inlined
+            const smallFunction = (x) => x + 1;
+            const largeFunction = (x) => {
+                let result = x;
+                for (let i = 0; i < 100; i++) {
+                    result += Math.random();
+                }
+                return result;
+            };
+            
+            // Measure call overhead
+            const smallFunctionTime = this.measureFunctionTime(smallFunction, 1000000);
+            const largeFunctionTime = this.measureFunctionTime(largeFunction, 10000);
+            
+            // Inlining detection based on call overhead
+            if (smallFunctionTime < 10) { // Very fast execution suggests inlining
+                inlining.inlining_available = true;
+                inlining.inlined_functions.push('small_arithmetic_function');
+            }
+            
+            inlining.inlining_effectiveness = smallFunctionTime > 0 ? largeFunctionTime / smallFunctionTime : 0;
+            
+            return inlining;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Dead Code Elimination
+    async detectDeadCodeElimination() {
+        try {
+            const deadCodeElimination = {
+                elimination_available: false,
+                elimination_effectiveness: 'unknown',
+                optimized_patterns: []
+            };
+            
+            // Function with dead code
+            const functionWithDeadCode = function(x) {
+                const unusedVar = 42; // Dead code
+                const anotherUnused = Math.random(); // Dead code
+                if (false) { // Dead code
+                    console.log('This will never execute');
+                }
+                return x * 2;
+            };
+            
+            // Function without dead code
+            const cleanFunction = function(x) {
+                return x * 2;
+            };
+            
+            // Compare execution times
+            const deadCodeTime = this.measureFunctionTime(functionWithDeadCode, 100000);
+            const cleanTime = this.measureFunctionTime(cleanFunction, 100000);
+            
+            // If times are similar, dead code elimination is likely working
+            if (Math.abs(deadCodeTime - cleanTime) / cleanTime < 0.1) {
+                deadCodeElimination.elimination_available = true;
+                deadCodeElimination.optimized_patterns.push('unused_variables');
+                deadCodeElimination.optimized_patterns.push('unreachable_code');
+            }
+            
+            deadCodeElimination.elimination_effectiveness = deadCodeTime > 0 ? cleanTime / deadCodeTime : 1;
+            
+            return deadCodeElimination;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Loop Optimization
+    async detectLoopOptimization() {
+        try {
+            const loopOptimization = {
+                optimization_available: false,
+                optimized_patterns: [],
+                optimization_effectiveness: 0
+            };
+            
+            // Simple loop that should be optimized
+            const optimizableLoop = function() {
+                let sum = 0;
+                for (let i = 0; i < 10000; i++) {
+                    sum += i;
+                }
+                return sum;
+            };
+            
+            // Complex loop that's harder to optimize
+            const complexLoop = function() {
+                let sum = 0;
+                for (let i = 0; i < 10000; i++) {
+                    sum += Math.random() * i;
+                }
+                return sum;
+            };
+            
+            const simpleTime = this.measureFunctionTime(optimizableLoop, 1000);
+            const complexTime = this.measureFunctionTime(complexLoop, 1000);
+            
+            // If simple loop is significantly faster, optimization is likely working
+            if (complexTime > simpleTime * 2) {
+                loopOptimization.optimization_available = true;
+                loopOptimization.optimized_patterns.push('simple_arithmetic_loop');
+            }
+            
+            loopOptimization.optimization_effectiveness = complexTime > 0 ? complexTime / simpleTime : 1;
+            
+            return loopOptimization;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Type Optimization
+    async detectTypeOptimization() {
+        try {
+            const typeOptimization = {
+                optimization_available: false,
+                optimized_types: [],
+                type_stability_benefits: 0
+            };
+            
+            // Function with stable types
+            const stableTypeFunction = function(x) {
+                let sum = 0;
+                for (let i = 0; i < 1000; i++) {
+                    sum += i; // Always numbers
+                }
+                return sum;
+            };
+            
+            // Function with unstable types
+            const unstableTypeFunction = function(x) {
+                let sum = 0;
+                for (let i = 0; i < 1000; i++) {
+                    sum += (i % 2 === 0) ? i : i.toString(); // Mixed types
+                }
+                return sum;
+            };
+            
+            const stableTime = this.measureFunctionTime(stableTypeFunction, 1000);
+            const unstableTime = this.measureFunctionTime(unstableTypeFunction, 1000);
+            
+            if (stableTime < unstableTime * 0.8) {
+                typeOptimization.optimization_available = true;
+                typeOptimization.optimized_types.push('number_operations');
+            }
+            
+            typeOptimization.type_stability_benefits = unstableTime > 0 ? unstableTime / stableTime : 1;
+            
+            return typeOptimization;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Constant Folding
+    async detectConstantFolding() {
+        try {
+            const constantFolding = {
+                folding_available: false,
+                folded_operations: [],
+                optimization_impact: 0
+            };
+            
+            // Function with constants that should be folded
+            const constantFunction = function() {
+                return 2 + 3 * 4 - 1; // Should be folded to 13
+            };
+            
+            // Function with variable operations
+            const variableFunction = function(a, b, c, d) {
+                return a + b * c - d;
+            };
+            
+            const constantTime = this.measureFunctionTime(constantFunction, 1000000);
+            const variableTime = this.measureFunctionTime(() => variableFunction(2, 3, 4, 1), 1000000);
+            
+            // If constant function is much faster, constant folding is working
+            if (constantTime < variableTime * 0.5) {
+                constantFolding.folding_available = true;
+                constantFolding.folded_operations.push('arithmetic_constants');
+            }
+            
+            constantFolding.optimization_impact = variableTime > 0 ? variableTime / constantTime : 1;
+            
+            return constantFolding;
+            
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+    
+    // Detect Profile-Guided Optimization
+    async detectProfileGuidedOptimization() {
+        try {
+            const pgo = {
+                pgo_available: false,
+                profile_guided_benefits: 0,
+                optimization_indicators: []
+            };
+            
+            // Function that benefits from profiling
+            const profileableFunction = function(x) {
+                if (x > 0.5) { // Branch taken most of the time
+                    return x * x;
+                } else { // Branch taken rarely
+                    return x + 1;
+                }
+            };
+            
+            // Warm up with predictable pattern
+            for (let i = 0; i < 10000; i++) {
+                profileableFunction(0.8); // Always take first branch
+            }
+            
+            // Measure performance after profiling
+            const profiledTime = this.measureFunctionTime(() => profileableFunction(0.8), 100000);
+            
+            // Measure with unpredictable pattern
+            const unpredictableTime = this.measureFunctionTime(() => profileableFunction(Math.random()), 100000);
+            
+            if (profiledTime < unpredictableTime * 0.9) {
+                pgo.pgo_available = true;
+                pgo.optimization_indicators.push('branch_prediction_optimization');
+            }
+            
+            pgo.profile_guided_benefits = unpredictableTime > 0 ? unpredictableTime / profiledTime : 1;
+            
+            return pgo;
             
         } catch (error) {
             return { error: error.message };
