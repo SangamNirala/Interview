@@ -775,33 +775,66 @@ async def websocket_session_integrity_endpoint(websocket: WebSocket, session_id:
 @app.on_event("startup")
 async def startup_websocket_manager():
     """Initialize WebSocket manager and start background tasks"""
+    print("🚀 Starting application startup sequence...")
+    logging.info("🚀 Starting application startup sequence...")
+    
     try:
+        # Initialize WebSocket manager
+        print("📡 Initializing WebSocket manager...")
+        logging.info("📡 Initializing WebSocket manager...")
+        
         await websocket_manager.initialize_database()
         await websocket_manager.start_background_tasks()
-        logging.info("WebSocket manager initialized successfully")
         
+        print("✅ WebSocket manager initialized successfully")
+        logging.info("✅ WebSocket manager initialized successfully")
+        
+    except Exception as e:
+        print(f"⚠️  WebSocket manager initialization failed: {e}")
+        logging.error(f"⚠️  WebSocket manager initialization failed: {e}")
+        # Continue with startup even if websocket fails
+    
+    try:
         # Initialize fingerprinting collections
-        logging.info("Initializing fingerprinting collections...")
+        print("🗃️  Initializing fingerprinting collections...")
+        logging.info("🗃️  Initializing fingerprinting collections...")
+        
         fingerprint_result = await initialize_fingerprinting_collections()
         
         if fingerprint_result['success']:
+            print(f"✅ Fingerprinting collections initialized successfully!")
+            print(f"   Collections created: {fingerprint_result['collections_created']}")
+            print(f"   Indexes created: {fingerprint_result['indexes_created']}")
+            
             logging.info(f"✅ Fingerprinting collections initialized successfully!")
             logging.info(f"Collections created: {fingerprint_result['collections_created']}")
             logging.info(f"Indexes created: {fingerprint_result['indexes_created']}")
         else:
-            logging.warning(f"⚠️ Fingerprinting collections initialization completed with warnings:")
+            print(f"⚠️  Fingerprinting collections initialization completed with warnings:")
+            logging.warning(f"⚠️  Fingerprinting collections initialization completed with warnings:")
             for error in fingerprint_result.get('errors', []):
+                print(f"  - {error}")
                 logging.warning(f"  - {error}")
         
         # Verify collections integrity
+        print("🔍 Verifying collections integrity...")
+        logging.info("🔍 Verifying collections integrity...")
+        
         verification_result = await verify_collections_integrity()
         if verification_result['success']:
+            print(f"✅ All {verification_result['collections_verified']} fingerprinting collections verified")
             logging.info(f"✅ All {verification_result['collections_verified']} fingerprinting collections verified")
         else:
-            logging.warning(f"⚠️ Collection verification issues: {verification_result.get('collections_missing', [])}")
+            print(f"⚠️  Collection verification issues: {verification_result.get('collections_missing', [])}")
+            logging.warning(f"⚠️  Collection verification issues: {verification_result.get('collections_missing', [])}")
             
     except Exception as e:
-        logging.error(f"Failed to initialize WebSocket manager: {e}")
+        print(f"❌ Failed to initialize fingerprinting collections: {e}")
+        logging.error(f"❌ Failed to initialize fingerprinting collections: {e}")
+        # Continue startup even if fingerprinting init fails
+    
+    print("🎉 Application startup sequence completed!")
+    logging.info("🎉 Application startup sequence completed!")
 
 @app.on_event("shutdown")
 async def shutdown_websocket_manager():
