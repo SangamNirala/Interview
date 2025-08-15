@@ -9,7 +9,7 @@ import json
 import io
 import time
 
-BASE_URL = "https://fprintshield.preview.emergentagent.com/api"
+BASE_URL = "https://biometric-engine.preview.emergentagent.com/api"
 
 class ComprehensiveProgressionTest:
     def __init__(self):

@@ -23,7 +23,7 @@ import time
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://fprintshield.preview.emergentagent.com/api"
+BACKEND_URL = "https://biometric-engine.preview.emergentagent.com/api"
 
 def test_admin_authentication():
     """Test admin authentication with Game@1234 password"""

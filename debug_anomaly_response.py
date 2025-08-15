@@ -7,7 +7,7 @@ import requests
 import json
 
 # Backend URL
-BACKEND_URL = "https://fprintshield.preview.emergentagent.com/api"
+BACKEND_URL = "https://biometric-engine.preview.emergentagent.com/api"
 
 def test_response_structure():
     print("🔍 Debugging Anomaly Detection Response Structure")

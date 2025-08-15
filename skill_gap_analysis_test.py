@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Backend URL configuration
-BACKEND_URL = "https://fprintshield.preview.emergentagent.com/api"
+BACKEND_URL = "https://biometric-engine.preview.emergentagent.com/api"
 
 class SkillGapAnalysisTester:
     def __init__(self):

@@ -47,7 +47,7 @@ import time
 import asyncio
 
 # Configuration
-BACKEND_URL = "https://fprintshield.preview.emergentagent.com/api"
+BACKEND_URL = "https://biometric-engine.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class DatabaseOptimizationTester:
