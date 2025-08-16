@@ -343,7 +343,7 @@ class Phase5CriticalBugFixesTest:
         """Test 4: Device Analytics Retrieval with Enhanced Data"""
         try:
             session_id = str(uuid.uuid4())
-            response = self.session.get(f"{BACKEND_URL}/fingerprinting/device-analytics",
+            response = self.session.get(f"{BACKEND_URL}/session-fingerprinting/device-analytics/{session_id}",
                                       params={"session_id": session_id}, timeout=10)
             
             if response.status_code == 200:
