@@ -6437,8 +6437,8 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                 </div>
               </div>
               
-              {/* Difficulty Level Selection - Only show when job is selected */}
-              {(selectedTechnicalJob || technicalJobSearch.trim()) && (
+              {/* Difficulty Level Selection - Only show when job is selected via button click */}
+              {selectedTechnicalJob && (
                 <div className="mt-8 p-6 bg-white/5 rounded-lg border border-white/10">
                   <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
                     🎯 Select Difficulty Level
