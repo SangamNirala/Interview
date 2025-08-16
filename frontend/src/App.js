@@ -6437,6 +6437,80 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                 </div>
               </div>
               
+              {/* Difficulty Level Selection - Only show when job is selected */}
+              {(selectedTechnicalJob || technicalJobSearch.trim()) && (
+                <div className="mt-8 p-6 bg-white/5 rounded-lg border border-white/10">
+                  <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    🎯 Select Difficulty Level
+                  </h4>
+                  <p className="text-gray-300 text-sm mb-4">
+                    Choose the difficulty level that matches your experience and skill level.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-center p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:bg-orange-600/10 hover:border-orange-400/30">
+                      <input
+                        type="radio"
+                        name="difficultyLevel"
+                        value="beginner"
+                        checked={selectedDifficultyLevel === 'beginner'}
+                        onChange={(e) => setSelectedDifficultyLevel(e.target.value)}
+                        className="w-4 h-4 text-orange-600 bg-white/10 border-white/20 focus:ring-orange-500 focus:ring-2"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="text-green-400 mr-2 text-lg">🌱</span>
+                          <span className="font-medium text-white">Beginner</span>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">
+                          Basic to intermediate questions - Perfect for entry-level positions and recent graduates
+                        </p>
+                      </div>
+                    </label>
+                    
+                    <label className="flex items-center p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:bg-orange-600/10 hover:border-orange-400/30">
+                      <input
+                        type="radio"
+                        name="difficultyLevel"
+                        value="intermediate"
+                        checked={selectedDifficultyLevel === 'intermediate'}
+                        onChange={(e) => setSelectedDifficultyLevel(e.target.value)}
+                        className="w-4 h-4 text-orange-600 bg-white/10 border-white/20 focus:ring-orange-500 focus:ring-2"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="text-yellow-400 mr-2 text-lg">⚡</span>
+                          <span className="font-medium text-white">Intermediate</span>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">
+                          Intermediate to advanced level questions - Ideal for professionals with 2-5 years of experience
+                        </p>
+                      </div>
+                    </label>
+                    
+                    <label className="flex items-center p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:bg-orange-600/10 hover:border-orange-400/30">
+                      <input
+                        type="radio"
+                        name="difficultyLevel"
+                        value="advanced"
+                        checked={selectedDifficultyLevel === 'advanced'}
+                        onChange={(e) => setSelectedDifficultyLevel(e.target.value)}
+                        className="w-4 h-4 text-orange-600 bg-white/10 border-white/20 focus:ring-orange-500 focus:ring-2"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="text-red-400 mr-2 text-lg">🔥</span>
+                          <span className="font-medium text-white">Advanced</span>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-1">
+                          Expert-level questions - Designed for senior professionals and team leads with 5+ years of experience
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
+              
               {/* Action Buttons */}
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <button
