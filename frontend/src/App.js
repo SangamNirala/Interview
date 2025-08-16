@@ -3206,6 +3206,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
   const [showTechnicalModal, setShowTechnicalModal] = useState(false);
   const [technicalJobSearch, setTechnicalJobSearch] = useState('');
   const [selectedTechnicalJob, setSelectedTechnicalJob] = useState('');
+  const [selectedDifficultyLevel, setSelectedDifficultyLevel] = useState('');
   
   // Aptitude Test Configuration state
   const [aptitudeTopics, setAptitudeTopics] = useState({
