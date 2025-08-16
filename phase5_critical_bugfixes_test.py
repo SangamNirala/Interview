@@ -99,7 +99,7 @@ class Phase5CriticalBugFixesTest:
                 "session_id": str(uuid.uuid4())
             }
             
-            response = self.session.post(f"{BACKEND_URL}/fingerprinting/detect-virtual-machines",
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/detect-virtual-machines",
                                        json=vm_data, timeout=15)
             
             if response.status_code == 200:
