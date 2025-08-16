@@ -14,7 +14,7 @@ import io
 from typing import Dict, Any
 
 # Backend URL from frontend .env
-BASE_URL = "https://securesession.preview.emergentagent.com/api"
+BASE_URL = "https://fingerprint-test.preview.emergentagent.com/api"
 
 class EnhancedInterviewTester:
     def __init__(self):

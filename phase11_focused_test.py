@@ -15,7 +15,7 @@ import uuid
 from datetime import datetime, timedelta
 
 # Configuration
-BACKEND_URL = "https://securesession.preview.emergentagent.com/api"
+BACKEND_URL = "https://fingerprint-test.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class FocusedAPITester:

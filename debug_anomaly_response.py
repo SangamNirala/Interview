@@ -7,7 +7,7 @@ import requests
 import json
 
 # Backend URL
-BACKEND_URL = "https://securesession.preview.emergentagent.com/api"
+BACKEND_URL = "https://fingerprint-test.preview.emergentagent.com/api"
 
 def test_response_structure():
     print("🔍 Debugging Anomaly Detection Response Structure")
