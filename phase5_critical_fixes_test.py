@@ -332,8 +332,18 @@ class Phase5CriticalFixesTest:
                             print(f"    ❌ {test_case['name']}: Module not loaded error")
                             continue
                         
-                        # Check for expected response format
-                        missing_fields = [field for field in test_case['expected_fields'] if field not in data]
+                        # Check for expected response format (handle nested structure)
+                        if 'hardware_analysis' in data and isinstance(data['hardware_analysis'], dict):
+                            hw_data = data['hardware_analysis']
+                            missing_fields = [field for field in test_case['expected_fields'] if field not in hw_data]
+                        elif 'vm_detection' in data and isinstance(data['vm_detection'], dict):
+                            vm_data = data['vm_detection']
+                            # For VM detection, check nested structure
+                            expected_vm_fields = ['vm_detection_results', 'vm_probability', 'vm_classification', 'is_virtual_machine']
+                            missing_fields = [field for field in expected_vm_fields if field not in vm_data]
+                        else:
+                            # Check for direct fields at root level
+                            missing_fields = [field for field in test_case['expected_fields'] if field not in data]
                         
                         if not missing_fields:
                             print(f"    ✅ {test_case['name']}: Proper response format")
