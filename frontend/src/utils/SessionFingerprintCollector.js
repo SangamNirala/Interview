@@ -61,6 +61,258 @@ class SessionFingerprintCollector {
     }
     
     /**
+     * Enhanced error handling wrapper for all fingerprinting methods
+     */
+    async executeWithErrorHandling(methodName, operation, fallback = null) {
+        const startTime = performance.now();
+        let lastError = null;
+        
+        for (let attempt = 1; attempt <= this.errorHandling.retryAttempts; attempt++) {
+            try {
+                this.logger.debug(`Executing ${methodName} (attempt ${attempt})`);
+                
+                const result = await operation();
+                
+                // Log successful execution
+                const executionTime = performance.now() - startTime;
+                this.performanceMetrics[methodName] = {
+                    success: true,
+                    executionTime: executionTime,
+                    attempts: attempt,
+                    timestamp: new Date().toISOString()
+                };
+                
+                return result;
+                
+            } catch (error) {
+                lastError = error;
+                this.logger.warn(`${methodName} failed on attempt ${attempt}:`, error.message);
+                
+                // Log error
+                this.errorLog.push({
+                    method: methodName,
+                    attempt: attempt,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Wait before retry (except on last attempt)
+                if (attempt < this.errorHandling.retryAttempts) {
+                    await this.sleep(this.errorHandling.retryDelay * attempt);
+                }
+            }
+        }
+        
+        // All attempts failed
+        const executionTime = performance.now() - startTime;
+        this.performanceMetrics[methodName] = {
+            success: false,
+            executionTime: executionTime,
+            attempts: this.errorHandling.retryAttempts,
+            error: lastError?.message,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Return fallback or error result
+        if (fallback && this.errorHandling.fallbackEnabled) {
+            this.logger.info(`Using fallback for ${methodName}`);
+            return typeof fallback === 'function' ? fallback() : fallback;
+        }
+        
+        return {
+            error: lastError?.message || 'Unknown error',
+            method: methodName,
+            attempts: this.errorHandling.retryAttempts,
+            fallback_used: false
+        };
+    }
+    
+    /**
+     * Enhanced caching mechanism for expensive operations
+     */
+    async getCachedResult(key, operation, ttl = null) {
+        const cacheKey = `fingerprint_${key}`;
+        const now = Date.now();
+        
+        // Check cache
+        if (this.cache.enabled && this.cache.storage.has(cacheKey)) {
+            const cached = this.cache.storage.get(cacheKey);
+            const effectiveTtl = ttl || this.cache.ttl;
+            
+            if (now - cached.timestamp < effectiveTtl) {
+                this.logger.debug(`Cache hit for ${key}`);
+                return { ...cached.data, cached: true };
+            } else {
+                // Remove expired entry
+                this.cache.storage.delete(cacheKey);
+            }
+        }
+        
+        // Execute operation
+        const startTime = performance.now();
+        const result = await operation();
+        const executionTime = performance.now() - startTime;
+        
+        // Cache result
+        if (this.cache.enabled && result && !result.error) {
+            // Manage cache size
+            if (this.cache.storage.size >= this.cache.maxSize) {
+                // Remove oldest entry
+                const oldestKey = this.cache.storage.keys().next().value;
+                this.cache.storage.delete(oldestKey);
+            }
+            
+            this.cache.storage.set(cacheKey, {
+                data: result,
+                timestamp: now,
+                executionTime: executionTime
+            });
+            
+            this.logger.debug(`Cached result for ${key} (${executionTime.toFixed(2)}ms)`);
+        }
+        
+        // Monitor performance
+        this.monitorPerformance(key, executionTime);
+        
+        return result;
+    }
+    
+    /**
+     * Performance monitoring and optimization
+     */
+    monitorPerformance(operation, executionTime) {
+        // Add to performance log
+        this.performanceMonitor.collections.push({
+            operation: operation,
+            executionTime: executionTime,
+            timestamp: Date.now()
+        });
+        
+        // Maintain collection size
+        if (this.performanceMonitor.collections.length > this.performanceMonitor.maxCollections) {
+            this.performanceMonitor.collections.shift();
+        }
+        
+        // Update average execution time
+        const totalTime = this.performanceMonitor.collections.reduce((sum, item) => sum + item.executionTime, 0);
+        this.performanceMonitor.averageExecutionTime = totalTime / this.performanceMonitor.collections.length;
+        
+        // Log slow operations
+        if (executionTime > this.performanceMonitor.slowOperationThreshold) {
+            this.logger.warn(`Slow operation detected: ${operation} took ${executionTime.toFixed(2)}ms`);
+        }
+    }
+    
+    /**
+     * Memory usage optimization
+     */
+    optimizeMemoryUsage() {
+        // Clear old error logs
+        if (this.errorLog.length > 100) {
+            this.errorLog = this.errorLog.slice(-50);
+        }
+        
+        // Clear old performance metrics
+        const now = Date.now();
+        const oneHourAgo = now - (60 * 60 * 1000);
+        
+        this.performanceMonitor.collections = this.performanceMonitor.collections.filter(
+            item => item.timestamp > oneHourAgo
+        );
+        
+        // Clear expired cache entries
+        for (const [key, value] of this.cache.storage.entries()) {
+            if (now - value.timestamp > this.cache.ttl) {
+                this.cache.storage.delete(key);
+            }
+        }
+        
+        this.logger.debug('Memory usage optimized');
+    }
+    
+    /**
+     * Get performance statistics
+     */
+    getPerformanceStats() {
+        return {
+            cache: {
+                enabled: this.cache.enabled,
+                size: this.cache.storage.size,
+                maxSize: this.cache.maxSize,
+                hitRate: this.calculateCacheHitRate()
+            },
+            performance: {
+                averageExecutionTime: this.performanceMonitor.averageExecutionTime,
+                totalCollections: this.performanceMonitor.collections.length,
+                slowOperations: this.performanceMonitor.collections.filter(
+                    item => item.executionTime > this.performanceMonitor.slowOperationThreshold
+                ).length
+            },
+            errors: {
+                totalErrors: this.errorLog.length,
+                recentErrors: this.errorLog.filter(
+                    error => Date.now() - new Date(error.timestamp).getTime() < 60000
+                ).length
+            }
+        };
+    }
+    
+    calculateCacheHitRate() {
+        const recentCollections = this.performanceMonitor.collections.slice(-100);
+        if (recentCollections.length === 0) return 0;
+        
+        const cacheHits = recentCollections.filter(item => item.cached).length;
+        return (cacheHits / recentCollections.length) * 100;
+    }
+    
+    /**
+     * Get fallback device fingerprint when main collection fails
+     */
+    getFallbackDeviceFingerprint() {
+        return {
+            fallback_data: true,
+            basic_device_info: {
+                hardware_concurrency: navigator.hardwareConcurrency || 0,
+                device_memory: navigator.deviceMemory || 0,
+                platform: navigator.platform,
+                user_agent: navigator.userAgent,
+                canvas_fingerprint: this.getBasicCanvasFingerprint(),
+                screen_info: {
+                    width: screen.width,
+                    height: screen.height,
+                    color_depth: screen.colorDepth
+                }
+            },
+            collection_metadata: {
+                timestamp: new Date().toISOString(),
+                collection_method: 'fallback',
+                error_reason: 'main_collection_failed'
+            }
+        };
+    }
+    
+    /**
+     * Basic canvas fingerprint for fallback
+     */
+    getBasicCanvasFingerprint() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillText('Basic fingerprint test', 10, 10);
+            return canvas.toDataURL();
+        } catch (error) {
+            return 'canvas_error';
+        }
+    }
+    
+    /**
+     * Sleep utility for retry delays
+     */
+    async sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    /**
      * Collect comprehensive device fingerprint
      * Main entry point for device fingerprinting
      */
