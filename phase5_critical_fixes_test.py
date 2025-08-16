@@ -19,8 +19,8 @@ from datetime import datetime
 import sys
 import os
 
-# Use the production URL from frontend/.env
-BACKEND_URL = "https://fingerprint-test.preview.emergentagent.com/api"
+# Use local URL for testing since backend is running locally
+BACKEND_URL = "http://127.0.0.1:8001/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class Phase5CriticalFixesTest:
