@@ -244,6 +244,7 @@ class Phase5CriticalFixesTest:
                     "name": "Detect Virtual Machines",
                     "endpoint": "/session-fingerprinting/detect-virtual-machines",
                     "data": {
+                        "session_id": str(uuid.uuid4()),  # Required field
                         "device_data": {
                             "hardware_signature": {"cpu_cores": 8, "memory_gb": 16},
                             "confidence_metrics": {"confidence_level": 0.85}
@@ -255,6 +256,7 @@ class Phase5CriticalFixesTest:
                     "name": "Analyze Hardware",
                     "endpoint": "/session-fingerprinting/analyze-hardware", 
                     "data": {
+                        "session_id": str(uuid.uuid4()),  # Required field
                         "device_data": {
                             "hardware_signature": {"cpu_cores": 8, "memory_gb": 16, "gpu_vendor": "NVIDIA"}
                         }
@@ -265,6 +267,7 @@ class Phase5CriticalFixesTest:
                     "name": "Analyze Browser Fingerprint",
                     "endpoint": "/session-fingerprinting/analyze-browser-fingerprint",
                     "data": {
+                        "session_id": str(uuid.uuid4()),  # Required field
                         "browser_data": {
                             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                             "screen_resolution": "1920x1080",
