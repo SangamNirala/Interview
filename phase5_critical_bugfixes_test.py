@@ -19,8 +19,8 @@ from datetime import datetime
 import sys
 import os
 
-# Backend URL - use local for testing
-BACKEND_URL = "http://localhost:8001/api"
+# Get backend URL from environment
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://fingerprint-test.preview.emergentagent.com') + '/api'
 ADMIN_PASSWORD = "Game@1234"
 
 class Phase5CriticalBugFixesTest:
