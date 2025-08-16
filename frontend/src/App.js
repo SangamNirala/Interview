@@ -6060,6 +6060,115 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
             )}
           </div>
         )}
+
+        {/* Interview Questions Tab */}
+        {activeTab === 'interview-questions' && (
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+              🎤 Interview Questions
+            </h2>
+            
+            <div className="max-w-2xl mx-auto">
+              {/* Job Title Search Box */}
+              <div className="mb-8">
+                <label className="block text-sm font-medium text-white mb-2">
+                  Job Title
+                </label>
+                <input
+                  type="text"
+                  value={interviewQuestionsJobTitle}
+                  onChange={(e) => setInterviewQuestionsJobTitle(e.target.value)}
+                  placeholder="e.g. Frontend Developer, Data Scientist, Backend Engineer"
+                  className="w-full px-4 py-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-lg"
+                />
+                <p className="text-gray-400 text-sm mt-2">
+                  Enter a job title to generate relevant interview questions
+                </p>
+              </div>
+              
+              {/* Question Type Buttons */}
+              <div className="space-y-4">
+                <button
+                  className="w-full bg-gradient-to-r from-blue-600/80 to-indigo-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-blue-700/80 hover:to-indigo-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
+                  disabled
+                >
+                  <span className="mr-3 text-2xl">🧮</span>
+                  <div className="text-left flex-1">
+                    <div className="font-semibold text-lg">Aptitude Questions</div>
+                    <div className="text-sm text-blue-200">Numerical, Logical, Verbal & Spatial Reasoning</div>
+                  </div>
+                  <span className="ml-3 text-xs bg-white/20 px-3 py-1 rounded-full">Coming Soon</span>
+                </button>
+                
+                <button
+                  className="w-full bg-gradient-to-r from-orange-600/80 to-yellow-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-orange-700/80 hover:to-yellow-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
+                  disabled
+                >
+                  <span className="mr-3 text-2xl">💻</span>
+                  <div className="text-left flex-1">
+                    <div className="font-semibold text-lg">Technical Interview Questions</div>
+                    <div className="text-sm text-orange-200">Role-specific technical challenges and problem-solving</div>
+                  </div>
+                  <span className="ml-3 text-xs bg-white/20 px-3 py-1 rounded-full">Coming Soon</span>
+                </button>
+                
+                <button
+                  className="w-full bg-gradient-to-r from-cyan-600/80 to-teal-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-cyan-700/80 hover:to-teal-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
+                  disabled
+                >
+                  <span className="mr-3 text-2xl">🗣️</span>
+                  <div className="text-left flex-1">
+                    <div className="font-semibold text-lg">Behavioral Interview Questions</div>
+                    <div className="text-sm text-cyan-200">Soft skills, teamwork, and situational responses</div>
+                  </div>
+                  <span className="ml-3 text-xs bg-white/20 px-3 py-1 rounded-full">Coming Soon</span>
+                </button>
+              </div>
+              
+              {/* Feature Information */}
+              <div className="mt-8 p-6 bg-purple-900/20 rounded-lg border border-purple-400/30">
+                <div className="flex items-start">
+                  <span className="text-purple-400 mr-3 mt-1 text-2xl">💡</span>
+                  <div>
+                    <p className="text-purple-200 text-lg font-medium mb-3">Quick Tips for Better Results:</p>
+                    <ul className="text-purple-300 space-y-2">
+                      <li className="flex items-start">
+                        <span className="text-purple-400 mr-2">•</span>
+                        Be specific with job titles (e.g., "React Developer" vs "Developer")
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-purple-400 mr-2">•</span>
+                        Include seniority level (Junior, Senior, Lead, Principal)
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-purple-400 mr-2">•</span>
+                        Add domain context (e.g., "Healthcare Data Analyst", "E-commerce Backend Developer")
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-purple-400 mr-2">•</span>
+                        Specify technologies if relevant (e.g., "Python ML Engineer", "React Native Developer")
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Coming Soon Notice */}
+              <div className="mt-8 text-center p-6 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-lg border border-indigo-400/30">
+                <div className="text-4xl mb-4">🚀</div>
+                <h3 className="text-xl font-bold text-white mb-2">Exciting Features Coming Soon!</h3>
+                <p className="text-gray-300 mb-4">
+                  We're working hard to bring you AI-powered interview question generation tailored to specific job roles and industries.
+                </p>
+                <div className="flex justify-center space-x-2">
+                  <span className="px-3 py-1 bg-blue-600/30 text-blue-200 rounded-full text-sm">AI-Generated</span>
+                  <span className="px-3 py-1 bg-green-600/30 text-green-200 rounded-full text-sm">Industry-Specific</span>
+                  <span className="px-3 py-1 bg-purple-600/30 text-purple-200 rounded-full text-sm">Difficulty Levels</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* ATS Score Calculation Success Popup */}
