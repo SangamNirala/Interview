@@ -146,6 +146,7 @@ class Phase5CriticalFixesTest:
                 {
                     "endpoint": "/session-fingerprinting/analyze-browser-fingerprint",
                     "data": {
+                        "session_id": str(uuid.uuid4()),  # Required field
                         "browser_data": {
                             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                             "screen_resolution": "1920x1080",
@@ -159,6 +160,7 @@ class Phase5CriticalFixesTest:
                 {
                     "endpoint": "/session-fingerprinting/analyze-hardware",
                     "data": {
+                        "session_id": str(uuid.uuid4()),  # Required field
                         "device_data": {
                             "hardware_signature": {
                                 "cpu_cores": 8,
