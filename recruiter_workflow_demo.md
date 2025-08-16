@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://fingerprint-test.preview.emergentagent.com
+URL: https://codebase-upgrade-1.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

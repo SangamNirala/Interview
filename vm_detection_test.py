@@ -13,7 +13,7 @@ from datetime import datetime
 import uuid
 
 # Get backend URL from environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://fingerprint-test.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://codebase-upgrade-1.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 class VMDetectionTester:

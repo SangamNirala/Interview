@@ -7,7 +7,7 @@ import requests
 import json
 import time
 
-BASE_URL = 'https://fingerprint-test.preview.emergentagent.com/api'
+BASE_URL = 'https://codebase-upgrade-1.preview.emergentagent.com/api'
 
 def test_comprehensive_enhanced_features():
     session = requests.Session()
