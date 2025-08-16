@@ -3199,6 +3199,9 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
   const [allAnalyses, setAllAnalyses] = useState([]);
   const [analysesLoading, setAnalysesLoading] = useState(false);
   
+  // Interview Questions Search state
+  const [interviewQuestionsJobTitle, setInterviewQuestionsJobTitle] = useState('');
+  
   // Aptitude Test Configuration state
   const [aptitudeTopics, setAptitudeTopics] = useState({
     numerical: false,
