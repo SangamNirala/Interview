@@ -6519,13 +6519,16 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                       alert('Please select or search a job title to view technical questions.');
                       return;
                     }
-                    if (!selectedDifficultyLevel) {
+                    // Only require difficulty level if job was selected via button (not just typed)
+                    if (selectedTechnicalJob && !selectedDifficultyLevel) {
                       alert('Please select a difficulty level to generate questions.');
                       return;
                     }
                     // For now, just show an alert with the selected job and difficulty
                     const jobTitle = selectedTechnicalJob || technicalJobSearch;
-                    const difficulty = selectedDifficultyLevel.charAt(0).toUpperCase() + selectedDifficultyLevel.slice(1);
+                    const difficulty = selectedDifficultyLevel ? 
+                      selectedDifficultyLevel.charAt(0).toUpperCase() + selectedDifficultyLevel.slice(1) : 
+                      'Default';
                     alert(`Generating ${difficulty} level technical interview questions for "${jobTitle}"!`);
                     setShowTechnicalModal(false);
                   }}
