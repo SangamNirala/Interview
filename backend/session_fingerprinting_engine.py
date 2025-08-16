@@ -1434,12 +1434,40 @@ class EnvironmentAnalyzer:
         try:
             # Create instance of SessionFingerprintingEngine for browser analysis
             engine = SessionFingerprintingEngine()
-            return await engine.analyze_browser_fingerprint(browser_data)
+            result = await engine.analyze_browser_fingerprint(browser_data)
+            
+            if result.get('success'):
+                # Transform the response to match server expectations
+                analysis_result = result.get('analysis_result', {})
+                
+                # Create analysis summary
+                analysis_summary = {
+                    'fingerprint_hash': analysis_result.get('fingerprint_hash', ''),
+                    'authenticity_confidence': result.get('authenticity_confidence', 0.5),
+                    'manipulation_detected': result.get('manipulation_detected', False),
+                    'overall_risk_level': result.get('overall_risk_level', 'MEDIUM'),
+                    'fingerprint_entropy': result.get('fingerprint_entropy', 0.0),
+                    'analysis_duration_ms': analysis_result.get('analysis_duration_ms', 0),
+                    'total_components_analyzed': len([k for k in analysis_result.keys() if k.endswith('_analysis')]),
+                    'timestamp': analysis_result.get('timestamp', '')
+                }
+                
+                return {
+                    'success': True,
+                    'browser_fingerprint_analysis': analysis_result,
+                    'analysis_summary': analysis_summary,
+                    'timestamp': analysis_result.get('timestamp', '')
+                }
+            else:
+                return result
+                
         except Exception as e:
             self.logger.error(f"Error analyzing browser fingerprint: {str(e)}")
             return {
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'browser_fingerprint_analysis': {},
+                'analysis_summary': {}
             }
     
     def detect_automation_tools(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
