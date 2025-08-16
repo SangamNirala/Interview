@@ -284,7 +284,7 @@ class Phase5CriticalFixesTest:
                     "data": {
                         "session_id": str(uuid.uuid4()),  # Required field
                         "device_data": {
-                            "hardware_signature": {"cpu_cores": 8, "memory_gb": 16, "gpu_vendor": "NVIDIA"}
+                            "hardware": {"cpu_cores": 8, "memory_gb": 16, "gpu_vendor": "NVIDIA"}  # Changed from hardware_signature to hardware
                         }
                     },
                     "expected_fields": ["hardware_profile", "hardware_anomalies", "overall_hardware_score"]
@@ -295,9 +295,18 @@ class Phase5CriticalFixesTest:
                     "data": {
                         "session_id": str(uuid.uuid4()),  # Required field
                         "browser_data": {
-                            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                            "screen_resolution": "1920x1080",
-                            "timezone": "America/New_York"
+                            "user_agent": {
+                                "raw": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                                "browser": "Chrome"
+                            },
+                            "screen": {
+                                "width": 1920,
+                                "height": 1080
+                            },
+                            "timezone": {
+                                "name": "America/New_York",
+                                "offset": -300
+                            }
                         }
                     },
                     "expected_fields": ["browser_analysis", "fingerprint_entropy", "anomaly_indicators"]
