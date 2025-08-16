@@ -6089,39 +6089,45 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
               {/* Question Type Buttons */}
               <div className="space-y-4">
                 <button
-                  className="w-full bg-gradient-to-r from-blue-600/80 to-indigo-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-blue-700/80 hover:to-indigo-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
-                  disabled
+                  onClick={() => {
+                    // Placeholder for aptitude questions functionality
+                    console.log('Aptitude Questions clicked');
+                  }}
+                  className="w-full bg-gradient-to-r from-blue-600/80 to-indigo-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-blue-700/80 hover:to-indigo-700/80 transition-all duration-300 flex items-center justify-center cursor-pointer hover:shadow-lg"
                 >
                   <span className="mr-3 text-2xl">🧮</span>
                   <div className="text-left flex-1">
                     <div className="font-semibold text-lg">Aptitude Questions</div>
                     <div className="text-sm text-blue-200">Numerical, Logical, Verbal & Spatial Reasoning</div>
                   </div>
-                  <span className="ml-3 text-xs bg-white/20 px-3 py-1 rounded-full">Coming Soon</span>
                 </button>
                 
                 <button
-                  className="w-full bg-gradient-to-r from-orange-600/80 to-yellow-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-orange-700/80 hover:to-yellow-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
-                  disabled
+                  onClick={() => {
+                    // Placeholder for technical interview questions functionality
+                    console.log('Technical Interview Questions clicked');
+                  }}
+                  className="w-full bg-gradient-to-r from-orange-600/80 to-yellow-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-orange-700/80 hover:to-yellow-700/80 transition-all duration-300 flex items-center justify-center cursor-pointer hover:shadow-lg"
                 >
                   <span className="mr-3 text-2xl">💻</span>
                   <div className="text-left flex-1">
                     <div className="font-semibold text-lg">Technical Interview Questions</div>
                     <div className="text-sm text-orange-200">Role-specific technical challenges and problem-solving</div>
                   </div>
-                  <span className="ml-3 text-xs bg-white/20 px-3 py-1 rounded-full">Coming Soon</span>
                 </button>
                 
                 <button
-                  className="w-full bg-gradient-to-r from-cyan-600/80 to-teal-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-cyan-700/80 hover:to-teal-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
-                  disabled
+                  onClick={() => {
+                    // Placeholder for behavioral interview questions functionality
+                    console.log('Behavioral Interview Questions clicked');
+                  }}
+                  className="w-full bg-gradient-to-r from-cyan-600/80 to-teal-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-cyan-700/80 hover:to-teal-700/80 transition-all duration-300 flex items-center justify-center cursor-pointer hover:shadow-lg"
                 >
                   <span className="mr-3 text-2xl">🗣️</span>
                   <div className="text-left flex-1">
                     <div className="font-semibold text-lg">Behavioral Interview Questions</div>
                     <div className="text-sm text-cyan-200">Soft skills, teamwork, and situational responses</div>
                   </div>
-                  <span className="ml-3 text-xs bg-white/20 px-3 py-1 rounded-full">Coming Soon</span>
                 </button>
               </div>
               
