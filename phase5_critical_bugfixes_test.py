@@ -451,6 +451,41 @@ class Phase5CriticalBugFixesTest:
             self.log_result("Performance Impact Test", False, f"❌ Error: {str(e)}")
             return False
             
+    def test_database_fingerprinting_stats(self):
+        """Test 7: Database Fingerprinting Statistics - Working Endpoint"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/admin/database/fingerprinting-stats", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") and "collection_stats" in data.get("details", {}):
+                    collection_stats = data["details"]["collection_stats"]
+                    collections = ["device_fingerprints", "browser_fingerprints", "session_integrity_profiles", 
+                                 "fingerprint_violations", "device_reputation_scores", "fingerprint_analytics"]
+                    
+                    all_collections_present = all(col in collection_stats for col in collections)
+                    
+                    if all_collections_present:
+                        self.log_result("Database Fingerprinting Statistics", True, 
+                                      f"✅ All 6 fingerprinting collections present and accessible")
+                        return True
+                    else:
+                        missing = [col for col in collections if col not in collection_stats]
+                        self.log_result("Database Fingerprinting Statistics", False, 
+                                      f"❌ Missing collections: {missing}")
+                        return False
+                else:
+                    self.log_result("Database Fingerprinting Statistics", False, 
+                                  f"❌ Invalid response structure: {data}")
+                    return False
+            else:
+                self.log_result("Database Fingerprinting Statistics", False, 
+                              f"❌ Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("Database Fingerprinting Statistics", False, f"❌ Error: {str(e)}")
+            return False
+            
     def run_all_tests(self):
         """Run all Phase 5 critical bug fixes and optimization tests"""
         print("🧪 TASK 4: PHASE 5 - CRITICAL BUG FIXES & OPTIMIZATION Test")
