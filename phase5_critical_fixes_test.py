@@ -163,9 +163,20 @@ class Phase5CriticalFixesTest:
                     "data": {
                         "session_id": str(uuid.uuid4()),  # Required field
                         "browser_data": {
-                            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                            "screen_resolution": "1920x1080",
-                            "timezone": "America/New_York",
+                            "user_agent": {
+                                "raw": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                                "browser": "Chrome",
+                                "version": "91.0.4472.124"
+                            },
+                            "screen": {
+                                "width": 1920,
+                                "height": 1080,
+                                "color_depth": 24
+                            },
+                            "timezone": {
+                                "name": "America/New_York",
+                                "offset": -300
+                            },
                             "language": "en-US",
                             "platform": "Win32"
                         }
@@ -177,7 +188,7 @@ class Phase5CriticalFixesTest:
                     "data": {
                         "session_id": str(uuid.uuid4()),  # Required field
                         "device_data": {
-                            "hardware_signature": {
+                            "hardware": {  # Changed from hardware_signature to hardware
                                 "cpu_cores": 8,
                                 "memory_gb": 16,
                                 "gpu_vendor": "NVIDIA"
