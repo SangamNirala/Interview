@@ -474,6 +474,9 @@ class Phase5CriticalBugFixesTest:
         print("\n🛡️ ERROR HANDLING & PERFORMANCE TESTING:")
         self.test_error_handling_verification()
         self.test_performance_impact()
+        
+        print("\n🗃️ DATABASE INTEGRATION TESTING:")
+        self.test_database_fingerprinting_stats()
             
         # Print summary
         print("\n" + "=" * 70)
