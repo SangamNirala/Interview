@@ -257,7 +257,7 @@ class Phase5CriticalBugFixesTest:
                 }
             }
             
-            response = self.session.post(f"{BACKEND_URL}/fingerprinting/analyze-browser-fingerprint",
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
                                        json=enhanced_browser_data, timeout=15)
             
             if response.status_code == 200:
