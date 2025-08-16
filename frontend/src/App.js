@@ -4100,10 +4100,10 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
 
         {/* Tab Navigation */}
         <div className="mb-8">
-          <nav className="flex space-x-1 bg-white/10 backdrop-blur-lg rounded-lg p-1">
+          <nav className="flex flex-wrap gap-1 bg-white/10 backdrop-blur-lg rounded-lg p-1 lg:space-x-1 lg:flex-nowrap">
             <button
               onClick={() => setActiveTab('create-interview')}
-              className={`flex-1 py-3 px-4 text-sm font-medium rounded-md transition-all duration-300 ${
+              className={`flex-1 py-3 px-2 lg:px-4 text-xs lg:text-sm font-medium rounded-md transition-all duration-300 ${
                 activeTab === 'create-interview'
                   ? 'bg-orange-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
@@ -4113,7 +4113,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
             </button>
             <button
               onClick={() => setActiveTab('assessment-reports')}
-              className={`flex-1 py-3 px-4 text-sm font-medium rounded-md transition-all duration-300 ${
+              className={`flex-1 py-3 px-2 lg:px-4 text-xs lg:text-sm font-medium rounded-md transition-all duration-300 ${
                 activeTab === 'assessment-reports'
                   ? 'bg-orange-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
@@ -4123,7 +4123,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
             </button>
             <button
               onClick={() => setActiveTab('resume-analysis')}
-              className={`flex-1 py-3 px-4 text-sm font-medium rounded-md transition-all duration-300 ${
+              className={`flex-1 py-3 px-2 lg:px-4 text-xs lg:text-sm font-medium rounded-md transition-all duration-300 ${
                 activeTab === 'resume-analysis'
                   ? 'bg-orange-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
@@ -4133,7 +4133,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
             </button>
             <button
               onClick={() => setActiveTab('create-aptitude-test')}
-              className={`flex-1 py-3 px-4 text-sm font-medium rounded-md transition-all duration-300 ${
+              className={`flex-1 py-3 px-2 lg:px-4 text-xs lg:text-sm font-medium rounded-md transition-all duration-300 ${
                 activeTab === 'create-aptitude-test'
                   ? 'bg-orange-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
@@ -4143,7 +4143,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
             </button>
             <button
               onClick={() => setActiveTab('analysis-result')}
-              className={`flex-1 py-3 px-4 text-sm font-medium rounded-md transition-all duration-300 ${
+              className={`flex-1 py-3 px-2 lg:px-4 text-xs lg:text-sm font-medium rounded-md transition-all duration-300 ${
                 activeTab === 'analysis-result'
                   ? 'bg-orange-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
@@ -4153,7 +4153,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
             </button>
             <button
               onClick={() => setActiveTab('interview-questions')}
-              className={`flex-1 py-3 px-4 text-sm font-medium rounded-md transition-all duration-300 ${
+              className={`flex-1 py-3 px-2 lg:px-4 text-xs lg:text-sm font-medium rounded-md transition-all duration-300 ${
                 activeTab === 'interview-questions'
                   ? 'bg-purple-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
