@@ -95,7 +95,6 @@ class Phase5CriticalBugFixesTest:
                         "hardware_ids": ["PCI\\VEN_10DE&DEV_2206"]
                     }
                 },
-                "confidence_level": 0.95,
                 "session_id": str(uuid.uuid4())
             }
             
@@ -133,6 +132,18 @@ class Phase5CriticalBugFixesTest:
                 else:
                     self.log_result("VM Detection Confidence Level Bug Fix", False, 
                                   f"❌ Missing vm_detection in response: {data}")
+                    return False
+            elif response.status_code == 500:
+                # Check if this is a module loading issue
+                data = response.json()
+                error_detail = data.get("detail", "")
+                if "Module not loaded" in error_detail:
+                    self.log_result("VM Detection Confidence Level Bug Fix", False, 
+                                  f"⚠️ MODULE NOT LOADED - Cannot test confidence_level bug fix: {error_detail}")
+                    return False
+                else:
+                    self.log_result("VM Detection Confidence Level Bug Fix", False, 
+                                  f"❌ Server error: {error_detail}")
                     return False
             else:
                 self.log_result("VM Detection Confidence Level Bug Fix", False, 
