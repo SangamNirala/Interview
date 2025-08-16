@@ -5790,340 +5790,264 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
             <h2 className="text-2xl font-bold text-white mb-6">📋 Analysis Results</h2>
             
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Left Column - Analysis Results (2/3 width) */}
-              <div className="xl:col-span-2">
-                {analysesLoading ? (
-                  <div className="text-center py-8">
-                    <div className="text-white text-lg">🔄 Loading analyses...</div>
-                  </div>
-                ) : allAnalyses.length === 0 && atsResults.length === 0 && rejectionResults.length === 0 && technicalResults.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 mb-4">📄 No analyses available yet</div>
-                    <p className="text-gray-300 mb-6">Start by analyzing a resume or calculating ATS scores in the Resume Analysis tab</p>
-                    <button
-                      onClick={() => setActiveTab('resume-analysis')}
-                      className="bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-700 hover:to-red-700 transition-all duration-300"
-                    >
-                      📝 Start Resume Analysis
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* ATS Score Results */}
-                    {atsResults.map((atsResult) => (
-                      <div key={atsResult.ats_id} className="bg-gradient-to-r from-blue-900/50 to-indigo-900/50 rounded-lg p-6 border border-blue-400/30">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-white flex items-center">
-                              🎯 ATS Score: {atsResult.ats_score}/100 - {atsResult.job_title}
-                            </h3>
-                            <p className="text-gray-300 text-sm">
-                              Generated: {new Date(atsResult.created_at).toLocaleDateString()} at{' '}
-                              {new Date(atsResult.created_at).toLocaleTimeString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => downloadAtsPDF(atsResult.ats_id, atsResult.job_title)}
-                            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center"
-                          >
-                            📄 Download ATS Report
-                          </button>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4 mb-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
-                          <p className="text-gray-300 text-sm">
-                            {atsResult.job_description.length > 200 
-                              ? `${atsResult.job_description.substring(0, 200)}...`
-                              : atsResult.job_description
-                            }
-                          </p>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">ATS Analysis Preview</h4>
-                          <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
-                            {atsResult.analysis_text?.length > 300 
-                              ? `${atsResult.analysis_text.substring(0, 300)}...`
-                              : atsResult.analysis_text || 'Full ATS analysis available in PDF download'
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* Rejection Reasons Results */}
-                    {rejectionResults.map((rejectionResult) => (
-                      <div key={rejectionResult.id} className="bg-gradient-to-r from-red-900/50 to-pink-900/50 rounded-lg p-6 border border-red-400/30">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-white flex items-center">
-                              ❌ Rejection Reasons Analysis - {rejectionResult.jobTitle}
-                            </h3>
-                            <p className="text-gray-300 text-sm">
-                              Generated: {new Date(rejectionResult.timestamp).toLocaleDateString()} at{' '}
-                              {new Date(rejectionResult.timestamp).toLocaleTimeString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => downloadRejectionReasonsPDF(rejectionResult.id, rejectionResult.jobTitle)}
-                            className="bg-gradient-to-r from-red-600 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-red-700 hover:to-pink-700 transition-all duration-300 flex items-center"
-                          >
-                            📄 Download Rejection Report
-                          </button>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4 mb-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
-                          <p className="text-gray-300 text-sm">
-                            {rejectionResult.jobDescription.length > 200 
-                              ? `${rejectionResult.jobDescription.substring(0, 200)}...`
-                              : rejectionResult.jobDescription
-                            }
-                          </p>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">Rejection Reasons Preview</h4>
-                          <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
-                            {rejectionResult.rejectionReasons?.length > 400 
-                              ? `${rejectionResult.rejectionReasons.substring(0, 400)}...`
-                              : rejectionResult.rejectionReasons || 'Comprehensive rejection reasons available in PDF download'
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* Technical Interview Questions Results */}
-                    {technicalResults.map((technicalResult) => (
-                      <div key={technicalResult.id} className="bg-gradient-to-r from-orange-900/50 to-yellow-900/50 rounded-lg p-6 border border-orange-400/30">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-white flex items-center">
-                              💻 Technical Interview Questions - {technicalResult.jobTitle}
-                            </h3>
-                            <p className="text-gray-300 text-sm">
-                              Generated: {new Date(technicalResult.timestamp).toLocaleDateString()} at{' '}
-                              {new Date(technicalResult.timestamp).toLocaleTimeString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => downloadTechnicalInterviewQuestionsPDF(technicalResult.id, technicalResult.jobTitle)}
-                            className="bg-gradient-to-r from-orange-600 to-yellow-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-orange-700 hover:to-yellow-700 transition-all duration-300 flex items-center"
-                          >
-                            📄 Download Interview Questions
-                          </button>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4 mb-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
-                          <p className="text-gray-300 text-sm">
-                            {technicalResult.jobDescription.length > 200 
-                              ? `${technicalResult.jobDescription.substring(0, 200)}...`
-                              : technicalResult.jobDescription
-                            }
-                          </p>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">Interview Questions Preview</h4>
-                          <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
-                            {technicalResult.interviewQuestions?.length > 400 
-                              ? `${technicalResult.interviewQuestions.substring(0, 400)}...`
-                              : technicalResult.interviewQuestions || 'Comprehensive technical interview questions available in PDF download'
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* Behavioral Interview Questions Results */}
-                    {behavioralResults.map((behavioralResult) => (
-                      <div key={behavioralResult.id} className="bg-gradient-to-r from-cyan-900/50 to-teal-900/50 rounded-lg p-6 border border-cyan-400/30">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-white flex items-center">
-                              🗣️ Behavioral Interview Questions - {behavioralResult.jobTitle}
-                            </h3>
-                            <p className="text-gray-300 text-sm">
-                              Generated: {new Date(behavioralResult.timestamp).toLocaleDateString()} at{' '}
-                              {new Date(behavioralResult.timestamp).toLocaleTimeString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => downloadBehavioralInterviewQuestionsPDF(behavioralResult.id, behavioralResult.jobTitle)}
-                            className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-cyan-700 hover:to-teal-700 transition-all duration-300 flex items-center"
-                          >
-                            📄 Download Interview Questions
-                          </button>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4 mb-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
-                          <p className="text-gray-300 text-sm">
-                            {behavioralResult.jobDescription.length > 200 
-                              ? `${behavioralResult.jobDescription.substring(0, 200)}...`
-                              : behavioralResult.jobDescription
-                            }
-                          </p>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">Interview Questions Preview</h4>
-                          <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
-                            {behavioralResult.interviewQuestions?.length > 400 
-                              ? `${behavioralResult.interviewQuestions.substring(0, 400)}...`
-                              : behavioralResult.interviewQuestions || 'Comprehensive behavioral interview questions available in PDF download'
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* Regular Analysis Results */}
-                    {allAnalyses.map((analysis) => (
-                      <div key={analysis.id} className="bg-white/10 rounded-lg p-6 border border-white/20">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-white flex items-center">
-                              {analysis.type === 'resume' && '🎯'}
-                              {analysis.type === 'rejection' && '❌'}
-                              {analysis.type === 'technical' && '💻'}
-                              {analysis.type === 'behavioral' && '🗣️'}
-                              {' '}{analysis.job_title}
-                            </h3>
-                            <p className="text-gray-300 text-sm">
-                              Created: {new Date(analysis.created_at).toLocaleDateString()} at{' '}
-                              {new Date(analysis.created_at).toLocaleTimeString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => downloadAnalysisPDF(analysis)}
-                            className="bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-700 hover:to-blue-700 transition-all duration-300 flex items-center"
-                          >
-                            📄 Download PDF
-                          </button>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4 mb-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
-                          <p className="text-gray-300 text-sm">
-                            {analysis.job_description.length > 200 
-                              ? `${analysis.job_description.substring(0, 200)}...`
-                              : analysis.job_description
-                            }
-                          </p>
-                        </div>
-                        
-                        <div className="bg-white/5 rounded-lg p-4">
-                          <h4 className="text-lg font-semibold text-white mb-2">
-                            {analysis.type === 'resume' && 'Gap Analysis Preview'}
-                            {analysis.type === 'rejection' && 'Rejection Reasons Preview'}
-                            {analysis.type === 'technical' && 'Interview Questions Preview'}
-                            {analysis.type === 'behavioral' && 'Interview Questions Preview'}
-                          </h4>
-                          <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
-                            {analysis.type === 'resume' && (
-                              analysis.analysis_results?.analysis_text?.length > 300 
-                                ? `${analysis.analysis_results.analysis_text.substring(0, 300)}...`
-                                : analysis.analysis_results?.analysis_text || 'Analysis details available in PDF'
-                            )}
-                            {analysis.type === 'rejection' && (
-                              analysis.rejection_reasons?.length > 300
-                                ? `${analysis.rejection_reasons.substring(0, 300)}...`
-                                : analysis.rejection_reasons || 'Rejection reasons details available in PDF'
-                            )}
-                            {analysis.type === 'technical' && (
-                              analysis.interview_questions?.length > 300
-                                ? `${analysis.interview_questions.substring(0, 300)}...`
-                                : analysis.interview_questions || 'Technical interview questions available in PDF'
-                            )}
-                            {analysis.type === 'behavioral' && (
-                              analysis.interview_questions?.length > 300
-                                ? `${analysis.interview_questions.substring(0, 300)}...`
-                                : analysis.interview_questions || 'Behavioral interview questions available in PDF'
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            {analysesLoading ? (
+              <div className="text-center py-8">
+                <div className="text-white text-lg">🔄 Loading analyses...</div>
               </div>
-              
-              {/* Right Column - Interview Questions Section (1/3 width) */}
-              <div className="xl:col-span-1">
-                <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 sticky top-4">
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-                    🎤 Interview Questions
-                  </h3>
-                  
-                  {/* Job Title Search Box */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Job Title
-                    </label>
-                    <input
-                      type="text"
-                      value={interviewQuestionsJobTitle}
-                      onChange={(e) => setInterviewQuestionsJobTitle(e.target.value)}
-                      placeholder="e.g. Frontend Developer, Data Scientist, Backend Engineer"
-                      className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                    />
-                    <p className="text-gray-400 text-xs mt-1">
-                      Enter a job title to generate relevant interview questions
-                    </p>
-                  </div>
-                  
-                  {/* Question Type Buttons */}
-                  <div className="space-y-3">
-                    <button
-                      className="w-full bg-gradient-to-r from-blue-600/80 to-indigo-600/80 text-white font-medium py-3 px-4 rounded-lg hover:from-blue-700/80 hover:to-indigo-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
-                      disabled
-                    >
-                      <span className="mr-2">🧮</span>
-                      Aptitude Questions
-                      <span className="ml-2 text-xs bg-white/20 px-2 py-1 rounded-full">Coming Soon</span>
-                    </button>
-                    
-                    <button
-                      className="w-full bg-gradient-to-r from-orange-600/80 to-yellow-600/80 text-white font-medium py-3 px-4 rounded-lg hover:from-orange-700/80 hover:to-yellow-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
-                      disabled
-                    >
-                      <span className="mr-2">💻</span>
-                      Technical Interview Questions
-                      <span className="ml-2 text-xs bg-white/20 px-2 py-1 rounded-full">Coming Soon</span>
-                    </button>
-                    
-                    <button
-                      className="w-full bg-gradient-to-r from-cyan-600/80 to-teal-600/80 text-white font-medium py-3 px-4 rounded-lg hover:from-cyan-700/80 hover:to-teal-700/80 transition-all duration-300 flex items-center justify-center cursor-not-allowed opacity-60"
-                      disabled
-                    >
-                      <span className="mr-2">🗣️</span>
-                      Behavioral Interview Questions
-                      <span className="ml-2 text-xs bg-white/20 px-2 py-1 rounded-full">Coming Soon</span>
-                    </button>
-                  </div>
-                  
-                  {/* Helper Text */}
-                  <div className="mt-6 p-4 bg-purple-900/20 rounded-lg border border-purple-400/30">
-                    <div className="flex items-start">
-                      <span className="text-purple-400 mr-2 mt-1">💡</span>
+            ) : allAnalyses.length === 0 && atsResults.length === 0 && rejectionResults.length === 0 && technicalResults.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-gray-400 mb-4">📄 No analyses available yet</div>
+                <p className="text-gray-300 mb-6">Start by analyzing a resume or calculating ATS scores in the Resume Analysis tab</p>
+                <button
+                  onClick={() => setActiveTab('resume-analysis')}
+                  className="bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-700 hover:to-red-700 transition-all duration-300"
+                >
+                  📝 Start Resume Analysis
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* ATS Score Results */}
+                {atsResults.map((atsResult) => (
+                  <div key={atsResult.ats_id} className="bg-gradient-to-r from-blue-900/50 to-indigo-900/50 rounded-lg p-6 border border-blue-400/30">
+                    <div className="flex justify-between items-start mb-4">
                       <div>
-                        <p className="text-purple-200 text-sm font-medium mb-2">Quick Tips:</p>
-                        <ul className="text-purple-300 text-xs space-y-1">
-                          <li>• Be specific with job titles (e.g., "React Developer" vs "Developer")</li>
-                          <li>• Include seniority level (Junior, Senior, Lead)</li>
-                          <li>• Add domain context (e.g., "Healthcare Data Analyst")</li>
-                        </ul>
+                        <h3 className="text-xl font-bold text-white flex items-center">
+                          🎯 ATS Score: {atsResult.ats_score}/100 - {atsResult.job_title}
+                        </h3>
+                        <p className="text-gray-300 text-sm">
+                          Generated: {new Date(atsResult.created_at).toLocaleDateString()} at{' '}
+                          {new Date(atsResult.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => downloadAtsPDF(atsResult.ats_id, atsResult.job_title)}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center"
+                      >
+                        📄 Download ATS Report
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4 mb-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
+                      <p className="text-gray-300 text-sm">
+                        {atsResult.job_description.length > 200 
+                          ? `${atsResult.job_description.substring(0, 200)}...`
+                          : atsResult.job_description
+                        }
+                      </p>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">ATS Analysis Preview</h4>
+                      <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
+                        {atsResult.analysis_text?.length > 300 
+                          ? `${atsResult.analysis_text.substring(0, 300)}...`
+                          : atsResult.analysis_text || 'Full ATS analysis available in PDF download'
+                        }
                       </div>
                     </div>
                   </div>
-                </div>
+                ))}
+                
+                {/* Rejection Reasons Results */}
+                {rejectionResults.map((rejectionResult) => (
+                  <div key={rejectionResult.id} className="bg-gradient-to-r from-red-900/50 to-pink-900/50 rounded-lg p-6 border border-red-400/30">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white flex items-center">
+                          ❌ Rejection Reasons Analysis - {rejectionResult.jobTitle}
+                        </h3>
+                        <p className="text-gray-300 text-sm">
+                          Generated: {new Date(rejectionResult.timestamp).toLocaleDateString()} at{' '}
+                          {new Date(rejectionResult.timestamp).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => downloadRejectionReasonsPDF(rejectionResult.id, rejectionResult.jobTitle)}
+                        className="bg-gradient-to-r from-red-600 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-red-700 hover:to-pink-700 transition-all duration-300 flex items-center"
+                      >
+                        📄 Download Rejection Report
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4 mb-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
+                      <p className="text-gray-300 text-sm">
+                        {rejectionResult.jobDescription.length > 200 
+                          ? `${rejectionResult.jobDescription.substring(0, 200)}...`
+                          : rejectionResult.jobDescription
+                        }
+                      </p>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">Rejection Reasons Preview</h4>
+                      <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
+                        {rejectionResult.rejectionReasons?.length > 400 
+                          ? `${rejectionResult.rejectionReasons.substring(0, 400)}...`
+                          : rejectionResult.rejectionReasons || 'Comprehensive rejection reasons available in PDF download'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Technical Interview Questions Results */}
+                {technicalResults.map((technicalResult) => (
+                  <div key={technicalResult.id} className="bg-gradient-to-r from-orange-900/50 to-yellow-900/50 rounded-lg p-6 border border-orange-400/30">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white flex items-center">
+                          💻 Technical Interview Questions - {technicalResult.jobTitle}
+                        </h3>
+                        <p className="text-gray-300 text-sm">
+                          Generated: {new Date(technicalResult.timestamp).toLocaleDateString()} at{' '}
+                          {new Date(technicalResult.timestamp).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => downloadTechnicalInterviewQuestionsPDF(technicalResult.id, technicalResult.jobTitle)}
+                        className="bg-gradient-to-r from-orange-600 to-yellow-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-orange-700 hover:to-yellow-700 transition-all duration-300 flex items-center"
+                      >
+                        📄 Download Interview Questions
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4 mb-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
+                      <p className="text-gray-300 text-sm">
+                        {technicalResult.jobDescription.length > 200 
+                          ? `${technicalResult.jobDescription.substring(0, 200)}...`
+                          : technicalResult.jobDescription
+                        }
+                      </p>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">Interview Questions Preview</h4>
+                      <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
+                        {technicalResult.interviewQuestions?.length > 400 
+                          ? `${technicalResult.interviewQuestions.substring(0, 400)}...`
+                          : technicalResult.interviewQuestions || 'Comprehensive technical interview questions available in PDF download'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Behavioral Interview Questions Results */}
+                {behavioralResults.map((behavioralResult) => (
+                  <div key={behavioralResult.id} className="bg-gradient-to-r from-cyan-900/50 to-teal-900/50 rounded-lg p-6 border border-cyan-400/30">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white flex items-center">
+                          🗣️ Behavioral Interview Questions - {behavioralResult.jobTitle}
+                        </h3>
+                        <p className="text-gray-300 text-sm">
+                          Generated: {new Date(behavioralResult.timestamp).toLocaleDateString()} at{' '}
+                          {new Date(behavioralResult.timestamp).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => downloadBehavioralInterviewQuestionsPDF(behavioralResult.id, behavioralResult.jobTitle)}
+                        className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-cyan-700 hover:to-teal-700 transition-all duration-300 flex items-center"
+                      >
+                        📄 Download Interview Questions
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4 mb-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
+                      <p className="text-gray-300 text-sm">
+                        {behavioralResult.jobDescription.length > 200 
+                          ? `${behavioralResult.jobDescription.substring(0, 200)}...`
+                          : behavioralResult.jobDescription
+                        }
+                      </p>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">Interview Questions Preview</h4>
+                      <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
+                        {behavioralResult.interviewQuestions?.length > 400 
+                          ? `${behavioralResult.interviewQuestions.substring(0, 400)}...`
+                          : behavioralResult.interviewQuestions || 'Comprehensive behavioral interview questions available in PDF download'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Regular Analysis Results */}
+                {allAnalyses.map((analysis) => (
+                  <div key={analysis.id} className="bg-white/10 rounded-lg p-6 border border-white/20">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white flex items-center">
+                          {analysis.type === 'resume' && '🎯'}
+                          {analysis.type === 'rejection' && '❌'}
+                          {analysis.type === 'technical' && '💻'}
+                          {analysis.type === 'behavioral' && '🗣️'}
+                          {' '}{analysis.job_title}
+                        </h3>
+                        <p className="text-gray-300 text-sm">
+                          Created: {new Date(analysis.created_at).toLocaleDateString()} at{' '}
+                          {new Date(analysis.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => downloadAnalysisPDF(analysis)}
+                        className="bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-700 hover:to-blue-700 transition-all duration-300 flex items-center"
+                      >
+                        📄 Download PDF
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4 mb-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">Job Requirements</h4>
+                      <p className="text-gray-300 text-sm">
+                        {analysis.job_description.length > 200 
+                          ? `${analysis.job_description.substring(0, 200)}...`
+                          : analysis.job_description
+                        }
+                      </p>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">
+                        {analysis.type === 'resume' && 'Gap Analysis Preview'}
+                        {analysis.type === 'rejection' && 'Rejection Reasons Preview'}
+                        {analysis.type === 'technical' && 'Interview Questions Preview'}
+                        {analysis.type === 'behavioral' && 'Interview Questions Preview'}
+                      </h4>
+                      <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
+                        {analysis.type === 'resume' && (
+                          analysis.analysis_results?.analysis_text?.length > 300 
+                            ? `${analysis.analysis_results.analysis_text.substring(0, 300)}...`
+                            : analysis.analysis_results?.analysis_text || 'Analysis details available in PDF'
+                        )}
+                        {analysis.type === 'rejection' && (
+                          analysis.rejection_reasons?.length > 300
+                            ? `${analysis.rejection_reasons.substring(0, 300)}...`
+                            : analysis.rejection_reasons || 'Rejection reasons details available in PDF'
+                        )}
+                        {analysis.type === 'technical' && (
+                          analysis.interview_questions?.length > 300
+                            ? `${analysis.interview_questions.substring(0, 300)}...`
+                            : analysis.interview_questions || 'Technical interview questions available in PDF'
+                        )}
+                        {analysis.type === 'behavioral' && (
+                          analysis.interview_questions?.length > 300
+                            ? `${analysis.interview_questions.substring(0, 300)}...`
+                            : analysis.interview_questions || 'Behavioral interview questions available in PDF'
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
