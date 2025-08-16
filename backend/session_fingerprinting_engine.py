@@ -285,12 +285,21 @@ class SessionFingerprintingEngine:
             # Normalize confidence (0.0 to 1.0)
             vm_confidence = min(1.0, vm_confidence)
             
+            # Return format expected by server endpoint
             return {
-                'vm_detected': vm_detected,
-                'vm_type': vm_type,
-                'confidence_level': vm_confidence,  # <-- ADD THIS MISSING LINE
-                'vm_indicators': vm_indicators,
-                'confidence_score': vm_confidence,  # Additional field for compatibility
+                'success': True,
+                'vm_detection_results': {
+                    'vm_detected': vm_detected,
+                    'vm_type': vm_type,
+                    'vm_indicators': vm_indicators,
+                    'confidence_score': vm_confidence
+                },
+                'vm_probability': vm_confidence,
+                'vm_classification': vm_type,
+                'is_virtual_machine': vm_detected,
+                'confidence_metrics': {
+                    'detection_quality': 'high' if vm_confidence > 0.7 else 'medium' if vm_confidence > 0.4 else 'low'
+                },
                 'analysis_timestamp': datetime.utcnow().isoformat()
             }
             
