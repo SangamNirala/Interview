@@ -6519,8 +6519,14 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                       alert('Please select or search a job title to view technical questions.');
                       return;
                     }
-                    // For now, just show an alert with the selected job
-                    alert(`Technical interview questions for "${selectedTechnicalJob || technicalJobSearch}" will be generated here!`);
+                    if (!selectedDifficultyLevel) {
+                      alert('Please select a difficulty level to generate questions.');
+                      return;
+                    }
+                    // For now, just show an alert with the selected job and difficulty
+                    const jobTitle = selectedTechnicalJob || technicalJobSearch;
+                    const difficulty = selectedDifficultyLevel.charAt(0).toUpperCase() + selectedDifficultyLevel.slice(1);
+                    alert(`Generating ${difficulty} level technical interview questions for "${jobTitle}"!`);
                     setShowTechnicalModal(false);
                   }}
                   className="flex-1 bg-gradient-to-r from-orange-600 to-yellow-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-orange-700 hover:to-yellow-700 transition-all duration-300 shadow-lg hover:shadow-xl"
