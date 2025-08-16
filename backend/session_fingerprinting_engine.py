@@ -1381,15 +1381,44 @@ class DeviceFingerprintingEngine(SessionFingerprintingEngine):
             hardware_data = device_data.get('hardware', {})
             hardware_fp = self._generate_hardware_fingerprint(hardware_data)
             
+            # Analyze for anomalies
+            hardware_anomalies = []
+            overall_score = 0.8  # Default score
+            
+            # Check for common VM/emulator patterns
+            if 'cpu' in hardware_data:
+                cpu_data = hardware_data['cpu']
+                if cpu_data.get('cores', 0) <= 2:
+                    hardware_anomalies.append('low_core_count')
+                    overall_score -= 0.1
+                if 'vmware' in str(cpu_data.get('vendor', '')).lower():
+                    hardware_anomalies.append('vm_cpu_detected')
+                    overall_score -= 0.2
+            
+            # Create hardware profile
+            hardware_profile = {
+                'cpu_info': hardware_data.get('cpu', {}),
+                'memory_info': hardware_data.get('memory', {}),
+                'gpu_info': hardware_data.get('gpu', {}),
+                'profile_confidence': overall_score
+            }
+            
             return {
                 'success': True,
                 'hardware_analysis': hardware_fp,
+                'hardware_profile': hardware_profile,
+                'hardware_anomalies': hardware_anomalies,
+                'overall_hardware_score': overall_score,
                 'analysis_timestamp': datetime.utcnow().isoformat()
             }
         except Exception as e:
             self.logger.error(f"Error analyzing hardware: {str(e)}")
             return {
                 'success': False,
+                'hardware_analysis': {},
+                'hardware_profile': {},
+                'hardware_anomalies': [],
+                'overall_hardware_score': 0.0,
                 'error': str(e)
             }
 
