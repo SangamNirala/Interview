@@ -70,8 +70,9 @@ class Phase5CriticalFixesTest:
     def test_vm_detection_confidence_level_fix(self):
         """Test 2: VM Detection Confidence Level Bug Fix - CRITICAL"""
         try:
-            # Test data with proper confidence_level field
+            # Test data with proper confidence_level field and required session_id
             test_data = {
+                "session_id": str(uuid.uuid4()),  # Required field
                 "device_data": {
                     "hardware_signature": {
                         "cpu_cores": 8,
