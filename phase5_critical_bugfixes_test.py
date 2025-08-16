@@ -314,7 +314,7 @@ class Phase5CriticalBugFixesTest:
                 }
             }
             
-            response = self.session.post(f"{BACKEND_URL}/fingerprinting/track-device-consistency",
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/track-device-consistency",
                                        json=consistency_data, timeout=15)
             
             if response.status_code == 200:
