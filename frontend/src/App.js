@@ -6109,8 +6109,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                 
                 <button
                   onClick={() => {
-                    // Placeholder for technical interview questions functionality
-                    console.log('Technical Interview Questions clicked');
+                    setShowTechnicalModal(true);
                   }}
                   className="w-full bg-gradient-to-r from-orange-600/80 to-yellow-600/80 text-white font-medium py-4 px-6 rounded-lg hover:from-orange-700/80 hover:to-yellow-700/80 transition-all duration-300 flex items-center justify-center cursor-pointer hover:shadow-lg"
                 >
