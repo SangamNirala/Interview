@@ -20,7 +20,7 @@ import sys
 import os
 
 # Get backend URL from environment
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://codebase-upgrade-1.preview.emergentagent.com') + '/api'
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://interviewmate-1.preview.emergentagent.com') + '/api'
 ADMIN_PASSWORD = "Game@1234"
 
 class Phase5CriticalBugFixesTest:

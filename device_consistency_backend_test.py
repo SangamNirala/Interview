@@ -29,7 +29,7 @@ from datetime import datetime, timedelta
 import random
 
 # Configuration
-BACKEND_URL = "https://codebase-upgrade-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://interviewmate-1.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class DeviceConsistencyTester:

@@ -4,7 +4,7 @@
 
 ### 1. LOGIN TO ADMIN DASHBOARD
 ```
-URL: https://codebase-upgrade-1.preview.emergentagent.com
+URL: https://interviewmate-1.preview.emergentagent.com
 Admin Password: Game@1234
 ```
 

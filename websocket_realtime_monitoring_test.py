@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 class WebSocketRealTimeMonitoringTester:
     def __init__(self):
         # Get backend URL from environment
-        self.backend_url = "https://codebase-upgrade-1.preview.emergentagent.com"
+        self.backend_url = "https://interviewmate-1.preview.emergentagent.com"
         self.api_base_url = f"{self.backend_url}/api"
         self.ws_base_url = self.backend_url.replace("https://", "wss://").replace("http://", "ws://")
         
