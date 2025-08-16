@@ -1400,12 +1400,12 @@ class EnvironmentAnalyzer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
     
-    def analyze_browser_fingerprint(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def analyze_browser_fingerprint(self, browser_data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze browser fingerprint"""
         try:
             # Create instance of SessionFingerprintingEngine for browser analysis
             engine = SessionFingerprintingEngine()
-            return asyncio.run(engine.analyze_browser_fingerprint(browser_data))
+            return await engine.analyze_browser_fingerprint(browser_data)
         except Exception as e:
             self.logger.error(f"Error analyzing browser fingerprint: {str(e)}")
             return {
