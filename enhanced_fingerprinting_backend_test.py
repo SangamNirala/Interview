@@ -26,7 +26,7 @@ import time
 import random
 
 # Configuration
-BACKEND_URL = "https://session-tracker-7.preview.emergentagent.com/api"
+BACKEND_URL = "https://securesession.preview.emergentagent.com/api"
 ADMIN_PASSWORD = "Game@1234"
 
 class EnhancedFingerprintingTester:

@@ -7,7 +7,7 @@ import requests
 import json
 import uuid
 
-BACKEND_URL = "https://session-tracker-7.preview.emergentagent.com"
+BACKEND_URL = "https://securesession.preview.emergentagent.com"
 BASE_URL = f"{BACKEND_URL}/api"
 
 def test_vm_detection():

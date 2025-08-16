@@ -16,7 +16,7 @@ load_dotenv('/app/backend/.env')
 load_dotenv('/app/frontend/.env')
 
 # Get backend URL from frontend environment
-BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://session-tracker-7.preview.emergentagent.com')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'https://securesession.preview.emergentagent.com')
 BASE_URL = f"{BACKEND_URL}/api"
 
 print(f"🔗 Testing Backend URL: {BASE_URL}")

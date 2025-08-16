@@ -21,7 +21,7 @@ import io
 from typing import Dict, Any, Optional
 
 # Backend URL - using the production URL from frontend .env
-BASE_URL = "https://session-tracker-7.preview.emergentagent.com/api"
+BASE_URL = "https://securesession.preview.emergentagent.com/api"
 
 class VoiceTokenTester:
     def __init__(self):
