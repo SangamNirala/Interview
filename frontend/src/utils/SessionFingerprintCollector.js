@@ -395,6 +395,74 @@ class SessionFingerprintCollector {
         );
     }
     
+    // ===== BASIC FALLBACK METHODS FOR ERROR HANDLING =====
+    
+    getBasicDeviceInfo() {
+        return {
+            hardware_concurrency: navigator.hardwareConcurrency || 0,
+            device_memory: navigator.deviceMemory || 0,
+            platform: navigator.platform,
+            max_touch_points: navigator.maxTouchPoints || 0
+        };
+    }
+    
+    getBasicBrowserInfo() {
+        return {
+            user_agent: navigator.userAgent,
+            language: navigator.language,
+            languages: navigator.languages || [],
+            cookie_enabled: navigator.cookieEnabled,
+            do_not_track: navigator.doNotTrack
+        };
+    }
+    
+    getBasicNetworkInfo() {
+        try {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            return {
+                effective_type: connection?.effectiveType || 'unknown',
+                downlink: connection?.downlink || 0,
+                rtt: connection?.rtt || 0
+            };
+        } catch (error) {
+            return { error: 'Network info unavailable' };
+        }
+    }
+    
+    getBasicEnvironmentalInfo() {
+        return {
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            locale: navigator.language,
+            screen_width: screen.width,
+            screen_height: screen.height
+        };
+    }
+    
+    getBasicPerformanceInfo() {
+        return {
+            timing_origin: performance.timeOrigin || 0,
+            memory_used: performance.memory?.usedJSHeapSize || 0,
+            memory_total: performance.memory?.totalJSHeapSize || 0
+        };
+    }
+    
+    getBasicOSInfo() {
+        return {
+            platform: navigator.platform,
+            user_agent: navigator.userAgent,
+            app_version: navigator.appVersion
+        };
+    }
+    
+    getBasicScreenInfo() {
+        return {
+            width: screen.width,
+            height: screen.height,
+            color_depth: screen.colorDepth,
+            pixel_depth: screen.pixelDepth
+        };
+    }
+    
     /**
      * ENHANCED: collectDeviceFingerprint() - Advanced Hardware Enumeration
      * Requirements per original plan:
