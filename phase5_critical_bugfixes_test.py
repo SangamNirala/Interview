@@ -376,7 +376,7 @@ class Phase5CriticalBugFixesTest:
                 # Intentionally missing required fields to test error handling
             }
             
-            response = self.session.post(f"{BACKEND_URL}/fingerprinting/analyze-browser-fingerprint",
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
                                        json=malformed_data, timeout=10)
             
             # Should return proper error response, not crash
