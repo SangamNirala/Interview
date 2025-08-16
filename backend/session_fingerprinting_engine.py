@@ -306,11 +306,21 @@ class SessionFingerprintingEngine:
         except Exception as e:
             logger.error(f"Error in VM detection: {str(e)}")
             return {
-                'vm_detected': False,
-                'vm_type': "unknown",
-                'confidence_level': 0.0,  # <-- ENSURE THIS IS ALWAYS PRESENT
-                'vm_indicators': [],
-                'error': str(e)
+                'success': False,
+                'vm_detection_results': {
+                    'vm_detected': False,
+                    'vm_type': "unknown",
+                    'vm_indicators': [],
+                    'confidence_score': 0.0
+                },
+                'vm_probability': 0.0,
+                'vm_classification': 'unknown',
+                'is_virtual_machine': False,
+                'confidence_metrics': {
+                    'detection_quality': 'insufficient'
+                },
+                'error': str(e),
+                'analysis_timestamp': datetime.utcnow().isoformat()
             }
 
     async def track_device_consistency(self, device_id: str, current_signature: Dict[str, Any]) -> Dict[str, Any]:
