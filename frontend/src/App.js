@@ -6538,6 +6538,7 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
                     setShowTechnicalModal(false);
                     setSelectedTechnicalJob('');
                     setTechnicalJobSearch('');
+                    setSelectedDifficultyLevel('');
                   }}
                   className="flex-1 sm:flex-none px-6 py-4 bg-gray-600/30 text-white font-medium rounded-lg hover:bg-gray-600/50 transition-all duration-300"
                 >
