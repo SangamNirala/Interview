@@ -21718,7 +21718,7 @@ async def analyze_browser_fingerprint(request: BrowserFingerprintRequest):
         logging.info(f"Analyzing browser fingerprint for session: {request.session_id}")
         
         # Perform browser fingerprint analysis using the environment analyzer
-        result = environment_analyzer.analyze_browser_fingerprint(request.browser_data)
+        result = await environment_analyzer.analyze_browser_fingerprint(request.browser_data)
         
         if result.get('success'):
             # Store browser analysis results in MongoDB
