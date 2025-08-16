@@ -287,8 +287,8 @@ class Phase5CriticalBugFixesTest:
         try:
             # Test device consistency with enhanced error handling
             consistency_data = {
+                "device_id": str(uuid.uuid4()),
                 "current_signature": {
-                    "device_id": str(uuid.uuid4()),
                     "hardware_signature": "enhanced_hardware_signature_v2",
                     "browser_signature": "enhanced_browser_signature_v2",
                     "network_signature": "enhanced_network_signature_v2",
@@ -296,21 +296,12 @@ class Phase5CriticalBugFixesTest:
                         "signature_generation_errors": [],
                         "validation_errors": [],
                         "consistency_check_errors": []
+                    },
+                    "enhanced_features": {
+                        "caching_enabled": True,
+                        "error_recovery": True,
+                        "performance_monitoring": True
                     }
-                },
-                "previous_signatures": [
-                    {
-                        "timestamp": (datetime.now().timestamp() - 3600),
-                        "hardware_signature": "enhanced_hardware_signature_v1",
-                        "browser_signature": "enhanced_browser_signature_v1",
-                        "network_signature": "enhanced_network_signature_v1"
-                    }
-                ],
-                "session_id": str(uuid.uuid4()),
-                "enhanced_features": {
-                    "caching_enabled": True,
-                    "error_recovery": True,
-                    "performance_monitoring": True
                 }
             }
             
