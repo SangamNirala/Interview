@@ -416,7 +416,10 @@ class Phase5CriticalFixesTest:
             if response.status_code == 200:
                 data = response.json()
                 if data.get("success"):
-                    collections = data.get("collections", {})
+                    # Check for collection_stats (actual response format)
+                    collection_stats = data.get("details", {}).get("collection_stats", {})
+                    collections = data.get("collections", collection_stats)  # Fallback to old format
+                    
                     if len(collections) >= 6:  # Should have 6 fingerprinting collections
                         self.log_result("Database Collections Working", True, 
                                       f"All {len(collections)} collections accessible")
