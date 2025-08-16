@@ -6181,6 +6181,293 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
         )}
       </div>
       
+      {/* Technical Interview Questions Modal */}
+      {showTechnicalModal && (
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-orange-900/90 to-yellow-900/90 backdrop-blur-lg rounded-2xl border border-white/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-bold text-white flex items-center">
+                  💻 Select a Job Title
+                </h2>
+                <button
+                  onClick={() => setShowTechnicalModal(false)}
+                  className="text-gray-400 hover:text-white text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-all duration-300"
+                >
+                  ×
+                </button>
+              </div>
+              
+              {/* Search Bar */}
+              <div className="mb-8">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={technicalJobSearch}
+                    onChange={(e) => setTechnicalJobSearch(e.target.value)}
+                    placeholder="Search for your job title (e.g., Data Scientist, Frontend Developer, DevOps Engineer)"
+                    className="w-full px-4 py-4 pl-12 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300 text-lg"
+                  />
+                  <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl">
+                    🔍
+                  </span>
+                </div>
+              </div>
+              
+              {/* Job Categories */}
+              <div className="space-y-6">
+                {/* Software & Engineering */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                    💻 Software & Engineering
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      'Frontend Developer', 'Backend Engineer', 'Full Stack Developer',
+                      'Software Engineer', 'Mobile App Developer', 'Game Developer',
+                      'Embedded Systems Engineer', 'DevOps Engineer', 'Site Reliability Engineer (SRE)'
+                    ].filter(job => 
+                      technicalJobSearch === '' || 
+                      job.toLowerCase().includes(technicalJobSearch.toLowerCase())
+                    ).map((job) => (
+                      <button
+                        key={job}
+                        onClick={() => {
+                          setSelectedTechnicalJob(job);
+                          setTechnicalJobSearch(job);
+                        }}
+                        className={`p-3 rounded-lg text-left transition-all duration-300 border ${
+                          selectedTechnicalJob === job 
+                            ? 'bg-orange-600/30 border-orange-400/50 text-white' 
+                            : 'bg-white/10 border-white/20 text-gray-300 hover:bg-orange-600/20 hover:border-orange-400/30 hover:text-white'
+                        }`}
+                      >
+                        <div className="font-medium">{job}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Data & AI */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                    📊 Data & AI
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      'Data Scientist', 'Data Analyst', 'Machine Learning Engineer',
+                      'Data Engineer', 'AI Researcher', 'Business Intelligence (BI) Analyst', 'Statistician'
+                    ].filter(job => 
+                      technicalJobSearch === '' || 
+                      job.toLowerCase().includes(technicalJobSearch.toLowerCase())
+                    ).map((job) => (
+                      <button
+                        key={job}
+                        onClick={() => {
+                          setSelectedTechnicalJob(job);
+                          setTechnicalJobSearch(job);
+                        }}
+                        className={`p-3 rounded-lg text-left transition-all duration-300 border ${
+                          selectedTechnicalJob === job 
+                            ? 'bg-orange-600/30 border-orange-400/50 text-white' 
+                            : 'bg-white/10 border-white/20 text-gray-300 hover:bg-orange-600/20 hover:border-orange-400/30 hover:text-white'
+                        }`}
+                      >
+                        <div className="font-medium">{job}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Cloud & Infrastructure */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                    🌐 Cloud & Infrastructure
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      'Cloud Engineer', 'Solutions Architect', 'Security Engineer',
+                      'Network Engineer', 'Cloud DevOps Engineer'
+                    ].filter(job => 
+                      technicalJobSearch === '' || 
+                      job.toLowerCase().includes(technicalJobSearch.toLowerCase())
+                    ).map((job) => (
+                      <button
+                        key={job}
+                        onClick={() => {
+                          setSelectedTechnicalJob(job);
+                          setTechnicalJobSearch(job);
+                        }}
+                        className={`p-3 rounded-lg text-left transition-all duration-300 border ${
+                          selectedTechnicalJob === job 
+                            ? 'bg-orange-600/30 border-orange-400/50 text-white' 
+                            : 'bg-white/10 border-white/20 text-gray-300 hover:bg-orange-600/20 hover:border-orange-400/30 hover:text-white'
+                        }`}
+                      >
+                        <div className="font-medium">{job}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Design & UX */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                    🎨 Design & UX
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      'UX Designer', 'UI Designer', 'Product Designer',
+                      'UX Researcher', 'Interaction Designer'
+                    ].filter(job => 
+                      technicalJobSearch === '' || 
+                      job.toLowerCase().includes(technicalJobSearch.toLowerCase())
+                    ).map((job) => (
+                      <button
+                        key={job}
+                        onClick={() => {
+                          setSelectedTechnicalJob(job);
+                          setTechnicalJobSearch(job);
+                        }}
+                        className={`p-3 rounded-lg text-left transition-all duration-300 border ${
+                          selectedTechnicalJob === job 
+                            ? 'bg-orange-600/30 border-orange-400/50 text-white' 
+                            : 'bg-white/10 border-white/20 text-gray-300 hover:bg-orange-600/20 hover:border-orange-400/30 hover:text-white'
+                        }`}
+                      >
+                        <div className="font-medium">{job}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Quality & Testing */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                    🧪 Quality & Testing
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      'QA Tester', 'Automation Test Engineer', 'Performance Tester',
+                      'Security Tester', 'Manual Tester'
+                    ].filter(job => 
+                      technicalJobSearch === '' || 
+                      job.toLowerCase().includes(technicalJobSearch.toLowerCase())
+                    ).map((job) => (
+                      <button
+                        key={job}
+                        onClick={() => {
+                          setSelectedTechnicalJob(job);
+                          setTechnicalJobSearch(job);
+                        }}
+                        className={`p-3 rounded-lg text-left transition-all duration-300 border ${
+                          selectedTechnicalJob === job 
+                            ? 'bg-orange-600/30 border-orange-400/50 text-white' 
+                            : 'bg-white/10 border-white/20 text-gray-300 hover:bg-orange-600/20 hover:border-orange-400/30 hover:text-white'
+                        }`}
+                      >
+                        <div className="font-medium">{job}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Product & Management */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                    📦 Product & Management
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      'Product Manager', 'Technical Product Manager', 'Project Manager',
+                      'Scrum Master', 'Program Manager'
+                    ].filter(job => 
+                      technicalJobSearch === '' || 
+                      job.toLowerCase().includes(technicalJobSearch.toLowerCase())
+                    ).map((job) => (
+                      <button
+                        key={job}
+                        onClick={() => {
+                          setSelectedTechnicalJob(job);
+                          setTechnicalJobSearch(job);
+                        }}
+                        className={`p-3 rounded-lg text-left transition-all duration-300 border ${
+                          selectedTechnicalJob === job 
+                            ? 'bg-orange-600/30 border-orange-400/50 text-white' 
+                            : 'bg-white/10 border-white/20 text-gray-300 hover:bg-orange-600/20 hover:border-orange-400/30 hover:text-white'
+                        }`}
+                      >
+                        <div className="font-medium">{job}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Marketing, Sales & Support */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                    📈 Marketing, Sales & Support
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      'Digital Marketing Specialist', 'SEO Analyst', 'Customer Support Engineer',
+                      'Sales Engineer', 'Technical Support Specialist'
+                    ].filter(job => 
+                      technicalJobSearch === '' || 
+                      job.toLowerCase().includes(technicalJobSearch.toLowerCase())
+                    ).map((job) => (
+                      <button
+                        key={job}
+                        onClick={() => {
+                          setSelectedTechnicalJob(job);
+                          setTechnicalJobSearch(job);
+                        }}
+                        className={`p-3 rounded-lg text-left transition-all duration-300 border ${
+                          selectedTechnicalJob === job 
+                            ? 'bg-orange-600/30 border-orange-400/50 text-white' 
+                            : 'bg-white/10 border-white/20 text-gray-300 hover:bg-orange-600/20 hover:border-orange-400/30 hover:text-white'
+                        }`}
+                      >
+                        <div className="font-medium">{job}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => {
+                    if (!selectedTechnicalJob && !technicalJobSearch.trim()) {
+                      alert('Please select or search a job title to view technical questions.');
+                      return;
+                    }
+                    // For now, just show an alert with the selected job
+                    alert(`Technical interview questions for "${selectedTechnicalJob || technicalJobSearch}" will be generated here!`);
+                    setShowTechnicalModal(false);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-orange-600 to-yellow-600 text-white font-semibold py-4 px-6 rounded-lg hover:from-orange-700 hover:to-yellow-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  Generate Questions
+                </button>
+                <button
+                  onClick={() => {
+                    setShowTechnicalModal(false);
+                    setSelectedTechnicalJob('');
+                    setTechnicalJobSearch('');
+                  }}
+                  className="flex-1 sm:flex-none px-6 py-4 bg-gray-600/30 text-white font-medium rounded-lg hover:bg-gray-600/50 transition-all duration-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* ATS Score Calculation Success Popup */}
       {showAtsPopup && currentAtsResult && (
         <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
