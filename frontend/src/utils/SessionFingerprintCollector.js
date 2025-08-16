@@ -313,57 +313,86 @@ class SessionFingerprintCollector {
     }
     
     /**
-     * Collect comprehensive device fingerprint
-     * Main entry point for device fingerprinting
+     * Enhanced collectDeviceFingerprint with error handling
      */
     async collectComprehensiveFingerprint() {
-        try {
-            this.logger.info("Starting comprehensive device fingerprinting collection");
-            
-            const startTime = performance.now();
-            
-            // Collect all fingerprint components in parallel for better performance
-            const [
-                deviceData,
-                browserData,
-                networkData,
-                environmentalData
-            ] = await Promise.allSettled([
-                this.collectDeviceFingerprint(),
-                this.collectBrowserCharacteristics(), 
-                this.collectNetworkInformation(),
-                this.collectEnvironmentalData()
-            ]);
-            
-            const collectionTime = performance.now() - startTime;
-            
-            const fingerprint = {
-                hardware: deviceData.status === 'fulfilled' ? deviceData.value : {},
-                browser: browserData.status === 'fulfilled' ? browserData.value : {},
-                network: networkData.status === 'fulfilled' ? networkData.value : {},
-                environment: environmentalData.status === 'fulfilled' ? environmentalData.value : {},
-                performance: await this.collectPerformanceBenchmarks(),
-                os: await this.collectOperatingSystemData(),
-                screen: await this.collectScreenCharacteristics(),
-                collection_metadata: {
-                    timestamp: new Date().toISOString(),
-                    collection_id: this.generateUniqueId(),
-                    collection_time_ms: collectionTime,
-                    version: this.collectionVersion,
-                    user_agent: navigator.userAgent,
-                    collection_method: 'comprehensive'
-                }
-            };
-            
-            this.fingerprintData = fingerprint;
-            this.logger.info(`Device fingerprinting completed in ${collectionTime.toFixed(2)}ms`);
-            
-            return fingerprint;
-            
-        } catch (error) {
-            this.logger.error("Error collecting comprehensive fingerprint:", error);
-            return this.getFallbackFingerprint();
-        }
+        return await this.executeWithErrorHandling(
+            'collectComprehensiveFingerprint',
+            async () => {
+                this.logger.info("Starting comprehensive device fingerprinting collection");
+                
+                const startTime = performance.now();
+                
+                // Collect all fingerprint components with enhanced error handling
+                const deviceData = await this.executeWithErrorHandling(
+                    'collectDeviceFingerprint',
+                    () => this.collectDeviceFingerprint(),
+                    () => ({ error: 'Device data collection failed', basic_device: this.getBasicDeviceInfo() })
+                );
+                
+                const browserData = await this.executeWithErrorHandling(
+                    'collectBrowserCharacteristics',
+                    () => this.collectBrowserCharacteristics(),
+                    () => ({ error: 'Browser data collection failed', basic_browser: this.getBasicBrowserInfo() })
+                );
+                
+                const networkData = await this.executeWithErrorHandling(
+                    'collectNetworkInformation',
+                    () => this.collectNetworkInformation(),
+                    () => ({ error: 'Network data collection failed', basic_network: this.getBasicNetworkInfo() })
+                );
+                
+                const environmentalData = await this.executeWithErrorHandling(
+                    'collectEnvironmentalData',
+                    () => this.collectEnvironmentalData(),
+                    () => ({ error: 'Environmental data collection failed', basic_env: this.getBasicEnvironmentalInfo() })
+                );
+                
+                const performanceData = await this.executeWithErrorHandling(
+                    'collectPerformanceBenchmarks',
+                    () => this.collectPerformanceBenchmarks(),
+                    () => ({ error: 'Performance benchmarks failed', basic_performance: this.getBasicPerformanceInfo() })
+                );
+                
+                const osData = await this.executeWithErrorHandling(
+                    'collectOperatingSystemData',
+                    () => this.collectOperatingSystemData(),
+                    () => ({ error: 'OS data collection failed', basic_os: this.getBasicOSInfo() })
+                );
+                
+                const screenData = await this.executeWithErrorHandling(
+                    'collectScreenCharacteristics',
+                    () => this.collectScreenCharacteristics(),
+                    () => ({ error: 'Screen data collection failed', basic_screen: this.getBasicScreenInfo() })
+                );
+                
+                const collectionTime = performance.now() - startTime;
+                
+                const fingerprint = {
+                    hardware: deviceData,
+                    browser: browserData,
+                    network: networkData,
+                    environment: environmentalData,
+                    performance: performanceData,
+                    os: osData,
+                    screen: screenData,
+                    collection_metadata: {
+                        timestamp: new Date().toISOString(),
+                        collection_id: this.generateUniqueId(),
+                        collection_time_ms: collectionTime,
+                        version: this.collectionVersion,
+                        user_agent: navigator.userAgent,
+                        collection_method: 'enhanced_with_error_handling'
+                    }
+                };
+                
+                this.fingerprintData = fingerprint;
+                this.logger.info(`Device fingerprinting completed in ${collectionTime.toFixed(2)}ms`);
+                
+                return fingerprint;
+            },
+            () => this.getFallbackDeviceFingerprint()
+        );
     }
     
     /**
