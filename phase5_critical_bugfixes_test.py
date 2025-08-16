@@ -426,7 +426,7 @@ class Phase5CriticalBugFixesTest:
             }
             
             start_time = time.time()
-            response = self.session.post(f"{BACKEND_URL}/fingerprinting/analyze-browser-fingerprint",
+            response = self.session.post(f"{BACKEND_URL}/session-fingerprinting/analyze-browser-fingerprint",
                                        json=large_enhanced_data, timeout=30)
             end_time = time.time()
             
