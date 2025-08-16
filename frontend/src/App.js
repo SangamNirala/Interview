@@ -3202,6 +3202,11 @@ const PlacementPreparationDashboard = ({ setCurrentPage }) => {
   // Interview Questions Search state
   const [interviewQuestionsJobTitle, setInterviewQuestionsJobTitle] = useState('');
   
+  // Technical Interview Questions Modal state
+  const [showTechnicalModal, setShowTechnicalModal] = useState(false);
+  const [technicalJobSearch, setTechnicalJobSearch] = useState('');
+  const [selectedTechnicalJob, setSelectedTechnicalJob] = useState('');
+  
   // Aptitude Test Configuration state
   const [aptitudeTopics, setAptitudeTopics] = useState({
     numerical: false,
